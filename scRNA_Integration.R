@@ -1,17 +1,23 @@
+setwd("C:/Users/wat2/Desktop/snRNA_seq_data/")
 
 library(Seurat)
 library(ggplot2)
 
 
-D1.id <- c()
+# D1.id stores sample IDs for day 1 samples
+# D28.id stores sample IDs for day 28 samples
+D1.id <- c("13969fce852b59a2")
 D28.id <- c()
 
 
 flu.list <- list()
 flu.exp.list <- list()
+# Traverse all day 1 samples
 for (idx in 1:length(D1.id)) {
+  # Grab current sample name
   i <- D1.id[idx]
-  flu.list[[i]] <- Read10X_h5(paste0("path to folder", i, "/outs/filtered_feature_bc_matrix.h5"))
+  # Read in h5 matrix associated with current sample
+  flu.list[[i]] <- Read10X_h5(paste0(i, "/outs/filtered_feature_bc_matrix.h5"))
   flu.exp.list[[i]] <- flu.list[[i]]
   prefix <- paste0("Sample_", idx, "_D1#")
   print(prefix)
@@ -33,7 +39,6 @@ rm(flu.list)
 
 all.flu.unbias <- do.call("cbind", flu.exp.list)
 dim(all.flu.unbias)
-[1]  36601 178045
 
 all.flu.unbias.obj <- CreateSeuratObject(counts = all.flu.unbias,
                                         assay = "RNA",
