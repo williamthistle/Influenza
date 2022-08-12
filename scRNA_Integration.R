@@ -3,10 +3,12 @@ setwd("C:/Users/wat2/Desktop/snRNA_seq_data/")
 library(Seurat)
 library(ggplot2)
 
+base_scRNA_dir = "C:/Users/wat2/Desktop/"
+
 
 # D1.id stores sample IDs for day 1 samples
 # D28.id stores sample IDs for day 28 samples
-D1.id <- c("13969fce852b59a2")
+D1.id <- c()
 D28.id <- c()
 
 
