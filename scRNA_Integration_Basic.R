@@ -2,14 +2,21 @@ library(Seurat)
 library(ggplot2)
 
 # Location of scRNA data - data are organized by aliquot ID
-base_scRNA_dir <- "~/snRNA_seq_data/"
-output_dir <- "~/snRNA_seq_data_output/"
+# Note that aliquot ID and sample ID are different since multiple sample types
+# (scRNA-seq, scATAC-seq) can come from the same aliquot
+# However, in the context of analyzing samples from a single sample type,
+# you can consider aliquots and samples basically equivalent
+base_scRNA_dir <- "~/scRNA_seq_data/"
+output_dir <- "~/scRNA_seq_data_output/"
 sample_metadata <- read.csv("~/current_sample_metadata_minus_8d5be1a4937a7ad3.csv")
+# Look in base scRNA dir to get list of all potential aliquots
+# We will only use aliquots that are paired (D-1 and D28)
 aliquot_list <- list.dirs(base_scRNA_dir, recursive = FALSE)
 aliquot_list <- strsplit(aliquot_list, "/")
 aliquot_list <- unlist(lapply(aliquot_list, tail, n = 1L))
-# D1.id stores sample IDs for day -1 samples
-# D28.id stores sample IDs for day 28 samples
+# D1.id stores aliquot IDs for day -1 samples
+# D28.id stores aliquot IDs for day 28 samples
+print("Grabbing Day -1 and D28 aliquot IDs from metadata file")
 D1.id <- c()
 D28.id <- c()
 for (aliquot in aliquot_list) {
@@ -20,7 +27,7 @@ for (aliquot in aliquot_list) {
   all_samples_associated_with_current_subject = sample_metadata[sample_metadata$SUBJECT_ID == current_subject ,]
   if (nrow(all_samples_associated_with_current_subject) == 2) {
     # Now, we grab our D-1 and D28 aliquot names.
-    # If D-1 is not already in D1.id AND we have snRNA-seq data from both D-1 and D28 aliquots,  
+    # If D-1 is not already in D1.id AND we have scRNA-seq data from both D-1 and D28 aliquots,  
     # then add D-1 to D1.id and D28 to D28.id
     d_negative_1_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D-1",]$X_aliquot_id
     d_28_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D28",]$X_aliquot_id
@@ -32,7 +39,8 @@ for (aliquot in aliquot_list) {
 }
 
 flu.list <- list()
-# Traverse all day -1 samples
+# Grab data from all all Day -1 aliquots
+print("Grabbing all Day -1 h5 matrices")
 for (idx in 1:length(D1.id)) {
   # Grab current sample name
   i <- D1.id[idx]
@@ -43,7 +51,8 @@ for (idx in 1:length(D1.id)) {
   colnames(flu.list[[i]]) <- paste0(prefix, colnames(flu.list[[i]]))
 }
 
-# Do the exact same steps for day 28 samples
+# Do the exact same steps for Day 28 aliquots
+print("Grabbing all Day 28 h5 matrices")
 for (idx in 1:length(D28.id)) {
   i <- D28.id[idx]
   flu.list[[i]] <- Read10X_h5(paste0(base_scRNA_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
@@ -52,11 +61,13 @@ for (idx in 1:length(D28.id)) {
   colnames(flu.list[[i]]) <- paste0(prefix, colnames(flu.list[[i]]))
 }
 
+# From now on, we'll just use "samples" instead of "aliquots"
 # Combine all cells from all samples into one object
 all.flu.unbias <- do.call("cbind", flu.list)
 dim(all.flu.unbias)
 
-# Create Seurat object from snRNA-seq matrix and calculate various stats
+# Create Seurat object from scRNA-seq matrix and calculate various stats
+print("Create Seurat Object from all samples")
 all.flu.unbias.obj <- CreateSeuratObject(counts = all.flu.unbias,
                                         assay = "RNA",
                                         project = "unbias")
@@ -80,6 +91,7 @@ rm(flu.list)
 rm(all.flu.unbias)
 
 # Filter cells
+print("Filtering cells")
 all.flu.unbias.obj <- subset(all.flu.unbias.obj,nFeature_RNA > 900 & nFeature_RNA < 4000 & percent.mt < 20 & percent.hb < 0.4 & percent.rp < 50)
 
 # Label each cell with sample name
@@ -103,6 +115,36 @@ all.flu.unbias.obj <- SCTransform(all.flu.unbias.obj,
 all.flu.unbias.obj <- RunPCA(all.flu.unbias.obj, npcs = 50, approx = T, verbose = T)
 all.flu.unbias.obj <- RunUMAP(all.flu.unbias.obj, reduction = "pca", dims = 1:30)
 
+# Generate plots for batch detection
+print("Generating panel of plots where each plot shows cells for a given sample (batch detection)")
 pdf(paste0(output_dir, "all.flu.unbias.obj.PDF"))
-DimPlot(all.flu.unbias.obj, reduction = "umap")
+DimPlot(all.flu.unbias.obj, reduction = "umap", split.by = "sample", group.by = "sample")
 dev.off()
+
+# Label each cell as male or female
+female.id <- c()
+# In particular, this looks at metadata, sees which samples are female,
+# and then records that info in female.id
+for (idx in 1:length(D1.id)) {
+  current_aliquot <- D1.id[idx]
+  current_sample <- sample_metadata[sample_metadata$X_aliquot_id == current_aliquot,]
+  current_sex <- current_sample$SEX
+  if(current_sex == "F") {
+    female_sample_name <- paste0("Sample_", idx)
+    female.id <- append(female.id, female_sample_name)
+  }
+}
+
+# We assume by default that sex is male
+sex <- rep("Male", length(all.flu.unbias.obj$sample))
+
+# Then we traverse our cells and if a given sample is actually female,
+# we change its sex to female
+for(sample in female.id){
+  if(any(grep(sample, all.flu.unbias.obj$sample))){
+    sex[grep(sample, all.flu.unbias.obj$sample)] <- "Female"
+  }
+}
+
+# Finally, we save the sex of each cell in $sex
+all.flu.unbias.obj$sex <- sex
