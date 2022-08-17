@@ -209,4 +209,4 @@ flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 1)
 DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
 ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")
 # Save overall data
-save.image(paste0(output_dir, "integrated_obj_final.RData"))
+save.image(paste0(output_dir, "integrated_obj_final_2.RData"))
