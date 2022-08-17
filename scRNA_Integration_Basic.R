@@ -1,6 +1,7 @@
 library(Seurat)
 library(ggplot2)
 
+chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 # Location of scRNA data - data are organized by aliquot ID
 # Note that aliquot ID and sample ID are different since multiple sample types
 # (scRNA-seq, scATAC-seq) can come from the same aliquot
@@ -39,6 +40,7 @@ for (aliquot in aliquot_list) {
 }
 
 flu.list <- list()
+sample.names <- list()
 # Grab data from all all Day -1 aliquots
 print("Grabbing all Day -1 h5 matrices")
 for (idx in 1:length(D1.id)) {
@@ -47,6 +49,7 @@ for (idx in 1:length(D1.id)) {
   # Read in h5 matrix associated with current sample and add sample index to cell column names
   flu.list[[i]] <- Read10X_h5(paste0(base_scRNA_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
   prefix <- paste0("Sample_", idx, "_D1#")
+  sample.names <- paste0("Sample_", idx, "_D1")
   print(prefix)
   colnames(flu.list[[i]]) <- paste0(prefix, colnames(flu.list[[i]]))
 }
@@ -57,6 +60,7 @@ for (idx in 1:length(D28.id)) {
   i <- D28.id[idx]
   flu.list[[i]] <- Read10X_h5(paste0(base_scRNA_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
   prefix <- paste0("Sample_", idx, "_D28#")
+  sample.names <- paste0("Sample_", idx, "_D28")
   print(prefix)
   colnames(flu.list[[i]]) <- paste0(prefix, colnames(flu.list[[i]]))
 }
@@ -117,9 +121,16 @@ all.flu.unbias.obj <- RunUMAP(all.flu.unbias.obj, reduction = "pca", dims = 1:30
 
 # Generate plots for batch detection
 print("Generating panel of plots where each plot shows cells for a given sample (batch detection)")
-pdf(paste0(output_dir, "all.flu.unbias.obj.PDF"))
-DimPlot(all.flu.unbias.obj, reduction = "umap", split.by = "sample", group.by = "sample")
-dev.off()
+# Each plot will be 3x3 (except the last one, which will be whatever remains)
+plot_sets <- chunk(sample.names, 9)
+plot_index <- 1
+for (plot_set in plot_sets) {
+  print(paste0("Printing plot set ", plot_index))
+  plot_subset <- subset(x = all.flu.unbias.obj, subset = sample %in% plot_set)
+  DimPlot(plot_subset, reduction = "umap", split.by = "sample", group.by = "sample", ncol = 3, raster = FALSE)
+  ggsave(paste0(output_dir, "all.flu.unbias.obj.", plot_index, ".PDF"), device = "pdf")
+  plot_index <- plot_index + 1
+}
 
 # Label each cell as male or female
 female.id <- c()
@@ -148,3 +159,54 @@ for(sample in female.id){
 
 # Finally, we save the sex of each cell in $sex
 all.flu.unbias.obj$sex <- sex
+
+# Use plots from above to determine batches (visually inspect and group like plots)
+batch1.id <- c("Sample_2_D1", "Sample_2_D28")
+batch2.id <- c("Sample_6_D1", "Sample_6_D28")
+batch3.id <- c("Sample_9_D1")
+batch4.id <- c("Sample_12_D1", "Sample_12_D28", "Sample_13_D1")
+# Label samples according to batch
+batch <- all.flu.unbias.obj$sample
+for (i in 1:length(batch)) {
+  if(any(grepl(batch[i], batch1.id))) { batch[i] <- "b1" }
+  else if(any(grepl(batch[i], batch2.id))) { batch[i] <- "b2" }
+  else if(any(grepl(batch[i], batch3.id))) { batch[i] <- "b3" }
+  else if(any(grepl(batch[i], batch4.id))) { batch[i] <- "b4" } 
+  else { batch[i] <- "b5" }
+}
+all.flu.unbias.obj$batch <- batch
+# Plot all samples grouped by batch
+DimPlot(all.flu.unbias.obj, group.by = "batch", reduction = "umap",# cells.highlight = cells,
+        label = TRUE, repel = TRUE, shuffle = TRUE, raster = FALSE) +
+  ggtitle("Flu all samples, 5 batches")
+  ggsave(paste0(output_dir, "all.flu.batches.obj.PDF"), device = "pdf")
+
+all.flu.batch.list <- SplitObject(all.flu.unbias.obj, split.by = "batch")
+rm(all.flu.unbias.obj)
+for (i in 1:length(all.flu.batch.list)) {
+  print(i)
+  all.flu.batch.list[[i]] <- NormalizeData(all.flu.batch.list[[i]])
+  all.flu.batch.list[[i]] <- CellCycleScoring(all.flu.batch.list[[i]], s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+  all.flu.batch.list[[i]]$CC.Difference <- all.flu.batch.list[[i]]$S.Score - all.flu.batch.list[[i]]$G2M.Score
+  all.flu.batch.list[[i]] <- SCTransform(all.flu.batch.list[[i]],
+                                         vars.to.regress = c("percent.mt", "percent.rps", "percent.rpl", "percent.hb", "CC.Difference"), conserve.memory = TRUE,
+                                         verbose = TRUE)
+}
+
+features <- SelectIntegrationFeatures(object.list = all.flu.batch.list, nfeatures = 2000)
+all.flu.batch.list <- PrepSCTIntegration(object.list = all.flu.batch.list, anchor.features = features)
+all.flu.batch.list <- lapply(X = all.flu.batch.list, FUN = RunPCA, verbose = FALSE, features = features)
+anchors <- FindIntegrationAnchors(object.list = all.flu.batch.list, anchor.features = features, normalization.method = "SCT", reduction = "rpca")
+flu.combined.sct <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
+
+DefaultAssay(flu.combined.sct) <- "integrated"
+flu.combined.sct <- ScaleData(flu.combined.sct, verbose = T)
+flu.combined.sct <- RunPCA(flu.combined.sct, npcs = 30, approx = F, verbose = T)
+flu.combined.sct <- RunUMAP(flu.combined.sct, reduction = "pca", dims = 1:30)
+flu.combined.sct <- FindNeighbors(flu.combined.sct, reduction = "pca", dims = 1:30, prune.SNN = 1/10, k.param = 20, n.trees = 100)
+flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 1)
+# Plot integrated data
+DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
+ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")
+# Save overall data
+save.image(paste0(output_dir, "integrated_obj_final.RData"))

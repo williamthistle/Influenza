@@ -173,7 +173,7 @@ flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 1)
 
 rm(list=c("all.flu.unbias.obj", "all.flu.batch.list"))
 
-save.image("output path/integrated_obj.RData")
+save.image(paste0(output_dir, "integrated_obj.RData"))
 
 
 
