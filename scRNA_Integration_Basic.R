@@ -198,7 +198,7 @@ all.flu.batch.list <- PrepSCTIntegration(object.list = all.flu.batch.list, ancho
 all.flu.batch.list <- lapply(X = all.flu.batch.list, FUN = RunPCA, verbose = FALSE, features = features)
 anchors <- FindIntegrationAnchors(object.list = all.flu.batch.list, anchor.features = features, normalization.method = "SCT", reduction = "rpca")
 flu.combined.sct <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
-
+rm(all.flu.batch.list)
 DefaultAssay(flu.combined.sct) <- "integrated"
 flu.combined.sct <- ScaleData(flu.combined.sct, verbose = T)
 flu.combined.sct <- RunPCA(flu.combined.sct, npcs = 30, approx = F, verbose = T)
