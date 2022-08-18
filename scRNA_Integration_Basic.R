@@ -49,7 +49,7 @@ for (idx in 1:length(D1.id)) {
   # Read in h5 matrix associated with current sample and add sample index to cell column names
   flu.list[[i]] <- Read10X_h5(paste0(base_scRNA_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
   prefix <- paste0("Sample_", idx, "_D1#")
-  sample.names <- paste0("Sample_", idx, "_D1")
+  sample.names <- append(sample.names, paste0("Sample_", idx, "_D1"))
   print(prefix)
   colnames(flu.list[[i]]) <- paste0(prefix, colnames(flu.list[[i]]))
 }
@@ -60,10 +60,13 @@ for (idx in 1:length(D28.id)) {
   i <- D28.id[idx]
   flu.list[[i]] <- Read10X_h5(paste0(base_scRNA_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
   prefix <- paste0("Sample_", idx, "_D28#")
-  sample.names <- paste0("Sample_", idx, "_D28")
+  sample.names <- append(sample.names, paste0("Sample_", idx, "_D28"))
   print(prefix)
   colnames(flu.list[[i]]) <- paste0(prefix, colnames(flu.list[[i]]))
 }
+
+# Sort sample names so that D1 and D28 are grouped for each sample
+sample.names <- sort(sample.names)
 
 # From now on, we'll just use "samples" instead of "aliquots"
 # Combine all cells from all samples into one object
@@ -122,7 +125,7 @@ all.flu.unbias.obj <- RunUMAP(all.flu.unbias.obj, reduction = "pca", dims = 1:30
 # Generate plots for batch detection
 print("Generating panel of plots where each plot shows cells for a given sample (batch detection)")
 # Each plot will be 3x3 (except the last one, which will be whatever remains)
-plot_sets <- chunk(sample.names, 9)
+plot_sets <- chunk(sample.names, 7)
 plot_index <- 1
 for (plot_set in plot_sets) {
   print(paste0("Printing plot set ", plot_index))
@@ -162,23 +165,21 @@ all.flu.unbias.obj$sex <- sex
 
 # Use plots from above to determine batches (visually inspect and group like plots)
 batch1.id <- c("Sample_2_D1", "Sample_2_D28")
-batch2.id <- c("Sample_6_D1", "Sample_6_D28")
-batch3.id <- c("Sample_9_D1")
-batch4.id <- c("Sample_12_D1", "Sample_12_D28", "Sample_13_D1")
+batch2.id <- c("Sample_5_D1")
+batch3.id <- c("Sample_7_D1", "Sample_7_D28")
 # Label samples according to batch
 batch <- all.flu.unbias.obj$sample
 for (i in 1:length(batch)) {
   if(any(grepl(batch[i], batch1.id))) { batch[i] <- "b1" }
   else if(any(grepl(batch[i], batch2.id))) { batch[i] <- "b2" }
   else if(any(grepl(batch[i], batch3.id))) { batch[i] <- "b3" }
-  else if(any(grepl(batch[i], batch4.id))) { batch[i] <- "b4" } 
-  else { batch[i] <- "b5" }
+  else { batch[i] <- "b4" }
 }
 all.flu.unbias.obj$batch <- batch
 # Plot all samples grouped by batch
 DimPlot(all.flu.unbias.obj, group.by = "batch", reduction = "umap",# cells.highlight = cells,
         label = TRUE, repel = TRUE, shuffle = TRUE, raster = FALSE) +
-  ggtitle("Flu all samples, 5 batches")
+  ggtitle("Flu all samples, 4 batches")
   ggsave(paste0(output_dir, "all.flu.batches.obj.PDF"), device = "pdf")
 
 all.flu.batch.list <- SplitObject(all.flu.unbias.obj, split.by = "batch")
@@ -209,4 +210,4 @@ flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 1)
 DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
 ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")
 # Save overall data
-save.image(paste0(output_dir, "integrated_obj_final_2.RData"))
+save.image(paste0(output_dir, "integrated_obj_final.RData"))
