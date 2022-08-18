@@ -10,6 +10,7 @@ chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=leng
 base_scRNA_dir <- "~/scRNA_seq_data/"
 output_dir <- "~/scRNA_seq_data_output/"
 sample_metadata <- read.csv("~/current_sample_metadata_minus_8d5be1a4937a7ad3.csv")
+sample_assay_types <- read.csv("~/current_set_of_snRNA_and_snATAC_seq_samples.txt", sep = "\t")
 # Look in base scRNA dir to get list of all potential aliquots
 # We will only use aliquots that are paired (D-1 and D28)
 aliquot_list <- list.dirs(base_scRNA_dir, recursive = FALSE)
@@ -28,11 +29,15 @@ for (aliquot in aliquot_list) {
   all_samples_associated_with_current_subject = sample_metadata[sample_metadata$SUBJECT_ID == current_subject ,]
   if (nrow(all_samples_associated_with_current_subject) == 2) {
     # Now, we grab our D-1 and D28 aliquot names.
-    # If D-1 is not already in D1.id AND we have scRNA-seq data from both D-1 and D28 aliquots,  
+    # If D-1 is not already in D1.id AND we have scRNA-seq data from both D-1 and D28 aliquots AND we have scATAC-seq data from both D-1 and D28 aliquots,  
     # then add D-1 to D1.id and D28 to D28.id
     d_negative_1_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D-1",]$X_aliquot_id
     d_28_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D28",]$X_aliquot_id
-    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list) {
+    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot]
+    presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_sample_assays$snATAC_seq
+    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot]
+    presence_of_d_28_ATAC <- d_28_aliquot_sample_assays$snATAC_seq
+    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & presence_of_d_negative_1_ATAC == "Yes" & presence_of_d_28_ATAC == "Yes") {
       D1.id <- append(D1.id, d_negative_1_aliquot)
       D28.id <- append(D28.id, d_28_aliquot)
     }
@@ -40,7 +45,7 @@ for (aliquot in aliquot_list) {
 }
 
 flu.list <- list()
-sample.names <- list()
+sample.names <- vector()
 # Grab data from all all Day -1 aliquots
 print("Grabbing all Day -1 h5 matrices")
 for (idx in 1:length(D1.id)) {
@@ -124,8 +129,8 @@ all.flu.unbias.obj <- RunUMAP(all.flu.unbias.obj, reduction = "pca", dims = 1:30
 
 # Generate plots for batch detection
 print("Generating panel of plots where each plot shows cells for a given sample (batch detection)")
-# Each plot will be 3x3 (except the last one, which will be whatever remains)
-plot_sets <- chunk(sample.names, 7)
+# Each plot will be 2x3 (except the last one, which will be whatever remains)
+plot_sets <- chunk(sample.names, 6)
 plot_index <- 1
 for (plot_set in plot_sets) {
   print(paste0("Printing plot set ", plot_index))
@@ -164,22 +169,24 @@ for(sample in female.id){
 all.flu.unbias.obj$sex <- sex
 
 # Use plots from above to determine batches (visually inspect and group like plots)
-batch1.id <- c("Sample_2_D1", "Sample_2_D28")
-batch2.id <- c("Sample_5_D1")
-batch3.id <- c("Sample_7_D1", "Sample_7_D28")
+batch1.id <- c("Sample_1_D1", "Sample_1_D28")
+batch2.id <- c("Sample_4_D1")
+batch3.id <- c("Sample_5_D1", "Sample_5_D28")
+batch4.id <- c("Sample_6_D1", "Sample_6_D28")
 # Label samples according to batch
 batch <- all.flu.unbias.obj$sample
 for (i in 1:length(batch)) {
   if(any(grepl(batch[i], batch1.id))) { batch[i] <- "b1" }
   else if(any(grepl(batch[i], batch2.id))) { batch[i] <- "b2" }
   else if(any(grepl(batch[i], batch3.id))) { batch[i] <- "b3" }
-  else { batch[i] <- "b4" }
+  else if(any(grepl(batch[i], batch4.id))) { batch[i] <- "b4" }
+  else { batch[i] <- "b5" }
 }
 all.flu.unbias.obj$batch <- batch
 # Plot all samples grouped by batch
 DimPlot(all.flu.unbias.obj, group.by = "batch", reduction = "umap",# cells.highlight = cells,
         label = TRUE, repel = TRUE, shuffle = TRUE, raster = FALSE) +
-  ggtitle("Flu all samples, 4 batches")
+  ggtitle("Flu all samples, 5 batches")
   ggsave(paste0(output_dir, "all.flu.batches.obj.PDF"), device = "pdf")
 
 all.flu.batch.list <- SplitObject(all.flu.unbias.obj, split.by = "batch")

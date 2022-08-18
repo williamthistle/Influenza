@@ -7,23 +7,62 @@ library(ggplot2)
 
 set.seed(1)
 
+chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
+# Location of scATAC data - data are organized by aliquot ID
+# Note that aliquot ID and sample ID are different since multiple sample types
+# (scRNA-seq, scATAC-seq) can come from the same aliquot
+# However, in the context of analyzing samples from a single sample type,
+# you can consider aliquots and samples basically equivalent
+base_scATAC_dir <- "~/scATAC_seq_data/"
+output_dir <- "~/scATAC_seq_data_output/"
+sample_metadata <- read.csv("~/current_sample_metadata_minus_8d5be1a4937a7ad3.csv")
+sample_assay_types <- read.csv("~/current_set_of_snRNA_and_snATAC_seq_samples.txt", sep = "\t")
+# Look in base scATAC dir to get list of all potential aliquots
+# We will only use aliquots that are paired (D-1 and D28)
+aliquot_list <- list.dirs(base_scATAC_dir, recursive = FALSE)
+aliquot_list <- strsplit(aliquot_list, "/")
+aliquot_list <- unlist(lapply(aliquot_list, tail, n = 1L))
+# D1.id stores aliquot IDs for day -1 samples
+# D28.id stores aliquot IDs for day 28 samples
+print("Grabbing Day -1 and D28 aliquot IDs from metadata file")
 D1.id <- c()
 D28.id <- c()
+for (aliquot in aliquot_list) {
+  # Grab current sample metadata, subject associated with sample, and then check to see whether subject has two samples
+  # (D-1 and D28)
+  current_sample = sample_metadata[sample_metadata$X_aliquot_id == aliquot,]
+  current_subject = current_sample$SUBJECT_ID
+  all_samples_associated_with_current_subject = sample_metadata[sample_metadata$SUBJECT_ID == current_subject ,]
+  if (nrow(all_samples_associated_with_current_subject) == 2) {
+    # Now, we grab our D-1 and D28 aliquot names.
+    # If D-1 is not already in D1.id AND we have scRNA-seq data from both D-1 and D28 aliquots AND we have scRNA-seq data from both D-1 and D28 aliquots,  
+    # then add D-1 to D1.id and D28 to D28.id
+    d_negative_1_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D-1",]$X_aliquot_id
+    d_28_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D28",]$X_aliquot_id
+    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot]
+    presence_of_d_negative_1_RNA <- d_negative_1_aliquot_sample_assays$scRNA_seq
+    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot]
+    presence_of_d_28_RNA <- d_28_aliquot_sample_assays$scRNA_seq
+    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & presence_of_d_negative_1_RNA == "Yes" & presence_of_d_28_RNA == "Yes") {
+      D1.id <- append(D1.id, d_negative_1_aliquot)
+      D28.id <- append(D28.id, d_28_aliquot)
+    }
+  }
+}
 
-inputFiles <- paste0("path to folder/", c(D1.id, D28.id), "/outs/fragments.tsv.gz")
+# TODO: Make 1:6 generic
+inputFiles <- paste0(base_scATAC_dir, c(D1.id, D28.id), "/outs/fragments.tsv.gz")
 names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:6, "_D1"), paste0("Sample_", 1:6, "_D28"))
-
 metadata <- c(rep("D1", length(D1.id)), rep("D28", length(D28.id)))
 names(metadata) <- c(paste0("Sample_", 1:6, "_D1"), paste0("Sample_", 1:6, "_D28"))
 
 addArchRGenome("hg38")
 
-
 #fragment data processing 
 ArrowFiles <- createArrowFiles(
   inputFiles = inputFiles,
   sampleNames = names(inputFiles),
-  minTSS = 4, #Dont set this too high because you can always increase later
+  minTSS = 4, #Don't set this too high because you can always increase later
   minFrags = 3000,
   maxFrags = 30000,
   addTileMat = TRUE,
@@ -41,7 +80,7 @@ doubScores <- addDoubletScores(
 #key step for sample selection before integration
 proj <- ArchRProject(
   ArrowFiles = ArrowFiles, 
-  outputDirectory = "output path/ArchR/",
+  outputDirectory = paste0(output_dir, "ArchR/"),
   copyArrows = TRUE #This is recommended so that you maintain an unaltered copy for later usage.
 )
 
@@ -93,7 +132,7 @@ p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrich
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
-scRNA <- LoadH5Seurat("path to reference/multi.h5seurat")
+scRNA <- LoadH5Seurat("reference/multi.h5seurat")
 
 idx <- which(scRNA$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
 scRNA <- scRNA[,-idx]
