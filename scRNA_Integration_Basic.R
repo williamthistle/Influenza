@@ -1,5 +1,7 @@
 library(Seurat)
 library(ggplot2)
+library(dplyr)
+library(clustree)
 
 chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 # Location of scRNA data - data are organized by aliquot ID
