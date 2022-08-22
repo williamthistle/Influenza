@@ -12,7 +12,7 @@ chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=leng
 base_scRNA_dir <- "~/scRNA_seq_data/"
 output_dir <- "~/scRNA_seq_data_output/"
 sample_metadata <- read.csv("~/current_sample_metadata_minus_8d5be1a4937a7ad3.csv")
-sample_assay_types <- read.csv("~/current_set_of_snRNA_and_snATAC_seq_samples.txt", sep = "\t")
+sample_assay_types <- read.csv("~/current_set_of_scRNA_and_scATAC_seq_samples.txt", sep = "\t")
 # Look in base scRNA dir to get list of all potential aliquots
 # We will only use aliquots that are paired (D-1 and D28)
 aliquot_list <- list.dirs(base_scRNA_dir, recursive = FALSE)
@@ -35,10 +35,10 @@ for (aliquot in aliquot_list) {
     # then add D-1 to D1.id and D28 to D28.id
     d_negative_1_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D-1",]$X_aliquot_id
     d_28_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D28",]$X_aliquot_id
-    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot]
-    presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_sample_assays$snATAC_seq
-    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot]
-    presence_of_d_28_ATAC <- d_28_aliquot_sample_assays$snATAC_seq
+    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot,]
+    presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_sample_assays$scATAC_seq
+    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot,]
+    presence_of_d_28_ATAC <- d_28_aliquot_sample_assays$scATAC_seq
     if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & presence_of_d_negative_1_ATAC == "Yes" & presence_of_d_28_ATAC == "Yes") {
       D1.id <- append(D1.id, d_negative_1_aliquot)
       D28.id <- append(D28.id, d_28_aliquot)
@@ -214,7 +214,7 @@ flu.combined.sct <- ScaleData(flu.combined.sct, verbose = T)
 flu.combined.sct <- RunPCA(flu.combined.sct, npcs = 30, approx = F, verbose = T)
 flu.combined.sct <- RunUMAP(flu.combined.sct, reduction = "pca", dims = 1:30)
 flu.combined.sct <- FindNeighbors(flu.combined.sct, reduction = "pca", dims = 1:30, prune.SNN = 1/10, k.param = 20, n.trees = 100)
-flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 1)
+flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 0.2)
 # Plot integrated data
 DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
 ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")

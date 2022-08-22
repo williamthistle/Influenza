@@ -1,4 +1,4 @@
-aliquot_name	snRNA_seq	snATAC_seq	has_metadata
+aliquot_name	scRNA_seq	scATAC_seq	has_metadata
 150aad92de7817e8	Yes	Yes	Yes
 2deb7ca69a194aa9	Yes	Yes	Yes
 3216ea39e7f91587	Yes	Yes	Yes

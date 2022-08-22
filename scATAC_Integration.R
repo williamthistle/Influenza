@@ -4,10 +4,11 @@ library(pheatmap)
 library(mclust)
 library(writexl)
 library(ggplot2)
+library(hexbin)
+library(SeuratDisk)
 
 set.seed(1)
 
-chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 # Location of scATAC data - data are organized by aliquot ID
 # Note that aliquot ID and sample ID are different since multiple sample types
 # (scRNA-seq, scATAC-seq) can come from the same aliquot
@@ -16,7 +17,7 @@ chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=leng
 base_scATAC_dir <- "~/scATAC_seq_data/"
 output_dir <- "~/scATAC_seq_data_output/"
 sample_metadata <- read.csv("~/current_sample_metadata_minus_8d5be1a4937a7ad3.csv")
-sample_assay_types <- read.csv("~/current_set_of_snRNA_and_snATAC_seq_samples.txt", sep = "\t")
+sample_assay_types <- read.csv("~/current_set_of_scRNA_and_scATAC_seq_samples.txt", sep = "\t")
 # Look in base scATAC dir to get list of all potential aliquots
 # We will only use aliquots that are paired (D-1 and D28)
 aliquot_list <- list.dirs(base_scATAC_dir, recursive = FALSE)
@@ -39,9 +40,9 @@ for (aliquot in aliquot_list) {
     # then add D-1 to D1.id and D28 to D28.id
     d_negative_1_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D-1",]$X_aliquot_id
     d_28_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D28",]$X_aliquot_id
-    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot]
+    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot,]
     presence_of_d_negative_1_RNA <- d_negative_1_aliquot_sample_assays$scRNA_seq
-    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot]
+    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot,]
     presence_of_d_28_RNA <- d_28_aliquot_sample_assays$scRNA_seq
     if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & presence_of_d_negative_1_RNA == "Yes" & presence_of_d_28_RNA == "Yes") {
       D1.id <- append(D1.id, d_negative_1_aliquot)
