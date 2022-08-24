@@ -51,7 +51,9 @@ for (aliquot in aliquot_list) {
   }
 }
 
+
 # TODO: Make 1:6 generic
+# Read in input files and label each sample as D1 or D28 in metadata
 inputFiles <- paste0(base_scATAC_dir, c(D1.id, D28.id), "/outs/fragments.tsv.gz")
 names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:6, "_D1"), paste0("Sample_", 1:6, "_D28"))
 metadata <- c(rep("D1", length(D1.id)), rep("D28", length(D28.id)))
@@ -59,7 +61,7 @@ names(metadata) <- c(paste0("Sample_", 1:6, "_D1"), paste0("Sample_", 1:6, "_D28
 
 addArchRGenome("hg38")
 
-#fragment data processing 
+#fragment data processing - read in data
 ArrowFiles <- createArrowFiles(
   inputFiles = inputFiles,
   sampleNames = names(inputFiles),
@@ -70,7 +72,7 @@ ArrowFiles <- createArrowFiles(
   addGeneScoreMat = TRUE
 )
 
-#fake cell check
+#fake cell check (check for doublets)
 doubScores <- addDoubletScores(
   input = ArrowFiles,
   k = 10, #Refers to how many cells near a "pseudo-doublet" to count.
@@ -78,19 +80,22 @@ doubScores <- addDoubletScores(
   LSIMethod = 1
 )
 
-#key step for sample selection before integration
+# Create ArchR project based on processed input files (arrow files)
 proj <- ArchRProject(
   ArrowFiles = ArrowFiles, 
   outputDirectory = paste0(output_dir, "ArchR/"),
   copyArrows = TRUE #This is recommended so that you maintain an unaltered copy for later usage.
 )
 
-
+# Filter out doublets (fake cells)
 proj <- filterDoublets(ArchRProj = proj)
 
+save.image(paste0(output_dir, "atac_after_filtering_doublets.RData"))
+
+# List available matrices in project
 getAvailableMatrices(proj)
 #------------------------------------------------------------------------------------------------
-# add conditions
+# add condition metadata (D1 and D28) to cells in project
 aa<-proj$Sample
 idxSample <- which(str_detect(proj$Sample, "D1"))
 aa[idxSample]<-'D1'
@@ -100,22 +105,24 @@ aa[idxSample]<-'D28'
 
 proj <- addCellColData(ArchRProj = proj, data = aa, cells = proj$cellNames,name = "Conditions", force = TRUE)
 
-
+# Plot out TSS Enrichment / Doublet Enrichment / Nucleosome Ratio for each sample
 p1 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "TSSEnrichment", plotAs = "ridges")
 p2 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "DoubletEnrichment", plotAs = "ridges")
 p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "NucleosomeRatio", plotAs = "ridges")
 
 plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 
-
+# Filter out cells that don't meet TSS enrichment / double enrichment / nucleosome ratio criteria
 idxPass <- which(proj$TSSEnrichment >= 6 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
+# List number of D1 and D28 cells and list number of cells remaining for each sample
 table(proj$Conditions)
 table(proj$Sample)
 
 
-
+# Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 
+# and add cluster information (addClusters)
 addArchRThreads(threads = 8)
 proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
                         clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
@@ -123,9 +130,14 @@ proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "Iter
 proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
 proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 4, knnAssign = 30, maxClusters = NULL, force = TRUE)
 
+save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_1.RData"))
+
+# Determine whether there is similarity in how cells are clustered by sample or condition and by the clusters
+# determined above (0 is random, 1 is perfect)
 adjustedRandIndex(proj$Sample, proj$Clusters)
 adjustedRandIndex(proj$Conditions, proj$Clusters)
 
+# UMAP plots colored by condition, sample, cluster ID, and TSS enrichment
 p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Conditions", embedding = "UMAP", force = TRUE)
 p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
 p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
@@ -133,17 +145,23 @@ p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrich
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
+# Load reference scRNA data
 scRNA <- LoadH5Seurat("reference/multi.h5seurat")
 
+# Remove certain cell types we're not interested in
 idx <- which(scRNA$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
 scRNA <- scRNA[,-idx]
 
 idx <- which(scRNA$celltype.l3 == "Treg Naive")
 scRNA <- scRNA[,-idx]
 
+# Rename CD4 Proliferating and CD8 Proliferating to T Proliferating
 idx <- which(scRNA$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
 scRNA$celltype.l2[idx] <- "T Proliferating"
-
+# Step required in new version of ArchR to make addGeneIntegrationMatrix run successfully
+#scRNA <- RenameAssays(scRNA, SCT = "RNA")
+save.image(paste0(output_dir, "atac_before_gene_integration_matrix.RData"))
+# Integrate scATAC-seq and scRNA-seq data
 addArchRThreads(threads = 6)
 proj <- addGeneIntegrationMatrix(
   ArchRProj = proj, 
@@ -160,6 +178,8 @@ proj <- addGeneIntegrationMatrix(
   force = TRUE
 )
 
+rm(scRNA)
+save.image(paste0(output_dir, "atac_after_gene_integration_matrix.RData"))
 
 pal <- paletteDiscrete(values = proj$predictedGroup)
 
@@ -208,6 +228,8 @@ proj.filtered <- addIterativeLSI(ArchRProj = proj.filtered, useMatrix = "TileMat
 proj.filtered <- addUMAP(ArchRProj = proj.filtered, reducedDims = "IterativeLSI", force = TRUE)
 proj.filtered <- addClusters(input = proj.filtered, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 3, knnAssign = 30, maxClusters = NULL, force = TRUE)
 
+save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_2.RData"))
+
 adjustedRandIndex(proj.filtered$Sample, proj.filtered$Clusters)
 adjustedRandIndex(proj.filtered$Conditions, proj.filtered$Clusters)
 
@@ -230,18 +252,38 @@ for (m in c(1:length(pre_cluster))){
 
 
 proj.filtered <- addCellColData(ArchRProj = proj.filtered, data = Cell_type_voting, cells = proj.filtered$cellNames, name = "Cell_type_voting", force = TRUE)
+save.image(paste0(output_dir, "atac_after_cell_type_voting.RData"))
+saveArchRProject(ArchRProj = proj.filtered, paste0(output_dir, "ArchR_Filtered/"))
 
-#Remove the messy cluster
-idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11")) 
+#Remove the messy clusters
+idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C12", "C16", "C24", "C25", "C30", "C36", "C37", "C45", "C47"))
 cellsPass <- proj.filtered$cellNames[-idxPass]
 proj.filtered<-proj.filtered[cellsPass, ]
+
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "CD4 Naive", "T Naive")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "CD8 Naive", "T Naive")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "NK_CD56bright", "NK")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "ASDC", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "cDC", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Eryth", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "HSPC", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "pDC", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Plasmablast", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Platelet", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Treg", "T Naive")
 
 table(proj.filtered$Conditions)
 table(proj.filtered$Sample)
 table(proj.filtered$Cell_type_combined)
 
+p1 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
+p2 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+p3 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_combined", embedding = "UMAP", force = TRUE)
+p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
 
 
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15_Final.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+#save.image(paste0(output_dir, "atac_final.RData"))
 
 
 
