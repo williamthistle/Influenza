@@ -53,11 +53,11 @@ for (aliquot in aliquot_list) {
 
 
 # TODO: Make 1:6 generic
-# Read in input files and label each sample as D1 or D28 in metadata
-inputFiles <- paste0(base_scATAC_dir, c(D1.id, D28.id), "/outs/fragments.tsv.gz")
-names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:6, "_D1"), paste0("Sample_", 1:6, "_D28"))
-metadata <- c(rep("D1", length(D1.id)), rep("D28", length(D28.id)))
-names(metadata) <- c(paste0("Sample_", 1:6, "_D1"), paste0("Sample_", 1:6, "_D28"))
+# Read in input files and label each sample as D28 in metadata
+inputFiles <- paste0(base_scATAC_dir, c(D28.id), "/outs/fragments.tsv.gz")
+names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:6, "_D28"))
+metadata <- c(rep("D28", length(D28.id)))
+names(metadata) <- c(paste0("Sample_", 1:6, "_D28"))
 
 addArchRGenome("hg38")
 
@@ -83,23 +83,20 @@ doubScores <- addDoubletScores(
 # Create ArchR project based on processed input files (arrow files)
 proj <- ArchRProject(
   ArrowFiles = ArrowFiles, 
-  outputDirectory = paste0(output_dir, "ArchR/"),
+  outputDirectory = paste0(output_dir, "ArchR_Post/"),
   copyArrows = TRUE #This is recommended so that you maintain an unaltered copy for later usage.
 )
 
 # Filter out doublets (fake cells)
 proj <- filterDoublets(ArchRProj = proj)
 
-save.image(paste0(output_dir, "atac_after_filtering_doublets.RData"))
+save.image(paste0(output_dir, "atac_after_filtering_doublets_post.RData"))
 
 # List available matrices in project
 getAvailableMatrices(proj)
 #------------------------------------------------------------------------------------------------
-# add condition metadata (D1 and D28) to cells in project
+# add condition metadata (D28) to cells in project
 aa<-proj$Sample
-idxSample <- which(str_detect(proj$Sample, "D1"))
-aa[idxSample]<-'D1'
-
 idxSample <- which(str_detect(proj$Sample, "D28"))
 aa[idxSample]<-'D28'
 
@@ -130,7 +127,7 @@ proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "Iter
 proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
 proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 4, knnAssign = 30, maxClusters = NULL, force = TRUE)
 
-save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_1.RData"))
+save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_1_post.RData"))
 
 # Determine whether there is similarity in how cells are clustered by sample or condition and by the clusters
 # determined above (0 is random, 1 is perfect)
@@ -160,7 +157,7 @@ idx <- which(scRNA$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
 scRNA$celltype.l2[idx] <- "T Proliferating"
 # Step required in new version of ArchR to make addGeneIntegrationMatrix run successfully
 #scRNA <- RenameAssays(scRNA, SCT = "RNA")
-save.image(paste0(output_dir, "atac_before_gene_integration_matrix.RData"))
+save.image(paste0(output_dir, "atac_before_gene_integration_matrix_post.RData"))
 # Integrate scATAC-seq and scRNA-seq data
 addArchRThreads(threads = 6)
 proj <- addGeneIntegrationMatrix(
@@ -179,7 +176,7 @@ proj <- addGeneIntegrationMatrix(
 )
 
 rm(scRNA)
-save.image(paste0(output_dir, "atac_after_gene_integration_matrix.RData"))
+save.image(paste0(output_dir, "atac_after_gene_integration_matrix_post.RData"))
 
 pal <- paletteDiscrete(values = proj$predictedGroup)
 
@@ -228,7 +225,7 @@ proj.filtered <- addIterativeLSI(ArchRProj = proj.filtered, useMatrix = "TileMat
 proj.filtered <- addUMAP(ArchRProj = proj.filtered, reducedDims = "IterativeLSI", force = TRUE)
 proj.filtered <- addClusters(input = proj.filtered, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 3, knnAssign = 30, maxClusters = NULL, force = TRUE)
 
-save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_2.RData"))
+save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_2_post.RData"))
 
 adjustedRandIndex(proj.filtered$Sample, proj.filtered$Clusters)
 adjustedRandIndex(proj.filtered$Conditions, proj.filtered$Clusters)
@@ -252,11 +249,11 @@ for (m in c(1:length(pre_cluster))){
 
 
 proj.filtered <- addCellColData(ArchRProj = proj.filtered, data = Cell_type_voting, cells = proj.filtered$cellNames, name = "Cell_type_voting", force = TRUE)
-save.image(paste0(output_dir, "atac_after_cell_type_voting.RData"))
-saveArchRProject(ArchRProj = proj.filtered, paste0(output_dir, "ArchR_Filtered/"))
+save.image(paste0(output_dir, "atac_after_cell_type_voting_post.RData"))
+#saveArchRProject(ArchRProj = proj.filtered, paste0(output_dir, "ArchR_Filtered/"))
 
 #Remove the messy clusters
-idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C12", "C16", "C24", "C25", "C30", "C36", "C37", "C45", "C47"))
+idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C31", "C37", "C39"))
 cellsPass <- proj.filtered$cellNames[-idxPass]
 proj.filtered<-proj.filtered[cellsPass, ]
 
@@ -283,10 +280,27 @@ p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "
 
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15_Final.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
-#save.image(paste0(output_dir, "atac_final.RData"))
 
+# Peak calling - first, find pseudo-bulk replicates, then call peaks using MACS2
+proj.filtered <- addGroupCoverages(ArchRProj = proj.filtered, groupBy = "Cell_type_combined")
+pathToMacs2 <- findMacs2()
+proj.filtered <- addReproduciblePeakSet(
+  ArchRProj = proj.filtered, 
+  groupBy = "Cell_type_combined", 
+  pathToMacs2 = pathToMacs2
+)
+#proj.filtered.2 <- addPeakMatrix(proj.filtered)
+#markersPeaks <- getMarkerFeatures(
+#  ArchRProj = proj.filtered.2, 
+#  useMatrix = "PeakMatrix", 
+#  groupBy = "Cell_type_combined",
+#  bias = c("TSSEnrichment", "log10(nFrags)"),
+#  testMethod = "wilcoxon"
+#)
 
+#markerList <- getMarkers(markersPeaks, cutOff = "FDR <= 0.01 & Log2FC >= 1")
 
-
+export.bed(getPeakSet(proj.filtered),con='post_peaks.bed')
+save.image(paste0(output_dir, "atac_final_post.RData"))
 
 

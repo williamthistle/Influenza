@@ -2,6 +2,7 @@ library(Seurat)
 library(ggplot2)
 library(dplyr)
 library(clustree)
+library(SeuratDisk)
 
 chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 # Location of scRNA data - data are organized by aliquot ID
@@ -218,5 +219,65 @@ flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 0.2)
 # Plot integrated data
 DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
 ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")
+# IDK - try integrating reference data to assign cell types?
+scRNA_ref <- LoadH5Seurat("reference/multi.h5seurat")
+# Remove certain cell types we're not interested in
+idx <- which(scRNA_ref$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+scRNA_ref <- scRNA_ref[,-idx]
+idx <- which(scRNA_ref$celltype.l3 == "Treg Naive")
+scRNA_ref <- scRNA_ref[,-idx]
+# Rename CD4 Proliferating and CD8 Proliferating to T Proliferating
+idx <- which(scRNA_ref$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
+scRNA_ref$celltype.l2[idx] <- "T Proliferating"
+flu.anchors <- FindTransferAnchors(reference = scRNA_ref, query = flu.combined.sct,
+                                        dims = 1:30, reference.reduction = "pca", k.filter = NA)
+
+predictions <- TransferData(anchorset = flu.anchors, refdata = scRNA_ref$celltype.l2,
+                            dims = 1:30)
+flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = predictions)
+rm(scRNA_ref)
+
+save.image(paste0(output_dir, "integrated_obj_after_predictions.RData"))
+
+cell_names <- rownames(flu.combined.sct@meta.data)
+flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = cell_names, col.name = "cell_name")
+Cell_type_combined = flu.combined.sct$predicted.id
+idx <- grep("CD4 T", Cell_type_combined)
+Cell_type_combined[idx] <- "CD4 Memory"
+idx <- grep("CD8 T", Cell_type_combined)
+Cell_type_combined[idx] <- "CD8 Memory"
+idx <- grep("cDC", Cell_type_combined)
+Cell_type_combined[idx] <- "cDC"
+idx <- grep("Proliferating", Cell_type_combined)
+Cell_type_combined[idx] <- "Proliferating"
+idx <- grep("B", Cell_type_combined)
+Cell_type_combined[idx] <- "B"
+flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = Cell_type_combined, col.name = 'Cell_type_combined')
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "CD4 Naive", "T Naive")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "CD8 Naive", "T Naive")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "NK_CD56bright", "NK")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "ASDC", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "cDC", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Eryth", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "HSPC", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "pDC", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Plasmablast", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Platelet", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Treg", "T Naive")
+
+cluster_distributions <- list()
+idx <- 1
+for (cluster in levels(flu.combined.sct)) {
+  idxPass <- which(Idents(flu.combined.sct) %in% cluster)
+  cellsPass <- names(flu.combined.sct$orig.ident[idxPass])
+  filtered_cluster <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
+  cluster_distributions[[idx]] <- table(filtered_cluster$Cell_type_combined)
+  idx <- idx + 1
+}
+
+DimPlot(flu.combined.sct, reduction = "umap", group.by = "Cell_type_combined", label = TRUE,
+              label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
+ggsave(paste0(output_dir, "flu.combined.sct.by.cell.type.PDF"), device = "pdf")
+
 # Save overall data
 save.image(paste0(output_dir, "integrated_obj_final.RData"))

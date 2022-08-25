@@ -1,5 +1,10 @@
+
 output_dir <- "~/scRNA_seq_data_output/"
 load(paste0(output_dir, "integrated_obj_final.RData"))
+
+output_dir <- "~/scATAC_seq_data_output/"
+load(paste0(output_dir, "atac_after_cell_type_voting.RData"))
+
 
 for (res in seq(0, 1, 0.1)) {
   flu.combined.sct <- FindClusters(flu.combined.sct, resolution = res)
@@ -11,7 +16,7 @@ ggsave(paste0(output_dir, "flu.combined.sct.cluster.trees.PDF"), device = "pdf")
 proj <- saveArchRProject()
 proj <- loadArchRProject(path = paste0(output_dir, "ArchR"))
 
-load(paste0(output_dir, "atac_after_cell_type_voting.RData"))
+load(paste0(output_dir, "atac_after_cell_type_voting_pre.RData"))
 
 cluster_predictions <- vector()
 cluster_distributions <- list()
