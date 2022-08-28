@@ -1,6 +1,6 @@
 
 output_dir <- "~/scRNA_seq_data_output/"
-load(paste0(output_dir, "integrated_obj_final.RData"))
+load(paste0(output_dir, "integrated_obj_after_predictions.RData"))
 
 output_dir <- "~/scATAC_seq_data_output/"
 load(paste0(output_dir, "atac_after_cell_type_voting.RData"))

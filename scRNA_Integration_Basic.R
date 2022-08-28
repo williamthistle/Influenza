@@ -215,11 +215,11 @@ flu.combined.sct <- ScaleData(flu.combined.sct, verbose = T)
 flu.combined.sct <- RunPCA(flu.combined.sct, npcs = 30, approx = F, verbose = T)
 flu.combined.sct <- RunUMAP(flu.combined.sct, reduction = "pca", dims = 1:30)
 flu.combined.sct <- FindNeighbors(flu.combined.sct, reduction = "pca", dims = 1:30, prune.SNN = 1/10, k.param = 20, n.trees = 100)
-flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 0.2)
+flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 1)
 # Plot integrated data
 DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
 ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")
-# IDK - try integrating reference data to assign cell types?
+# We will integrate reference data to assign cell types
 scRNA_ref <- LoadH5Seurat("reference/multi.h5seurat")
 # Remove certain cell types we're not interested in
 idx <- which(scRNA_ref$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
@@ -230,7 +230,7 @@ scRNA_ref <- scRNA_ref[,-idx]
 idx <- which(scRNA_ref$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
 scRNA_ref$celltype.l2[idx] <- "T Proliferating"
 flu.anchors <- FindTransferAnchors(reference = scRNA_ref, query = flu.combined.sct,
-                                        dims = 1:30, reference.reduction = "pca", k.filter = NA)
+                                        dims = 1:30, reference.reduction = "pca")
 
 predictions <- TransferData(anchorset = flu.anchors, refdata = scRNA_ref$celltype.l2,
                             dims = 1:30)
@@ -257,14 +257,48 @@ flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combin
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "CD8 Naive", "T Naive")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "NK_CD56bright", "NK")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "ASDC", "CD14 Mono")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "cDC", "CD14 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "cDC", "CD14 Mono")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Eryth", "CD14 Mono")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "HSPC", "CD14 Mono")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "pDC", "CD14 Mono")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Plasmablast", "CD14 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "HSPC", "CD14 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "pDC", "CD14 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Plasmablast", "CD14 Mono")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Platelet", "CD14 Mono")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Treg", "T Naive")
 
+#Remove the messy clusters
+idxPass <- which(Idents(flu.combined.sct) %in% c("4", "7", "18"))
+cellsPass <- names(flu.combined.sct$orig.ident[-idxPass])
+flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
+
+DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_type_combined", label = TRUE,
+              label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
+ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.PDF"), device = "pdf")
+
+# Differential expression
+diff_markers <- FindMarkers(flu.combined.sct.minus.clusters, group.by = "group", ident.1 = "D1", ident.2 = "D28")
+diff_markers$p_val_adj_2 = p.adjust(diff_markers$p_val, method='fdr')
+diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
+diff_markers <- diff_markers[diff_markers$p_val_adj_2 < 0.05,]
+# Maybe try differential expression between groups for each cell type?
+for (cell_type in unique(flu.combined.sct$Cell_type_combined)) {
+  print(cell_type)
+  idxPass <- which(flu.combined.sct$Cell_type_combined %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- names(flu.combined.sct$orig.ident[idxPass])
+  cells_subset <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
+  diff_markers <- FindMarkers(cells_subset, group.by = "group", ident.1 = "D1", ident.2 = "D28")
+  diff_markers$p_val_adj_2 = p.adjust(diff_markers$p_val, method='fdr')
+  diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
+  diff_markers <- diff_markers[diff_markers$p_val_adj_2 < 0.05,]
+  print(nrow(diff_markers))
+}
+
+
+
+# Save overall data
+save.image(paste0(output_dir, "integrated_obj_final.RData"))
+
+# Find cluster distributions for removing messy clusters if we want
 cluster_distributions <- list()
 idx <- 1
 for (cluster in levels(flu.combined.sct)) {
@@ -274,10 +308,3 @@ for (cluster in levels(flu.combined.sct)) {
   cluster_distributions[[idx]] <- table(filtered_cluster$Cell_type_combined)
   idx <- idx + 1
 }
-
-DimPlot(flu.combined.sct, reduction = "umap", group.by = "Cell_type_combined", label = TRUE,
-              label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
-ggsave(paste0(output_dir, "flu.combined.sct.by.cell.type.PDF"), device = "pdf")
-
-# Save overall data
-save.image(paste0(output_dir, "integrated_obj_final.RData"))
