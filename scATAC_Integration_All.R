@@ -245,7 +245,7 @@ cM <- as.matrix(confusionMatrix(proj.filtered$Clusters, proj.filtered$Cell_type_
 pre_cluster <- rownames(cM)
 max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
 
-Cell_type_voting = proj.filtered$Clusters
+Cell_type_voting <- proj.filtered$Clusters
 for (m in c(1:length(pre_cluster))){
   idxSample <- which(proj.filtered$Clusters == pre_cluster[m])
   Cell_type_voting[idxSample] <- max_celltype[m]

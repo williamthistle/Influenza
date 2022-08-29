@@ -3,8 +3,22 @@ library(ggplot2)
 library(dplyr)
 library(clustree)
 library(SeuratDisk)
+library(ArchR) # Just used for confusion matrix
 
 chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
+
+performCellMajorityVoteConversion <- function(seurat_obj, cluster_ids) {
+  for (cluster_id in cluster_ids) {
+    idxPass <- which(Idents(seurat_obj) %in% cluster_id)
+    cellsPass <- names(seurat_obj$orig.ident[idxPass])
+    filtered_cluster <- subset(x = seurat_obj, subset = cell_name %in% cellsPass)
+    cell_type_voting <- filtered_cluster$Cell_type_voting
+    cluster_distribution <- table(filtered_cluster$Cell_type_combined)
+    cluster_distribution <- sort(cluster_distribution, TRUE)
+    # If second largest class is at least 20% of total, then we want to keep it, so we 
+  }
+}
+
 # Location of scRNA data - data are organized by aliquot ID
 # Note that aliquot ID and sample ID are different since multiple sample types
 # (scRNA-seq, scATAC-seq) can come from the same aliquot
@@ -215,7 +229,7 @@ flu.combined.sct <- ScaleData(flu.combined.sct, verbose = T)
 flu.combined.sct <- RunPCA(flu.combined.sct, npcs = 30, approx = F, verbose = T)
 flu.combined.sct <- RunUMAP(flu.combined.sct, reduction = "pca", dims = 1:30)
 flu.combined.sct <- FindNeighbors(flu.combined.sct, reduction = "pca", dims = 1:30, prune.SNN = 1/10, k.param = 20, n.trees = 100)
-flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 1)
+flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 0.4)
 # Plot integrated data
 DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
 ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")
@@ -265,21 +279,21 @@ flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combin
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Platelet", "CD14 Mono")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Treg", "T Naive")
 
-#Remove the messy clusters
+# Remove the messy clusters
 idxPass <- which(Idents(flu.combined.sct) %in% c("4", "7", "18"))
 cellsPass <- names(flu.combined.sct$orig.ident[-idxPass])
 flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
+# Perform majority cell-type voting
+# 1) If one type is vast majority, then convert all cells to that type
+# 2) If there is a mix of two cell types, then maybe keep both and feed all other cells into one of the two types
+# 3) Otherwise, if we can't vote for a majority, then we should probably remove that cluster
+
 
 DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_type_combined", label = TRUE,
               label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
 ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.PDF"), device = "pdf")
 
-# Differential expression
-diff_markers <- FindMarkers(flu.combined.sct.minus.clusters, group.by = "group", ident.1 = "D1", ident.2 = "D28")
-diff_markers$p_val_adj_2 = p.adjust(diff_markers$p_val, method='fdr')
-diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
-diff_markers <- diff_markers[diff_markers$p_val_adj_2 < 0.05,]
-# Maybe try differential expression between groups for each cell type?
+# We want to perform differential expression between groups (D1 and D28) for each cell type
 for (cell_type in unique(flu.combined.sct$Cell_type_combined)) {
   print(cell_type)
   idxPass <- which(flu.combined.sct$Cell_type_combined %in% cell_type)
@@ -299,12 +313,25 @@ for (cell_type in unique(flu.combined.sct$Cell_type_combined)) {
 save.image(paste0(output_dir, "integrated_obj_final.RData"))
 
 # Find cluster distributions for removing messy clusters if we want
+cM <- as.matrix(confusionMatrix(Idents(flu.combined.sct), flu.combined.sct$Cell_type_combined))
+pre_cluster <- rownames(cM)
+max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
+Cell_type_voting <- as.vector(Idents(flu.combined.sct))
+for (m in c(1:length(pre_cluster))){
+  idxSample <- which(Idents(flu.combined.sct) == pre_cluster[m])
+  Cell_type_voting[idxSample] <- max_celltype[m]
+}
+flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = Cell_type_voting, col.name = "Cell_type_voting")
+
 cluster_distributions <- list()
+cluster_predictions <- vector()
 idx <- 1
 for (cluster in levels(flu.combined.sct)) {
   idxPass <- which(Idents(flu.combined.sct) %in% cluster)
   cellsPass <- names(flu.combined.sct$orig.ident[idxPass])
   filtered_cluster <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
+  cluster_predictions <- append(cluster_predictions, table(filtered_cluster$Cell_type_voting))
   cluster_distributions[[idx]] <- table(filtered_cluster$Cell_type_combined)
   idx <- idx + 1
 }
+names(cluster_predictions) <- paste(unique(Idents(flu.combined.sct)), "-", names(cluster_predictions))
