@@ -31,5 +31,6 @@ for (cluster in unique(proj.filtered$Clusters)) {
 }
 
 names(cluster_predictions) <- paste(unique(proj.filtered$Clusters), "-", names(cluster_predictions))
-
+# Way to see memory of all R objects
+sort( sapply(ls(),function(x){object.size(get(x))})) 
 

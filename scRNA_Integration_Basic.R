@@ -7,16 +7,33 @@ library(ArchR) # Just used for confusion matrix
 
 chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 
-performCellMajorityVoteConversion <- function(seurat_obj, cluster_ids) {
+performCellMajorityVoteConversion <- function(seurat_obj, cluster_ids, keep_second, fold_into_second) {
   for (cluster_id in cluster_ids) {
+    print(cluster_id)
     idxPass <- which(Idents(seurat_obj) %in% cluster_id)
     cellsPass <- names(seurat_obj$orig.ident[idxPass])
-    filtered_cluster <- subset(x = seurat_obj, subset = cell_name %in% cellsPass)
-    cell_type_voting <- filtered_cluster$Cell_type_voting
-    cluster_distribution <- table(filtered_cluster$Cell_type_combined)
+    cluster_distribution <- table(seurat_obj$Cell_type_combined[idxPass])
     cluster_distribution <- sort(cluster_distribution, TRUE)
-    # If second largest class is at least 20% of total, then we want to keep it, so we 
+    if(length(cluster_distribution) == 1) {
+      print("No need to update this cluster because it only has one cell type")
+    } else {
+      # If keep_second, then we keep the cell type with second largest count (cluster border)
+      if (!missing(keep_second)) {
+        # If fold_into is missing, then fold everything else into majority class
+        if(missing(fold_into_second)) {
+          seurat_obj$Cell_type_combined[idxPass][seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[1] &
+                                                   seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[2]] <- names(cluster_distribution)[1] 
+        } else {
+          seurat_obj$Cell_type_combined[idxPass][seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[1] &
+                                                   seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[2]] <- names(cluster_distribution)[2]
+        }
+      } else {
+        # If no keep_second, then just make everything the majority class
+        seurat_obj$Cell_type_combined[idxPass][seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[1]] <- names(cluster_distribution)[1]
+      }
+    }
   }
+  seurat_obj
 }
 
 # Location of scRNA data - data are organized by aliquot ID
@@ -244,7 +261,7 @@ scRNA_ref <- scRNA_ref[,-idx]
 idx <- which(scRNA_ref$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
 scRNA_ref$celltype.l2[idx] <- "T Proliferating"
 flu.anchors <- FindTransferAnchors(reference = scRNA_ref, query = flu.combined.sct,
-                                        dims = 1:30, reference.reduction = "pca")
+                                        dims = 1:30, reference.reduction = "pca", k.filter = NA)
 
 predictions <- TransferData(anchorset = flu.anchors, refdata = scRNA_ref$celltype.l2,
                             dims = 1:30)
@@ -280,7 +297,8 @@ flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combin
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Treg", "T Naive")
 
 # Remove the messy clusters
-idxPass <- which(Idents(flu.combined.sct) %in% c("4", "7", "18"))
+idxPass <- which(Idents(flu.combined.sct) %in% c("11"))
+#idxPass <- which(Idents(flu.combined.sct) %in% c("3", "11"))
 cellsPass <- names(flu.combined.sct$orig.ident[-idxPass])
 flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
 # Perform majority cell-type voting
@@ -322,7 +340,11 @@ for (m in c(1:length(pre_cluster))){
   Cell_type_voting[idxSample] <- max_celltype[m]
 }
 flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = Cell_type_voting, col.name = "Cell_type_voting")
-
+flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "13", "14", "15", "16", "17", "18"))
+#flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("3"), TRUE)
+#flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("13"), TRUE, TRUE)
+  
+  
 cluster_distributions <- list()
 cluster_predictions <- vector()
 idx <- 1
@@ -334,4 +356,4 @@ for (cluster in levels(flu.combined.sct)) {
   cluster_distributions[[idx]] <- table(filtered_cluster$Cell_type_combined)
   idx <- idx + 1
 }
-names(cluster_predictions) <- paste(unique(Idents(flu.combined.sct)), "-", names(cluster_predictions))
+names(cluster_predictions) <- paste(levels(flu.combined.sct), "-", names(cluster_predictions))
