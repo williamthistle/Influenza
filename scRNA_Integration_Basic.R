@@ -7,6 +7,10 @@ library(ArchR) # Just used for confusion matrix
 
 chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 
+# Perform majority cell-type voting
+# 1) If one type is vast majority, then convert all cells to that type
+# 2) If there is an even mix of two cell types, then potentially keep both and feed all other cells into one of the two types
+#    The idea behind this was to preserve borders between clusters, but in reality, it turns out that just converting all cells to the majority works better.
 performCellMajorityVoteConversion <- function(seurat_obj, cluster_ids, keep_second, fold_into_second) {
   for (cluster_id in cluster_ids) {
     print(cluster_id)
@@ -225,6 +229,7 @@ DimPlot(all.flu.unbias.obj, group.by = "batch", reduction = "umap",# cells.highl
 
 all.flu.batch.list <- SplitObject(all.flu.unbias.obj, split.by = "batch")
 rm(all.flu.unbias.obj)
+# Perform normalization on each batch
 for (i in 1:length(all.flu.batch.list)) {
   print(i)
   all.flu.batch.list[[i]] <- NormalizeData(all.flu.batch.list[[i]])
@@ -235,6 +240,7 @@ for (i in 1:length(all.flu.batch.list)) {
                                          verbose = TRUE)
 }
 
+# Integrate batches
 features <- SelectIntegrationFeatures(object.list = all.flu.batch.list, nfeatures = 2000)
 all.flu.batch.list <- PrepSCTIntegration(object.list = all.flu.batch.list, anchor.features = features)
 all.flu.batch.list <- lapply(X = all.flu.batch.list, FUN = RunPCA, verbose = FALSE, features = features)
@@ -242,6 +248,7 @@ anchors <- FindIntegrationAnchors(object.list = all.flu.batch.list, anchor.featu
 flu.combined.sct <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
 rm(all.flu.batch.list)
 DefaultAssay(flu.combined.sct) <- "integrated"
+# Run PCA / UMAP / clustering on integrated data
 flu.combined.sct <- ScaleData(flu.combined.sct, verbose = T)
 flu.combined.sct <- RunPCA(flu.combined.sct, npcs = 30, approx = F, verbose = T)
 flu.combined.sct <- RunUMAP(flu.combined.sct, reduction = "pca", dims = 1:30)
@@ -260,6 +267,10 @@ scRNA_ref <- scRNA_ref[,-idx]
 # Rename CD4 Proliferating and CD8 Proliferating to T Proliferating
 idx <- which(scRNA_ref$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
 scRNA_ref$celltype.l2[idx] <- "T Proliferating"
+# Add cell type predictions
+# Note that k.filter = NA skips filtering anchors stage - when this stage was in place,
+# virtually all T Naive (as classified later) cells were filtered out. Not sure if this is good or bad, but
+# for now we are going with bad.
 flu.anchors <- FindTransferAnchors(reference = scRNA_ref, query = flu.combined.sct,
                                         dims = 1:30, reference.reduction = "pca", k.filter = NA)
 
@@ -270,8 +281,11 @@ rm(scRNA_ref)
 
 save.image(paste0(output_dir, "integrated_obj_after_predictions.RData"))
 
+# Add cell names as column
 cell_names <- rownames(flu.combined.sct@meta.data)
 flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = cell_names, col.name = "cell_name")
+# Combine cell types where we can't distinguish the difference and add as metadata column
+# Note that platelets may actually be save-able, but for now, we're not doing so
 Cell_type_combined = flu.combined.sct$predicted.id
 idx <- grep("CD4 T", Cell_type_combined)
 Cell_type_combined[idx] <- "CD4 Memory"
@@ -296,41 +310,7 @@ flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combin
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Platelet", "CD14 Mono")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Treg", "T Naive")
 
-# Remove the messy clusters
-idxPass <- which(Idents(flu.combined.sct) %in% c("11"))
-#idxPass <- which(Idents(flu.combined.sct) %in% c("3", "11"))
-cellsPass <- names(flu.combined.sct$orig.ident[-idxPass])
-flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
-# Perform majority cell-type voting
-# 1) If one type is vast majority, then convert all cells to that type
-# 2) If there is a mix of two cell types, then maybe keep both and feed all other cells into one of the two types
-# 3) Otherwise, if we can't vote for a majority, then we should probably remove that cluster
-
-
-DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_type_combined", label = TRUE,
-              label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
-ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.PDF"), device = "pdf")
-
-# We want to perform differential expression between groups (D1 and D28) for each cell type
-for (cell_type in unique(flu.combined.sct$Cell_type_combined)) {
-  print(cell_type)
-  idxPass <- which(flu.combined.sct$Cell_type_combined %in% cell_type)
-  print(length(idxPass))
-  cellsPass <- names(flu.combined.sct$orig.ident[idxPass])
-  cells_subset <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
-  diff_markers <- FindMarkers(cells_subset, group.by = "group", ident.1 = "D1", ident.2 = "D28")
-  diff_markers$p_val_adj_2 = p.adjust(diff_markers$p_val, method='fdr')
-  diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
-  diff_markers <- diff_markers[diff_markers$p_val_adj_2 < 0.05,]
-  print(nrow(diff_markers))
-}
-
-
-
-# Save overall data
-save.image(paste0(output_dir, "integrated_obj_final.RData"))
-
-# Find cluster distributions for removing messy clusters if we want
+# Add Cell_type_voting column to metadata
 cM <- as.matrix(confusionMatrix(Idents(flu.combined.sct), flu.combined.sct$Cell_type_combined))
 pre_cluster <- rownames(cM)
 max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
@@ -340,11 +320,8 @@ for (m in c(1:length(pre_cluster))){
   Cell_type_voting[idxSample] <- max_celltype[m]
 }
 flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = Cell_type_voting, col.name = "Cell_type_voting")
-flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "13", "14", "15", "16", "17", "18"))
-#flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("3"), TRUE)
-#flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("13"), TRUE, TRUE)
-  
-  
+
+# Find cluster distributions for removing messy clusters if we want
 cluster_distributions <- list()
 cluster_predictions <- vector()
 idx <- 1
@@ -357,3 +334,69 @@ for (cluster in levels(flu.combined.sct)) {
   idx <- idx + 1
 }
 names(cluster_predictions) <- paste(levels(flu.combined.sct), "-", names(cluster_predictions))
+
+# Perform cell majority voting
+flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "13", "14", "15", "16", "17", "18"))
+#flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("3"), TRUE)
+#flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("13"), TRUE, TRUE)
+
+# Remove the messy clusters
+idxPass <- which(Idents(flu.combined.sct) %in% c("3", "11"))
+cellsPass <- names(flu.combined.sct$orig.ident[-idxPass])
+flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
+
+# Final plot of cell types clustered
+DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_type_combined", label = TRUE,
+              label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
+ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.PDF"), device = "pdf")
+
+print("Performing differential expression between groups (D1 and D28) for each cell type")
+for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_combined)) {
+  print(cell_type)
+  idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_combined %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- names(flu.combined.sct.minus.clusters$orig.ident[idxPass])
+  cells_subset <- subset(x = flu.combined.sct.minus.clusters, subset = cell_name %in% cellsPass)
+  DefaultAssay(cells_subset) <- "SCT"
+  cells_subset <- PrepSCTFindMarkers(cells_subset)
+  Idents(cells_subset) <- "group"
+  #diff_markers <- FindMarkers(cells_subset, group.by = "group", ident.1 = "D1", ident.2 = "D28", logfc.threshold = 0, min.pct = 0.1)
+  diff_markers <- FindMarkers(cells_subset, ident.1 = "D28", ident.2 = "D1",logfc.threshold = 0, min.pct = 0, assay = "SCT", recorrect_umi = FALSE)
+  #diff_markers$p_val_adj = p.adjust(diff_markers$p_val, method='fdr')
+  #diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
+  #diff_markers <- diff_markers[diff_markers$p_val_adj < 0.05,]
+  print(nrow(diff_markers))
+  cell_type <- sub(" ", "_", cell_type)
+  write.csv(diff_markers, paste0("D28-vs-D1-degs-", cell_type, ".csv"))
+}
+
+print("Computing pseudobulk counts for each cell type")
+for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_combined)) {
+  print(cell_type)
+  idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_combined %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- names(flu.combined.sct.minus.clusters$orig.ident[idxPass])
+  # Subset again by each sample name
+  # Sum by row
+  # Keep as vector in list
+  cells_subset <- subset(x = flu.combined.sct.minus.clusters, subset = cell_name %in% cellsPass)
+  cells_pseudobulk <- list()
+  for (sample_name in sample.names) {
+    samples_subset <- subset(x = cells_subset, subset = sample %in% sample_name)
+    samples_data <- samples_subset@assays$RNA@counts
+    samples_data <- rowSums(as.matrix(samples_data))
+    cells_pseudobulk[[sample_name]] <- samples_data
+  }
+  final_cells_pseudobulk_df <- bind_cols(cells_pseudobulk[1])
+  for (idx in 2:length(sample.names)) {
+    final_cells_pseudobulk_df <- bind_cols(final_cells_pseudobulk_df, cells_pseudobulk[idx])
+  }
+  final_cells_pseudobulk_df <- as.data.frame(final_cells_pseudobulk_df)
+  rownames(final_cells_pseudobulk_df) <- names(cells_pseudobulk[[1]])
+  final_cells_pseudobulk_df <- final_cells_pseudobulk_df[rowSums(final_cells_pseudobulk_df[])>0,]
+  cell_type <- sub(" ", "_", cell_type)
+  write.csv(final_cells_pseudobulk_df, paste0("pseudo_bulk_RNA_count_", cell_type, ".csv"))
+}
+
+# Save overall data
+save.image(paste0(output_dir, "integrated_obj_final.RData"))
