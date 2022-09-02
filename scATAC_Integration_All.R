@@ -281,6 +281,7 @@ idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6
 cellsPass <- proj.filtered$cellNames[-idxPass]
 proj.filtered<-proj.filtered[cellsPass, ]
 
+# Combine more cell types
 proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "CD4 Naive", "T Naive")
 proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "CD8 Naive", "T Naive")
 proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "NK_CD56bright", "NK")
@@ -297,6 +298,7 @@ table(proj.filtered$Conditions)
 table(proj.filtered$Sample)
 table(proj.filtered$Cell_type_combined)
 
+# Print final integrated data with cell type predictions
 p1 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
 p2 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
 p3 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_combined", embedding = "UMAP", force = TRUE)
@@ -309,7 +311,7 @@ plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15_Final.pdf", Ar
 # We need to re-add our hg38 genome
 addArchRGenome("hg38")
 
-# Peak calling - first, find pseudo-bulk replicates, then call peaks using MACS2
+# Peak calling - first, call addGroupCoverages to find pseudo-bulk replicates, then call peaks using MACS2
 proj.filtered <- addGroupCoverages(ArchRProj = proj.filtered, groupBy = "Cell_type_combined")
 pathToMacs2 <- findMacs2()
 proj.filtered <- addReproduciblePeakSet(
@@ -348,20 +350,18 @@ for (cell_type in unique(proj.filtered.2$Cell_type_combined)) {
   write.xlsx(list_of_datasets, file = paste0(cell_type, "D28_D1_diff.xlsx"), colNames = FALSE)
 }
 
-# Pseudobulk generation
+# Create Peaks.txt file for MAGICAL
 peaks <- getPeakSet(proj.filtered.2)
 seq_names <- as.data.frame(peaks@seqnames)
 ranges <- as.data.frame(peaks@ranges)
 peak_txt_file <- cbind(seq_names, ranges)
 colnames(peak_txt_file)[1] <- "chr"
 peak_txt_file <- peak_txt_file[, !(names(peak_txt_file) %in% c("width", "names"))]
-#write_xlsx(as.data.frame(peaks@seqnames), paste0(output_dir, "/pseudo_bulk/peak_chr.xlsx"))
-#write_xlsx(as.data.frame(peaks@ranges), paste0(output_dir, "/pseudo_bulk/peak_start_end.xlsx"))
-#write_xlsx(as.data.frame(peaks@elementMetadata), paste0(output_dir, "/pseudo_bulk/peak_meta.xlsx"))
+peak_txt_file[,1] <- sub("chr", "", peak_txt_file[,1])
+peak_txt_file[,1] <- sub("X", "23", peak_txt_file[,1])
+write.table(peak_txt_file, file = paste0(output_dir, "Peaks.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
 
-Cell_types <- unique(proj.filtered$Cell_type_voting)
-sample.names <- unique(proj.filtered$Sample)
-peak_count <- getMatrixFromProject(ArchRProj = proj.filtered.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
+# Create peak_motif_matches.txt file for MAGICAL
 proj.filtered.2 <- addMotifAnnotations(ArchRProj = proj.filtered.2, motifSet = "cisbp", name = "Motif")
 peak_motif_matches <- getMatches(proj.filtered.2, name = "Motif")
 peak_motif_txt_file <- as.data.frame(peak_motif_matches@assays@data$matches)
@@ -374,8 +374,12 @@ colnames(peak_motif_txt_file)[2] <- "point1"
 colnames(peak_motif_txt_file)[3] <- "point2"
 cols <- sapply(peak_motif_txt_file, is.logical)
 peak_motif_txt_file[,cols] <- lapply(peak_motif_txt_file[,cols], as.numeric)
+write.table(peak_motif_txt_file, file = paste0(output_dir, "peak_motif_matches.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
 
-
+# Create text file for each cell type containing pseudobulk counts for peaks
+Cell_types <- unique(proj.filtered$Cell_type_voting)
+sample.names <- unique(proj.filtered$Sample)
+peak_count <- getMatrixFromProject(ArchRProj = proj.filtered.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
 for (i in c(1:length(Cell_types))){
   pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
   colnames(pseudo_bulk)<-sample.names
@@ -388,6 +392,6 @@ for (i in c(1:length(Cell_types))){
     }
   }
   
-  write.table(pseudo_bulk, file = paste0(output_dir, "/pseudo_bulk/pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t")
+  write.table(pseudo_bulk, file = paste0(output_dir, "pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t", col.names = NA)
 }
 
