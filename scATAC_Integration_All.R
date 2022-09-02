@@ -12,18 +12,23 @@ library(BSgenome.Hsapiens.UCSC.hg38)
 
 set.seed(1)
 
+# Set project dir - used to organize different projects
+project_dir <- "~/PLACEBO_FLU_1/"
+if (!dir.exists(project_dir)) {dir.create(project_dir)}
 # Location of scATAC data - data are organized by aliquot ID
 # Note that aliquot ID and sample ID are different since multiple sample types
 # (scRNA-seq, scATAC-seq) can come from the same aliquot
 # However, in the context of analyzing samples from a single sample type,
 # you can consider aliquots and samples basically equivalent
-base_scATAC_dir <- "~/scATAC_seq_data/"
-output_dir <- "~/scATAC_seq_data_output/"
-sample_metadata <- read.csv("~/current_sample_metadata_minus_8d5be1a4937a7ad3.csv")
-sample_assay_types <- read.csv("~/current_set_of_scRNA_and_scATAC_seq_samples.txt", sep = "\t")
+data_dir <- paste0(project_dir, "scATAC_seq_data/")
+if (!dir.exists(data_dir)) {dir.create(data_dir)}
+output_dir <- paste0(project_dir, "scATAC_seq_data_output/")
+if (!dir.exists(output_dir)) {dir.create(output_dir)}
+sample_metadata <- read.csv(paste0(project_dir, "current_sample_metadata_minus_8d5be1a4937a7ad3.csv"))
+sample_assay_types <- read.csv(paste0(project_dir, "current_set_of_scRNA_and_scATAC_seq_samples.txt"), sep = "\t")
 # Look in base scATAC dir to get list of all potential aliquots
 # We will only use aliquots that are paired (D-1 and D28)
-aliquot_list <- list.dirs(base_scATAC_dir, recursive = FALSE)
+aliquot_list <- list.dirs(data_dir, recursive = FALSE)
 aliquot_list <- strsplit(aliquot_list, "/")
 aliquot_list <- unlist(lapply(aliquot_list, tail, n = 1L))
 # D1.id stores aliquot IDs for day -1 samples
@@ -55,7 +60,7 @@ for (aliquot in aliquot_list) {
 }
 
 # Read in input files and label each sample as D1 or D28 in metadata
-inputFiles <- paste0(base_scATAC_dir, c(D1.id, D28.id), "/outs/fragments.tsv.gz")
+inputFiles <- paste0(data_dir, c(D1.id, D28.id), "/outs/fragments.tsv.gz")
 names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:length(D1.id), "_D1"), paste0("Sample_", 1:length(D28.id), "_D28"))
 metadata <- c(rep("D1", length(D1.id)), rep("D28", length(D28.id)))
 names(metadata) <- c(paste0("Sample_", 1:length(D1.id), "_D1"), paste0("Sample_", 1:length(D28.id), "_D28"))
@@ -91,7 +96,9 @@ proj <- ArchRProject(
 # Filter out doublets (fake cells)
 proj <- filterDoublets(ArchRProj = proj)
 
-save.image(paste0(output_dir, "atac_after_filtering_doublets.RData"))
+image_dir <- paste0(output_dir, "images/")
+if (!dir.exists(image_dir)) {dir.create(image_dir)}
+save.image(paste0(image_dir, "atac_after_filtering_doublets.RData"))
 
 # List available matrices in project
 getAvailableMatrices(proj)
@@ -131,7 +138,7 @@ proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "Iter
 proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
 proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 4, knnAssign = 30, maxClusters = NULL, force = TRUE)
 
-save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_1.RData"))
+save.image(paste0(image_dir, "atac_after_lsi_umap_clusters_1.RData"))
 
 # Determine whether there is similarity between our clusters and clusters according to sample or condition
 # (0 is random, 1 is perfect)
@@ -147,7 +154,9 @@ p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrich
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
 # Load reference scRNA data
-scRNA <- LoadH5Seurat("reference/multi.h5seurat")
+reference_dir <- "~/reference/"
+if (!dir.exists(reference_dir)) {dir.create(reference_dir)}
+scRNA <- LoadH5Seurat(paste0(reference_dir, "multi.h5seurat"))
 
 # Remove certain cell types we're not interested in
 idx <- which(scRNA$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
@@ -160,7 +169,7 @@ scRNA <- scRNA[,-idx]
 idx <- which(scRNA$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
 scRNA$celltype.l2[idx] <- "T Proliferating"
 
-save.image(paste0(output_dir, "atac_before_gene_integration_matrix.RData"))
+save.image(paste0(image_dir, "atac_before_gene_integration_matrix.RData"))
 
 # Integrate scATAC-seq and scRNA-seq data
 addArchRThreads(threads = 6)
@@ -180,7 +189,7 @@ proj <- addGeneIntegrationMatrix(
 )
 
 rm(scRNA)
-save.image(paste0(output_dir, "atac_after_gene_integration_matrix.RData"))
+save.image(paste0(image_dir, "atac_after_gene_integration_matrix.RData"))
 
 # Plot integrated data with cell type predictions 
 pal <- paletteDiscrete(values = proj$predictedGroup)
@@ -232,7 +241,7 @@ proj.filtered <- addIterativeLSI(ArchRProj = proj.filtered, useMatrix = "TileMat
 proj.filtered <- addUMAP(ArchRProj = proj.filtered, reducedDims = "IterativeLSI", force = TRUE)
 proj.filtered <- addClusters(input = proj.filtered, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 3, knnAssign = 30, maxClusters = NULL, force = TRUE)
 
-save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_2.RData"))
+save.image(paste0(image_dir, "atac_after_lsi_umap_clusters_2.RData"))
 
 # Recalculate Rand index (see above)
 adjustedRandIndex(proj.filtered$Sample, proj.filtered$Clusters)
@@ -260,7 +269,6 @@ for (m in c(1:length(pre_cluster))){
 
 proj.filtered <- addCellColData(ArchRProj = proj.filtered, data = Cell_type_voting, cells = proj.filtered$cellNames, name = "Cell_type_voting", force = TRUE)
 save.image(paste0(output_dir, "atac_after_cell_type_voting.RData"))
-saveArchRProject(ArchRProj = proj.filtered, paste0(output_dir, "ArchR_Filtered/"))
 
 # See how clusters are distributed
 cluster_predictions <- vector()
@@ -322,8 +330,10 @@ proj.filtered <- addReproduciblePeakSet(
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
 proj.filtered.2 <- addPeakMatrix(proj.filtered)
-save.image(paste0(output_dir, "atac_after_peak_matrix.RData"))
+save.image(paste0(image_dir, "atac_after_peak_matrix.RData"))
 # Calculate differential accessible peaks for each cell type
+differential_peaks_dir <- paste0(output_dir, "diff_peaks/")
+if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir)}
 for (cell_type in unique(proj.filtered.2$Cell_type_combined)) {
   print(cell_type)
   # Grab cells associated with cell type
@@ -347,7 +357,7 @@ for (cell_type in unique(proj.filtered.2$Cell_type_combined)) {
   cell_type <- sub(" ", "_", cell_type)
   list_of_datasets <- list("Log2FC" = marker_log_2_fc, "Mean" = marker_mean, "FDR" = marker_fdr, "Pval" = marker_pval, 
                            "MeanDiff" = marker_mean_diff, "AUC" = marker_auc, "MeanBGD" = marker_mean_bgd)
-  write.xlsx(list_of_datasets, file = paste0(cell_type, "D28_D1_diff.xlsx"), colNames = FALSE)
+  write.xlsx(list_of_datasets, file = paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff.xlsx"), colNames = FALSE)
 }
 
 # Create Peaks.txt file for MAGICAL
@@ -380,6 +390,8 @@ write.table(peak_motif_txt_file, file = paste0(output_dir, "peak_motif_matches.t
 Cell_types <- unique(proj.filtered$Cell_type_voting)
 sample.names <- unique(proj.filtered$Sample)
 peak_count <- getMatrixFromProject(ArchRProj = proj.filtered.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
+pseudo_bulk_dir <- paste0(output_dir, "pseudo_bulk/")
+if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}
 for (i in c(1:length(Cell_types))){
   pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
   colnames(pseudo_bulk)<-sample.names
@@ -392,6 +404,6 @@ for (i in c(1:length(Cell_types))){
     }
   }
   
-  write.table(pseudo_bulk, file = paste0(output_dir, "pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t", col.names = NA)
+  write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t", col.names = NA)
 }
 
