@@ -54,13 +54,11 @@ for (aliquot in aliquot_list) {
   }
 }
 
-
-# TODO: Make 1:6 generic
 # Read in input files and label each sample as D1 or D28 in metadata
 inputFiles <- paste0(base_scATAC_dir, c(D1.id, D28.id), "/outs/fragments.tsv.gz")
-names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:6, "_D1"), paste0("Sample_", 1:6, "_D28"))
+names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:length(D1.id), "_D1"), paste0("Sample_", 1:length(D28.id), "_D28"))
 metadata <- c(rep("D1", length(D1.id)), rep("D28", length(D28.id)))
-names(metadata) <- c(paste0("Sample_", 1:6, "_D1"), paste0("Sample_", 1:6, "_D28"))
+names(metadata) <- c(paste0("Sample_", 1:length(D1.id), "_D1"), paste0("Sample_", 1:length(D28.id), "_D28"))
 
 addArchRGenome("hg38")
 
@@ -75,7 +73,7 @@ ArrowFiles <- createArrowFiles(
   addGeneScoreMat = TRUE
 )
 
-#fake cell check (check for doublets)
+# Fake cell check (find doublets)
 doubScores <- addDoubletScores(
   input = ArrowFiles,
   k = 10, #Refers to how many cells near a "pseudo-doublet" to count.
@@ -98,7 +96,7 @@ save.image(paste0(output_dir, "atac_after_filtering_doublets.RData"))
 # List available matrices in project
 getAvailableMatrices(proj)
 #------------------------------------------------------------------------------------------------
-# add condition metadata (D1 and D28) to cells in project
+# add condition metadata (D1 or D28) to cells in project
 aa<-proj$Sample
 idxSample <- which(str_detect(proj$Sample, "D1"))
 aa[idxSample]<-'D1'
@@ -135,8 +133,8 @@ proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat
 
 save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_1.RData"))
 
-# Determine whether there is similarity in how cells are clustered by sample or condition and by the clusters
-# determined above (0 is random, 1 is perfect)
+# Determine whether there is similarity between our clusters and clusters according to sample or condition
+# (0 is random, 1 is perfect)
 adjustedRandIndex(proj$Sample, proj$Clusters)
 adjustedRandIndex(proj$Conditions, proj$Clusters)
 
@@ -161,9 +159,9 @@ scRNA <- scRNA[,-idx]
 # Rename CD4 Proliferating and CD8 Proliferating to T Proliferating
 idx <- which(scRNA$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
 scRNA$celltype.l2[idx] <- "T Proliferating"
-# Step required in new version of ArchR to make addGeneIntegrationMatrix run successfully
-#scRNA <- RenameAssays(scRNA, SCT = "RNA")
+
 save.image(paste0(output_dir, "atac_before_gene_integration_matrix.RData"))
+
 # Integrate scATAC-seq and scRNA-seq data
 addArchRThreads(threads = 6)
 proj <- addGeneIntegrationMatrix(
@@ -184,12 +182,14 @@ proj <- addGeneIntegrationMatrix(
 rm(scRNA)
 save.image(paste0(output_dir, "atac_after_gene_integration_matrix.RData"))
 
+# Plot integrated data with cell type predictions 
 pal <- paletteDiscrete(values = proj$predictedGroup)
 
 p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
 
 plotPDF(p1, name = "Integrated_annotated.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
+# Combine cell types
 Cell_type_combined = proj$predictedGroup
 idx <- grep("CD4 T", Cell_type_combined)
 Cell_type_combined[idx] <- "CD4 Memory"
@@ -208,7 +208,7 @@ Cell_type_combined[idx] <- "B"
 
 proj <- addCellColData(ArchRProj = proj, data = Cell_type_combined, cells = proj$cellNames, name = "Cell_type_combined", force = TRUE)
 
-
+# Plot integrated data with cell type predictions (combined)
 pal <- paletteDiscrete(values = proj$Cell_type_combined)
 p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_combined", embedding = "UMAP", pal = pal, force = TRUE)
 
@@ -224,6 +224,7 @@ table(proj.filtered$Conditions)
 table(proj.filtered$Sample)
 table(proj.filtered$Cell_type_combined)
 
+# Redo dimensionality reduction, UMAP, clustering
 addArchRThreads(threads = 8)
 proj.filtered <- addIterativeLSI(ArchRProj = proj.filtered, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
                         clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
@@ -233,9 +234,11 @@ proj.filtered <- addClusters(input = proj.filtered, reducedDims = "IterativeLSI"
 
 save.image(paste0(output_dir, "atac_after_lsi_umap_clusters_2.RData"))
 
+# Recalculate Rand index (see above)
 adjustedRandIndex(proj.filtered$Sample, proj.filtered$Clusters)
 adjustedRandIndex(proj.filtered$Conditions, proj.filtered$Clusters)
 
+# Plot integrated data with cell type predictions (combined) after TSS filtering
 p1 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
 p2 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
 p3 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_combined", embedding = "UMAP", force = TRUE)
@@ -243,6 +246,7 @@ p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
+# Get cell_type_voting info and add to ArchR project
 cM <- as.matrix(confusionMatrix(proj.filtered$Clusters, proj.filtered$Cell_type_combined))
 pre_cluster <- rownames(cM)
 max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
@@ -258,7 +262,21 @@ proj.filtered <- addCellColData(ArchRProj = proj.filtered, data = Cell_type_voti
 save.image(paste0(output_dir, "atac_after_cell_type_voting.RData"))
 saveArchRProject(ArchRProj = proj.filtered, paste0(output_dir, "ArchR_Filtered/"))
 
-#Remove the messy clusters
+# See how clusters are distributed
+cluster_predictions <- vector()
+cluster_distributions <- list()
+idx <- 1
+for (cluster in unique(proj.filtered$Clusters)) {
+  idxPass <- which(proj.filtered$Clusters %in% cluster)
+  cellsPass <- proj.filtered$cellNames[idxPass]
+  filtered_cluster <-proj.filtered[cellsPass,]
+  cluster_predictions <- append(cluster_predictions, table(filtered_cluster$Cell_type_voting))
+  cluster_distributions[[idx]] <- table(filtered_cluster$Cell_type_combined)
+  idx <- idx + 1
+}
+names(cluster_predictions) <- paste(unique(proj.filtered$Clusters), "-", names(cluster_predictions))
+
+#Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
 idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C12", "C16", "C25", "C30", "C47"))
 cellsPass <- proj.filtered$cellNames[-idxPass]
 proj.filtered<-proj.filtered[cellsPass, ]
@@ -332,13 +350,32 @@ for (cell_type in unique(proj.filtered.2$Cell_type_combined)) {
 
 # Pseudobulk generation
 peaks <- getPeakSet(proj.filtered.2)
-write_xlsx(as.data.frame(peaks@seqnames), paste0(output_dir, "/pseudo_bulk/peak_chr.xlsx"))
-write_xlsx(as.data.frame(peaks@ranges), paste0(output_dir, "/pseudo_bulk/peak_start_end.xlsx"))
-write_xlsx(as.data.frame(peaks@elementMetadata), paste0(output_dir, "/pseudo_bulk/peak_meta.xlsx"))
+seq_names <- as.data.frame(peaks@seqnames)
+ranges <- as.data.frame(peaks@ranges)
+peak_txt_file <- cbind(seq_names, ranges)
+colnames(peak_txt_file)[1] <- "chr"
+peak_txt_file <- peak_txt_file[, !(names(peak_txt_file) %in% c("width", "names"))]
+#write_xlsx(as.data.frame(peaks@seqnames), paste0(output_dir, "/pseudo_bulk/peak_chr.xlsx"))
+#write_xlsx(as.data.frame(peaks@ranges), paste0(output_dir, "/pseudo_bulk/peak_start_end.xlsx"))
+#write_xlsx(as.data.frame(peaks@elementMetadata), paste0(output_dir, "/pseudo_bulk/peak_meta.xlsx"))
 
 Cell_types <- unique(proj.filtered$Cell_type_voting)
 sample.names <- unique(proj.filtered$Sample)
 peak_count <- getMatrixFromProject(ArchRProj = proj.filtered.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
+proj.filtered.2 <- addMotifAnnotations(ArchRProj = proj.filtered.2, motifSet = "cisbp", name = "Motif")
+peak_motif_matches <- getMatches(proj.filtered.2, name = "Motif")
+peak_motif_txt_file <- as.data.frame(peak_motif_matches@assays@data$matches)
+# Remove _.* from ends of column names
+for (col in 1:ncol(peak_motif_txt_file)){
+  colnames(peak_motif_txt_file)[col] <-  sub("_.*", "", colnames(peak_motif_txt_file)[col])
+}
+peak_motif_txt_file <- cbind(peak_txt_file, peak_motif_txt_file)
+colnames(peak_motif_txt_file)[2] <- "point1"
+colnames(peak_motif_txt_file)[3] <- "point2"
+cols <- sapply(peak_motif_txt_file, is.logical)
+peak_motif_txt_file[,cols] <- lapply(peak_motif_txt_file[,cols], as.numeric)
+
+
 for (i in c(1:length(Cell_types))){
   pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
   colnames(pseudo_bulk)<-sample.names
@@ -353,5 +390,4 @@ for (i in c(1:length(Cell_types))){
   
   write.table(pseudo_bulk, file = paste0(output_dir, "/pseudo_bulk/pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t")
 }
-
 

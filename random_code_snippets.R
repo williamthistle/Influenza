@@ -23,7 +23,7 @@ library(Matrix)
 
 set.seed(1)
 output_dir <- "~/scATAC_seq_data_output/"
-load(paste0(output_dir, "atac_after_cell_type_voting.RData"))
+load(paste0(output_dir, "atac_after_peak_matrix.RData"))
 
 
 for (res in seq(0, 1, 0.1)) {
