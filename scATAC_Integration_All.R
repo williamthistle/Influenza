@@ -302,6 +302,7 @@ proj.filtered <- addReproduciblePeakSet(
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
 proj.filtered.2 <- addPeakMatrix(proj.filtered)
+save.image(paste0(output_dir, "atac_after_peak_matrix.RData"))
 # Calculate differential accessible peaks for each cell type
 for (cell_type in unique(proj.filtered.2$Cell_type_combined)) {
   print(cell_type)
@@ -335,7 +336,6 @@ write_xlsx(as.data.frame(peaks@seqnames), paste0(output_dir, "/pseudo_bulk/peak_
 write_xlsx(as.data.frame(peaks@ranges), paste0(output_dir, "/pseudo_bulk/peak_start_end.xlsx"))
 write_xlsx(as.data.frame(peaks@elementMetadata), paste0(output_dir, "/pseudo_bulk/peak_meta.xlsx"))
 
-library(Matrix)
 Cell_types <- unique(proj.filtered$Cell_type_voting)
 sample.names <- unique(proj.filtered$Sample)
 peak_count <- getMatrixFromProject(ArchRProj = proj.filtered.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))

@@ -19,6 +19,7 @@ library(SeuratDisk)
 library(dplyr)
 library(openxlsx)
 library(BSgenome.Hsapiens.UCSC.hg38)
+library(Matrix)
 
 set.seed(1)
 output_dir <- "~/scATAC_seq_data_output/"
