@@ -338,22 +338,20 @@ write_xlsx(as.data.frame(peaks@elementMetadata), paste0(output_dir, "/pseudo_bul
 library(Matrix)
 Cell_types <- unique(proj.filtered$Cell_type_voting)
 sample.names <- unique(proj.filtered$Sample)
-
-PeakCount <- getGroupSE(proj.filtered.2, useMatrix = "PeakMatrix")
-
+peak_count <- getMatrixFromProject(ArchRProj = proj.filtered.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
 for (i in c(1:length(Cell_types))){
   pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
   colnames(pseudo_bulk)<-sample.names
   rownames(pseudo_bulk)<-peaks@elementMetadata$idx
   
   for (s in c(1:length(sample.names))){
-    idxMatch <- which(str_detect(PeakCount$Cell_type_voting,Cell_types[i]) & str_detect(PeakCount$Sample,sample.names[s]))
+    idxMatch <- which(str_detect(peak_count$Cell_type_voting,Cell_types[i]) & str_detect(peak_count$Sample,sample.names[s]))
     if (length(idxMatch)>1){
-      pseudo_bulk[,s] = Matrix::rowSums(PeakCount@assays@data$PeakMatrix[,idxMatch])
+      pseudo_bulk[,s] = Matrix::rowSums(peak_count@assays@data$PeakMatrix[,idxMatch])
     }
   }
   
-  write.table(pseudo_bulk, file = paste('OUTPUT_PATH/pseudo_bulk/pseudo_bulk_ATAC_count_', Cell_types[i], '.txt', sep=''), quote = FALSE, sep = "\t")
+  write.table(pseudo_bulk, file = paste0(output_dir, "/pseudo_bulk/pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t")
 }
 
 
