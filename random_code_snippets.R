@@ -7,6 +7,20 @@ library(ArchR) # Just used for confusion matrix
 output_dir <- "~/scRNA_seq_data_output/"
 load(paste0(output_dir, "integrated_obj_after_predictions.RData"))
 
+
+library(ArchR)
+library(stringr)
+library(pheatmap)
+library(mclust)
+library(writexl)
+library(ggplot2)
+library(hexbin)
+library(SeuratDisk)
+library(dplyr)
+library(openxlsx)
+library(BSgenome.Hsapiens.UCSC.hg38)
+
+set.seed(1)
 output_dir <- "~/scATAC_seq_data_output/"
 load(paste0(output_dir, "atac_after_cell_type_voting.RData"))
 

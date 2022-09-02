@@ -7,6 +7,8 @@ library(ggplot2)
 library(hexbin)
 library(SeuratDisk)
 library(dplyr)
+library(openxlsx)
+library(BSgenome.Hsapiens.UCSC.hg38)
 
 set.seed(1)
 
@@ -297,30 +299,61 @@ proj.filtered <- addReproduciblePeakSet(
   groupBy = "Cell_type_combined", 
   pathToMacs2 = pathToMacs2
 )
-peak_set <- getPeakSet(proj.filtered)
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
 proj.filtered.2 <- addPeakMatrix(proj.filtered)
-# Calculate differential accessible peaks
-marker_D28_D1 <- getMarkerFeatures(ArchRProj = proj.filtered.2, useMatrix = "PeakMatrix", groupBy = "Conditions",
-                                   testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), maxCells = 15000,
-                                   useGroups = "D28", bgdGroups = "D1")
+# Calculate differential accessible peaks for each cell type
+for (cell_type in unique(proj.filtered.2$Cell_type_combined)) {
+  print(cell_type)
+  # Grab cells associated with cell type
+  idxPass <- which(proj.filtered.2$Cell_type_combined %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- proj.filtered.2$cellNames[idxPass]
+  cells_subset <- subsetCells(proj.filtered.2, cellsPass)
+  # Find DAPs
+  marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "Conditions",
+                                     testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), maxCells = 15000,
+                                     useGroups = "D28", bgdGroups = "D1")
+  # Grab relevant stats
+  marker_log_2_fc <- assays(marker_D28_D1)$Log2FC
+  marker_mean <- assays(marker_D28_D1)$Mean
+  marker_fdr <- assays(marker_D28_D1)$FDR
+  marker_pval <- assays(marker_D28_D1)$Pval
+  marker_mean_diff <- assays(marker_D28_D1)$MeanDiff
+  marker_auc <- assays(marker_D28_D1)$AUC
+  marker_mean_bgd <- assays(marker_D28_D1)$MeanBGD
+  # Print stats to Excel spreadsheet (used by MAGICAL)
+  cell_type <- sub(" ", "_", cell_type)
+  list_of_datasets <- list("Log2FC" = marker_log_2_fc, "Mean" = marker_mean, "FDR" = marker_fdr, "Pval" = marker_pval, 
+                           "MeanDiff" = marker_mean_diff, "AUC" = marker_auc, "MeanBGD" = marker_mean_bgd)
+  write.xlsx(list_of_datasets, file = paste0(cell_type, "D28_D1_diff.xlsx"), colNames = FALSE)
+}
 
-# Filter markers
-markerList <- getMarkers(marker_D28_D1, cutOff = "FDR < 0.05 & Log2FC > 0.1")
-cell_types <- rownames(mcols(peak_set))
-peak_set_df <- data.frame(seqnames(peak_set), ranges(peak_set))
-names(peak_set_df) <- c("seqnames", "start", "end", "width", "cell_type")
-keep <- c("seqnames", "start", "end", "cell_type") 
-peak_set_df <- peak_set_df[keep]
-marker_list_df <- as.data.frame(markerList$D28)
-dap <- inner_join(peak_set_df, marker_list_df, by = c("seqnames", "start", "end"))
-table(dap$cell_type)
+# Pseudobulk generation
+peaks <- getPeakSet(proj.filtered.2)
+write_xlsx(as.data.frame(peaks@seqnames), paste0(output_dir, "/pseudo_bulk/peak_chr.xlsx"))
+write_xlsx(as.data.frame(peaks@ranges), paste0(output_dir, "/pseudo_bulk/peak_start_end.xlsx"))
+write_xlsx(as.data.frame(peaks@elementMetadata), paste0(output_dir, "/pseudo_bulk/peak_meta.xlsx"))
 
-#save.image(paste0(output_dir, "atac_final.RData"))
+library(Matrix)
+Cell_types <- unique(proj.filtered$Cell_type_voting)
+sample.names <- unique(proj.filtered$Sample)
 
+PeakCount <- getGroupSE(proj.filtered.2, useMatrix = "PeakMatrix")
 
-
-
+for (i in c(1:length(Cell_types))){
+  pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
+  colnames(pseudo_bulk)<-sample.names
+  rownames(pseudo_bulk)<-peaks@elementMetadata$idx
+  
+  for (s in c(1:length(sample.names))){
+    idxMatch <- which(str_detect(PeakCount$Cell_type_voting,Cell_types[i]) & str_detect(PeakCount$Sample,sample.names[s]))
+    if (length(idxMatch)>1){
+      pseudo_bulk[,s] = Matrix::rowSums(PeakCount@assays@data$PeakMatrix[,idxMatch])
+    }
+  }
+  
+  write.table(pseudo_bulk, file = paste('OUTPUT_PATH/pseudo_bulk/pseudo_bulk_ATAC_count_', Cell_types[i], '.txt', sep=''), quote = FALSE, sep = "\t")
+}
 
 
