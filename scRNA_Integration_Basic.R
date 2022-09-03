@@ -322,6 +322,42 @@ DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_ty
               label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
 ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.PDF"), device = "pdf")
 
+# Create cell type proportion file for MAGICAL
+cell_type_proportions_df <- data.frame("Condition" = sub(".*_", "", sample.names), "Sample_name" = sample.names)
+total_cell_counts_df <- data.frame("Sample_name" = sample.names)
+cell_counts <- vector()
+# Find total cell counts for each sample
+for (sample_id in sample.names) {
+  idxPass <- which(flu.combined.sct.minus.clusters$sample %in% sample_id)
+  cellsPass <- names(flu.combined.sct.minus.clusters$orig.ident[idxPass])
+  sample_subset <- subset(x = flu.combined.sct.minus.clusters, subset = cell_name %in% cellsPass)
+  cell_counts <- append(cell_counts, ncol(sample_subset))
+}
+total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
+
+for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
+  cell_type_proportions <- vector()
+  print(cell_type)
+  # Grab cells associated with cell type
+  idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_voting %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- names(flu.combined.sct.minus.clusters$orig.ident[idxPass])
+  cells_subset <- subset(x = flu.combined.sct.minus.clusters, subset = cell_name %in% cellsPass)
+  for (sample_id in sample.names) {
+    # Subset further based on cells associated with sample ID
+    idxPass <- which(cells_subset$sample %in% sample_id)
+    cellsPass <- names(cells_subset$orig.ident[idxPass])
+    sample_subset <- subset(x = cells_subset, subset = cell_name %in% cellsPass)
+    cell_counts <- ncol(sample_subset)
+    cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+  }
+  temp_df <- data.frame(cell_type_proportions)
+  names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
+  cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
+}
+write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
+
+
 print("Performing differential expression between groups (D1 and D28) for each cell type")
 for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   print(cell_type)
