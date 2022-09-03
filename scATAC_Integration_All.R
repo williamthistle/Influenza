@@ -15,6 +15,9 @@ set.seed(1)
 # Set project dir - used to organize different projects
 project_dir <- "~/PLACEBO_FLU_1/"
 if (!dir.exists(project_dir)) {dir.create(project_dir)}
+# We can either process pre, post, or all data - TO DO
+data_processing_choices <- c("pre", "post", "all")
+data_processing_choice <- data_processing_choices[3]
 # Location of scATAC data - data are organized by aliquot ID
 # Note that aliquot ID and sample ID are different since multiple sample types
 # (scRNA-seq, scATAC-seq) can come from the same aliquot
@@ -255,20 +258,22 @@ p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
-# Get cell_type_voting info and add to ArchR project
-cM <- as.matrix(confusionMatrix(proj.filtered$Clusters, proj.filtered$Cell_type_combined))
-pre_cluster <- rownames(cM)
-max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
+# Combine more cell types
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "CD4 Naive", "T Naive")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "CD8 Naive", "T Naive")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "NK_CD56bright", "NK")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "ASDC", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "cDC", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Eryth", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "HSPC", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "pDC", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Plasmablast", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Platelet", "CD14 Mono")
+proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Treg", "T Naive")
 
-Cell_type_voting <- proj.filtered$Clusters
-for (m in c(1:length(pre_cluster))){
-  idxSample <- which(proj.filtered$Clusters == pre_cluster[m])
-  Cell_type_voting[idxSample] <- max_celltype[m]
-}
-
-
-proj.filtered <- addCellColData(ArchRProj = proj.filtered, data = Cell_type_voting, cells = proj.filtered$cellNames, name = "Cell_type_voting", force = TRUE)
-save.image(paste0(output_dir, "atac_after_cell_type_voting.RData"))
+table(proj.filtered$Conditions)
+table(proj.filtered$Sample)
+table(proj.filtered$Cell_type_combined)
 
 # See how clusters are distributed
 cluster_predictions <- vector()
@@ -289,27 +294,25 @@ idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6
 cellsPass <- proj.filtered$cellNames[-idxPass]
 proj.filtered<-proj.filtered[cellsPass, ]
 
-# Combine more cell types
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "CD4 Naive", "T Naive")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "CD8 Naive", "T Naive")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "NK_CD56bright", "NK")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "ASDC", "CD14 Mono")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "cDC", "CD14 Mono")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Eryth", "CD14 Mono")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "HSPC", "CD14 Mono")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "pDC", "CD14 Mono")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Plasmablast", "CD14 Mono")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Platelet", "CD14 Mono")
-proj.filtered$Cell_type_combined <- replace(proj.filtered$Cell_type_combined, proj.filtered$Cell_type_combined == "Treg", "T Naive")
+# Get cell_type_voting info and add to ArchR project
+cM <- as.matrix(confusionMatrix(proj.filtered$Clusters, proj.filtered$Cell_type_combined))
+pre_cluster <- rownames(cM)
+max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
 
-table(proj.filtered$Conditions)
-table(proj.filtered$Sample)
-table(proj.filtered$Cell_type_combined)
+Cell_type_voting <- proj.filtered$Clusters
+for (m in c(1:length(pre_cluster))){
+  idxSample <- which(proj.filtered$Clusters == pre_cluster[m])
+  Cell_type_voting[idxSample] <- max_celltype[m]
+}
+
+
+proj.filtered <- addCellColData(ArchRProj = proj.filtered, data = Cell_type_voting, cells = proj.filtered$cellNames, name = "Cell_type_voting", force = TRUE)
+save.image(paste0(output_dir, "atac_after_cell_type_voting.RData"))
 
 # Print final integrated data with cell type predictions
 p1 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
 p2 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-p3 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_combined", embedding = "UMAP", force = TRUE)
+p3 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
 p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
 
 
