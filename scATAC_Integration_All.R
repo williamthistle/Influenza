@@ -174,7 +174,7 @@ scRNA$celltype.l2[idx] <- "T Proliferating"
 
 save.image(paste0(image_dir, "atac_before_gene_integration_matrix.RData"))
 
-# Integrate scATAC-seq and scRNA-seq data
+# Integrate scRNA-seq reference data into scATAC-seq data
 addArchRThreads(threads = 6)
 proj <- addGeneIntegrationMatrix(
   ArchRProj = proj, 
@@ -318,16 +318,53 @@ p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15_Final.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
+# Create cell type proportion file for MAGICAL
+cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = names(metadata))
+total_cell_counts_df <- data.frame("Sample_name" = names(metadata))
+cell_counts <- vector()
+# Find total cell counts for each sample
+for (sample_id in names(metadata)) {
+  idxPass <- which(proj.filtered$Sample %in% sample_id)
+  print(length(idxPass))
+  cellsPass <- proj.filtered$cellNames[idxPass]
+  sample_subset <- subsetCells(proj.filtered, cellsPass)
+  cell_counts <- append(cell_counts, nCells(sample_subset))
+}
+total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
+
+for (cell_type in unique(proj.filtered$Cell_type_voting)) {
+  cell_type_proportions <- vector()
+  print(cell_type)
+  # Grab cells associated with cell type
+  idxPass <- which(proj.filtered.2$Cell_type_voting %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- proj.filtered$cellNames[idxPass]
+  cells_subset <- subsetCells(proj.filtered, cellsPass)
+  for (sample_id in names(metadata)) {
+    # Subset further based on cells associated with sample ID
+    idxPass <- which(cells_subset$Sample %in% sample_id)
+    print(length(idxPass))
+    cellsPass <- cells_subset$cellNames[idxPass]
+    sample_subset <- subsetCells(cells_subset, cellsPass)
+    cell_counts <- nCells(sample_subset)
+    cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+  }
+  temp_df <- data.frame(cell_type_proportions)
+  names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
+  cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
+}
+write.csv(cell_type_proportions_df, file = paste0(output_dir, "ATAC_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
+
 # Apparently info about ArchR Genome is not stored in the .RData file, so if we load an .RData file above,
 # We need to re-add our hg38 genome
 addArchRGenome("hg38")
 
 # Peak calling - first, call addGroupCoverages to find pseudo-bulk replicates, then call peaks using MACS2
-proj.filtered <- addGroupCoverages(ArchRProj = proj.filtered, groupBy = "Cell_type_combined")
+proj.filtered <- addGroupCoverages(ArchRProj = proj.filtered, groupBy = "Cell_type_voting")
 pathToMacs2 <- findMacs2()
 proj.filtered <- addReproduciblePeakSet(
   ArchRProj = proj.filtered, 
-  groupBy = "Cell_type_combined", 
+  groupBy = "Cell_type_voting", 
   pathToMacs2 = pathToMacs2
 )
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
@@ -337,10 +374,10 @@ save.image(paste0(image_dir, "atac_after_peak_matrix.RData"))
 # Calculate differential accessible peaks for each cell type
 differential_peaks_dir <- paste0(output_dir, "diff_peaks/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir)}
-for (cell_type in unique(proj.filtered.2$Cell_type_combined)) {
+for (cell_type in unique(proj.filtered.2$Cell_type_voting)) {
   print(cell_type)
   # Grab cells associated with cell type
-  idxPass <- which(proj.filtered.2$Cell_type_combined %in% cell_type)
+  idxPass <- which(proj.filtered.2$Cell_type_voting %in% cell_type)
   print(length(idxPass))
   cellsPass <- proj.filtered.2$cellNames[idxPass]
   cells_subset <- subsetCells(proj.filtered.2, cellsPass)

@@ -7,51 +7,26 @@ library(ArchR) # Just used for confusion matrix
 
 chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 
-# Perform majority cell-type voting
-# 1) If one type is vast majority, then convert all cells to that type
-# 2) If there is an even mix of two cell types, then potentially keep both and feed all other cells into one of the two types
-#    The idea behind this was to preserve borders between clusters, but in reality, it turns out that just converting all cells to the majority works better.
-performCellMajorityVoteConversion <- function(seurat_obj, cluster_ids, keep_second, fold_into_second) {
-  for (cluster_id in cluster_ids) {
-    print(cluster_id)
-    idxPass <- which(Idents(seurat_obj) %in% cluster_id)
-    cellsPass <- names(seurat_obj$orig.ident[idxPass])
-    cluster_distribution <- table(seurat_obj$Cell_type_combined[idxPass])
-    cluster_distribution <- sort(cluster_distribution, TRUE)
-    if(length(cluster_distribution) == 1) {
-      print("No need to update this cluster because it only has one cell type")
-    } else {
-      # If keep_second, then we keep the cell type with second largest count (cluster border)
-      if (!missing(keep_second)) {
-        # If fold_into is missing, then fold everything else into majority class
-        if(missing(fold_into_second)) {
-          seurat_obj$Cell_type_combined[idxPass][seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[1] &
-                                                   seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[2]] <- names(cluster_distribution)[1] 
-        } else {
-          seurat_obj$Cell_type_combined[idxPass][seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[1] &
-                                                   seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[2]] <- names(cluster_distribution)[2]
-        }
-      } else {
-        # If no keep_second, then just make everything the majority class
-        seurat_obj$Cell_type_combined[idxPass][seurat_obj$Cell_type_combined[idxPass] != names(cluster_distribution)[1]] <- names(cluster_distribution)[1]
-      }
-    }
-  }
-  seurat_obj
-}
-
+# Set project dir - used to organize different projects
+project_dir <- "~/PLACEBO_FLU_1/"
+if (!dir.exists(project_dir)) {dir.create(project_dir)}
+# We can either process pre, post, or all data - TO DO
+data_processing_choices <- c("pre", "post", "all")
+data_processing_choice <- data_processing_choices[3]
 # Location of scRNA data - data are organized by aliquot ID
 # Note that aliquot ID and sample ID are different since multiple sample types
 # (scRNA-seq, scATAC-seq) can come from the same aliquot
 # However, in the context of analyzing samples from a single sample type,
 # you can consider aliquots and samples basically equivalent
-base_scRNA_dir <- "~/scRNA_seq_data/"
-output_dir <- "~/scRNA_seq_data_output/"
-sample_metadata <- read.csv("~/current_sample_metadata_minus_8d5be1a4937a7ad3.csv")
-sample_assay_types <- read.csv("~/current_set_of_scRNA_and_scATAC_seq_samples.txt", sep = "\t")
+data_dir <- paste0(project_dir, "scRNA_seq_data/")
+if (!dir.exists(data_dir)) {dir.create(data_dir)}
+output_dir <- paste0(project_dir, "scRNA_seq_data_output/")
+if (!dir.exists(output_dir)) {dir.create(output_dir)}
+sample_metadata <- read.csv(paste0(project_dir, "current_sample_metadata_minus_8d5be1a4937a7ad3.csv"))
+sample_assay_types <- read.csv(paste0(project_dir, "current_set_of_scRNA_and_scATAC_seq_samples.txt"), sep = "\t")
 # Look in base scRNA dir to get list of all potential aliquots
 # We will only use aliquots that are paired (D-1 and D28)
-aliquot_list <- list.dirs(base_scRNA_dir, recursive = FALSE)
+aliquot_list <- list.dirs(data_dir, recursive = FALSE)
 aliquot_list <- strsplit(aliquot_list, "/")
 aliquot_list <- unlist(lapply(aliquot_list, tail, n = 1L))
 # D1.id stores aliquot IDs for day -1 samples
@@ -90,7 +65,7 @@ for (idx in 1:length(D1.id)) {
   # Grab current sample name
   i <- D1.id[idx]
   # Read in h5 matrix associated with current sample and add sample index to cell column names
-  flu.list[[i]] <- Read10X_h5(paste0(base_scRNA_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
+  flu.list[[i]] <- Read10X_h5(paste0(data_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
   prefix <- paste0("Sample_", idx, "_D1#")
   sample.names <- append(sample.names, paste0("Sample_", idx, "_D1"))
   print(prefix)
@@ -101,7 +76,7 @@ for (idx in 1:length(D1.id)) {
 print("Grabbing all Day 28 h5 matrices")
 for (idx in 1:length(D28.id)) {
   i <- D28.id[idx]
-  flu.list[[i]] <- Read10X_h5(paste0(base_scRNA_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
+  flu.list[[i]] <- Read10X_h5(paste0(data_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
   prefix <- paste0("Sample_", idx, "_D28#")
   sample.names <- append(sample.names, paste0("Sample_", idx, "_D28"))
   print(prefix)
@@ -279,7 +254,9 @@ predictions <- TransferData(anchorset = flu.anchors, refdata = scRNA_ref$celltyp
 flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = predictions)
 rm(scRNA_ref)
 
-save.image(paste0(output_dir, "integrated_obj_after_predictions.RData"))
+image_dir <- paste0(output_dir, "images/")
+if (!dir.exists(image_dir)) {dir.create(image_dir)}
+save.image(paste0(image_dir, "integrated_obj_after_predictions.RData"))
 
 # Add cell names as column
 cell_names <- rownames(flu.combined.sct@meta.data)
@@ -335,25 +312,20 @@ for (cluster in levels(flu.combined.sct)) {
 }
 names(cluster_predictions) <- paste(levels(flu.combined.sct), "-", names(cluster_predictions))
 
-# Perform cell majority voting
-flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "13", "14", "15", "16", "17", "18"))
-#flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("3"), TRUE)
-#flu.combined.sct <- performCellMajorityVoteConversion(flu.combined.sct, c("13"), TRUE, TRUE)
-
 # Remove the messy clusters
 idxPass <- which(Idents(flu.combined.sct) %in% c("3", "11"))
 cellsPass <- names(flu.combined.sct$orig.ident[-idxPass])
 flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
 
 # Final plot of cell types clustered
-DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_type_combined", label = TRUE,
+DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_type_voting", label = TRUE,
               label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
 ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.PDF"), device = "pdf")
 
 print("Performing differential expression between groups (D1 and D28) for each cell type")
-for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_combined)) {
+for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   print(cell_type)
-  idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_combined %in% cell_type)
+  idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_voting %in% cell_type)
   print(length(idxPass))
   cellsPass <- names(flu.combined.sct.minus.clusters$orig.ident[idxPass])
   cells_subset <- subset(x = flu.combined.sct.minus.clusters, subset = cell_name %in% cellsPass)
@@ -367,13 +339,13 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_combined)) {
   #diff_markers <- diff_markers[diff_markers$p_val_adj < 0.05,]
   print(nrow(diff_markers))
   cell_type <- sub(" ", "_", cell_type)
-  write.csv(diff_markers, paste0("D28-vs-D1-degs-", cell_type, ".csv"))
+  write.csv(diff_markers, paste0(output_dir, "D28-vs-D1-degs-", cell_type, ".csv"))
 }
 
 print("Computing pseudobulk counts for each cell type")
-for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_combined)) {
+for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   print(cell_type)
-  idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_combined %in% cell_type)
+  idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_voting %in% cell_type)
   print(length(idxPass))
   cellsPass <- names(flu.combined.sct.minus.clusters$orig.ident[idxPass])
   # Subset again by each sample name
@@ -395,8 +367,8 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_combined)) {
   rownames(final_cells_pseudobulk_df) <- names(cells_pseudobulk[[1]])
   final_cells_pseudobulk_df <- final_cells_pseudobulk_df[rowSums(final_cells_pseudobulk_df[])>0,]
   cell_type <- sub(" ", "_", cell_type)
-  write.csv(final_cells_pseudobulk_df, paste0("pseudo_bulk_RNA_count_", cell_type, ".csv"))
+  write.csv(final_cells_pseudobulk_df, paste0(output_dir, "pseudo_bulk_RNA_count_", cell_type, ".csv"))
 }
 
 # Save overall data
-save.image(paste0(output_dir, "integrated_obj_final.RData"))
+save.image(paste0(image_dir, "integrated_obj_final.RData"))
