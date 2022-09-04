@@ -301,6 +301,10 @@ flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = Cell_type_voting, c
 # Find cluster distributions for removing messy clusters if we want
 cluster_distributions <- list()
 cluster_predictions <- vector()
+cluster_mean_S_score <- vector()
+cluster_mean_G2M_score <- vector()
+cluster_mean_CC_difference <- vector()
+cluster_ids <- vector()
 idx <- 1
 for (cluster in levels(flu.combined.sct)) {
   idxPass <- which(Idents(flu.combined.sct) %in% cluster)
@@ -308,9 +312,16 @@ for (cluster in levels(flu.combined.sct)) {
   filtered_cluster <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
   cluster_predictions <- append(cluster_predictions, table(filtered_cluster$Cell_type_voting))
   cluster_distributions[[idx]] <- table(filtered_cluster$Cell_type_combined)
+  cluster_mean_S_score <- append(cluster_mean_S_score, mean(filtered_cluster$S.Score))
+  cluster_mean_G2M_score <- append(cluster_mean_G2M_score, mean(filtered_cluster$G2M.Score))
+  cluster_mean_CC_difference <- append(cluster_mean_CC_difference, mean(filtered_cluster$CC.Difference))
+  cluster_ids <- append(cluster_ids, cluster)
   idx <- idx + 1
 }
 names(cluster_predictions) <- paste(levels(flu.combined.sct), "-", names(cluster_predictions))
+# Maybe high S score and high G2M score indicate Proliferating cluster?
+cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score, "G2M" = cluster_mean_G2M_score, "CC Diff" = cluster_mean_CC_difference)
+
 
 # Remove the messy clusters
 idxPass <- which(Idents(flu.combined.sct) %in% c("3", "11"))
