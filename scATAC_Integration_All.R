@@ -316,7 +316,7 @@ p3 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "
 p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
 
 
-plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15_Final.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15_Final.pdf", ArchRProj = proj.filtered, addDOC = FALSE, width = 5, height = 5)
 
 # Create cell type proportion file for MAGICAL
 cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = names(metadata))
@@ -336,7 +336,7 @@ for (cell_type in unique(proj.filtered$Cell_type_voting)) {
   cell_type_proportions <- vector()
   print(cell_type)
   # Grab cells associated with cell type
-  idxPass <- which(proj.filtered.2$Cell_type_voting %in% cell_type)
+  idxPass <- which(proj.filtered$Cell_type_voting %in% cell_type)
   print(length(idxPass))
   cellsPass <- proj.filtered$cellNames[idxPass]
   cells_subset <- subsetCells(proj.filtered, cellsPass)

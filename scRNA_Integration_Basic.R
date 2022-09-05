@@ -333,6 +333,8 @@ DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_ty
               label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
 ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.PDF"), device = "pdf")
 
+save.image(paste0(output_dir, "integrated_obj_after_final_plot.RData"))
+
 # Create cell type proportion file for MAGICAL
 cell_type_proportions_df <- data.frame("Condition" = sub(".*_", "", sample.names), "Sample_name" = sample.names)
 total_cell_counts_df <- data.frame("Sample_name" = sample.names)
@@ -358,9 +360,13 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
     # Subset further based on cells associated with sample ID
     idxPass <- which(cells_subset$sample %in% sample_id)
     cellsPass <- names(cells_subset$orig.ident[idxPass])
-    sample_subset <- subset(x = cells_subset, subset = cell_name %in% cellsPass)
-    cell_counts <- ncol(sample_subset)
-    cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+    if (length(cellsPass) == 0) {
+      cell_type_proportions <- append(cell_type_proportions, 0)
+    } else {
+      sample_subset <- subset(x = cells_subset, subset = cell_name %in% cellsPass)
+      cell_counts <- ncol(sample_subset)
+      cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+    }
   }
   temp_df <- data.frame(cell_type_proportions)
   names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
@@ -400,6 +406,7 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   # Keep as vector in list
   cells_subset <- subset(x = flu.combined.sct.minus.clusters, subset = cell_name %in% cellsPass)
   cells_pseudobulk <- list()
+  # TODO: Fix this for samples that have 0 cells in cell type
   for (sample_name in sample.names) {
     samples_subset <- subset(x = cells_subset, subset = sample %in% sample_name)
     samples_data <- samples_subset@assays$RNA@counts
@@ -418,4 +425,4 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
 }
 
 # Save overall data
-save.image(paste0(image_dir, "integrated_obj_final.RData"))
+save.image(paste0(output_dir, "integrated_obj_final.RData"))

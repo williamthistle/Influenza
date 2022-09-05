@@ -5,7 +5,7 @@ library(clustree)
 library(SeuratDisk)
 library(ArchR) # Just used for confusion matrix
 output_dir <- "~/scRNA_seq_data_output/"
-load(paste0(output_dir, "integrated_obj_after_predictions.RData"))
+load(paste0(output_dir, "integrated_obj_after_final_plot.RData"))
 
 
 library(ArchR)
