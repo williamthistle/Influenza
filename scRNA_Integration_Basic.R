@@ -392,7 +392,7 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   #diff_markers <- diff_markers[diff_markers$p_val_adj < 0.05,]
   print(nrow(diff_markers))
   cell_type <- sub(" ", "_", cell_type)
-  write.csv(diff_markers, paste0(output_dir, "D28-vs-D1-degs-", cell_type, ".csv"))
+  write.csv(diff_markers, paste0(output_dir, "D28-vs-D1-degs-", cell_type, ".csv"), quote = FALSE)
 }
 
 print("Computing pseudobulk counts for each cell type")
