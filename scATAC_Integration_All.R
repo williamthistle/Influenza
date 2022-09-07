@@ -317,6 +317,12 @@ p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "
 
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15_Final.pdf", ArchRProj = proj.filtered, addDOC = FALSE, width = 5, height = 5)
+plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
+  labs(title = "scATAC-seq Data Integration \n (12 Samples, 64K Cells)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + theme(legend.text=element_text(size=12)) +
+  theme(plot.title = element_text(face="bold", size=16)) +
+  theme(axis.title=element_text(size=14))
+ggsave(paste0(output_dir, "Integrated_ATAC_plot.png"), device = "png", dpi = 300)
 
 # Create cell type proportion file for MAGICAL
 cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = names(metadata))

@@ -87,3 +87,8 @@ performCellMajorityVoteConversion <- function(seurat_obj, cluster_ids, keep_seco
   seurat_obj
 }
 
+plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
+  labs(title = "scATAC-seq Data Integration \n (12 Samples, 64K Cells)") + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(paste0(output_dir, "test.png"), device = "png", dpi = 300)
+

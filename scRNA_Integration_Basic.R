@@ -8,7 +8,7 @@ library(ArchR) # Just used for confusion matrix
 chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 
 # Set project dir - used to organize different projects
-project_dir <- "~/PLACEBO_FLU_1/"
+project_dir <- "~/ALL_FLU/"
 if (!dir.exists(project_dir)) {dir.create(project_dir)}
 # We can either process pre, post, or all data - TO DO
 data_processing_choices <- c("pre", "post", "all")
@@ -330,8 +330,10 @@ flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_na
 
 # Final plot of cell types clustered
 DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_type_voting", label = TRUE,
-              label.size = 3, repel = TRUE, raster = FALSE) + ggtitle("Cell types")
-ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.PDF"), device = "pdf")
+              label.size = 3, repel = TRUE, raster = FALSE) + 
+  labs(title = "scRNA-seq Data Integration \n (12 Samples, 97K Cells)") + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.png"), device = "png", dpi = 300)
 
 save.image(paste0(output_dir, "integrated_obj_after_final_plot.RData"))
 
