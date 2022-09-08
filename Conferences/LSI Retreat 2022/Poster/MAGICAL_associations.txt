@@ -1,0 +1,9 @@
+Cell Type	MAGICAL Associations
+T Naive	111
+NK	109
+CD14 Mono	99
+CD16 Mono	71
+CD4 Memory	68
+MAIT	54
+B	35
+CD8 Memory	33
