@@ -23,7 +23,7 @@ library(Matrix)
 
 set.seed(1)
 output_dir <- "~/scATAC_seq_data_output/"
-load(paste0(output_dir, "atac_after_peak_matrix.RData"))
+load(paste0(output_dir, "atac_after_lsi_umap_clusters_2.RData"))
 
 
 for (res in seq(0, 1, 0.1)) {
@@ -91,4 +91,27 @@ plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_t
   labs(title = "scATAC-seq Data Integration \n (12 Samples, 64K Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(paste0(output_dir, "test.png"), device = "png", dpi = 300)
+
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+dap_df <- read.table("MAGICAL_daps.txt", sep = "\t", header = TRUE)
+cell_type_order <- c("T Naive", "CD4 Memory", "NK", "CD14 Mono", "CD16 Mono", "MAIT", "B", "CD8 Memory")
+cell_type_order <- rev(cell_type_order)
+DAP_plot <- ggplot(dap_df, aes(x=Cell.Type, y=DAPs, fill=Cell.Type, )) +
+  geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
+  xlab("Cell Type") + ylab("Number of DAPs") + ggtitle("DAPs Across Cell Types") +
+  theme(plot.title = element_text(hjust = 0.5)) + scale_fill_discrete(name = "Cell Type") +
+  scale_fill_manual(values=cbPalette)
+
+deg_df <- read.table("MAGICAL_degs.txt", sep = "\t", header = TRUE)
+cell_type_order <- c("B", "T Naive", "CD4 Memory", "MAIT", "CD8 Memory", "NK", "CD16 Mono", "CD14 Mono")
+DEG_plot <- ggplot(deg_df, aes(x=Cell.Type, y=DEGs, fill=Cell.Type, )) +
+  geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
+  xlab("Cell Type") + ylab("Number of DEGs") + ggtitle("DEGs Across Cell Types") +
+  theme(plot.title = element_text(hjust = 0.5)) + scale_fill_discrete(name = "Cell Type") +
+  scale_fill_manual(values=cbPalette)
+
+mag_associations_df <- read.table("MAGICAL_associations.txt")
+MAGICAL_associations_plot <-ggplot(mag_associations_df, aes(x="Cell Type", y="Magical Associations", fill="Cell Type")) +
+  geom_bar(stat="identity")+theme_minimal()+coord_flip()
 
