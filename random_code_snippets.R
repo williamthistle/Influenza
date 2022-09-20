@@ -131,11 +131,11 @@ ggplot(mag_associations_df, aes(x=Cell.Type, y=MAGICAL.Associations, fill=Cell.T
   geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
   xlab("Cell Type") + ylab("Number of MAGICAL Associations") + ggtitle("MAGICAL Associations per Cell Type") +
   labs(fill = "Cell Type") +
-  theme(plot.title = element_text(hjust = 0.5), legend.text=element_text(size=14)) + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
   theme(plot.title = element_text(face="bold", size=20)) +
   theme(axis.title=element_text(size=18)) +
   theme(axis.text=element_text(size=14)) +
-  theme(legend.title=element_text(size=16)) +
+  theme(legend.position="none") +
   scale_fill_discrete(name = "Cell Type") +
   scale_fill_manual(values=cbPalette)
 ggsave("MAGICAL_associations.png", device = "png", dpi = 300)
