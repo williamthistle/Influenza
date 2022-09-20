@@ -123,7 +123,7 @@ p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", 
 
 plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 
-# Filter out cells that don't meet TSS enrichment / double enrichment / nucleosome ratio criteria
+# Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
 idxPass <- which(proj$TSSEnrichment >= 6 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
@@ -275,6 +275,18 @@ table(proj.filtered$Conditions)
 table(proj.filtered$Sample)
 table(proj.filtered$Cell_type_combined)
 
+# Get cell_type_voting info and add to ArchR project
+cM <- as.matrix(confusionMatrix(proj.filtered$Clusters, proj.filtered$Cell_type_combined))
+pre_cluster <- rownames(cM)
+max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
+
+Cell_type_voting <- proj.filtered$Clusters
+for (m in c(1:length(pre_cluster))){
+  idxSample <- which(proj.filtered$Clusters == pre_cluster[m])
+  Cell_type_voting[idxSample] <- max_celltype[m]
+}
+proj.filtered <- addCellColData(ArchRProj = proj.filtered, data = Cell_type_voting, cells = proj.filtered$cellNames, name = "Cell_type_voting", force = TRUE)
+
 # See how clusters are distributed
 cluster_predictions <- vector()
 cluster_distributions <- list()
@@ -290,24 +302,16 @@ for (cluster in unique(proj.filtered$Clusters)) {
 names(cluster_predictions) <- paste(unique(proj.filtered$Clusters), "-", names(cluster_predictions))
 
 #Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
-idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C12", "C16", "C25", "C30", "C47"))
+# OLD - idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C12", "C16", "C25", "C30", "C47"))
+idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C12", "C13", "C16", "C17", "C22", "C24", "C25", "C30","C31", "C33", "C34", "C36", "C44", "C45", "C46", "C47"))
 cellsPass <- proj.filtered$cellNames[-idxPass]
-proj.filtered<-proj.filtered[cellsPass, ]
-
-# Get cell_type_voting info and add to ArchR project
-cM <- as.matrix(confusionMatrix(proj.filtered$Clusters, proj.filtered$Cell_type_combined))
-pre_cluster <- rownames(cM)
-max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
-
-Cell_type_voting <- proj.filtered$Clusters
-for (m in c(1:length(pre_cluster))){
-  idxSample <- which(proj.filtered$Clusters == pre_cluster[m])
-  Cell_type_voting[idxSample] <- max_celltype[m]
-}
+proj.filtered <- proj.filtered[cellsPass, ]
+#p3 <- plotEmbedding(ArchRProj = proj.filtered.minus.clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
+#plotPDF(p3, name = "test.pdf", ArchRProj = proj.filtered.minus.clusters, addDOC = FALSE, width = 5, height = 5)
+save.image(paste0(output_dir, "atac_after_removing_clusters.RData"))
 
 
-proj.filtered <- addCellColData(ArchRProj = proj.filtered, data = Cell_type_voting, cells = proj.filtered$cellNames, name = "Cell_type_voting", force = TRUE)
-save.image(paste0(output_dir, "atac_after_cell_type_voting.RData"))
+
 
 # Print final integrated data with cell type predictions
 p1 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
@@ -318,7 +322,7 @@ p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15_Final.pdf", ArchRProj = proj.filtered, addDOC = FALSE, width = 5, height = 5)
 plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
-  labs(title = "scATAC-seq Data Integration \n (12 Samples, 64K Cells)") + 
+  labs(title = "scATAC-seq Data Integration \n (12 Samples, 44K Cells)") + 
   theme(plot.title = element_text(hjust = 0.5)) + theme(legend.text=element_text(size=12)) +
   theme(plot.title = element_text(face="bold", size=16)) +
   theme(axis.title=element_text(size=14))

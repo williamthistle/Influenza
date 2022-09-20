@@ -23,7 +23,7 @@ library(Matrix)
 
 set.seed(1)
 output_dir <- "~/scATAC_seq_data_output/"
-load(paste0(output_dir, "atac_after_peak_matrix.RData"))
+load(paste0(output_dir, "atac_after_lsi_umap_clusters_2.RData"))
 
 
 for (res in seq(0, 1, 0.1)) {
@@ -92,3 +92,82 @@ plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_t
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(paste0(output_dir, "test.png"), device = "png", dpi = 300)
 
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+dap_df <- read.table("MAGICAL_daps.txt", sep = "\t", header = TRUE)
+cell_type_order <- c("T Naive", "CD4 Memory", "NK", "CD14 Mono", "CD16 Mono", "MAIT", "B", "CD8 Memory")
+cell_type_order <- rev(cell_type_order)
+ggplot(dap_df, aes(x=Cell.Type, y=DAPs, fill=Cell.Type, )) +
+  geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
+  xlab("Cell Type") + ylab("Number of DAPs") + ggtitle("DAPs per Cell Type") +
+  labs(fill = "Cell Type") +
+  theme(plot.title = element_text(hjust = 0.5), legend.text=element_text(size=14)) + 
+  theme(plot.title = element_text(face="bold", size=20)) +
+  theme(axis.title=element_text(size=18)) +
+  theme(axis.text=element_text(size=14)) +
+  theme(legend.title=element_text(size=16)) +
+  scale_fill_discrete(name = "Cell Type") +
+  scale_fill_manual(values=cbPalette)
+ggsave("DAPs.png", device = "png", dpi = 300)
+
+deg_df <- read.table("MAGICAL_degs.txt", sep = "\t", header = TRUE)
+cell_type_order <- c("B", "T Naive", "CD4 Memory", "MAIT", "CD8 Memory", "NK", "CD16 Mono", "CD14 Mono")
+ggplot(deg_df, aes(x=Cell.Type, y=DEGs, fill=Cell.Type, )) +
+  geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
+  xlab("Cell Type") + ylab("Number of DEGs") + ggtitle("DEGs per Cell Type") +
+  labs(fill = "Cell Type") +
+  theme(plot.title = element_text(hjust = 0.5), legend.text=element_text(size=14)) + 
+  theme(plot.title = element_text(face="bold", size=20)) +
+  theme(axis.title=element_text(size=18)) +
+  theme(axis.text=element_text(size=14)) +
+  theme(legend.title=element_text(size=16)) +
+  scale_fill_discrete(name = "Cell Type") +
+  scale_fill_manual(values=cbPalette)
+ggsave("DEGs.png", device = "png", dpi = 300)
+
+mag_associations_df <- read.table("MAGICAL_associations.txt", sep = "\t", header = TRUE)
+cell_type_order <- c("CD8 Memory", "B", "MAIT", "CD4 Memory", "CD16 Mono", "CD14 Mono", "NK", "T Naive")
+ggplot(mag_associations_df, aes(x=Cell.Type, y=MAGICAL.Associations, fill=Cell.Type)) +
+  geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
+  xlab("Cell Type") + ylab("Number of MAGICAL Associations") + ggtitle("MAGICAL Associations per Cell Type") +
+  labs(fill = "Cell Type") +
+  theme(plot.title = element_text(hjust = 0.5), legend.text=element_text(size=14)) + 
+  theme(plot.title = element_text(face="bold", size=20)) +
+  theme(axis.title=element_text(size=18)) +
+  theme(axis.text=element_text(size=14)) +
+  theme(legend.title=element_text(size=16)) +
+  scale_fill_discrete(name = "Cell Type") +
+  scale_fill_manual(values=cbPalette)
+ggsave("MAGICAL_associations.png", device = "png", dpi = 300)
+
+cd4_memory_df <- read.table("CD4_Memory_Genes.txt")
+unique_genes <- unique(cd4_memory_df$V1)
+write.table(unique_genes, "CD4_Memory_Genes_Unique.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+cd8_memory_df <- read.table("CD8_Memory_Genes.txt")
+unique_genes <- unique(cd8_memory_df$V1)
+write.table(unique_genes, "CD8_Memory_Genes_Unique.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+t_naive_df <- read.table("T_Naive_Genes.txt")
+unique_genes <- unique(t_naive_df$V1)
+write.table(unique_genes, "T_Naive_Genes_Unique.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+mait_df <- read.table("MAIT_Genes.txt")
+unique_genes <- unique(mait_df$V1)
+write.table(unique_genes, "MAIT_Genes_Unique.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+cd14_mono_df <- read.table("CD14_Mono_Genes.txt")
+unique_genes <- unique(cd14_mono_df$V1)
+write.table(unique_genes, "CD14_Mono_Genes_Unique.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+cd16_mono_df <- read.table("CD16_Mono_Genes.txt")
+unique_genes <- unique(cd16_mono_df$V1)
+write.table(unique_genes, "CD16_Mono_Genes_Unique.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+nk_df <- read.table("NK_Genes.txt")
+unique_genes <- unique(nk_df$V1)
+write.table(unique_genes, "NK_Genes_Unique.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+b_df <- read.table("B_Genes.txt")
+unique_genes <- unique(b_df$V1)
+write.table(unique_genes, "B_Genes_Unique.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
