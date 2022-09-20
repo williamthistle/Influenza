@@ -25,65 +25,58 @@ if (!dir.exists(output_dir)) {dir.create(output_dir)}
 sample_metadata <- read.csv(paste0(project_dir, "current_sample_metadata_minus_8d5be1a4937a7ad3.csv"))
 sample_assay_types <- read.csv(paste0(project_dir, "current_set_of_scRNA_and_scATAC_seq_samples.txt"), sep = "\t")
 # Look in base scRNA dir to get list of all potential aliquots
-# We will only use aliquots that are paired (D-1 and D28)
+# We will only use aliquots that are paired (placebo and vaccine)
 aliquot_list <- list.dirs(data_dir, recursive = FALSE)
 aliquot_list <- strsplit(aliquot_list, "/")
 aliquot_list <- unlist(lapply(aliquot_list, tail, n = 1L))
-# D1.id stores aliquot IDs for day -1 samples
-# D28.id stores aliquot IDs for day 28 samples
-print("Grabbing Day -1 and D28 aliquot IDs from metadata file")
-D1.id <- c()
-D28.id <- c()
+# placebo.id stores aliquot IDs for placebo samples
+# vaccine.id stores aliquot IDs for vaccine samples
+print("Grabbing placebo and vaccine aliquot IDs from metadata file")
+placebo.id <- c()
+vaccine.id <- c()
 for (aliquot in aliquot_list) {
   # Grab current sample metadata, subject associated with sample, and then check to see whether subject has two samples
-  # (D-1 and D28)
+  # (placebo and vaccine)
   current_sample = sample_metadata[sample_metadata$X_aliquot_id == aliquot,]
   current_subject = current_sample$SUBJECT_ID
-  all_samples_associated_with_current_subject = sample_metadata[sample_metadata$SUBJECT_ID == current_subject ,]
-  if (nrow(all_samples_associated_with_current_subject) == 2) {
-    # Now, we grab our D-1 and D28 aliquot names.
-    # If D-1 is not already in D1.id AND we have scRNA-seq data from both D-1 and D28 aliquots AND we have scATAC-seq data from both D-1 and D28 aliquots,  
-    # then add D-1 to D1.id and D28 to D28.id
-    d_negative_1_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D-1",]$X_aliquot_id
-    d_28_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D28",]$X_aliquot_id
-    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot,]
-    presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_sample_assays$scATAC_seq
-    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot,]
-    presence_of_d_28_ATAC <- d_28_aliquot_sample_assays$scATAC_seq
-    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & presence_of_d_negative_1_ATAC == "Yes" & presence_of_d_28_ATAC == "Yes") {
-      D1.id <- append(D1.id, d_negative_1_aliquot)
-      D28.id <- append(D28.id, d_28_aliquot)
-    }
+  # Now, we grab our placebo and vaccine aliquot names.
+  # If placebo is not already in placebo.id AND we have scRNA-seq data from both placebo and vaccine aliquots AND we have scATAC-seq data from both placebo and vaccine aliquots,  
+  # then add placebo to placebo.id and vaccine to vaccine.id
+  current_aliquot <- current_sample$aliquot_id
+  if (current_sample$TREATMENT == "PLACEBO") {
+    placebo.id <- append(placebo.id, current_aliquot)
+  } else {
+    vaccine.id <- append(vaccine.id, current_aliquot)
   }
 }
 
 flu.list <- list()
 sample.names <- vector()
-# Grab data from all all Day -1 aliquots
-print("Grabbing all Day -1 h5 matrices")
-for (idx in 1:length(D1.id)) {
+# Grab data from all all Placebo aliquots
+print("Grabbing all Placebo h5 matrices")
+for (idx in 1:length(placebo.id)) {
   # Grab current sample name
-  i <- D1.id[idx]
+  i <- placebo.id[idx]
   # Read in h5 matrix associated with current sample and add sample index to cell column names
   flu.list[[i]] <- Read10X_h5(paste0(data_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
-  prefix <- paste0("Sample_", idx, "_D1#")
-  sample.names <- append(sample.names, paste0("Sample_", idx, "_D1"))
+  prefix <- paste0("Sample_", idx, "_placebo#")
+  sample.names <- append(sample.names, paste0("Sample_", idx, "_placebo"))
   print(prefix)
   colnames(flu.list[[i]]) <- paste0(prefix, colnames(flu.list[[i]]))
 }
 
-# Do the exact same steps for Day 28 aliquots
-print("Grabbing all Day 28 h5 matrices")
-for (idx in 1:length(D28.id)) {
-  i <- D28.id[idx]
+# Do the exact same steps for Vaccine aliquots
+print("Grabbing all Vaccine h5 matrices")
+for (idx in 1:length(vaccine.id)) {
+  i <- vaccine.id[idx]
   flu.list[[i]] <- Read10X_h5(paste0(data_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
-  prefix <- paste0("Sample_", idx, "_D28#")
-  sample.names <- append(sample.names, paste0("Sample_", idx, "_D28"))
+  prefix <- paste0("Sample_", idx, "_vaccine#")
+  sample.names <- append(sample.names, paste0("Sample_", idx, "_vaccine"))
   print(prefix)
   colnames(flu.list[[i]]) <- paste0(prefix, colnames(flu.list[[i]]))
 }
 
-# Sort sample names so that D1 and D28 are grouped for each sample
+# Sort sample names so that Placebo and vaccine are grouped for each sample
 sample.names <- sort(sample.names)
 
 # From now on, we'll just use "samples" instead of "aliquots"
@@ -122,7 +115,7 @@ all.flu.unbias.obj <- subset(all.flu.unbias.obj,nFeature_RNA > 900 & nFeature_RN
 # Label each cell with sample name
 all.flu.unbias.obj$sample <- as.vector(sapply(strsplit(colnames(all.flu.unbias.obj), "#"), "[", 1))
 
-# Label each cell with group name (D1 or D28)
+# Label each cell with group name (Placebo or vaccine)
 group <- all.flu.unbias.obj$sample
 group <- gsub("Sample_[1-9]_", "", group)
 all.flu.unbias.obj$group <- group
@@ -152,13 +145,16 @@ for (plot_set in plot_sets) {
   ggsave(paste0(output_dir, "all.flu.unbias.obj.", plot_index, ".PDF"), device = "pdf")
   plot_index <- plot_index + 1
 }
+image_dir <- paste0(output_dir, "images/")
+if (!dir.exists(image_dir)) {dir.create(image_dir)}
+save.image(paste0(image_dir, "integrated_obj_to_detect_batches.RData"))
 
 # Label each cell as male or female
 female.id <- c()
 # In particular, this looks at metadata, sees which samples are female,
 # and then records that info in female.id
-for (idx in 1:length(D1.id)) {
-  current_aliquot <- D1.id[idx]
+for (idx in 1:length(placebo.id)) {
+  current_aliquot <- placebo.id[idx]
   current_sample <- sample_metadata[sample_metadata$X_aliquot_id == current_aliquot,]
   current_sex <- current_sample$SEX
   if(current_sex == "F") {
@@ -182,18 +178,12 @@ for(sample in female.id){
 all.flu.unbias.obj$sex <- sex
 
 # Use plots from above to determine batches (visually inspect and group like plots)
-batch1.id <- c("Sample_1_D1", "Sample_1_D28")
-batch2.id <- c("Sample_4_D1")
-batch3.id <- c("Sample_5_D1", "Sample_5_D28")
-batch4.id <- c("Sample_6_D1", "Sample_6_D28")
+batch1.id <- c("Sample_1_placebo")
 # Label samples according to batch
 batch <- all.flu.unbias.obj$sample
 for (i in 1:length(batch)) {
   if(any(grepl(batch[i], batch1.id))) { batch[i] <- "b1" }
-  else if(any(grepl(batch[i], batch2.id))) { batch[i] <- "b2" }
-  else if(any(grepl(batch[i], batch3.id))) { batch[i] <- "b3" }
-  else if(any(grepl(batch[i], batch4.id))) { batch[i] <- "b4" }
-  else { batch[i] <- "b5" }
+  else { batch[i] <- "b2" }
 }
 all.flu.unbias.obj$batch <- batch
 # Plot all samples grouped by batch
@@ -233,6 +223,7 @@ flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 0.4)
 # Plot integrated data
 DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
 ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")
+save.image(paste0(image_dir, "integrated_obj_after_integration.RData"))
 # We will integrate reference data to assign cell types
 scRNA_ref <- LoadH5Seurat("~/reference/multi.h5seurat")
 # Remove certain cell types we're not interested in
@@ -254,9 +245,6 @@ predictions <- TransferData(anchorset = flu.anchors, refdata = scRNA_ref$celltyp
                             dims = 1:30)
 flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = predictions)
 rm(scRNA_ref)
-
-image_dir <- paste0(output_dir, "images/")
-if (!dir.exists(image_dir)) {dir.create(image_dir)}
 save.image(paste0(image_dir, "integrated_obj_after_predictions.RData"))
 
 # Add cell names as column
@@ -279,13 +267,13 @@ flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = Cell_type_combined,
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "CD4 Naive", "T Naive")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "CD8 Naive", "T Naive")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "NK_CD56bright", "NK")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "ASDC", "CD14 Mono")
-#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "cDC", "CD14 Mono")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Eryth", "CD14 Mono")
-#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "HSPC", "CD14 Mono")
-#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "pDC", "CD14 Mono")
-#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Plasmablast", "CD14 Mono")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Platelet", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "ASDC", "CPlacebo4 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "cDC", "CPlacebo4 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Eryth", "CPlacebo4 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "HSPC", "CPlacebo4 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "pDC", "CPlacebo4 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Plasmablast", "CPlacebo4 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Platelet", "CPlacebo4 Mono")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Treg", "T Naive")
 
 # Add Cell_type_voting column to metadata
@@ -378,7 +366,7 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
 write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
 
 
-print("Performing differential expression between groups (D1 and D28) for each cell type")
+print("Performing differential expression between groups (Placebo and vaccine) for each cell type")
 for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   print(cell_type)
   idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_voting %in% cell_type)
@@ -388,14 +376,14 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   DefaultAssay(cells_subset) <- "SCT"
   cells_subset <- PrepSCTFindMarkers(cells_subset)
   Idents(cells_subset) <- "group"
-  #diff_markers <- FindMarkers(cells_subset, group.by = "group", ident.1 = "D1", ident.2 = "D28", logfc.threshold = 0, min.pct = 0.1)
-  diff_markers <- FindMarkers(cells_subset, ident.1 = "D28", ident.2 = "D1",logfc.threshold = 0, min.pct = 0, assay = "SCT", recorrect_umi = FALSE)
+  #diff_markers <- FindMarkers(cells_subset, group.by = "group", ident.1 = "Placebo", ident.2 = "vaccine", logfc.threshold = 0, min.pct = 0.1)
+  diff_markers <- FindMarkers(cells_subset, ident.1 = "vaccine", ident.2 = "Placebo",logfc.threshold = 0, min.pct = 0, assay = "SCT", recorrect_umi = FALSE)
   #diff_markers$p_val_adj = p.adjust(diff_markers$p_val, method='fdr')
   #diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
   #diff_markers <- diff_markers[diff_markers$p_val_adj < 0.05,]
   print(nrow(diff_markers))
   cell_type <- sub(" ", "_", cell_type)
-  write.csv(diff_markers, paste0(output_dir, "D28-vs-D1-degs-", cell_type, ".csv"), quote = FALSE)
+  write.csv(diff_markers, paste0(output_dir, "vaccine-vs-Placebo-degs-", cell_type, ".csv"), quote = FALSE)
 }
 
 print("Computing pseudobulk counts for each cell type")
