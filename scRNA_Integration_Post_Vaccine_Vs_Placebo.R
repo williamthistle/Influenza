@@ -115,7 +115,7 @@ all.flu.unbias.obj <- subset(all.flu.unbias.obj,nFeature_RNA > 900 & nFeature_RN
 # Label each cell with sample name
 all.flu.unbias.obj$sample <- as.vector(sapply(strsplit(colnames(all.flu.unbias.obj), "#"), "[", 1))
 
-# Label each cell with group name (Placebo or vaccine)
+# Label each cell with group name (placebo or vaccine)
 group <- all.flu.unbias.obj$sample
 group <- gsub("Sample_[1-9]_", "", group)
 all.flu.unbias.obj$group <- group
@@ -267,13 +267,13 @@ flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = Cell_type_combined,
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "CD4 Naive", "T Naive")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "CD8 Naive", "T Naive")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "NK_CD56bright", "NK")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "ASDC", "CPlacebo4 Mono")
-#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "cDC", "CPlacebo4 Mono")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Eryth", "CPlacebo4 Mono")
-#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "HSPC", "CPlacebo4 Mono")
-#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "pDC", "CPlacebo4 Mono")
-#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Plasmablast", "CPlacebo4 Mono")
-flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Platelet", "CPlacebo4 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "ASDC", "CD14 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "cDC", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Eryth", "CD14 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "HSPC", "CD14 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "pDC", "CD14 Mono")
+#flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Plasmablast", "CD14 Mono")
+flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Platelet", "CD14 Mono")
 flu.combined.sct$Cell_type_combined <- replace(flu.combined.sct$Cell_type_combined, flu.combined.sct$Cell_type_combined == "Treg", "T Naive")
 
 # Add Cell_type_voting column to metadata
@@ -313,14 +313,14 @@ cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score,
 
 
 # Remove the messy clusters
-idxPass <- which(Idents(flu.combined.sct) %in% c("3", "11"))
+idxPass <- which(Idents(flu.combined.sct) %in% c("3", "7", "10", "14", "16", "18"))
 cellsPass <- names(flu.combined.sct$orig.ident[-idxPass])
 flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
 
 # Final plot of cell types clustered
 DimPlot(flu.combined.sct.minus.clusters, reduction = "umap", group.by = "Cell_type_voting", label = TRUE,
               label.size = 3, repel = TRUE, raster = FALSE) + 
-  labs(title = "scRNA-seq Data Integration \n (12 Samples, 97K Cells)") + 
+  labs(title = "scRNA-seq Data Integration \n (10 Samples, 68K Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(paste0(output_dir, "flu.combined.sct.minus.clusters.png"), device = "png", dpi = 300)
 
@@ -365,8 +365,7 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
 }
 write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
 
-
-print("Performing differential expression between groups (Placebo and vaccine) for each cell type")
+print("Performing differential expression between groups (vaccine and placebo) for each cell type")
 for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   print(cell_type)
   idxPass <- which(flu.combined.sct.minus.clusters$Cell_type_voting %in% cell_type)
@@ -376,14 +375,10 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   DefaultAssay(cells_subset) <- "SCT"
   cells_subset <- PrepSCTFindMarkers(cells_subset)
   Idents(cells_subset) <- "group"
-  #diff_markers <- FindMarkers(cells_subset, group.by = "group", ident.1 = "Placebo", ident.2 = "vaccine", logfc.threshold = 0, min.pct = 0.1)
-  diff_markers <- FindMarkers(cells_subset, ident.1 = "vaccine", ident.2 = "Placebo",logfc.threshold = 0, min.pct = 0, assay = "SCT", recorrect_umi = FALSE)
-  #diff_markers$p_val_adj = p.adjust(diff_markers$p_val, method='fdr')
-  #diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
-  #diff_markers <- diff_markers[diff_markers$p_val_adj < 0.05,]
+  diff_markers <- FindMarkers(cells_subset, ident.1 = "vaccine", ident.2 = "placebo",logfc.threshold = 0, min.pct = 0, assay = "SCT", recorrect_umi = FALSE)
   print(nrow(diff_markers))
   cell_type <- sub(" ", "_", cell_type)
-  write.csv(diff_markers, paste0(output_dir, "vaccine-vs-Placebo-degs-", cell_type, ".csv"), quote = FALSE)
+  write.csv(diff_markers, paste0(output_dir, "vaccine-vs-placebo-degs-", cell_type, ".csv"), quote = FALSE)
 }
 
 print("Computing pseudobulk counts for each cell type")
@@ -397,12 +392,16 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   # Keep as vector in list
   cells_subset <- subset(x = flu.combined.sct.minus.clusters, subset = cell_name %in% cellsPass)
   cells_pseudobulk <- list()
-  # TODO: Fix this for samples that have 0 cells in cell type
   for (sample_name in sample.names) {
-    samples_subset <- subset(x = cells_subset, subset = sample %in% sample_name)
-    samples_data <- samples_subset@assays$RNA@counts
-    samples_data <- rowSums(as.matrix(samples_data))
-    cells_pseudobulk[[sample_name]] <- samples_data
+    idxMatch <- which(str_detect(cells_subset$Cell_type_voting,cell_type) & str_detect(cells_subset$sample, sample_name))
+    if (length(idxMatch)>1) {
+      samples_subset <- subset(x = cells_subset, subset = sample %in% sample_name)
+      samples_data <- samples_subset@assays$SCT@counts
+      samples_data <- rowSums(as.matrix(samples_data))
+      cells_pseudobulk[[sample_name]] <- samples_data
+    } else {
+      cells_pseudobulk[[sample_name]] <- numeric(nrow(flu.combined.sct.minus.clusters@assays$SCT))
+    }
   }
   final_cells_pseudobulk_df <- bind_cols(cells_pseudobulk[1])
   for (idx in 2:length(sample.names)) {
@@ -410,7 +409,6 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   }
   final_cells_pseudobulk_df <- as.data.frame(final_cells_pseudobulk_df)
   rownames(final_cells_pseudobulk_df) <- names(cells_pseudobulk[[1]])
-  final_cells_pseudobulk_df <- final_cells_pseudobulk_df[rowSums(final_cells_pseudobulk_df[])>0,]
   cell_type <- sub(" ", "_", cell_type)
   write.csv(final_cells_pseudobulk_df, paste0(output_dir, "pseudo_bulk_RNA_count_", cell_type, ".csv"))
 }

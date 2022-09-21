@@ -409,12 +409,16 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   # Keep as vector in list
   cells_subset <- subset(x = flu.combined.sct.minus.clusters, subset = cell_name %in% cellsPass)
   cells_pseudobulk <- list()
-  # TODO: Fix this for samples that have 0 cells in cell type
   for (sample_name in sample.names) {
-    samples_subset <- subset(x = cells_subset, subset = sample %in% sample_name)
-    samples_data <- samples_subset@assays$RNA@counts
-    samples_data <- rowSums(as.matrix(samples_data))
-    cells_pseudobulk[[sample_name]] <- samples_data
+    idxMatch <- which(str_detect(cells_subset$Cell_type_voting,cell_type) & str_detect(cells_subset$sample, sample_name))
+    if (length(idxMatch)>1) {
+      samples_subset <- subset(x = cells_subset, subset = sample %in% sample_name)
+      samples_data <- samples_subset@assays$SCT@counts
+      samples_data <- rowSums(as.matrix(samples_data))
+      cells_pseudobulk[[sample_name]] <- samples_data
+    } else {
+      cells_pseudobulk[[sample_name]] <- numeric(nrow(flu.combined.sct.minus.clusters@assays$SCT))
+    }
   }
   final_cells_pseudobulk_df <- bind_cols(cells_pseudobulk[1])
   for (idx in 2:length(sample.names)) {
@@ -422,7 +426,6 @@ for (cell_type in unique(flu.combined.sct.minus.clusters$Cell_type_voting)) {
   }
   final_cells_pseudobulk_df <- as.data.frame(final_cells_pseudobulk_df)
   rownames(final_cells_pseudobulk_df) <- names(cells_pseudobulk[[1]])
-  final_cells_pseudobulk_df <- final_cells_pseudobulk_df[rowSums(final_cells_pseudobulk_df[])>0,]
   cell_type <- sub(" ", "_", cell_type)
   write.csv(final_cells_pseudobulk_df, paste0(output_dir, "pseudo_bulk_RNA_count_", cell_type, ".csv"))
 }

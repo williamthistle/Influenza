@@ -4,8 +4,22 @@ library(dplyr)
 library(clustree)
 library(SeuratDisk)
 library(ArchR) # Just used for confusion matrix
-output_dir <- "~/scRNA_seq_data_output/"
-load(paste0(output_dir, "integrated_obj_after_final_plot.RData"))
+project_dir <- "~/POST_VACCINE_VS_PLACEBO/"
+output_dir <- paste0(project_dir, "scRNA_seq_data_output/")
+image_dir <- paste0(output_dir, "images/")
+load(paste0(image_dir, "integrated_obj_after_predictions.RData"))
+
+
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(clustree)
+library(SeuratDisk)
+library(ArchR) # Just used for confusion matrix
+output_dir <- paste0("scRNA_seq_data_output/")
+load(paste0(output_dir, "integrated_obj_after_predictions.RData"))
+
+
 
 
 library(ArchR)
