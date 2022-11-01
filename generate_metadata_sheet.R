@@ -1,4 +1,4 @@
-base_dir <- "C:/Users/willi/OneDrive/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
 scRNA_data_list <- paste0(base_dir, "scRNA/scRNA_data_list.txt")
 scATAC_data_list <- paste0(base_dir, "scATAC/scATAC_data_list.txt")
 multiome_data_list <- paste0(base_dir, "multiome/multiome_data_list.txt")
@@ -15,7 +15,7 @@ multiome_data <- multiome_data[1:length(multiome_data) - 1]
 scRNA_qc <- read.csv(scRNA_qc_file)
 multiome_qc <- read.csv(multiome_qc_file)
 overall_metadata <- read.csv(overall_metadata_file)
-final_metadata_sheet_df <- data.frame(aliquot_id = character(), subject_id = character(), scRNA_seq = character(),
+all_metadata_sheet_df <- data.frame(aliquot_id = character(), subject_id = character(), scRNA_seq = character(),
                                       scATAC_seq = character(), multiome = character(), has_metadata = character(),
                                       treatment = character(), time_point = character(), sex = character(), 
                                       passed_qc_scRNA_seq = character(), passed_qc_multiome = character())
@@ -54,14 +54,14 @@ for(scRNA_entry in scRNA_data) {
   }
   # Append N/A for multiome QC for now
   current_row <- append(current_row, "N/A")
-  final_metadata_sheet_df[nrow(final_metadata_sheet_df) + 1,] = current_row
+  all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
 }
 
 #scATAC-seq
 for(scATAC_entry in scATAC_data) {
   # We've already captured info about this aliquot above
-  if(scATAC_entry %in% final_metadata_sheet_df$aliquot_id) {
-    final_metadata_sheet_df[final_metadata_sheet_df$aliquot_id == scATAC_entry,]$scATAC_seq <- TRUE
+  if(scATAC_entry %in% all_metadata_sheet_df$aliquot_id) {
+    all_metadata_sheet_df[all_metadata_sheet_df$aliquot_id == scATAC_entry,]$scATAC_seq <- TRUE
   } else {
     # Add aliquot ID to current row
     current_row <- c()
@@ -93,17 +93,17 @@ for(scATAC_entry in scATAC_data) {
     current_row <- append(current_row, "N/A")
     # Append N/A for multiome QC for now
     current_row <- append(current_row, "N/A")
-    final_metadata_sheet_df[nrow(final_metadata_sheet_df) + 1,] = current_row
+    all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
 }
 
 # multiome
 for(multiome_entry in multiome_data) {
   # We've already captured info about this aliquot above
-  if(multiome_entry %in% final_metadata_sheet_df$aliquot_id) {
-    final_metadata_sheet_df[final_metadata_sheet_df$aliquot_id == multiome_entry,]$multiome <- TRUE
+  if(multiome_entry %in% all_metadata_sheet_df$aliquot_id) {
+    all_metadata_sheet_df[all_metadata_sheet_df$aliquot_id == multiome_entry,]$multiome <- TRUE
     current_qc <- multiome_qc[multiome_qc$Aliquot_ID == multiome_entry,]$Submission_QC_result
-    final_metadata_sheet_df[final_metadata_sheet_df$aliquot_id == multiome_entry,]$passed_qc_multiome <- current_qc
+    all_metadata_sheet_df[all_metadata_sheet_df$aliquot_id == multiome_entry,]$passed_qc_multiome <- current_qc
   } else {
     # Add aliquot ID to current row
     current_row <- c()
@@ -139,26 +139,42 @@ for(multiome_entry in multiome_data) {
     } else {
       current_row <- append(current_row, "N/A")
     }
-    final_metadata_sheet_df[nrow(final_metadata_sheet_df) + 1,] = current_row
+    all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
 }
 
-final_metadata_sheet_df <- final_metadata_sheet_df[order(final_metadata_sheet_df$subject_id),]
-write.table(final_metadata_sheet_df, paste0(base_dir, "all_metadata_sheet.tsv"), sep = "\t",
+all_metadata_sheet_df <- all_metadata_sheet_df[order(all_metadata_sheet_df$subject_id),]
+write.table(all_metadata_sheet_df, paste0(base_dir, "all_metadata_sheet.tsv"), sep = "\t",
             row.names = FALSE, quote = FALSE)
 
-placebo_metadata_sheet_df <- final_metadata_sheet_df[final_metadata_sheet_df$treatment == "PLACEBO",]
+placebo_metadata_sheet_df <- all_metadata_sheet_df[all_metadata_sheet_df$treatment == "PLACEBO",]
 write.table(placebo_metadata_sheet_df, paste0(base_dir, "placebo_metadata_sheet.tsv"), sep = "\t",
             row.names = FALSE, quote = FALSE)
 
+sexes <- c()
+visited_subjects <- c()
+for (current_row in 1:nrow(placebo_metadata_sheet_df)) {
+  if(!placebo_metadata_sheet_df[current_row,]$subject_id %in% visited_subjects ) {
+    sexes <- append(sexes, placebo_metadata_sheet_df[current_row,]$sex)
+    visited_subjects <- append(visited_subjects, placebo_metadata_sheet_df[current_row,]$subject_id)
+  }
+}
+
+print(paste0("The total number of aliquots is: ", nrow(all_metadata_sheet_df)))
+print(paste0("The total number of placebo aliquots is: ", nrow(placebo_metadata_sheet_df)))
+print(paste0("The total number of D-1 aliquots is: ", nrow(placebo_metadata_sheet_df[placebo_metadata_sheet_df$time_point == "D-1",])))
+print(paste0("The total number of D28 aliquots is: ", nrow(placebo_metadata_sheet_df[placebo_metadata_sheet_df$time_point == "D28",])))
+print(paste0("The total number of unique placebo subjects is: ", length(unique(placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects is: ", sum(sexes == "M")))
+print(paste0("The total number of female subjects is: ", sum(sexes == "F")))
+
+paired_placebo_metadata_sheet_df <- placebo_metadata_sheet_df[(placebo_metadata_sheet_df$scRNA_seq == TRUE & 
+                                                                 placebo_metadata_sheet_df$scATAC_seq == TRUE) | 
+                                                                placebo_metadata_sheet_df$multiome == TRUE,]
+
+print(paste0("The total number of subjects with paired scRNA-seq / scATAC-seq data or multiome data (for MAGICAL) is: ", length(unique(paired_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of subjects with paired scRNA-seq / scATAC-seq data or multiome data (for MAGICAL) and both D-1 and D28 timepoints is: ", length(unique(paired_placebo_metadata_sheet_df$subject_id)) - sum(table(paired_placebo_metadata_sheet_df$subject_id) < 2)))
 
 
-curated_metadata_sheet_df <- final_metadata_sheet_df[(final_metadata_sheet_df$scRNA_seq == TRUE & 
-                                                       final_metadata_sheet_df$scATAC_seq == TRUE) | 
-                                                       final_metadata_sheet_df$multiome == TRUE,]
 
-
-print(paste0("The total number of aliquots is: ", nrow(final_metadata_sheet_df)))
-
-print(paste0("The number of aliquots that have both scRNA-seq and scATAC-seq assays or multiome is: ", nrow(curated_metadata_sheet_df)))
 
