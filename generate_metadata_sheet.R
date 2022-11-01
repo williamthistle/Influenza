@@ -1,4 +1,4 @@
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/OneDrive/Documents/GitHub/Influenza/"
 scRNA_data_list <- paste0(base_dir, "scRNA/scRNA_data_list.txt")
 scATAC_data_list <- paste0(base_dir, "scATAC/scATAC_data_list.txt")
 multiome_data_list <- paste0(base_dir, "multiome/multiome_data_list.txt")
@@ -144,5 +144,21 @@ for(multiome_entry in multiome_data) {
 }
 
 final_metadata_sheet_df <- final_metadata_sheet_df[order(final_metadata_sheet_df$subject_id),]
-write.table(final_metadata_sheet_df, paste0(base_dir, "final_metadata_sheet.tsv"), sep = "\t",
+write.table(final_metadata_sheet_df, paste0(base_dir, "all_metadata_sheet.tsv"), sep = "\t",
             row.names = FALSE, quote = FALSE)
+
+placebo_metadata_sheet_df <- final_metadata_sheet_df[final_metadata_sheet_df$treatment == "PLACEBO",]
+write.table(placebo_metadata_sheet_df, paste0(base_dir, "placebo_metadata_sheet.tsv"), sep = "\t",
+            row.names = FALSE, quote = FALSE)
+
+
+
+curated_metadata_sheet_df <- final_metadata_sheet_df[(final_metadata_sheet_df$scRNA_seq == TRUE & 
+                                                       final_metadata_sheet_df$scATAC_seq == TRUE) | 
+                                                       final_metadata_sheet_df$multiome == TRUE,]
+
+
+print(paste0("The total number of aliquots is: ", nrow(final_metadata_sheet_df)))
+
+print(paste0("The number of aliquots that have both scRNA-seq and scATAC-seq assays or multiome is: ", nrow(curated_metadata_sheet_df)))
+
