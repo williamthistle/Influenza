@@ -6,7 +6,7 @@ bulkRNA_data <- read.table(bulkRNA_data_list)$V1
 overall_metadata <- read.csv(overall_metadata_file)
 bulkRNA_all_metadata_sheet_df <- data.frame(aliquot_id = character(), subject_id = character(), has_metadata = character(),
                                       treatment = character(), period = character(), time_point = character(), 
-                                    sex = character())
+                                    sex = character(), race = character())
 for(bulkRNA_entry in bulkRNA_data) {
   # Add aliquot ID to current row
   current_row <- c()
@@ -20,9 +20,11 @@ for(bulkRNA_entry in bulkRNA_data) {
     current_row <- append(current_row, current_sample$Period)
     current_row <- append(current_row, current_sample$Time_Point)
     current_row <- append(current_row, current_sample$SEX)
+    current_row <- append(current_row, current_sample$RACE)
   } else {
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, FALSE)
+    current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
@@ -48,6 +50,15 @@ for (current_row in 1:nrow(bulkRNA_placebo_metadata_sheet_df)) {
   }
 }
 
+races <- c()
+visited_subjects <- c()
+for (current_row in 1:nrow(bulkRNA_placebo_metadata_sheet_df)) {
+  if(!bulkRNA_placebo_metadata_sheet_df[current_row,]$subject_id %in% visited_subjects ) {
+    races <- append(races, bulkRNA_placebo_metadata_sheet_df[current_row,]$race)
+    visited_subjects <- append(visited_subjects, bulkRNA_placebo_metadata_sheet_df[current_row,]$subject_id)
+  }
+}
+
 print(paste0("The total number of aliquots is: ", nrow(bulkRNA_all_metadata_sheet_df)))
 print(paste0("The total number of placebo aliquots is: ", nrow(bulkRNA_placebo_metadata_sheet_df)))
 print(paste0("The total number of D-1 aliquots is: ", nrow(bulkRNA_placebo_metadata_sheet_df[bulkRNA_placebo_metadata_sheet_df$time_point == "D-1",])))
@@ -55,6 +66,8 @@ print(paste0("The total number of D28 aliquots is: ", nrow(bulkRNA_placebo_metad
 print(paste0("The total number of unique placebo subjects is: ", length(unique(bulkRNA_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects is: ", sum(sexes == "M")))
 print(paste0("The total number of female subjects is: ", sum(sexes == "F")))
+print(paste0("The total number of white subjects is: ", sum(races == "WHITE")))
+print(paste0("The total number of other race subjects is: ", length(races) - sum(races == "WHITE")))
 print(paste0("The total number of subjects with all timepoints is: ", length(unique(bulkRNA_placebo_metadata_sheet_df$subject_id)) - sum(table(bulkRNA_placebo_metadata_sheet_df$subject_id) < 10)))
 
 

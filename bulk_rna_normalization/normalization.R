@@ -10,6 +10,7 @@ tscale=function(mat){
 }#tscale
 
 
+setwd("C:/Users/wat2/Documents/GitHub/Influenza/bulk_rna_normalization")
 source("normalizeDataHelper.R")
 genemap <- readRDS("genemap.RDS")
 gene <- readRDS("gene.RDS")
@@ -17,16 +18,11 @@ setwd("C:/Users/wat2/Documents/local_data_files/")
 
 
 
-w <- fread("rsem_genes_count.txt", header = T, sep = ",")
-
-
-row.names <- as.character(w$gene_id)
-w <- w[,2:ncol(w)]
-w <- as.matrix(w)
-rownames(w) <- row.names
-
-
-counts <- w
+counts <- fread("rsem_genes_count.txt", header = T, sep = ",")
+row.names <- as.character(counts$gene_id)
+counts <- counts[,2:ncol(counts)]
+counts <- as.matrix(counts)
+rownames(counts) <- row.names
 
 
 
