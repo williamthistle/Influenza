@@ -8,11 +8,17 @@ library(ArchR) # Just used for confusion matrix
 chunk <- function(x, n) (mapply(function(a, b) (x[a:b]), seq.int(from=1, to=length(x), by=n), pmin(seq.int(from=1, to=length(x), by=n)+(n-1), length(x)), SIMPLIFY=FALSE))
 
 # Set project dir - used to organize different projects
-project_dir <- "~/POST_VACCINE_VS_PLACEBO/"
+project_dir <- "~/multiome/"
 if (!dir.exists(project_dir)) {dir.create(project_dir)}
 # We can either process pre, post, or all data - TO DO
 data_processing_choices <- c("pre", "post", "all")
 data_processing_choice <- data_processing_choices[3]
+# Treatment choices - we usually will just want to work with placebo samples
+treatment_choices <- c("placebo", "vaccinated", "all")
+treatment_choice <- treatment_choices[1]
+# We have to treat multiome slightly different than regular scRNA-seq
+assay_choices <- c("scRNA-seq", "multiome")
+assay_choice <- assay_choices[2]
 # Location of scRNA data - data are organized by aliquot ID
 # Note that aliquot ID and sample ID are different since multiple sample types
 # (scRNA-seq, scATAC-seq) can come from the same aliquot
@@ -22,8 +28,12 @@ data_dir <- paste0(project_dir, "scRNA_seq_data/")
 if (!dir.exists(data_dir)) {dir.create(data_dir)}
 output_dir <- paste0(project_dir, "scRNA_seq_data_output/")
 if (!dir.exists(output_dir)) {dir.create(output_dir)}
-sample_metadata <- read.csv(paste0(project_dir, "current_sample_metadata_minus_8d5be1a4937a7ad3.csv"))
-sample_assay_types <- read.csv(paste0(project_dir, "current_set_of_scRNA_and_scATAC_seq_samples.txt"), sep = "\t")
+sample_metadata <- read.table(paste0(project_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
+if (treatment_choice == "placebo") {
+  sample_metadata <- subset(sample_metadata, treatment == "PLACEBO")
+} else if (treatment_choice == "vaccinated") {
+  sample_metadata <- subset(sample_metadata, treatment == "MVA-NP+M1")
+}
 # Look in base scRNA dir to get list of all potential aliquots
 # We will only use aliquots that are paired (D-1 and D28)
 aliquot_list <- list.dirs(data_dir, recursive = FALSE)
@@ -37,20 +47,22 @@ D28.id <- c()
 for (aliquot in aliquot_list) {
   # Grab current sample metadata, subject associated with sample, and then check to see whether subject has two samples
   # (D-1 and D28)
-  current_sample = sample_metadata[sample_metadata$X_aliquot_id == aliquot,]
-  current_subject = current_sample$SUBJECT_ID
-  all_samples_associated_with_current_subject = sample_metadata[sample_metadata$SUBJECT_ID == current_subject ,]
+  current_sample = sample_metadata[sample_metadata$aliquot_id == aliquot,]
+  current_subject = current_sample$subject_id
+  all_samples_associated_with_current_subject = sample_metadata[sample_metadata$subject_id == current_subject,]
   if (nrow(all_samples_associated_with_current_subject) == 2) {
+    d_negative_1_aliquot_record <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$time_point == "D-1",]
+    d_28_aliquot_record <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$time_point == "D28",]
     # Now, we grab our D-1 and D28 aliquot names.
     # If D-1 is not already in D1.id AND we have scRNA-seq data from both D-1 and D28 aliquots AND we have scATAC-seq data from both D-1 and D28 aliquots,  
     # then add D-1 to D1.id and D28 to D28.id
-    d_negative_1_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D-1",]$X_aliquot_id
-    d_28_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D28",]$X_aliquot_id
-    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot,]
-    presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_sample_assays$scATAC_seq
-    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot,]
-    presence_of_d_28_ATAC <- d_28_aliquot_sample_assays$scATAC_seq
-    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & presence_of_d_negative_1_ATAC == "Yes" & presence_of_d_28_ATAC == "Yes") {
+    d_negative_1_aliquot <- d_negative_1_aliquot_record$aliquot_id
+    d_28_aliquot <- d_28_aliquot_record$aliquot_id
+    presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_record$scATAC_seq
+    presence_of_d_28_ATAC <- d_28_aliquot_record$scATAC_seq
+    presence_of_d_negative_1_multiome <- d_negative_1_aliquot_record$multiome
+    presence_of_d_28_multiome <- d_28_aliquot_record$multiome    
+    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & ((presence_of_d_negative_1_ATAC == TRUE & presence_of_d_28_ATAC == TRUE)) | (presence_of_d_negative_1_multiome == TRUE & presence_of_d_28_multiome == TRUE)) {
       D1.id <- append(D1.id, d_negative_1_aliquot)
       D28.id <- append(D28.id, d_28_aliquot)
     }
@@ -66,6 +78,9 @@ for (idx in 1:length(D1.id)) {
   i <- D1.id[idx]
   # Read in h5 matrix associated with current sample and add sample index to cell column names
   flu.list[[i]] <- Read10X_h5(paste0(data_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
+  if(assay_choice == "multiome") {
+    flu.list[[i]] <- flu.list[[i]]$`Gene Expression`
+  }
   prefix <- paste0("Sample_", idx, "_D1#")
   sample.names <- append(sample.names, paste0("Sample_", idx, "_D1"))
   print(prefix)
@@ -77,6 +92,9 @@ print("Grabbing all Day 28 h5 matrices")
 for (idx in 1:length(D28.id)) {
   i <- D28.id[idx]
   flu.list[[i]] <- Read10X_h5(paste0(data_dir, i, "/outs/filtered_feature_bc_matrix.h5"))
+  if(assay_choice == "multiome") {
+    flu.list[[i]] <- flu.list[[i]]$`Gene Expression`
+  }
   prefix <- paste0("Sample_", idx, "_D28#")
   sample.names <- append(sample.names, paste0("Sample_", idx, "_D28"))
   print(prefix)
@@ -85,7 +103,6 @@ for (idx in 1:length(D28.id)) {
 
 # Sort sample names so that D1 and D28 are grouped for each sample
 sample.names <- sort(sample.names)
-
 # From now on, we'll just use "samples" instead of "aliquots"
 # Combine all cells from all samples into one object
 all.flu.unbias <- do.call("cbind", flu.list)
