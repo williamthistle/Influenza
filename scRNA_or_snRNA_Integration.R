@@ -42,7 +42,7 @@ if (treatment_choice == "placebo") {
 } else if (treatment_choice == "vaccinated") {
   sample_metadata <- subset(sample_metadata, treatment == "MVA-NP+M1")
 }
-# Look in base scRNA dir to get list of all potential aliquots
+# Look in data dir to get list of all potential aliquots
 # We will only use aliquots that are paired (D-1 and D28)
 aliquot_list <- list.dirs(data_dir, recursive = FALSE)
 aliquot_list <- strsplit(aliquot_list, "/")
@@ -55,27 +55,23 @@ D28.id <- c()
 for (aliquot in aliquot_list) {
   # Grab current sample metadata, subject associated with sample, and then check to see whether subject has two samples
   # (D-1 and D28)
-  current_sample = sample_metadata[sample_metadata$aliquot_id == aliquot,]
-  current_subject = current_sample$subject_id
-  all_samples_associated_with_current_subject = sample_metadata[sample_metadata$subject_id == current_subject,]
+  current_sample <- sample_metadata[sample_metadata$aliquot_id == aliquot,]
+  current_subject <- current_sample$subject_id
+  all_samples_associated_with_current_subject <- sample_metadata[sample_metadata$subject_id == current_subject,]
+  if(assay_choice == "scRNA-seq") {
+    all_samples_associated_with_current_subject <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$scRNA_seq == TRUE & all_samples_associated_with_current_subject$scATAC_seq == TRUE,]
+  } else if(assay_choice == "multiome") {
+    all_samples_associated_with_current_subject <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$multiome == TRUE,]
+  }
   if (nrow(all_samples_associated_with_current_subject) == 2) {
     d_negative_1_aliquot_record <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$time_point == "D-1",]
     d_28_aliquot_record <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$time_point == "D28",]
     # Now, we grab our D-1 and D28 aliquot names.
-    # If D-1 is not already in D1.id AND we have the relevant data from both D-1 and D28 aliquots (scRNA-seq AND scATAC-seq or multiome),  
+    # If D-1 is not already in D1.id AND we have the relevant data from both D-1 and D28 aliquots,  
     # then add D-1 to D1.id and D28 to D28.id
     d_negative_1_aliquot <- d_negative_1_aliquot_record$aliquot_id
     d_28_aliquot <- d_28_aliquot_record$aliquot_id
-    if(assay_type == "scRNA-seq") {
-      presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_record$scATAC_seq
-      presence_of_d_28_ATAC <- d_28_aliquot_record$scATAC_seq
-      samples_present <- presence_of_d_negative_1_ATAC == TRUE & presence_of_d_28_ATAC == TRUE
-    } else if(assay_type == "multiome") {
-      presence_of_d_negative_1_multiome <- d_negative_1_aliquot_record$multiome
-      presence_of_d_28_multiome <- d_28_aliquot_record$multiome
-      samples_present <- presence_of_d_negative_1_multiome == TRUE & presence_of_d_28_multiome == TRUE
-    }
-    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & samples_present) {
+    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list) {
       D1.id <- append(D1.id, d_negative_1_aliquot)
       D28.id <- append(D28.id, d_28_aliquot)
     }
@@ -169,6 +165,10 @@ all.flu.unbias.obj <- SCTransform(all.flu.unbias.obj,
                                  verbose = TRUE)
 all.flu.unbias.obj <- RunPCA(all.flu.unbias.obj, npcs = 50, approx = T, verbose = T)
 all.flu.unbias.obj <- RunUMAP(all.flu.unbias.obj, reduction = "pca", dims = 1:30)
+
+image_dir <- paste0(output_dir, "images/")
+if (!dir.exists(image_dir)) {dir.create(image_dir)}
+save.image(paste0(image_dir, "1_unbiased_pooled_obj.RData"))
 
 # Generate plots for batch detection
 print("Generating panel of plots where each plot shows cells for a given sample (batch detection)")
@@ -285,8 +285,6 @@ predictions <- TransferData(anchorset = flu.anchors, refdata = scRNA_ref$celltyp
 flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = predictions)
 rm(scRNA_ref)
 
-image_dir <- paste0(output_dir, "images/")
-if (!dir.exists(image_dir)) {dir.create(image_dir)}
 save.image(paste0(image_dir, "integrated_obj_after_predictions.RData"))
 
 # Add cell names as column
