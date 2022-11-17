@@ -19,15 +19,23 @@ treatment_choice <- treatment_choices[1]
 # We have to treat multiome slightly different than regular scRNA-seq
 assay_choices <- c("scRNA-seq", "multiome")
 assay_choice <- assay_choices[2]
-# Location of scRNA data - data are organized by aliquot ID
+# Location of data - data are organized by aliquot ID
 # Note that aliquot ID and sample ID are different since multiple sample types
 # (scRNA-seq, scATAC-seq) can come from the same aliquot
 # However, in the context of analyzing samples from a single sample type,
 # you can consider aliquots and samples basically equivalent
-data_dir <- paste0(project_dir, "scRNA_seq_data/")
-if (!dir.exists(data_dir)) {dir.create(data_dir)}
-output_dir <- paste0(project_dir, "scRNA_seq_data_output/")
-if (!dir.exists(output_dir)) {dir.create(output_dir)}
+# Note that multiome is snRNA-seq so directory will differ a bit if using multiome assay
+if(assay_choice == "scRNA-seq") {
+  data_dir <- paste0(project_dir, "scRNA_seq_data/")
+  if (!dir.exists(data_dir)) {dir.create(data_dir)}
+  output_dir <- paste0(project_dir, "scRNA_seq_data_output/")
+  if (!dir.exists(output_dir)) {dir.create(output_dir)}
+} else if(assay_choice == "multiome") {
+  data_dir <- paste0(project_dir, "snRNA_seq_data/")
+  if (!dir.exists(data_dir)) {dir.create(data_dir)}
+  output_dir <- paste0(project_dir, "snRNA_seq_data_output/")
+  if (!dir.exists(output_dir)) {dir.create(output_dir)}
+}
 sample_metadata <- read.table(paste0(project_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
 if (treatment_choice == "placebo") {
   sample_metadata <- subset(sample_metadata, treatment == "PLACEBO")
@@ -54,15 +62,20 @@ for (aliquot in aliquot_list) {
     d_negative_1_aliquot_record <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$time_point == "D-1",]
     d_28_aliquot_record <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$time_point == "D28",]
     # Now, we grab our D-1 and D28 aliquot names.
-    # If D-1 is not already in D1.id AND we have scRNA-seq data from both D-1 and D28 aliquots AND we have scATAC-seq data from both D-1 and D28 aliquots,  
+    # If D-1 is not already in D1.id AND we have the relevant data from both D-1 and D28 aliquots (scRNA-seq AND scATAC-seq or multiome),  
     # then add D-1 to D1.id and D28 to D28.id
     d_negative_1_aliquot <- d_negative_1_aliquot_record$aliquot_id
     d_28_aliquot <- d_28_aliquot_record$aliquot_id
-    presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_record$scATAC_seq
-    presence_of_d_28_ATAC <- d_28_aliquot_record$scATAC_seq
-    presence_of_d_negative_1_multiome <- d_negative_1_aliquot_record$multiome
-    presence_of_d_28_multiome <- d_28_aliquot_record$multiome    
-    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & ((presence_of_d_negative_1_ATAC == TRUE & presence_of_d_28_ATAC == TRUE)) | (presence_of_d_negative_1_multiome == TRUE & presence_of_d_28_multiome == TRUE)) {
+    if(assay_type == "scRNA-seq") {
+      presence_of_d_negative_1_ATAC <- d_negative_1_aliquot_record$scATAC_seq
+      presence_of_d_28_ATAC <- d_28_aliquot_record$scATAC_seq
+      samples_present <- presence_of_d_negative_1_ATAC == TRUE & presence_of_d_28_ATAC == TRUE
+    } else if(assay_type == "multiome") {
+      presence_of_d_negative_1_multiome <- d_negative_1_aliquot_record$multiome
+      presence_of_d_28_multiome <- d_28_aliquot_record$multiome
+      samples_present <- presence_of_d_negative_1_multiome == TRUE & presence_of_d_28_multiome == TRUE
+    }
+    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & samples_present) {
       D1.id <- append(D1.id, d_negative_1_aliquot)
       D28.id <- append(D28.id, d_28_aliquot)
     }
