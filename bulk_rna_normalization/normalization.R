@@ -149,9 +149,9 @@ goodgenes=which(mm>5&mybiotype[rownames(countsSymbol)]=="protein_coding")
 countsSymbolUse=countsSymbol.RPKM[goodgenes,]
 
 
-sf=estimateSizeFactorsForMatrix(countsSymbolUse) #just a wrapper around DEseq2 normalization (see helper.R)
+sf=estimateSizeFactorsForMatrix(countsSymbolUse) #just a wrapper around DESeq2 normalization (see helper.R)
 countsSymbolN=sweep(countsSymbolUse,2,sf, "/")
-#compute an offset for log, smalles positive value
+#compute an offset for log, smallest positive value
 adj=min(countsSymbolN[countsSymbolN>0])
 
 data=log2(adj+countsSymbolN)
