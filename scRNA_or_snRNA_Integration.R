@@ -173,7 +173,7 @@ save.image(paste0(image_dir, "1_unbiased_pooled_obj.RData"))
 # Generate plots for batch detection
 print("Generating panel of plots where each plot shows cells for a given sample (batch detection)")
 # Each plot will be 2x3 (except the last one, which will be whatever remains)
-plot_sets <- chunk(sample.names, 6)
+plot_sets <- chunk(sample.names, 9)
 plot_index <- 1
 for (plot_set in plot_sets) {
   print(paste0("Printing plot set ", plot_index))
@@ -212,24 +212,18 @@ for(sample in female.id){
 all.flu.unbias.obj$sex <- sex
 
 # Use plots from above to determine batches (visually inspect and group like plots)
-batch1.id <- c("Sample_1_D1", "Sample_1_D28")
-batch2.id <- c("Sample_4_D1")
-batch3.id <- c("Sample_5_D1", "Sample_5_D28")
-batch4.id <- c("Sample_6_D1", "Sample_6_D28")
+batch1.id <- c("Sample_3_D1", "Sample_3_D28")
 # Label samples according to batch
 batch <- all.flu.unbias.obj$sample
 for (i in 1:length(batch)) {
   if(any(grepl(batch[i], batch1.id))) { batch[i] <- "b1" }
-  else if(any(grepl(batch[i], batch2.id))) { batch[i] <- "b2" }
-  else if(any(grepl(batch[i], batch3.id))) { batch[i] <- "b3" }
-  else if(any(grepl(batch[i], batch4.id))) { batch[i] <- "b4" }
-  else { batch[i] <- "b5" }
+  else { batch[i] <- "b2" }
 }
 all.flu.unbias.obj$batch <- batch
 # Plot all samples grouped by batch
 DimPlot(all.flu.unbias.obj, group.by = "batch", reduction = "umap",# cells.highlight = cells,
         label = TRUE, repel = TRUE, shuffle = TRUE, raster = FALSE) +
-  ggtitle("Flu all samples, 5 batches")
+  ggtitle("Flu all samples, 4 batches")
   ggsave(paste0(output_dir, "all.flu.batches.obj.PDF"), device = "pdf")
 
 all.flu.batch.list <- SplitObject(all.flu.unbias.obj, split.by = "batch")
