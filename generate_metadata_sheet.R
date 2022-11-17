@@ -24,7 +24,7 @@ find_race_count = function(curr_df) {
   return(races)
 }
 
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/williamthistle/Documents/GitHub/Influenza/"
 scRNA_data_list <- paste0(base_dir, "scRNA/scRNA_data_list.txt")
 scATAC_data_list <- paste0(base_dir, "scATAC/scATAC_data_list.txt")
 multiome_data_list <- paste0(base_dir, "multiome/multiome_data_list.txt")
@@ -256,61 +256,110 @@ print(paste0("The total number of other race placebo subjects is: ", length(find
 # Since the vast majority of subjects are white, we don't need to keep tracking race
 print("*********** SCRNA-SEQ (PLACEBO) ***********")
 scRNAseq_placebo_metadata_sheet_df <- placebo_metadata_sheet_df[placebo_metadata_sheet_df$scRNA_seq == TRUE,]
+print(paste0("The total number of aliquots is: ", nrow(scRNAseq_placebo_metadata_sheet_df)))
 print(paste0("The total number of D-1 aliquots is: ", nrow(scRNAseq_placebo_metadata_sheet_df[scRNAseq_placebo_metadata_sheet_df$time_point == "D-1",])))
 print(paste0("The total number of D28 aliquots is: ", nrow(scRNAseq_placebo_metadata_sheet_df[scRNAseq_placebo_metadata_sheet_df$time_point == "D28",])))
 print(paste0("The total number of unique subjects is: ", length(unique(scRNAseq_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects is: ", sum(find_sex_count(scRNAseq_placebo_metadata_sheet_df) == "M")))
 print(paste0("The total number of female subjects is: ", sum(find_sex_count(scRNAseq_placebo_metadata_sheet_df) == "F")))
 # Note terrible sex ratio (3 male vs 9 female)
-print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", sum(table(scRNAseq_placebo_metadata_sheet_df$subject_id) == 2)))
+scRNAseq_paired_timepoints_placebo_metadata_sheet_df <- scRNAseq_placebo_metadata_sheet_df[scRNAseq_placebo_metadata_sheet_df$subject_id %in% names(table(scRNAseq_placebo_metadata_sheet_df$subject_id)[table(scRNAseq_placebo_metadata_sheet_df$subject_id) == 2]),]
+print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(scRNAseq_paired_timepoints_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(scRNAseq_paired_timepoints_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(scRNAseq_paired_timepoints_placebo_metadata_sheet_df) == "F")))
+# Note terrible sex ratio (2 male vs 7 female)
 print("*********** SCRNA-SEQ (PLACEBO) THAT PASSED QC ***********")
 passed_qc_scRNAseq_placebo_metadata_sheet_df <- scRNAseq_placebo_metadata_sheet_df[scRNAseq_placebo_metadata_sheet_df$passed_qc_scRNA_seq  == "Good" | scRNAseq_placebo_metadata_sheet_df$passed_qc_scRNA_seq  == "Pass",]
+print(paste0("The total number of aliquots is: ", nrow(passed_qc_scRNAseq_placebo_metadata_sheet_df)))
 print(paste0("The total number of D-1 aliquots is: ", nrow(passed_qc_scRNAseq_placebo_metadata_sheet_df[passed_qc_scRNAseq_placebo_metadata_sheet_df$time_point == "D-1",])))
 print(paste0("The total number of D28 aliquots is: ", nrow(passed_qc_scRNAseq_placebo_metadata_sheet_df[passed_qc_scRNAseq_placebo_metadata_sheet_df$time_point == "D28",])))
 print(paste0("The total number of unique subjects is: ", length(unique(passed_qc_scRNAseq_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects is: ", sum(find_sex_count(passed_qc_scRNAseq_placebo_metadata_sheet_df) == "M")))
 print(paste0("The total number of female subjects is: ", sum(find_sex_count(passed_qc_scRNAseq_placebo_metadata_sheet_df) == "F")))
 # Note terrible sex ratio (2 male vs 6 female)
+scRNAseq_passed_qc_paired_timepoints_placebo_metadata_sheet_df <- passed_qc_scRNAseq_placebo_metadata_sheet_df[passed_qc_scRNAseq_placebo_metadata_sheet_df$subject_id %in% names(table(passed_qc_scRNAseq_placebo_metadata_sheet_df$subject_id)[table(passed_qc_scRNAseq_placebo_metadata_sheet_df$subject_id) == 2]),]
+print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(scRNAseq_passed_qc_paired_timepoints_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(scRNAseq_passed_qc_paired_timepoints_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(scRNAseq_passed_qc_paired_timepoints_placebo_metadata_sheet_df) == "F")))
+# Note terrible sex ratio (1 male vs 3 female)
 print("*********** SCATAC-SEQ (PLACEBO) ***********")
 scATACseq_placebo_metadata_sheet_df <- placebo_metadata_sheet_df[placebo_metadata_sheet_df$scATAC_seq == TRUE,]
+print(paste0("The total number of aliquots is: ", nrow(scATACseq_placebo_metadata_sheet_df)))
 print(paste0("The total number of D-1 aliquots is: ", nrow(scATACseq_placebo_metadata_sheet_df[scATACseq_placebo_metadata_sheet_df$time_point == "D-1",])))
 print(paste0("The total number of D28 aliquots is: ", nrow(scATACseq_placebo_metadata_sheet_df[scATACseq_placebo_metadata_sheet_df$time_point == "D28",])))
 print(paste0("The total number of unique subjects is: ", length(unique(scATACseq_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects is: ", sum(find_sex_count(scATACseq_placebo_metadata_sheet_df) == "M")))
 print(paste0("The total number of female subjects is: ", sum(find_sex_count(scATACseq_placebo_metadata_sheet_df) == "F")))
 # Note terrible sex ratio (4 male vs 9 female)
-print("*********** MULTIOME (PLACEBO) - ALL SAMPLES PASSED QC ***********")
+scATACseq_paired_timepoints_placebo_metadata_sheet_df <- scATACseq_placebo_metadata_sheet_df[scATACseq_placebo_metadata_sheet_df$subject_id %in% names(table(scATACseq_placebo_metadata_sheet_df$subject_id)[table(scATACseq_placebo_metadata_sheet_df$subject_id) == 2]),]
+print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(scATACseq_paired_timepoints_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(scATACseq_paired_timepoints_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(scATACseq_paired_timepoints_placebo_metadata_sheet_df) == "F")))
+# Note terrible sex ratio (3 male vs 6 female)
+print("*********** PAIRED SCRNA-SEQ AND SCATAC-SEQ (PLACEBO) FOR MAGICAL ***********")
+paired_placebo_metadata_sheet_df <- placebo_metadata_sheet_df[(placebo_metadata_sheet_df$scRNA_seq == TRUE & 
+                                                                 placebo_metadata_sheet_df$scATAC_seq == TRUE),]
+print(paste0("The total number of aliquots is: ", nrow(paired_placebo_metadata_sheet_df)))
+print(paste0("The total number of D-1 aliquots is: ", nrow(paired_placebo_metadata_sheet_df[paired_placebo_metadata_sheet_df$time_point == "D-1",])))
+print(paste0("The total number of D28 aliquots is: ", nrow(paired_placebo_metadata_sheet_df[paired_placebo_metadata_sheet_df$time_point == "D28",])))
+print(paste0("The total number of unique subjects is: ", length(unique(paired_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects is: ", sum(find_sex_count(paired_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects is: ", sum(find_sex_count(paired_placebo_metadata_sheet_df) == "F")))
+# Note terrible sex ratio (3 male vs 9 female)
+paired_paired_timepoints_placebo_metadata_sheet_df <- paired_placebo_metadata_sheet_df[paired_placebo_metadata_sheet_df$subject_id %in% names(table(paired_placebo_metadata_sheet_df$subject_id)[table(paired_placebo_metadata_sheet_df$subject_id) == 2]),]
+print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(paired_paired_timepoints_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(paired_paired_timepoints_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(paired_paired_timepoints_placebo_metadata_sheet_df) == "F")))
+# Note terrible sex ratio (2 male vs 4 female)
+print("*********** PAIRED SCRNA-SEQ THAT PASSED QC AND SCATAC-SEQ (PLACEBO) FOR MAGICAL ***********")
+passed_qc_paired_placebo_metadata_sheet_df <- paired_placebo_metadata_sheet_df[paired_placebo_metadata_sheet_df$passed_qc_scRNA_seq  == "Good" | paired_placebo_metadata_sheet_df$passed_qc_scRNA_seq  == "Pass",]
+print(paste0("The total number of aliquots is: ", nrow(passed_qc_paired_placebo_metadata_sheet_df)))
+print(paste0("The total number of D-1 aliquots is: ", nrow(passed_qc_paired_placebo_metadata_sheet_df[passed_qc_paired_placebo_metadata_sheet_df$time_point == "D-1",])))
+print(paste0("The total number of D28 aliquots is: ", nrow(passed_qc_paired_placebo_metadata_sheet_df[passed_qc_paired_placebo_metadata_sheet_df$time_point == "D28",])))
+print(paste0("The total number of unique subjects is: ", length(unique(passed_qc_paired_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects is: ", sum(find_sex_count(passed_qc_paired_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects is: ", sum(find_sex_count(passed_qc_paired_placebo_metadata_sheet_df) == "F")))
+# Note terrible sex ratio (2 male vs 5 female)
+passed_qc_paired_paired_timepoints_placebo_metadata_sheet_df <- passed_qc_paired_placebo_metadata_sheet_df[passed_qc_paired_placebo_metadata_sheet_df$subject_id %in% names(table(passed_qc_paired_placebo_metadata_sheet_df$subject_id)[table(passed_qc_paired_placebo_metadata_sheet_df$subject_id) == 2]),]
+print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(passed_qc_paired_paired_timepoints_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(passed_qc_paired_paired_timepoints_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(passed_qc_paired_paired_timepoints_placebo_metadata_sheet_df) == "F")))
+# Note sex ratio (1 male vs 2 female)
+print("*********** MULTIOME (PLACEBO) - NOTE THAT ALL SAMPLES PASSED QC ***********")
 multiome_placebo_metadata_sheet_df <- placebo_metadata_sheet_df[placebo_metadata_sheet_df$multiome == TRUE,]
+print(paste0("The total number of aliquots is: ", nrow(multiome_placebo_metadata_sheet_df)))
 print(paste0("The total number of D-1 aliquots is: ", nrow(multiome_placebo_metadata_sheet_df[multiome_placebo_metadata_sheet_df$time_point == "D-1",])))
 print(paste0("The total number of D28 aliquots is: ", nrow(multiome_placebo_metadata_sheet_df[multiome_placebo_metadata_sheet_df$time_point == "D28",])))
 print(paste0("The total number of unique subjects is: ", length(unique(multiome_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects is: ", sum(find_sex_count(multiome_placebo_metadata_sheet_df) == "M")))
 print(paste0("The total number of female subjects is: ", sum(find_sex_count(multiome_placebo_metadata_sheet_df) == "F")))
 # Note mediocre sex ratio (4 male vs 7 female)
+multiome_paired_timepoints_placebo_metadata_sheet_df <- multiome_placebo_metadata_sheet_df[multiome_placebo_metadata_sheet_df$subject_id %in% names(table(multiome_placebo_metadata_sheet_df$subject_id)[table(multiome_placebo_metadata_sheet_df$subject_id) == 2]),]
+print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(multiome_paired_timepoints_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(multiome_paired_timepoints_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(multiome_paired_timepoints_placebo_metadata_sheet_df) == "F")))
+# Note mediocre sex ratio (2 male vs 6 female)
 print("*********** BULK RNA-SEQ (PLACEBO) ***********")
 bulkRNAseq_placebo_metadata_sheet_df <- placebo_metadata_sheet_df[placebo_metadata_sheet_df$bulkRNA_seq == TRUE,]
-print(paste0("The total number of D-1 aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D-1",])))
-print(paste0("The total number of D28 aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D28",])))
-print(paste0("The total number of subjects with all timepoints is: ", length(unique(bulkRNAseq_placebo_metadata_sheet_df$subject_id)) - sum(table(bulkRNAseq_placebo_metadata_sheet_df$subject_id) < 10)))
+print(paste0("The total number of aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df)))
+print(paste0("The total number of D-1 (Period 1) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D1 predose" & bulkRNAseq_placebo_metadata_sheet_df$period == "1",])))
+print(paste0("The total number of D2 (Period 1) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D2" & bulkRNAseq_placebo_metadata_sheet_df$period == "1",])))
+print(paste0("The total number of D8 (Period 1) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D8" & bulkRNAseq_placebo_metadata_sheet_df$period == "1",])))
+print(paste0("The total number of D28 (Period 1) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D28" & bulkRNAseq_placebo_metadata_sheet_df$period == "1",])))
+print(paste0("The total number of D-2 (Period 2) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D-2" & bulkRNAseq_placebo_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D-1 (Period 2) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D-1" & bulkRNAseq_placebo_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D2 (Period 2) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D2" & bulkRNAseq_placebo_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D5 (Period 2) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D5" & bulkRNAseq_placebo_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D8 (Period 2) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D8" & bulkRNAseq_placebo_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D28 (Period 2) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D28" & bulkRNAseq_placebo_metadata_sheet_df$period == "2",])))
 print(paste0("The total number of unique subjects is: ", length(unique(bulkRNAseq_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects is: ", sum(find_sex_count(bulkRNAseq_placebo_metadata_sheet_df) == "M")))
 print(paste0("The total number of female subjects is: ", sum(find_sex_count(bulkRNAseq_placebo_metadata_sheet_df) == "F")))
-
-
-
-paired_placebo_metadata_sheet_df <- placebo_metadata_sheet_df[(placebo_metadata_sheet_df$scRNA_seq == TRUE & 
-                                                                 placebo_metadata_sheet_df$scATAC_seq == TRUE) | 
-                                                                placebo_metadata_sheet_df$multiome == TRUE,]
-print(paste0("The total number of subjects with paired scRNA-seq / scATAC-seq data or multiome data (for MAGICAL) is: ", length(unique(paired_placebo_metadata_sheet_df$subject_id))))
-print(paste0("The total number of subjects with paired scRNA-seq / scATAC-seq data or multiome data (for MAGICAL) and both D-1 and D28 timepoints is: ", sum(table(paired_placebo_metadata_sheet_df$subject_id) == 2)))
-print("*********** BULK RNA-SEQ (PLACEBO) ***********")
-
-
-
-
-
-
-
-
-
-
+# Good sex ratio (22 male vs 24 female)
+bulkRNAseq_all_timepoints_placebo_metadata_sheet_df <- bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$subject_id %in% names(table(bulkRNAseq_placebo_metadata_sheet_df$subject_id)[table(bulkRNAseq_placebo_metadata_sheet_df$subject_id) == 10]),]
+print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(bulkRNAseq_all_timepoints_placebo_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(bulkRNAseq_all_timepoints_placebo_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(bulkRNAseq_all_timepoints_placebo_metadata_sheet_df) == "F")))
+# Note bad sex ratio (7 male vs 16 female)
+# Overall conclusions:
+# In general, really bad sex ratios throughout (way more females than males)
