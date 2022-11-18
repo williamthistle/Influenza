@@ -108,6 +108,8 @@ collapse_hgnc <- function(mat, gene.name){
 
 
 countsSymbol <- collapse_hgnc(countsSymbol, row.names)
+# Note - need to add extra tab to beginning of header (TODO: fix this)
+write.table(countsSymbol, "rsem_genes_count.processed.txt", quote = FALSE, sep = "\t")
 
 
 

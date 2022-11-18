@@ -238,7 +238,7 @@ for (i in 1:length(all.flu.batch.list)) {
                                          vars.to.regress = c("percent.mt", "percent.rps", "percent.rpl", "percent.hb", "CC.Difference"), conserve.memory = TRUE,
                                          verbose = TRUE)
 }
-
+save.image(paste0(image_dir, "2_normalized_batches.RData"))
 # Integrate batches
 features <- SelectIntegrationFeatures(object.list = all.flu.batch.list, nfeatures = 2000)
 all.flu.batch.list <- PrepSCTIntegration(object.list = all.flu.batch.list, anchor.features = features)
@@ -248,6 +248,7 @@ flu.combined.sct <- IntegrateData(anchorset = anchors, normalization.method = "S
 rm(all.flu.batch.list)
 rm(anchors)
 DefaultAssay(flu.combined.sct) <- "integrated"
+save.image(paste0(image_dir, "3_integrated_data.RData"))
 # Run PCA / UMAP / clustering on integrated data
 flu.combined.sct <- ScaleData(flu.combined.sct, verbose = T)
 flu.combined.sct <- RunPCA(flu.combined.sct, npcs = 30, approx = F, verbose = T)
@@ -257,6 +258,7 @@ flu.combined.sct <- FindClusters(flu.combined.sct, resolution = 0.4)
 # Plot integrated data
 DimPlot(flu.combined.sct, reduction = "umap", label = TRUE, raster = FALSE)
 ggsave(paste0(output_dir, "flu.combined.sct.PDF"), device = "pdf")
+save.image(paste0(image_dir, "4_processed_integrated_data.RData"))
 # We will integrate reference data to assign cell types
 scRNA_ref <- LoadH5Seurat("~/reference/multi.h5seurat")
 # Remove certain cell types we're not interested in
