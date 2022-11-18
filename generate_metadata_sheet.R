@@ -363,3 +363,4 @@ print(paste0("The total number of female subjects with both D-1 and D28 timepoin
 # Note bad sex ratio (7 male vs 16 female)
 # Overall conclusions:
 # In general, really bad sex ratios throughout (way more females than males)
+# But Vincy didn't correct for it in her analysis, so maybe it's OK? 
