@@ -102,8 +102,8 @@ time_point_analysis_results <- results(time_point_analysis, alpha = 0.05)
 time_point_analysis_results <- time_point_analysis_results[order(time_point_analysis_results$padj),]
 # Note that log2FoldChange is not part of LRT, so we should just ignore it
 time_point_analysis_results <- subset(time_point_analysis_results, padj < 0.05)
-# WALD (pairwise) TESTS
-wald_time_point_analysis <- DESeqDataSetFromMatrix(countData = counts,
+# WALD (PAIRWISE) TESTS
+wald_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_counts,
                                               colData = full_time_placebo_metadata,
                                               design = ~ time_point + sex)
 wald_time_point_analysis <- DESeq(wald_time_point_analysis)
@@ -138,7 +138,7 @@ for (current_contrast in period_2_contrasts) {
 
 ##### MORE DATA TIMEPOINTS (PERIOD 2) #####
 # We have more data (46 aliquots versus 23) for 2_D-1, 2_D8, and 2_D28, 
-# so let's do LRT and Wald Tests for that subset specifically
+# so let's do LRT and Wald tests for that subset specifically
 period_2_more_metadata <- placebo_metadata[(placebo_metadata$time_point == "2_D_minus_1" | 
                                           placebo_metadata$time_point == "2_D8" | 
                                           placebo_metadata$time_point == "2_D28"),]
