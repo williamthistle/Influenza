@@ -108,9 +108,9 @@ wald_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_counts,
                                               design = ~ time_point + sex)
 wald_time_point_analysis <- DESeq(wald_time_point_analysis)
 period_1_baseline <- "1_D_minus_1"
-period_2_baseline <- "2_D_minus_1"
+period_2_baseline <- "2_D_minus_2"
 period_1_contrasts <- c("1_D2", "1_D8", "1_D28")
-period_2_contrasts <- c("2_D2", "2_D5", "2_D8", "2_D28")
+period_2_contrasts <- c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28")
 period_1_wald_tests <- c()
 period_2_wald_tests <- c()
 # Period 1 Wald tests
