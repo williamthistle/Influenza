@@ -1,0 +1,27 @@
+# CREATE FILE LIST OF FILES FOLLOWING CERTAIN PATTERN
+for f in $(find /GlobusCollab/Troyanskaya/MRSA-MSSA/scATAC/ECHO/MSSM_Data_Transfer/Vaccitech_scATAC_Coded -name "fragments.tsv.gz"); do 
+    echo "$f" >> filelist.txt;
+done
+
+# MOVE FILES FROM SERVER TO SERVER
+rsync -av --relative --files-from=filelist.txt . wat2@lumos:~/scATAC_seq_data/
+
+# NOT USING ANYTHING BELOW, BUT MAYBE IT'LL COME IN HANDY?
+
+# MERGE BED FILES
+cat pre_peaks.bed post_peaks.bed | sort -k1,1 -k2,2n | bedtools merge -i - > merged_peaks.bed
+
+# CONVERT BED TO SAF (for featureCounts)
+awk 'OFS="\t" {print $1"."$2+1"."$3, $1, $2+1, $3, "."}' peaks.narrowPeak > peaks.saf
+
+# Convert FRAGMENT BED TO BAM
+# hg38.chrom.sizes.txt can be downloaded from https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/latest/hg38.chrom.sizes
+bedtools bedtobam -i ~/scATAC_seq_data/e3e01c75894ef461/outs/fragments.tsv.gz -g hg38.chrom.sizes.txt > ~/scATAC_seq_data/e3e01c75894ef461/outs/test.bam
+
+# I created a bash script which converts all bed to bam using the above command
+
+# RUN FEATURECOUNTS TO GET COUNTS FOR PEAKS
+featureCounts -p -O -T 8 -a merged_peaks.saf -F SAF -o merged_featureCounts_output.txt ~/scATAC_seq_data/*/outs/fragments.bam
+
+# REMOVE UNNECESSARY COLUMNS FOR DESEQ2 (ONLY KEEP GENE NAMES AND COUNTS)
+cut -f1,7-18 merged_featureCounts_output.txt > merged_featureCounts_output.2.txt
