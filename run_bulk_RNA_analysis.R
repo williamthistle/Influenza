@@ -1,10 +1,10 @@
 library(DESeq2)
 library(data.table)
-source("bulk_RNA_analysis_helper.R")
 
 ##### SETUP #####
 # Read in count and metadata files
 base_dir <- "C:/Users/williamthistle/Documents/GitHub/Influenza/"
+source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
 data_dir <- "C:/Users/williamthistle/Documents/local_data_files/"
 counts <- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
 placebo_metadata_file <- paste0(base_dir, "placebo_metadata_sheet.tsv")
