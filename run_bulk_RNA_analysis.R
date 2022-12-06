@@ -96,7 +96,7 @@ period_2_without_2_D_minus_2_placebo_metadata <- period_2_without_2_D_minus_2_pl
 period_2_without_2_D_minus_2_counts <- counts[rownames(period_2_without_2_D_minus_2_placebo_metadata)]
 # Factorize time point (with associated factor levels) and sex
 period_2_without_2_D_minus_2_placebo_metadata$time_point <- as.factor(period_2_without_2_D_minus_2_placebo_metadata$time_point)
-levels(period_2_minus_2_D_minus_2_placebo_metadata$time_point) <- period_2_without_2_D_minus_2_factors
+levels(period_2_without_2_D_minus_2_placebo_metadata$time_point) <- period_2_without_2_D_minus_2_factors
 period_2_without_2_D_minus_2_placebo_metadata$sex <- as.factor(period_2_without_2_D_minus_2_placebo_metadata$sex)
 # Run DESeq2 analysis
 period_2_without_2_D_minus_2_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_2_without_2_D_minus_2_counts,
@@ -107,6 +107,17 @@ period_2_without_2_D_minus_2_time_point_analysis_results <- results(period_2_wit
 period_2_without_2_D_minus_2_time_point_analysis_results <- period_2_without_2_D_minus_2_time_point_analysis_results[order(period_2_without_2_D_minus_2_time_point_analysis_results$padj),]
 # Note that log2FoldChange is not part of LRT, so we should just ignore it
 period_2_without_2_D_minus_2_time_point_analysis_results <- subset(period_2_without_2_D_minus_2_time_point_analysis_results, padj < 0.05)
+# Create heatmap
+betas <- coef(period_2_without_2_D_minus_2_time_point_analysis)
+period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting <- results(period_2_without_2_D_minus_2_time_point_analysis, alpha = 0.05)
+topGenes <- head(order(period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting$padj),20)
+mat <- betas[topGenes, -c(1, 6)]
+thr <- 3 
+mat[mat < -thr] <- -thr
+mat[mat > thr] <- thr
+colnames(mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+pheatmap(mat, breaks=seq(from=-thr, to=thr, length=101),
+         cluster_col=FALSE, fontsize_col=14)
 # BOTH PERIODS (ALL TIME POINTS)
 # Factorize time point (with associated factor levels) and sex
 full_time_placebo_metadata$time_point <- as.factor(full_time_placebo_metadata$time_point)
