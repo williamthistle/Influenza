@@ -10,11 +10,11 @@ tscale=function(mat){
 }#tscale
 
 
-setwd("C:/Users/williamthistle/Documents/GitHub/Influenza/bulk_rna_normalization")
+setwd("C:/Users/willi/Documents/GitHub/Influenza/bulk_rna_normalization")
 source("normalizeDataHelper.R")
 genemap <- readRDS("genemap.RDS")
 gene <- readRDS("gene.RDS")
-setwd("C:/Users/williamthistle/Documents/local_data_files/")
+setwd("C:/Users/willi/Documents/local_data_files/")
 
 
 
