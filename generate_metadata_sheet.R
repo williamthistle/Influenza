@@ -24,7 +24,7 @@ find_race_count = function(curr_df) {
   return(races)
 }
 
-base_dir <- "C:/Users/williamthistle/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
 scRNA_data_list <- paste0(base_dir, "scRNA/scRNA_data_list.txt")
 scATAC_data_list <- paste0(base_dir, "scATAC/scATAC_data_list.txt")
 multiome_data_list <- paste0(base_dir, "multiome/multiome_data_list.txt")
@@ -45,8 +45,8 @@ multiome_qc <- read.csv(multiome_qc_file)
 overall_metadata <- read.csv(overall_metadata_file)
 all_metadata_sheet_df <- data.frame(aliquot_id = character(), subject_id = character(), scRNA_seq = character(),
                                       scATAC_seq = character(), multiome = character(), bulkRNA_seq = character(),
-                                      has_metadata = character(), treatment = character(), period = character(), 
-                                      time_point = character(), sex = character(), race = character(), 
+                                      has_metadata = character(), specimen_prep = character(), treatment = character(), 
+                                      period = character(), time_point = character(), sex = character(), race = character(), 
                                       passed_qc_scRNA_seq = character(), passed_qc_multiome = character())
 for(scRNA_entry in scRNA_data) {
   # Add aliquot ID to current row
@@ -67,6 +67,7 @@ for(scRNA_entry in scRNA_data) {
   current_row <- append(current_row, FALSE)
   if(nrow(current_sample) > 0) {
     current_row <- append(current_row, TRUE)
+    current_row <- append(current_row, current_sample$specimen_prep)
     current_row <- append(current_row, current_sample$TREATMENT)
     current_row <- append(current_row, current_sample$Period)
     current_row <- append(current_row, current_sample$Time_Point)
@@ -74,6 +75,7 @@ for(scRNA_entry in scRNA_data) {
     current_row <- append(current_row, current_sample$RACE)
   } else {
     current_row <- append(current_row, FALSE)
+    current_row <- append(current_row, "N/A")   
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
@@ -115,6 +117,7 @@ for(scATAC_entry in scATAC_data) {
     current_row <- append(current_row, FALSE)
     if(nrow(current_sample) > 0) {
       current_row <- append(current_row, TRUE)
+      current_row <- append(current_row, current_sample$specimen_prep)
       current_row <- append(current_row, current_sample$TREATMENT)
       current_row <- append(current_row, current_sample$Period)
       current_row <- append(current_row, current_sample$Time_Point)
@@ -122,6 +125,7 @@ for(scATAC_entry in scATAC_data) {
       current_row <- append(current_row, current_sample$RACE)
     } else {
       current_row <- append(current_row, FALSE)
+      current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
@@ -162,6 +166,7 @@ for(multiome_entry in multiome_data) {
     current_row <- append(current_row, FALSE)
     if(nrow(current_sample) > 0) {
       current_row <- append(current_row, TRUE)
+      current_row <- append(current_row, current_sample$specimen_prep)
       current_row <- append(current_row, current_sample$TREATMENT)
       current_row <- append(current_row, current_sample$Period)
       current_row <- append(current_row, current_sample$Time_Point)
@@ -169,6 +174,7 @@ for(multiome_entry in multiome_data) {
       current_row <- append(current_row, current_sample$RACE)
     } else {
       current_row <- append(current_row, FALSE)
+      current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
@@ -211,6 +217,7 @@ for(bulkRNA_entry in bulkRNA_data) {
     current_row <- append(current_row, TRUE)
     if(nrow(current_sample) > 0) {
       current_row <- append(current_row, TRUE)
+      current_row <- append(current_row, current_sample$specimen_prep)
       current_row <- append(current_row, current_sample$TREATMENT)
       current_row <- append(current_row, current_sample$Period)
       current_row <- append(current_row, current_sample$Time_Point)
@@ -218,6 +225,7 @@ for(bulkRNA_entry in bulkRNA_data) {
       current_row <- append(current_row, current_sample$RACE)
     } else {
       current_row <- append(current_row, FALSE)
+      current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")

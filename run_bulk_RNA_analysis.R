@@ -1,11 +1,12 @@
 library(DESeq2)
 library(data.table)
+library(pheatmap)
 
 ##### SETUP #####
 # Read in count and metadata files
-base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-data_dir <- "C:/Users/willi/Documents/local_data_files/"
+data_dir <- "C:/Users/wat2/Documents/local_data_files/"
 counts <- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
 all_metadata_file <- paste0(base_dir, "all_metadata_sheet.tsv")
 all_metadata <- read.table(all_metadata_file, header = TRUE, sep = "\t")
@@ -46,27 +47,22 @@ vaccinated_counts <- round(vaccinated_counts)
 placebo_counts <- round(placebo_counts)
 # Currently not filtering sex associated genes
 #sex_associated_genes <- find_sex_associated_genes(paste0(data_dir, "sex_associated_genes/"))
-
 # Order factor levels for period 1, period 2, and all time points
 period_1_factors <- c("1_D_minus_1", "1_D2", "1_D8", "1_D28")
+period_1_more_vaccination_data_factors <- c("1_D_minus_1", "1_D8")
 period_2_factors <- c("2_D_minus_2", "2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28")
 period_2_without_2_D_minus_2_factors <- c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28")
 all_factors <- c(period_1_factors, period_2_factors)
 
 
 ########### VACCINATED ########### 
-# Basically, the only question we're concerned about currently is - what does differential expression look like
-# during period 1 (vaccination)?
-# First, we will use subjects that have all 10 timepoints for our tests
+# We will begin by using subjects that have all 10 timepoints for our tests
 full_time_vaccinated_metadata <- vaccinated_metadata[vaccinated_metadata$subject_id 
                                                %in% names(table(vaccinated_metadata$subject_id)
                                                           [table(vaccinated_metadata$subject_id) == 10]),]
 full_time_vaccinated_counts <- vaccinated_counts[rownames(full_time_vaccinated_metadata)]
 # LRT TESTS
-# It may make sense to focus primarily on Period 2 (pre- and post challenge)
-# since nothing happens during Period 1 for vaccinated subjects (good check that our differential expression 
-# is working properly at least)
-# PERIOD 1
+# Period 1 (pre- and post-vaccination)
 # Only keep period 1 metadata and vaccinated_counts
 period_1_vaccinated_metadata <- full_time_vaccinated_metadata[full_time_vaccinated_metadata$period == 1,]
 period_1_vaccinated_counts <- vaccinated_counts[rownames(period_1_vaccinated_metadata)]
@@ -81,9 +77,81 @@ period_1_vaccinated_time_point_analysis <- DESeqDataSetFromMatrix(countData = pe
 period_1_vaccinated_time_point_analysis <- DESeq(period_1_vaccinated_time_point_analysis, test="LRT", reduced = ~ sex)
 period_1_vaccinated_time_point_analysis_results <- results(period_1_vaccinated_time_point_analysis, alpha = 0.05)
 period_1_vaccinated_time_point_analysis_results <- period_1_vaccinated_time_point_analysis_results[order(period_1_vaccinated_time_point_analysis_results$padj),]
-# Note that log2FoldChange is not part of LRT, so we should just ignore it
 period_1_vaccinated_time_point_analysis_results <- subset(period_1_vaccinated_time_point_analysis_results, padj < 0.05)
-# There are a lot of changes! Looks like we're wise to avoid using vaccinated subjects
+# There are a lot of changes! But do changes persist over time?
+# Let's create a heatmap to see!
+period_1_vaccinated_betas <- coef(period_1_vaccinated_time_point_analysis)
+period_1_vaccinated_time_point_analysis_results_for_plotting <- results(period_1_vaccinated_time_point_analysis, alpha = 0.05)
+period_1_vaccinated_topGenes <- head(order(period_1_vaccinated_time_point_analysis_results_for_plotting$padj),20)
+period_1_vaccinated_mat <- period_1_vaccinated_betas[period_1_vaccinated_topGenes, -c(1, 5)]
+period_1_vaccinated_thr <- 3 
+period_1_vaccinated_mat[period_1_vaccinated_mat < -period_1_vaccinated_thr] <- -period_1_vaccinated_thr
+period_1_vaccinated_mat[period_1_vaccinated_mat > period_1_vaccinated_thr] <- period_1_vaccinated_thr
+colnames(period_1_vaccinated_mat) <- c("Day 2 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+pheatmap(period_1_vaccinated_mat, breaks=seq(from=-period_1_vaccinated_thr, to=period_1_vaccinated_thr, length=101),
+         cluster_col=FALSE, fontsize_col=14)
+# It looks like changes are heightened in Day 2 and may not persist
+# We can do Wald tests to get a better sense of how each day compares to our baseline (pairwise)
+period_1_vaccinated_wald_tests <- c()
+period_1_vaccinated_wald_test_names <- resultsNames(period_1_vaccinated_time_point_analysis)
+# Remove first and last entries (intercept and sex)
+period_1_vaccinated_wald_test_names <- period_1_vaccinated_wald_test_names[c(-1, -length(period_1_vaccinated_wald_test_names))]
+index <- 1
+for (current_name in period_1_vaccinated_wald_test_names) {
+  current_results <- results(period_1_vaccinated_time_point_analysis, name = current_name, test = "Wald", 
+                             alpha = 0.05, lfcThreshold = 0.1)
+  current_results <- current_results[order(current_results$padj),]
+  current_results <- subset(current_results, padj < 0.05)
+  period_1_vaccinated_wald_tests[[index]] <- current_results
+  index <- index + 1
+}
+# We see 8226 in Day 2 vs Day -1, 0 in Day 8 vs Day -1, and 6 in Day 28 vs Day -1
+# This confirms what we saw in the heatmap - significant genes are found in Day 2 only
+
+
+
+
+###
+# Next, since we have more samples for Day -1 and Day 8, let's do a Wald test 
+# between the samples in those categories to see if we pick up any differences
+# Find subject(s) to exclude (at least one subject doesn't have both 1_D8 and 1_D_minus_1 for some reason)
+excluded_subjects <- setdiff(vaccinated_metadata[vaccinated_metadata$time_point == "1_D_minus_1",]$subject_id, vaccinated_metadata[vaccinated_metadata$time_point == "1_D8",]$subject_id)
+period_1_vaccinated_more_samples_metadata <- vaccinated_metadata[vaccinated_metadata$period == 1,]
+period_1_vaccinated_more_samples_metadata <- period_1_vaccinated_more_samples_metadata[(period_1_vaccinated_more_samples_metadata$time_point == "1_D_minus_1" | 
+                                                                                          period_1_vaccinated_more_samples_metadata$time_point == "1_D8"),]
+period_1_vaccinated_more_samples_metadata <- subset(period_1_vaccinated_more_samples_metadata,!(subject_id==excluded_subjects))
+# Try removing everyone but white
+#period_1_vaccinated_more_samples_metadata <- period_1_vaccinated_more_samples_metadata[period_1_vaccinated_more_samples_metadata$race == "WHITE",]
+period_1_vaccinated_more_samples_counts <- vaccinated_counts[rownames(period_1_vaccinated_more_samples_metadata)]
+period_1_vaccinated_more_samples_metadata$time_point <- as.factor(period_1_vaccinated_more_samples_metadata$time_point)
+levels(period_1_vaccinated_more_samples_metadata$time_point) <- period_1_more_vaccination_data_factors
+period_1_vaccinated_more_samples_metadata$sex <- as.factor(period_1_vaccinated_more_samples_metadata$sex)
+period_1_vaccinated_more_samples_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_1_vaccinated_more_samples_counts,
+                                                   colData = period_1_vaccinated_more_samples_metadata,
+                                                   design = ~ time_point + sex)
+period_1_vaccinated_more_samples_time_point_analysis <- DESeq(period_1_vaccinated_more_samples_time_point_analysis)
+period_1_vaccinated_more_samples_time_point_analysis_results <- results(period_1_vaccinated_more_samples_time_point_analysis, contrast = c("time_point", "1_D8", "1_D_minus_1"), 
+                           alpha = 0.05, lfcThreshold = 0.1)
+period_1_vaccinated_more_samples_time_point_analysis_results <- period_1_vaccinated_more_samples_time_point_analysis_results[order(period_1_vaccinated_more_samples_time_point_analysis_results$padj),]
+period_1_vaccinated_more_samples_time_point_analysis_results <- subset(period_1_vaccinated_more_samples_time_point_analysis_results, padj < 0.05)
+# There are 1500 genes here when we have 0 in our analysis above. We have more power so we are picking up more genes.
+# However, how big is the effect size?Because we have more power? What does it mean?
+# I wonder if a randomly selected subset of 14 subjects will have 0?
+random_subjects <- sample(unique(period_1_vaccinated_more_samples_metadata$subject_id), 14)
+period_1_vaccinated_more_samples_subset_metadata <- subset(period_1_vaccinated_more_samples_metadata,subject_id %in% random_subjects)
+period_1_vaccinated_more_samples_subset_metadata$time_point <- as.factor(period_1_vaccinated_more_samples_subset_metadata$time_point)
+period_1_vaccinated_more_samples_subset_counts <- vaccinated_counts[rownames(period_1_vaccinated_more_samples_subset_metadata)]
+levels(period_1_vaccinated_more_samples_subset_metadata$time_point) <- period_1_more_vaccination_data_factors
+period_1_vaccinated_more_samples_subset_metadata$sex <- as.factor(period_1_vaccinated_more_samples_subset_metadata$sex)
+period_1_vaccinated_more_samples_subset_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_1_vaccinated_more_samples_subset_counts,
+                                                                               colData = period_1_vaccinated_more_samples_subset_metadata,
+                                                                               design = ~ time_point + sex)
+period_1_vaccinated_more_samples_subset_time_point_analysis <- DESeq(period_1_vaccinated_more_samples_subset_time_point_analysis)
+period_1_vaccinated_more_samples_subset_time_point_analysis_results <- results(period_1_vaccinated_more_samples_subset_time_point_analysis, contrast = c("time_point", "1_D8", "1_D_minus_1"), 
+                                                                        alpha = 0.05)
+period_1_vaccinated_more_samples_subset_time_point_analysis_results <- period_1_vaccinated_more_samples_subset_time_point_analysis_results[order(period_1_vaccinated_more_samples_subset_time_point_analysis_results$padj),]
+period_1_vaccinated_more_samples_subset_time_point_analysis_results <- subset(period_1_vaccinated_more_samples_subset_time_point_analysis_results, padj < 0.05)
+# Only 11 genes, so that's the answer. We have more power with more samples
 
 ########### PLACEBO ########### 
 ##### ALL 10 TIMEPOINTS (PERIOD 1, PERIOD 2, BOTH PERIODS) #####
@@ -111,7 +179,6 @@ period_1_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_1_plac
 period_1_time_point_analysis <- DESeq(period_1_time_point_analysis, test="LRT", reduced = ~ sex)
 period_1_time_point_analysis_results <- results(period_1_time_point_analysis, alpha = 0.05)
 period_1_time_point_analysis_results <- period_1_time_point_analysis_results[order(period_1_time_point_analysis_results$padj),]
-# Note that log2FoldChange is not part of LRT, so we should just ignore it
 period_1_time_point_analysis_results <- subset(period_1_time_point_analysis_results, padj < 0.05)
 # PERIOD 2
 # Only keep period 2 metadata and placebo_counts
@@ -128,7 +195,6 @@ period_2_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_2_plac
 period_2_time_point_analysis <- DESeq(period_2_time_point_analysis, test="LRT", reduced = ~ sex)
 period_2_time_point_analysis_results <- results(period_2_time_point_analysis, alpha = 0.05)
 period_2_time_point_analysis_results <- period_2_time_point_analysis_results[order(period_2_time_point_analysis_results$padj),]
-# Note that log2FoldChange is not part of LRT, so we should just ignore it
 period_2_time_point_analysis_results <- subset(period_2_time_point_analysis_results, padj < 0.05)
 # PERIOD 2 MINUS 2 D-2
 # Because 2 D-2 and 2 D-1 are quite different, for now, let's just use 2 D-1 for Period 2 analysis
@@ -147,7 +213,6 @@ period_2_without_2_D_minus_2_time_point_analysis <- DESeqDataSetFromMatrix(count
 period_2_without_2_D_minus_2_time_point_analysis <- DESeq(period_2_without_2_D_minus_2_time_point_analysis, test="LRT", reduced = ~ sex)
 period_2_without_2_D_minus_2_time_point_analysis_results <- results(period_2_without_2_D_minus_2_time_point_analysis, alpha = 0.05)
 period_2_without_2_D_minus_2_time_point_analysis_results <- period_2_without_2_D_minus_2_time_point_analysis_results[order(period_2_without_2_D_minus_2_time_point_analysis_results$padj),]
-# Note that log2FoldChange is not part of LRT, so we should just ignore it
 period_2_without_2_D_minus_2_time_point_analysis_results <- subset(period_2_without_2_D_minus_2_time_point_analysis_results, padj < 0.05)
 # Create heatmap
 betas <- coef(period_2_without_2_D_minus_2_time_point_analysis)
@@ -172,7 +237,6 @@ time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_placebo_coun
 time_point_analysis <- DESeq(time_point_analysis, test="LRT", reduced=~sex)
 time_point_analysis_results <- results(time_point_analysis, alpha = 0.05)
 time_point_analysis_results <- time_point_analysis_results[order(time_point_analysis_results$padj),]
-# Note that log2FoldChange is not part of LRT, so we should just ignore it
 time_point_analysis_results <- subset(time_point_analysis_results, padj < 0.05)
 # WALD (PAIRWISE) TESTS
 wald_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_placebo_counts,
@@ -225,7 +289,6 @@ period_2_more_data_time_point_analysis <- DESeqDataSetFromMatrix(countData = per
 period_2_more_data_time_point_analysis <- DESeq(period_2_more_data_time_point_analysis, test="LRT", reduced=~sex)
 period_2_more_data_time_point_analysis_results <- results(period_2_more_data_time_point_analysis, alpha = 0.05)
 period_2_more_data_time_point_analysis_results <- period_2_more_data_time_point_analysis_results[order(period_2_more_data_time_point_analysis_results$padj),]
-# Note that log2FoldChange is not part of LRT, so we should just ignore it
 period_2_more_data_time_point_analysis_results <- subset(period_2_more_data_time_point_analysis_results, padj < 0.05)
 # Let's compare this result to 23 profiles for same time points and see whether we get more data than overall period 2 analysis
 period_2_subset_placebo_metadata <- period_2_placebo_metadata[(period_2_placebo_metadata$time_point == "2_D_minus_1" | 
@@ -244,6 +307,5 @@ period_2_subset_time_point_analysis <- DESeqDataSetFromMatrix(countData = period
 period_2_subset_time_point_analysis <- DESeq(period_2_subset_time_point_analysis, test="LRT", reduced=~sex)
 period_2_subset_time_point_analysis_results <- results(period_2_subset_time_point_analysis, alpha = 0.05)
 period_2_subset_time_point_analysis_results <- period_2_subset_time_point_analysis_results[order(period_2_subset_time_point_analysis_results$padj),]
-# Note that log2FoldChange is not part of LRT, so we should just ignore it
 period_2_subset_time_point_analysis_results <- subset(period_2_subset_time_point_analysis_results, padj < 0.05)
 
