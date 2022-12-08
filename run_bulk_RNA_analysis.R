@@ -4,9 +4,9 @@ library(pheatmap)
 
 ##### SETUP #####
 # Read in count and metadata files
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-data_dir <- "C:/Users/wat2/Documents/local_data_files/"
+data_dir <- "C:/Users/willi/Documents/local_data_files/"
 counts <- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
 all_metadata_file <- paste0(base_dir, "all_metadata_sheet.tsv")
 all_metadata <- read.table(all_metadata_file, header = TRUE, sep = "\t")
@@ -225,6 +225,27 @@ mat[mat > thr] <- thr
 colnames(mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
 pheatmap(mat, breaks=seq(from=-thr, to=thr, length=101),
          cluster_col=FALSE, fontsize_col=14)
+period_2_without_2_D_minus_2_sig_genes <- rownames(period_2_without_2_D_minus_2_time_point_analysis_results)
+period_2_without_2_D_minus_2_sig_genes_fcs <- betas[period_2_without_2_D_minus_2_sig_genes, -c(1, 6)]
+# D28
+period_2_without_2_D_minus_2_sig_genes_fcs_D28 <- period_2_without_2_D_minus_2_sig_genes_fcs[,4]
+period_2_without_2_D_minus_2_sig_genes_fcs_D28 <- period_2_without_2_D_minus_2_sig_genes_fcs_D28[period_2_without_2_D_minus_2_sig_genes_fcs_D28 <= -1 | period_2_without_2_D_minus_2_sig_genes_fcs_D28 >= 1]
+D28_gene_ontology_genes <- names(period_2_without_2_D_minus_2_sig_genes_fcs_D28)
+# D8
+period_2_without_2_D_minus_2_sig_genes_fcs_D8 <- period_2_without_2_D_minus_2_sig_genes_fcs[,3]
+period_2_without_2_D_minus_2_sig_genes_fcs_D8 <- period_2_without_2_D_minus_2_sig_genes_fcs_D8[period_2_without_2_D_minus_2_sig_genes_fcs_D8 <= -1 | period_2_without_2_D_minus_2_sig_genes_fcs_D8 >= 1]
+D8_gene_ontology_genes <- names(period_2_without_2_D_minus_2_sig_genes_fcs_D8)
+# Plot heatmap with top 200 genes (and clean up heatmap plot by removing row names and clustering)
+topGenes <- head(order(period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting$padj),200)
+mat <- betas[topGenes, -c(1, 6)]
+colnames(mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+thr <- 3 
+mat[mat < -thr] <- -thr
+mat[mat > thr] <- thr
+pheatmap(mat, breaks=seq(from=-thr, to=thr, length=101),
+         cluster_col=FALSE, fontsize_col=14, show_rownames = FALSE, cluster_row = FALSE)
+
+
 # BOTH PERIODS (ALL TIME POINTS)
 # Factorize time point (with associated factor levels) and sex
 full_time_placebo_metadata$time_point <- as.factor(full_time_placebo_metadata$time_point)
