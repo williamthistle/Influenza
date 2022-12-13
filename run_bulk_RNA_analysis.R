@@ -33,6 +33,9 @@ vaccinated_counts <- counts[kept_aliquots]
 kept_aliquots <- placebo_metadata$aliquot_id
 placebo_counts <- counts[kept_aliquots]
 # Sort columns in counts and rows for each so they're in same order (for DESeq2)
+colnames(counts) <- sort(colnames(counts))
+rownames(all_metadata) <- all_metadata$aliquot_id
+rownames(all_metadata) <- sort(rownames(all_metadata))
 colnames(vaccinated_counts) <- sort(colnames(vaccinated_counts))
 rownames(vaccinated_metadata) <- vaccinated_metadata$aliquot_id
 rownames(vaccinated_metadata) <- sort(rownames(vaccinated_metadata))
@@ -40,9 +43,11 @@ colnames(placebo_counts) <- sort(colnames(placebo_counts))
 rownames(placebo_metadata) <- placebo_metadata$aliquot_id
 rownames(placebo_metadata) <- sort(rownames(placebo_metadata))
 # Drop aliquot ID column (it's stored in rownames)
+all_metadata <- subset(all_metadata, select = -c(aliquot_id))
 vaccinated_metadata = subset(vaccinated_metadata, select = -c(aliquot_id))
 placebo_metadata = subset(placebo_metadata, select = -c(aliquot_id))
 # Probably OK to round expected counts from RSEM data. DESeq2 expects integers
+counts <- round(counts)
 vaccinated_counts <- round(vaccinated_counts)
 placebo_counts <- round(placebo_counts)
 # Currently not filtering sex associated genes
@@ -215,35 +220,34 @@ period_2_without_2_D_minus_2_time_point_analysis_results <- results(period_2_wit
 period_2_without_2_D_minus_2_time_point_analysis_results <- period_2_without_2_D_minus_2_time_point_analysis_results[order(period_2_without_2_D_minus_2_time_point_analysis_results$padj),]
 period_2_without_2_D_minus_2_time_point_analysis_results <- subset(period_2_without_2_D_minus_2_time_point_analysis_results, padj < 0.05)
 # Create heatmap
-betas <- coef(period_2_without_2_D_minus_2_time_point_analysis)
+period_2_without_2_D_minus_2_time_point_analysis_betas <- coef(period_2_without_2_D_minus_2_time_point_analysis)
 period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting <- results(period_2_without_2_D_minus_2_time_point_analysis, alpha = 0.05)
-topGenes <- head(order(period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting$padj),20)
-mat <- betas[topGenes, -c(1, 6)]
-thr <- 3 
-mat[mat < -thr] <- -thr
-mat[mat > thr] <- thr
-colnames(mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
-pheatmap(mat, breaks=seq(from=-thr, to=thr, length=101),
-         cluster_col=FALSE, fontsize_col=14)
+period_2_without_2_D_minus_2_time_point_analysis_20_topGenes <- head(order(period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting$padj),20)
+period_2_without_2_D_minus_2_time_point_analysis_20_mat <- period_2_without_2_D_minus_2_time_point_analysis_betas[period_2_without_2_D_minus_2_time_point_analysis_20_topGenes, -c(1, 6)]
+period_2_without_2_D_minus_2_time_point_analysis_thr <- 3 
+period_2_without_2_D_minus_2_time_point_analysis_20_mat[period_2_without_2_D_minus_2_time_point_analysis_20_mat < -period_2_without_2_D_minus_2_time_point_analysis_thr] <- -period_2_without_2_D_minus_2_time_point_analysis_thr
+period_2_without_2_D_minus_2_time_point_analysis_20_mat[period_2_without_2_D_minus_2_time_point_analysis_20_mat > period_2_without_2_D_minus_2_time_point_analysis_thr] <- period_2_without_2_D_minus_2_time_point_analysis_thr
+colnames(period_2_without_2_D_minus_2_time_point_analysis_20_mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+pheatmap(period_2_without_2_D_minus_2_time_point_analysis_20_mat, breaks=seq(from=-period_2_without_2_D_minus_2_time_point_analysis_thr, to=period_2_without_2_D_minus_2_time_point_analysis_thr, length=101),
+         cluster_col=FALSE, fontsize_col=14, filename = paste0(data_dir, "period_2_without_2_D_minus_2_time_point_analysis_top_20_genes.png"))
 period_2_without_2_D_minus_2_sig_genes <- rownames(period_2_without_2_D_minus_2_time_point_analysis_results)
-period_2_without_2_D_minus_2_sig_genes_fcs <- betas[period_2_without_2_D_minus_2_sig_genes, -c(1, 6)]
+period_2_without_2_D_minus_2_sig_genes_fcs <- period_2_without_2_D_minus_2_time_point_analysis_betas[period_2_without_2_D_minus_2_sig_genes, -c(1, 6)]
 # D28
 period_2_without_2_D_minus_2_sig_genes_fcs_D28 <- period_2_without_2_D_minus_2_sig_genes_fcs[,4]
 period_2_without_2_D_minus_2_sig_genes_fcs_D28 <- period_2_without_2_D_minus_2_sig_genes_fcs_D28[period_2_without_2_D_minus_2_sig_genes_fcs_D28 <= -1 | period_2_without_2_D_minus_2_sig_genes_fcs_D28 >= 1]
-D28_gene_ontology_genes <- names(period_2_without_2_D_minus_2_sig_genes_fcs_D28)
+period_2_without_2_D_minus_2_time_point_analysis_D28_gene_ontology_genes <- names(period_2_without_2_D_minus_2_sig_genes_fcs_D28)
 # D8
 period_2_without_2_D_minus_2_sig_genes_fcs_D8 <- period_2_without_2_D_minus_2_sig_genes_fcs[,3]
 period_2_without_2_D_minus_2_sig_genes_fcs_D8 <- period_2_without_2_D_minus_2_sig_genes_fcs_D8[period_2_without_2_D_minus_2_sig_genes_fcs_D8 <= -1 | period_2_without_2_D_minus_2_sig_genes_fcs_D8 >= 1]
-D8_gene_ontology_genes <- names(period_2_without_2_D_minus_2_sig_genes_fcs_D8)
+period_2_without_2_D_minus_2_time_point_analysis_D8_gene_ontology_genes <- names(period_2_without_2_D_minus_2_sig_genes_fcs_D8)
 # Plot heatmap with top 200 genes (and clean up heatmap plot by removing row names and clustering)
-topGenes <- head(order(period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting$padj),200)
-mat <- betas[topGenes, -c(1, 6)]
-colnames(mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
-thr <- 3 
-mat[mat < -thr] <- -thr
-mat[mat > thr] <- thr
-pheatmap(mat, breaks=seq(from=-thr, to=thr, length=101),
-         cluster_col=FALSE, fontsize_col=14, show_rownames = FALSE, cluster_row = FALSE)
+period_2_without_2_D_minus_2_time_point_analysis_200_topGenes <- head(order(period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting$padj),200)
+period_2_without_2_D_minus_2_time_point_analysis_200_mat <- period_2_without_2_D_minus_2_time_point_analysis_betas[period_2_without_2_D_minus_2_time_point_analysis_200_topGenes, -c(1, 6)]
+colnames(period_2_without_2_D_minus_2_time_point_analysis_200_mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+period_2_without_2_D_minus_2_time_point_analysis_200_mat[period_2_without_2_D_minus_2_time_point_analysis_200_mat < -period_2_without_2_D_minus_2_time_point_analysis_thr] <- -period_2_without_2_D_minus_2_time_point_analysis_thr
+period_2_without_2_D_minus_2_time_point_analysis_200_mat[period_2_without_2_D_minus_2_time_point_analysis_200_mat > period_2_without_2_D_minus_2_time_point_analysis_thr] <- period_2_without_2_D_minus_2_time_point_analysis_thr
+pheatmap(period_2_without_2_D_minus_2_time_point_analysis_200_mat, breaks=seq(from=-period_2_without_2_D_minus_2_time_point_analysis_thr, to=period_2_without_2_D_minus_2_time_point_analysis_thr, length=101),
+         cluster_col=FALSE, fontsize_col=14, show_rownames = FALSE, cluster_row = FALSE, filename = paste0(data_dir, "period_2_without_2_D_minus_2_time_point_analysis_top_200_genes.png"))
 
 
 # BOTH PERIODS (ALL TIME POINTS)
@@ -329,4 +333,36 @@ period_2_subset_time_point_analysis <- DESeq(period_2_subset_time_point_analysis
 period_2_subset_time_point_analysis_results <- results(period_2_subset_time_point_analysis, alpha = 0.05)
 period_2_subset_time_point_analysis_results <- period_2_subset_time_point_analysis_results[order(period_2_subset_time_point_analysis_results$padj),]
 period_2_subset_time_point_analysis_results <- subset(period_2_subset_time_point_analysis_results, padj < 0.05)
+
+# VACCINATED + PLACEBO TIME SERIES ANALYSIS - is there interaction between vaccination status and time point?
+full_time_all_metadata <- all_metadata[all_metadata$subject_id 
+                                           %in% names(table(all_metadata$subject_id)
+                                                      [table(all_metadata$subject_id) == 10]),]
+full_time_all_counts <- counts[rownames(full_time_all_metadata)]
+full_time_all_metadata$time_point <- as.factor(full_time_all_metadata$time_point)
+levels(full_time_all_metadata$time_point) <- all_factors
+full_time_all_metadata$sex <- as.factor(full_time_all_metadata$sex)
+full_time_all_metadata$treatment <- as.factor(full_time_all_metadata$treatment)
+# Run DESeq2 analysis
+all_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_all_counts,
+                                              colData = full_time_all_metadata,
+                                              design = ~ time_point + sex + treatment + time_point:treatment)
+all_time_point_analysis <- DESeq(all_time_point_analysis, test="LRT", reduced= ~ time_point + sex + treatment)
+all_time_point_analysis_results <- results(all_time_point_analysis, alpha = 0.05)
+all_time_point_analysis_results <- all_time_point_analysis_results[order(all_time_point_analysis_results$padj),]
+all_time_point_analysis_results <- subset(all_time_point_analysis_results, padj < 0.05)
+all_betas <- coef(all_time_point_analysis)
+all_time_point_analysis_results_for_plotting <- results(all_time_point_analysis, alpha = 0.05)
+all_topGenes <- head(order(all_time_point_analysis_results_for_plotting$padj),20)
+all_mat <- all_betas[all_topGenes, -c(1, 11, 12)]
+all_thr <- 3 
+all_mat[all_mat < -all_thr] <- -all_thr
+all_mat[all_mat > all_thr] <- all_thr
+colnames(all_mat) <- c("Day 2 vs Day -1 (P1)", "Day 8 vs Day -1 (P1)", "Day 28 vs Day -1 (P1)", "Day -2 (P2) vs Day -1 (P1)", "Day -1 (P2) vs Day -1 (P1)", 
+                       "Day 2 (P2) vs Day -1 (P1)", "Day 5 (P2) vs Day -1 (P1)", "Day 8 (P2) vs Day -1 (P1)", "Day 28 (P2) vs Day -1 (P1)", 
+                       "P1D2", "P1D8", "P1D28", "P2D-2", "P2D-1", "P2D2", "P2D5", "P2D8", "P2D28")
+pheatmap(all_mat, breaks=seq(from=-all_thr, to=all_thr, length=101),
+         cluster_col=FALSE, fontsize_col=14, filename = paste0(data_dir, "all_time_point_analysis_top_20_genes.png"))
+
+
 
