@@ -363,6 +363,5 @@ colnames(all_mat) <- c("Day 2 vs Day -1 (P1)", "Day 8 vs Day -1 (P1)", "Day 28 v
                        "P1D2", "P1D8", "P1D28", "P2D-2", "P2D-1", "P2D2", "P2D5", "P2D8", "P2D28")
 pheatmap(all_mat, breaks=seq(from=-all_thr, to=all_thr, length=101),
          cluster_col=FALSE, fontsize_col=14, filename = paste0(data_dir, "all_time_point_analysis_top_20_genes.png"))
-
-
+save.image(paste0(data_dir, "bulk_RNA_obj.RData"))
 
