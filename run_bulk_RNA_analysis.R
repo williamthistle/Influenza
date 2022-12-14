@@ -4,9 +4,10 @@ library(pheatmap)
 
 ##### SETUP #####
 # Read in count and metadata files
-base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-data_dir <- "C:/Users/willi/Documents/local_data_files/"
+data_dir <- "C:/Users/wat2/Documents/local_data_files/"
+load(paste0(data_dir, "bulk_RNA_obj.RData"))
 counts <- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
 all_metadata_file <- paste0(base_dir, "all_metadata_sheet.tsv")
 all_metadata <- read.table(all_metadata_file, header = TRUE, sep = "\t")
@@ -89,12 +90,12 @@ period_1_vaccinated_betas <- coef(period_1_vaccinated_time_point_analysis)
 period_1_vaccinated_time_point_analysis_results_for_plotting <- results(period_1_vaccinated_time_point_analysis, alpha = 0.05)
 period_1_vaccinated_topGenes <- head(order(period_1_vaccinated_time_point_analysis_results_for_plotting$padj),20)
 period_1_vaccinated_mat <- period_1_vaccinated_betas[period_1_vaccinated_topGenes, -c(1, 5)]
-period_1_vaccinated_thr <- 3 
+period_1_vaccinated_thr <- 6 
 period_1_vaccinated_mat[period_1_vaccinated_mat < -period_1_vaccinated_thr] <- -period_1_vaccinated_thr
 period_1_vaccinated_mat[period_1_vaccinated_mat > period_1_vaccinated_thr] <- period_1_vaccinated_thr
 colnames(period_1_vaccinated_mat) <- c("Day 2 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
 pheatmap(period_1_vaccinated_mat, breaks=seq(from=-period_1_vaccinated_thr, to=period_1_vaccinated_thr, length=101),
-         cluster_col=FALSE, fontsize_col=14)
+         cluster_col=FALSE, fontsize_col=14, filename = paste0(data_dir, "period_1_time_point_analysis_vaccinated_top_20_genes.png"))
 # It looks like changes are heightened in Day 2 and may not persist
 # We can do Wald tests to get a better sense of how each day compares to our baseline (pairwise)
 period_1_vaccinated_wald_tests <- c()
@@ -104,7 +105,7 @@ period_1_vaccinated_wald_test_names <- period_1_vaccinated_wald_test_names[c(-1,
 index <- 1
 for (current_name in period_1_vaccinated_wald_test_names) {
   current_results <- results(period_1_vaccinated_time_point_analysis, name = current_name, test = "Wald", 
-                             alpha = 0.05, lfcThreshold = 0.1)
+                             alpha = 0.05, lfcThreshold = 1)
   current_results <- current_results[order(current_results$padj),]
   current_results <- subset(current_results, padj < 0.05)
   period_1_vaccinated_wald_tests[[index]] <- current_results
@@ -219,6 +220,20 @@ period_2_without_2_D_minus_2_time_point_analysis <- DESeq(period_2_without_2_D_m
 period_2_without_2_D_minus_2_time_point_analysis_results <- results(period_2_without_2_D_minus_2_time_point_analysis, alpha = 0.05)
 period_2_without_2_D_minus_2_time_point_analysis_results <- period_2_without_2_D_minus_2_time_point_analysis_results[order(period_2_without_2_D_minus_2_time_point_analysis_results$padj),]
 period_2_without_2_D_minus_2_time_point_analysis_results <- subset(period_2_without_2_D_minus_2_time_point_analysis_results, padj < 0.05)
+# Run Wald tests
+period_2_without_2_D_minus_2_placebo_tests <- c()
+period_2_without_2_D_minus_2_placebo_wald_test_names <- resultsNames(period_2_without_2_D_minus_2_time_point_analysis)
+period_2_without_2_D_minus_2_placebo_wald_test_names <- period_2_without_2_D_minus_2_placebo_wald_test_names[c(-1, -length(period_2_without_2_D_minus_2_placebo_wald_test_names))]
+index <- 1
+for (current_name in period_2_without_2_D_minus_2_placebo_wald_test_names) {
+  current_results <- results(period_2_without_2_D_minus_2_time_point_analysis, name = current_name, test = "Wald", 
+                             alpha = 0.05, lfcThreshold = 1)
+  current_results <- current_results[order(current_results$padj),]
+  current_results <- subset(current_results, padj < 0.05)
+  period_2_without_2_D_minus_2_placebo_tests[[index]] <- current_results
+  index <- index + 1
+}
+
 # Create heatmap
 period_2_without_2_D_minus_2_time_point_analysis_betas <- coef(period_2_without_2_D_minus_2_time_point_analysis)
 period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting <- results(period_2_without_2_D_minus_2_time_point_analysis, alpha = 0.05)
@@ -358,10 +373,29 @@ all_mat <- all_betas[all_topGenes, -c(1, 11, 12)]
 all_thr <- 3 
 all_mat[all_mat < -all_thr] <- -all_thr
 all_mat[all_mat > all_thr] <- all_thr
-colnames(all_mat) <- c("Day 2 vs Day -1 (P1)", "Day 8 vs Day -1 (P1)", "Day 28 vs Day -1 (P1)", "Day -2 (P2) vs Day -1 (P1)", "Day -1 (P2) vs Day -1 (P1)", 
-                       "Day 2 (P2) vs Day -1 (P1)", "Day 5 (P2) vs Day -1 (P1)", "Day 8 (P2) vs Day -1 (P1)", "Day 28 (P2) vs Day -1 (P1)", 
-                       "P1D2", "P1D8", "P1D28", "P2D-2", "P2D-1", "P2D2", "P2D5", "P2D8", "P2D28")
+colnames(all_mat) <- c("Pl Day 2 (P1)", "Pl Day 8 (P1)", "Pl Day 28 (P1)", "Pl Day -2 (P2)", "Pl Day -1 (P2)", 
+                       "Pl Day 2 (P2)", "Pl Day 5 (P2)", "Pl Day 8 (P2)", "Pl Day 28 (P2)", 
+                       "V Day 2 (P1)", "V Day 8 (P1)", "V Day 28 (P1)", "V Day -2 (P2)", "V Day -1 (P2)", 
+                       "V Day 2 (P2)", "V Day 5 (P2)", "V Day 8 (P2)", "V Day 28 (P2)")
 pheatmap(all_mat, breaks=seq(from=-all_thr, to=all_thr, length=101),
          cluster_col=FALSE, fontsize_col=14, filename = paste0(data_dir, "all_time_point_analysis_top_20_genes.png"))
-save.image(paste0(data_dir, "bulk_RNA_obj.RData"))
+# Shuffle treatment to see whether we get the same number of DEGs with randomly assigned vaccinated and placebo subjects
+shuffled_metadata <- full_time_all_metadata
+treatment_shuffled_vector <- shuffled_metadata$treatment
+treatment_shuffled_vector <- table(treatment_shuffled_vector)
+treatment_shuffled_vector <- c(rep("MVA-NP+M1", treatment_shuffled_vector["MVA-NP+M1"] / 10), rep("PLACEBO", treatment_shuffled_vector["PLACEBO"] / 10))
+treatment_shuffled_vector <- sample(treatment_shuffled_vector)
+treatment_shuffled_vector <- rep(treatment_shuffled_vector, each = 10)
+shuffled_metadata$treatment <- treatment_shuffled_vector
+shuffled_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_all_counts,
+                                                  colData = shuffled_metadata,
+                                                  design = ~ time_point + sex + treatment + time_point:treatment)
+shuffled_time_point_analysis <- DESeq(shuffled_time_point_analysis, test="LRT", reduced= ~ time_point + sex + treatment)
+shuffled_time_point_analysis_results <- results(shuffled_time_point_analysis, alpha = 0.05)
+shuffled_time_point_analysis_results <- shuffled_time_point_analysis_results[order(shuffled_time_point_analysis_results$padj),]
+shuffled_time_point_analysis_results <- subset(shuffled_time_point_analysis_results, padj < 0.05)
+
+
+
+#save.image(paste0(data_dir, "bulk_RNA_obj.RData"))
 
