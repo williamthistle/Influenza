@@ -132,6 +132,8 @@ period_1_vaccinated_more_samples_time_point_analysis_results <- results(period_1
 period_1_vaccinated_more_samples_time_point_analysis_results <- period_1_vaccinated_more_samples_time_point_analysis_results[order(period_1_vaccinated_more_samples_time_point_analysis_results$padj),]
 period_1_vaccinated_more_samples_time_point_analysis_results <- subset(period_1_vaccinated_more_samples_time_point_analysis_results, padj < 0.05)
 # Why do we only get 1 gene here (1546 without LFC threshold) when our analysis above has 194 with much larger effect size?
+# I should run this exact same analysis with LRT followed by Wald test to see if results are the exact same
+
 # Test randomly selected subset of 14 subjects to compare to above analysis
 random_subjects <- sample(unique(period_1_vaccinated_more_samples_metadata$subject_id), 14)
 period_1_vaccinated_more_samples_subset_metadata <- subset(period_1_vaccinated_more_samples_metadata,subject_id %in% random_subjects)
