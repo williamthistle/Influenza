@@ -46,8 +46,8 @@ overall_metadata <- read.csv(overall_metadata_file)
 all_metadata_sheet_df <- data.frame(aliquot_id = character(), subject_id = character(), scRNA_seq = character(),
                                       scATAC_seq = character(), multiome = character(), bulkRNA_seq = character(),
                                       has_metadata = character(), specimen_prep = character(), treatment = character(), 
-                                      period = character(), time_point = character(), sex = character(), race = character(), 
-                                      passed_qc_scRNA_seq = character(), passed_qc_multiome = character())
+                                      period = character(), time_point = character(), sex = character(), age = character(), 
+                                      race = character(), passed_qc_scRNA_seq = character(), passed_qc_multiome = character())
 for(scRNA_entry in scRNA_data) {
   # Add aliquot ID to current row
   current_row <- c()
@@ -72,10 +72,12 @@ for(scRNA_entry in scRNA_data) {
     current_row <- append(current_row, current_sample$Period)
     current_row <- append(current_row, current_sample$Time_Point)
     current_row <- append(current_row, current_sample$SEX)
+    current_row <- append(current_row, current_sample$AGE)
     current_row <- append(current_row, current_sample$RACE)
   } else {
     current_row <- append(current_row, FALSE)
     current_row <- append(current_row, "N/A")   
+    current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
@@ -122,9 +124,11 @@ for(scATAC_entry in scATAC_data) {
       current_row <- append(current_row, current_sample$Period)
       current_row <- append(current_row, current_sample$Time_Point)
       current_row <- append(current_row, current_sample$SEX)
+      current_row <- append(current_row, current_sample$AGE)
       current_row <- append(current_row, current_sample$RACE)
     } else {
       current_row <- append(current_row, FALSE)
+      current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
@@ -171,9 +175,11 @@ for(multiome_entry in multiome_data) {
       current_row <- append(current_row, current_sample$Period)
       current_row <- append(current_row, current_sample$Time_Point)
       current_row <- append(current_row, current_sample$SEX)
+      current_row <- append(current_row, current_sample$AGE)
       current_row <- append(current_row, current_sample$RACE)
     } else {
       current_row <- append(current_row, FALSE)
+      current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
@@ -222,9 +228,11 @@ for(bulkRNA_entry in bulkRNA_data) {
       current_row <- append(current_row, current_sample$Period)
       current_row <- append(current_row, current_sample$Time_Point)
       current_row <- append(current_row, current_sample$SEX)
+      current_row <- append(current_row, current_sample$AGE)
       current_row <- append(current_row, current_sample$RACE)
     } else {
       current_row <- append(current_row, FALSE)
+      current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
       current_row <- append(current_row, "N/A")
@@ -238,6 +246,21 @@ for(bulkRNA_entry in bulkRNA_data) {
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
 }
+
+# Convert age to different categories
+# 1: 18-27
+# 2: 28-37
+# 3: 38-47
+# 4: 48-57
+all_metadata_sheet_df$age <- as.numeric(all_metadata_sheet_df$age)
+all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 18 & all_metadata_sheet_df$age <= 27 & !is.na(all_metadata_sheet_df$age)] <- 1
+all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 28 & all_metadata_sheet_df$age <= 37 & !is.na(all_metadata_sheet_df$age)] <- 2
+all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 38 & all_metadata_sheet_df$age <= 47 & !is.na(all_metadata_sheet_df$age)] <- 3
+all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 48 & all_metadata_sheet_df$age <= 57 & !is.na(all_metadata_sheet_df$age)] <- 4
+
+
+
+
 
 # Write complete metadata DF to file
 all_metadata_sheet_df <- all_metadata_sheet_df[order(all_metadata_sheet_df$subject_id),]
