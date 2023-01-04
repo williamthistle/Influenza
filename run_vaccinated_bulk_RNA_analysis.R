@@ -4,9 +4,9 @@ library(pheatmap)
 
 ##### SETUP #####
 # Read in count and metadata files
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-data_dir <- "C:/Users/wat2/Documents/local_data_files/"
+data_dir <- "C:/Users/willi/Documents/local_data_files/"
 #load(paste0(data_dir, "bulk_RNA_obj.RData"))
 counts <- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
 all_metadata_file <- paste0(base_dir, "all_metadata_sheet.tsv")
@@ -59,6 +59,24 @@ full_time_vaccinated_metadata <- vaccinated_metadata[vaccinated_metadata$subject
                                                %in% names(table(vaccinated_metadata$subject_id)
                                                           [table(vaccinated_metadata$subject_id) == 10]),]
 full_time_vaccinated_counts <- vaccinated_counts[rownames(full_time_vaccinated_metadata)]
+# Label each patient as low or high viral load?
+full_time_vaccinated_metadata$time_point <- as.factor(full_time_vaccinated_metadata$time_point)
+levels(full_time_vaccinated_metadata$time_point) <- all_factors
+full_time_vaccinated_metadata$sex <- as.factor(full_time_vaccinated_metadata$sex)
+full_time_vaccinated_metadata$age <- as.factor(full_time_vaccinated_metadata$age)
+full_time_vaccinated_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_vaccinated_counts,
+                                                                  colData = full_time_vaccinated_metadata,
+                                                                  design = ~ time_point + sex + age)
+pca_vst <- vst(full_time_vaccinated_time_point_analysis)
+# Clearly, we have two groups via PC2 (high and load viral load?)
+plotPCA(pca_vst, intgroup = c("time_point"))
+pca_vst_nums <- assay(pca_vst)
+pcs <- prcomp(t(pca_vst_nums))
+pcs <- pcs$x
+pcs <- as.data.frame(pcs)
+
+
+
 # LRT TESTS
 # Period 1 (pre- and post-vaccination)
 # Only keep period 1 metadata and vaccinated_counts
@@ -74,9 +92,19 @@ period_1_vaccinated_time_point_analysis <- DESeqDataSetFromMatrix(countData = pe
                                                        colData = period_1_vaccinated_metadata,
                                                        design = ~ time_point + sex + age)
 period_1_vaccinated_time_point_analysis <- DESeq(period_1_vaccinated_time_point_analysis, test="LRT", reduced = ~ sex + age)
+# DEBUGGING
+period_1_vaccinated_time_point_analysis <- DESeq(period_1_vaccinated_time_point_analysis)
+period_1_vaccinated_time_point_analysis_results <- results(period_1_vaccinated_time_point_analysis, contrast = c("time_point", "1_D8", "1_D_minus_1"), 
+                                                                        alpha = 0.05, lfcThreshold = 1)
+period_1_vaccinated_time_point_analysis_results <- period_1_vaccinated_time_point_analysis_results[order(period_1_vaccinated_time_point_analysis_results$padj),]
+period_1_vaccinated_time_point_analysis_results <- subset(period_1_vaccinated_time_point_analysis_results, padj < 0.05)
+# DEBUGGING
 period_1_vaccinated_time_point_analysis_results <- results(period_1_vaccinated_time_point_analysis, alpha = 0.05)
 period_1_vaccinated_time_point_analysis_results <- period_1_vaccinated_time_point_analysis_results[order(period_1_vaccinated_time_point_analysis_results$padj),]
 period_1_vaccinated_time_point_analysis_results <- subset(period_1_vaccinated_time_point_analysis_results, padj < 0.05)
+#period_1_vaccinated_time_point_analysis_results <- results(period_1_vaccinated_time_point_analysis, contrast = c("time_point", "1_D8", "1_D_minus_1"), 
+#                                                           alpha = 0.05, lfcThreshold = 1)
+
 # There are a lot of changes! But do changes persist over time?
 # Let's create a heatmap to see!
 period_1_vaccinated_betas <- coef(period_1_vaccinated_time_point_analysis)
@@ -106,9 +134,6 @@ for (current_name in period_1_vaccinated_wald_test_names) {
 }
 # We see 750 in Day 2, 194 in Day 8, and 209 in Day 28
 # Note that without LFC threshold, we see 8458 in Day 2, 216 in Day 8, and 249 in Day 28
-
-
-
 ###
 # Next, since we have more samples for Day -1 and Day 8, let's do a Wald test 
 # between the samples in those categories to see if we pick up any differences
@@ -133,7 +158,19 @@ period_1_vaccinated_more_samples_time_point_analysis_results <- period_1_vaccina
 period_1_vaccinated_more_samples_time_point_analysis_results <- subset(period_1_vaccinated_more_samples_time_point_analysis_results, padj < 0.05)
 # Why do we only get 1 gene here (1546 without LFC threshold) when our analysis above has 194 with much larger effect size?
 # I should run this exact same analysis with LRT followed by Wald test to see if results are the exact same
-
+period_1_vaccinated_more_samples_time_point_analysis_LRT <- DESeqDataSetFromMatrix(countData = period_1_vaccinated_more_samples_counts,
+                                                                               colData = period_1_vaccinated_more_samples_metadata,
+                                                                               design = ~ time_point + sex + age)
+period_1_vaccinated_more_samples_time_point_analysis_LRT <- DESeq(period_1_vaccinated_more_samples_time_point_analysis_LRT, test = "LRT", reduced = ~ sex + age)
+period_1_vaccinated_more_samples_time_point_analysis_results_LRT <- results(period_1_vaccinated_more_samples_time_point_analysis_LRT, alpha = 0.05)
+period_1_vaccinated_more_samples_time_point_analysis_results_LRT <- period_1_vaccinated_more_samples_time_point_analysis_results_LRT[order(period_1_vaccinated_more_samples_time_point_analysis_results_LRT$padj),]
+period_1_vaccinated_more_samples_time_point_analysis_results_LRT <- subset(period_1_vaccinated_more_samples_time_point_analysis_results_LRT, padj < 0.05)
+current_results <- results(period_1_vaccinated_more_samples_time_point_analysis_LRT, name = "time_point_1_D8_vs_1_D_minus_1", test = "Wald", 
+                           alpha = 0.05, lfcThreshold = 1) # NOTE LFC THRESHOLD OF 1
+current_results <- current_results[order(current_results$padj),]
+current_results <- subset(current_results, padj < 0.05)
+# We still only get 1 gene (slightly different adjusted p-value, but whatever)
+# Let's try running LRT + Wald Test on D8 vs D-1 for fewer samples dataset - we get 0 genes
 # Test randomly selected subset of 14 subjects to compare to above analysis
 random_subjects <- sample(unique(period_1_vaccinated_more_samples_metadata$subject_id), 14)
 period_1_vaccinated_more_samples_subset_metadata <- subset(period_1_vaccinated_more_samples_metadata,subject_id %in% random_subjects)
