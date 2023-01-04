@@ -59,6 +59,17 @@ full_time_placebo_metadata <- placebo_metadata[placebo_metadata$subject_id
                                                %in% names(table(placebo_metadata$subject_id)
                                                           [table(placebo_metadata$subject_id) == 10]),]
 full_time_placebo_counts <- placebo_counts[rownames(full_time_placebo_metadata)]
+# Label each patient as low or high viral load?
+full_time_placebo_metadata$time_point <- as.factor(full_time_placebo_metadata$time_point)
+levels(full_time_placebo_metadata$time_point) <- all_factors
+full_time_placebo_metadata$sex <- as.factor(full_time_placebo_metadata$sex)
+full_time_placebo_metadata$age <- as.factor(full_time_placebo_metadata$age)
+full_time_placebo_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_placebo_counts,
+                                                                   colData = full_time_placebo_metadata,
+                                                                   design = ~ time_point + sex + age)
+pca_vst <- vst(full_time_placebo_time_point_analysis)
+# Clearly, we have two groups via PC2 (high and load viral load?)
+plotPCA(pca_vst, intgroup = c("time_point"))
 # LRT TESTS
 # It may make sense to focus primarily on Period 2 (pre- and post challenge)
 # since nothing happens during Period 1 for placebo subjects (good check that our differential expression 

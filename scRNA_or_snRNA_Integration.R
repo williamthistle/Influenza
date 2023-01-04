@@ -36,6 +36,8 @@ if(assay_choice == "scRNA-seq") {
   output_dir <- paste0(project_dir, "snRNA_seq_data_output/")
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
 }
+image_dir <- paste0(output_dir, "images/")
+if (!dir.exists(image_dir)) {dir.create(image_dir)}
 sample_metadata <- read.table(paste0(project_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
 if (treatment_choice == "placebo") {
   sample_metadata <- subset(sample_metadata, treatment == "PLACEBO")
@@ -166,8 +168,6 @@ all.flu.unbias.obj <- SCTransform(all.flu.unbias.obj,
 all.flu.unbias.obj <- RunPCA(all.flu.unbias.obj, npcs = 50, approx = T, verbose = T)
 all.flu.unbias.obj <- RunUMAP(all.flu.unbias.obj, reduction = "pca", dims = 1:30)
 
-image_dir <- paste0(output_dir, "images/")
-if (!dir.exists(image_dir)) {dir.create(image_dir)}
 save.image(paste0(image_dir, "1_unbiased_pooled_obj.RData"))
 
 # Generate plots for batch detection
@@ -270,18 +270,18 @@ scRNA_ref <- scRNA_ref[,-idx]
 idx <- which(scRNA_ref$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
 scRNA_ref$celltype.l2[idx] <- "T Proliferating"
 # Add cell type predictions
-# Note that k.filter = NA skips filtering anchors stage - when this stage was in place,
-# virtually all T Naive (as classified later) cells were filtered out. Not sure if this is good or bad, but
-# for now we are going with bad.
+# Note that k.filter = NA skips filtering anchors stage - when this stage is in place,
+# virtually all T Naive (as classified later) cells were filtered out in scRNA-seq data.
 flu.anchors <- FindTransferAnchors(reference = scRNA_ref, query = flu.combined.sct,
-                                        dims = 1:30, reference.reduction = "pca", k.filter = NA)
+                                        dims = 1:30, reference.reduction = "pca")
 
 predictions <- TransferData(anchorset = flu.anchors, refdata = scRNA_ref$celltype.l2,
                             dims = 1:30)
 flu.combined.sct <- AddMetaData(flu.combined.sct, metadata = predictions)
 rm(scRNA_ref)
-
-save.image(paste0(image_dir, "integrated_obj_after_predictions.RData"))
+rm(flu.anchors)
+rm(plot_subset)
+save.image(paste0(image_dir, "5_integrated_obj_after_predictions.RData"))
 
 # Add cell names as column
 cell_names <- rownames(flu.combined.sct@meta.data)
