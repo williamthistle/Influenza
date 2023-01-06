@@ -4,9 +4,9 @@ library(pheatmap)
 
 ##### SETUP #####
 # Read in count and metadata files
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-data_dir <- "C:/Users/wat2/Documents/local_data_files/"
+data_dir <- "C:/Users/willi/Documents/local_data_files/"
 #load(paste0(data_dir, "bulk_RNA_obj.RData"))
 counts <- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
 all_metadata_file <- paste0(base_dir, "all_metadata_sheet.tsv")

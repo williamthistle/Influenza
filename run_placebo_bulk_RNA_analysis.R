@@ -4,9 +4,9 @@ library(pheatmap)
 
 ##### SETUP #####
 # Read in count and metadata files
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-data_dir <- "C:/Users/wat2/Documents/local_data_files/"
+data_dir <- "C:/Users/willi/Documents/local_data_files/"
 #load(paste0(data_dir, "placebo_bulk_RNA_obj.RData"))
 counts <- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
 all_metadata_file <- paste0(base_dir, "all_metadata_sheet.tsv")
@@ -64,10 +64,16 @@ full_time_placebo_metadata$time_point <- as.factor(full_time_placebo_metadata$ti
 levels(full_time_placebo_metadata$time_point) <- all_factors
 full_time_placebo_metadata$sex <- as.factor(full_time_placebo_metadata$sex)
 full_time_placebo_metadata$age <- as.factor(full_time_placebo_metadata$age)
+# DEBUGGING
+#full_time_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metadata$time_point == "2_D8" | full_time_placebo_metadata$time_point == "2_D_minus_1",]
+#full_time_placebo_counts <- placebo_counts[rownames(full_time_placebo_metadata)]
+# DEBUGGING
 full_time_placebo_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_placebo_counts,
                                                                    colData = full_time_placebo_metadata,
                                                                    design = ~ time_point + sex + age)
-pca_vst <- vst(full_time_placebo_time_point_analysis)
+
+
+pca_vst <- vst(full_time_placebo_time_point_analysis, blind = FALSE)
 # Clearly, we have two groups via PC2 (high and load viral load?)
 plotPCA(pca_vst, intgroup = c("time_point"))
 # LRT TESTS
