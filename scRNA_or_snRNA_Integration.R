@@ -349,7 +349,7 @@ cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score,
 
 
 # Remove the messy clusters
-idxPass <- which(Idents(flu.combined.sct) %in% c("3", "11"))
+idxPass <- which(Idents(flu.combined.sct) %in% c())
 cellsPass <- names(flu.combined.sct$orig.ident[-idxPass])
 flu.combined.sct.minus.clusters <- subset(x = flu.combined.sct, subset = cell_name %in% cellsPass)
 
