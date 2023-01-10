@@ -37,7 +37,7 @@ all_metadata$time_point[all_metadata$time_point == '2_D-1'] <- '2_D_minus_1'
 placebo_metadata <- all_metadata[all_metadata$treatment == "PLACEBO",]
 viral_load_vector <- c()
 for (subject_id in placebo_metadata$subject_id) {
-  if(subject_id %in% relevant_subjects) {
+  if(subject_id %in% high_viral_load_subjects) {
     viral_load_vector <- c(viral_load_vector, "HIGH")
   } else {
     viral_load_vector <- c(viral_load_vector, "LOW")
@@ -89,7 +89,7 @@ full_time_placebo_metadata$viral_load <- as.factor(full_time_placebo_metadata$vi
 # DEBUGGING
 full_time_placebo_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_placebo_counts,
                                                                    colData = full_time_placebo_metadata,
-                                                                   design = ~ time_point + sex + age + viral_load)
+                                                                   design = ~ time_point + sex + age)
 
 
 pca_vst <- vst(full_time_placebo_time_point_analysis, blind = FALSE)
@@ -105,14 +105,14 @@ period_1_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metada
 period_1_placebo_counts <- placebo_counts[rownames(period_1_placebo_metadata)]
 # Factorize time point (with associated factor levels) and sex
 period_1_placebo_metadata$time_point <- as.factor(period_1_placebo_metadata$time_point)
-levels(period_1_placebo_metadata$time_point) <- period_1_factors
+#levels(period_1_placebo_metadata$time_point) <- period_1_factors
 period_1_placebo_metadata$sex <- as.factor(period_1_placebo_metadata$sex)
 period_1_placebo_metadata$age <- as.factor(period_1_placebo_metadata$age)
 # Run DESeq2 analysis
 period_1_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_1_placebo_counts,
                               colData = period_1_placebo_metadata,
-                              design = ~ time_point + sex + age + viral_load)
-period_1_time_point_analysis <- DESeq(period_1_time_point_analysis, test="LRT", reduced = ~ sex + age + viral_load)
+                              design = ~ time_point + sex + age)
+period_1_time_point_analysis <- DESeq(period_1_time_point_analysis, test="LRT", reduced = ~ sex + age)
 period_1_time_point_analysis_results <- results(period_1_time_point_analysis, alpha = 0.05)
 period_1_time_point_analysis_results <- period_1_time_point_analysis_results[order(period_1_time_point_analysis_results$padj),]
 period_1_time_point_analysis_results <- subset(period_1_time_point_analysis_results, padj < 0.05)
@@ -122,14 +122,14 @@ period_2_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metada
 period_2_placebo_counts <- placebo_counts[rownames(period_2_placebo_metadata)]
 # Factorize time point (with associated factor levels) and sex
 period_2_placebo_metadata$time_point <- as.factor(period_2_placebo_metadata$time_point)
-levels(period_2_placebo_metadata$time_point) <- period_2_factors
+#levels(period_2_placebo_metadata$time_point) <- period_2_factors
 period_2_placebo_metadata$sex <- as.factor(period_2_placebo_metadata$sex)
 period_2_placebo_metadata$age <- as.factor(period_2_placebo_metadata$age)
 # Run DESeq2 analysis
 period_2_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_2_placebo_counts,
                                                        colData = period_2_placebo_metadata,
-                                                       design = ~ time_point + sex + age + viral_load)
-period_2_time_point_analysis <- DESeq(period_2_time_point_analysis, test="LRT", reduced = ~ sex + age + viral_load)
+                                                       design = ~ time_point + sex + age)
+period_2_time_point_analysis <- DESeq(period_2_time_point_analysis, test="LRT", reduced = ~ sex + age)
 period_2_time_point_analysis_results <- results(period_2_time_point_analysis, alpha = 0.05)
 period_2_time_point_analysis_results <- period_2_time_point_analysis_results[order(period_2_time_point_analysis_results$padj),]
 period_2_time_point_analysis_results <- subset(period_2_time_point_analysis_results, padj < 0.05)
@@ -141,7 +141,7 @@ period_2_without_2_D_minus_2_placebo_metadata <- period_2_without_2_D_minus_2_pl
 period_2_without_2_D_minus_2_placebo_counts <- placebo_counts[rownames(period_2_without_2_D_minus_2_placebo_metadata)]
 # Factorize time point (with associated factor levels) and sex
 period_2_without_2_D_minus_2_placebo_metadata$time_point <- as.factor(period_2_without_2_D_minus_2_placebo_metadata$time_point)
-levels(period_2_without_2_D_minus_2_placebo_metadata$time_point) <- period_2_without_2_D_minus_2_factors
+#levels(period_2_without_2_D_minus_2_placebo_metadata$time_point) <- period_2_without_2_D_minus_2_factors
 period_2_without_2_D_minus_2_placebo_metadata$sex <- as.factor(period_2_without_2_D_minus_2_placebo_metadata$sex)
 period_2_without_2_D_minus_2_placebo_metadata$age <- as.factor(period_2_without_2_D_minus_2_placebo_metadata$age)
 # Run DESeq2 analysis
@@ -149,6 +149,11 @@ period_2_without_2_D_minus_2_time_point_analysis <- DESeqDataSetFromMatrix(count
                                                        colData = period_2_without_2_D_minus_2_placebo_metadata,
                                                        design = ~ time_point + sex + age)
 period_2_without_2_D_minus_2_time_point_analysis <- DESeq(period_2_without_2_D_minus_2_time_point_analysis, test="LRT", reduced = ~ sex + age)
+
+
+
+
+
 period_2_without_2_D_minus_2_time_point_analysis_results <- results(period_2_without_2_D_minus_2_time_point_analysis, alpha = 0.05)
 period_2_without_2_D_minus_2_time_point_analysis_results <- period_2_without_2_D_minus_2_time_point_analysis_results[order(period_2_without_2_D_minus_2_time_point_analysis_results$padj),]
 period_2_without_2_D_minus_2_time_point_analysis_results <- subset(period_2_without_2_D_minus_2_time_point_analysis_results, padj < 0.05)
