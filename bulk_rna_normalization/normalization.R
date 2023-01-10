@@ -10,11 +10,11 @@ tscale=function(mat){
 }#tscale
 
 
-setwd("C:/Users/willi/Documents/GitHub/Influenza/bulk_rna_normalization")
+setwd("C:/Users/wat2/Documents/GitHub/Influenza/bulk_rna_normalization")
 source("normalizeDataHelper.R")
 genemap <- readRDS("genemap.RDS")
 gene <- readRDS("gene.RDS")
-setwd("C:/Users/willi/Documents/local_data_files/")
+setwd("C:/Users/wat2/Documents/local_data_files/")
 
 
 
@@ -201,7 +201,8 @@ data1.T <- myresid(data, techMod1, useMean = T)
 #data: RPKM+log+quantile normalization
 #data1: data -> data + correct for gene length+gc content
 #data1.T: data1 + add the mean value back
-
+data1.T.scaled <- tscale(data1.T)
+write.table(data1.T.scaled, "rsem_genes_count.processed.normalized.txt", quote = FALSE, sep = "\t")
 
 save(data.rpkm , data1, data1.T, pData, file = paste0("normalization.RData"))
 
