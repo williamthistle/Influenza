@@ -52,8 +52,15 @@ period_1_placebo_counts <- placebo_counts[rownames(period_1_placebo_metadata)]
 data(bloodCellMarkersIRISDMAP)
 data(canonicalPathways)
 data(svmMarkers)
-data(vacData)
-allPaths <- combinePaths(bloodCellMarkersIRISDMAP, svmMarkers, canonicalPathways, vacData)
-plierResult <- PLIER(as.matrix(period_1_placebo_counts), allPaths, scale = F)
-plotU(plierResult, auc.cutoff = 0.70, fdr.cutoff = 0.05, top = 3)
-
+data(vacData) # Not used by anything
+allPaths <- combinePaths(bloodCellMarkersIRISDMAP, svmMarkers, canonicalPathways)
+placebo_plier <- PLIER(as.matrix(period_1_placebo_counts), allPaths, scale = F)
+plotU(placebo_plier, auc.cutoff = 0.70, fdr.cutoff = 0.05, top = 3)
+# Does this show us that LV22 = NK, LV8 = B cell, LV7 = something,
+# LV6 = T Cell, LV4 = Erythoid cell, LV3 = something, LV2 = Neutrophil, LV21 = MEGA?
+#data(SPVs)
+#plotMat(corout<-cor(t(placebo_plier$B), SPVs, method="s"), scale = F)
+placebo_markers=plierResToMarkers(plierResult, allPaths)
+indexToPlot=which(apply(plierResult$Uauc*(plierResult$Up<0.001),2,max)>0.75)
+#placeboN=rowNorm(period_1_placebo_counts)
+plotTopZ(placebo_plier, period_1_placebo_counts, allPaths, top = 5, index = indexToPlot)
