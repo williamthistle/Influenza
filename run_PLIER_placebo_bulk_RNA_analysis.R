@@ -40,27 +40,41 @@ rownames(placebo_metadata) <- sort(rownames(placebo_metadata))
 # Drop aliquot ID column (it's stored in rownames)
 all_metadata <- subset(all_metadata, select = -c(aliquot_id))
 placebo_metadata = subset(placebo_metadata, select = -c(aliquot_id))
+# Load background pathway info for PLIER
+data(bloodCellMarkersIRISDMAP)
+data(canonicalPathways)
+data(svmMarkers)
+allPaths <- combinePaths(bloodCellMarkersIRISDMAP, svmMarkers, canonicalPathways)
 # ALL TIME POINTS
 full_time_placebo_metadata <- placebo_metadata[placebo_metadata$subject_id 
                                                %in% names(table(placebo_metadata$subject_id)
                                                           [table(placebo_metadata$subject_id) == 10]),]
 full_time_placebo_counts <- placebo_counts[rownames(full_time_placebo_metadata)]
-# PERIOD 1
+# Run PLIER on Period 1 (including pre-vaccination)
 period_1_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metadata$period == 1,]
 period_1_placebo_counts <- placebo_counts[rownames(period_1_placebo_metadata)]
-# Run PLIER on Period 1 and see what happens
-data(bloodCellMarkersIRISDMAP)
-data(canonicalPathways)
-data(svmMarkers)
-data(vacData) # Not used by anything
-allPaths <- combinePaths(bloodCellMarkersIRISDMAP, svmMarkers, canonicalPathways)
-placebo_plier <- PLIER(as.matrix(period_1_placebo_counts), allPaths, scale = F)
-plotU(placebo_plier, auc.cutoff = 0.70, fdr.cutoff = 0.05, top = 3)
-# Does this show us that LV22 = NK, LV8 = B cell, LV7 = something not cell type related,
-# LV6 = T Cell, LV4 = Erythoid cell, LV3 = Type 1 interferon (not cell type), LV2 = Neutrophil, LV21 = MEGA?
-#data(SPVs)
-#plotMat(corout<-cor(t(plierResult$B), SPVs, method="s"), scale = F)
-placebo_markers <- plierResToMarkers(placebo_plier, allPaths, index = c(2, 3, 4, 6, 7, 8, 21, 22))
-indexToPlot <- which(apply(placebo_plier$Uauc*(placebo_plier$Up<0.001),2,max)>0.75)
-#placeboN=rowNorm(period_1_placebo_counts)
-plotTopZ(placebo_plier, period_1_placebo_counts, allPaths, top = 5, index = indexToPlot)
+period_1_placebo_plier <- PLIER(as.matrix(period_1_placebo_counts), allPaths, scale = F)
+plotU(period_1_placebo_plier, auc.cutoff = 0.70, fdr.cutoff = 0.05, top = 3)
+# This is a clean heatmap. Seems like LV22 = NK, LV8 = B Cell, LV7 = something not cell type related,
+# LV6 = T Cell, LV4 = Erythoid cell, LV3 = Type 1 interferon response (not cell type), 
+# LV2 = Neutrophil, LV21 = Megakaryocyte
+period_1_placebo_markers <- plierResToMarkers(period_1_placebo_plier, allPaths, index = c(2, 3, 4, 6, 7, 8, 21, 22))
+colnames(period_1_placebo_markers) # Why does 3 not match the heatmap?
+indexToPlot <- which(apply(period_1_placebo_plier$Uauc*(period_1_placebo_plier$Up<0.001),2,max)>0.75)
+plotTopZ(period_1_placebo_plier, period_1_placebo_counts, allPaths, top = 5, index = indexToPlot)
+# Run PLIER on Period 1 (after vaccination)
+period_1_after_vaccination_placebo_metadata <- period_1_placebo_metadata[period_1_placebo_metadata$time_point != "1_D_minus_1",]
+period_1_after_vaccination_placebo_counts <- placebo_counts[rownames(period_1_after_vaccination_placebo_metadata)]
+period_1_after_vaccination_placebo_plier <- PLIER(as.matrix(period_1_after_vaccination_placebo_counts), allPaths, scale = F)
+plotU(period_1_after_vaccination_placebo_plier, auc.cutoff = 0.70, fdr.cutoff = 0.05, top = 3)
+# Run PLIER on Period 2 (including pre-treatment)
+period_2_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metadata$period == 2,]
+period_2_placebo_metadata <- period_2_placebo_metadata[period_2_placebo_metadata$time_point != "2_D_minus_2",]
+period_2_placebo_counts <- placebo_counts[rownames(period_2_placebo_metadata)]
+period_2_placebo_plier <- PLIER(as.matrix(period_2_placebo_counts), allPaths, scale = F)
+plotU(period_2_placebo_plier, auc.cutoff = 0.70, fdr.cutoff = 0.05, top = 3)
+# Run PLIER on Period 2 (after treatment)
+period_2_after_treatment_placebo_metadata <- period_2_placebo_metadata[period_2_placebo_metadata$time_point != "2_D_minus_1",]
+period_2_after_treatment_placebo_counts <- placebo_counts[rownames(period_2_after_treatment_placebo_metadata)]
+period_2_after_treatment_placebo_plier <- PLIER(as.matrix(period_2_after_treatment_placebo_counts), allPaths, scale = F)
+plotU(period_2_after_treatment_placebo_plier, auc.cutoff = 0.70, fdr.cutoff = 0.05, top = 3)
