@@ -11,10 +11,10 @@ setup_bulk_analysis=function() {
   viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
   viral_load_primary <<- viral_load_primary[viral_load_primary$TRT01A == "PLACEBO",]
   viral_load_primary$AVAL <<- as.numeric(viral_load_primary$AVAL)
-  # Organize by viral load (high to low) and grab top 13 subjects (cause that's what Tom used) - they will be high viral load
-  # and everything else will be low viral load
+  # Organize by viral load (high to low). Top 13 subjects will be high viral load and bottom 10 will be low viral load
   viral_load_primary <<- viral_load_primary[order(viral_load_primary$AVAL, decreasing = TRUE),]
   high_viral_load_subjects <<- viral_load_primary$SUBJID[1:13]
+  low_viral_load_subjects <<- viral_load_primary$SUBJID[(length(viral_load_primary$SUBJID) - 9):length(viral_load_primary$SUBJID)]
   # Take gene_id column from gene_counts and use contents as the rownames of gene_counts
   gene.row.names <<- as.character(gene_counts$gene_id)
   gene_counts <<- gene_counts[,2:ncol(gene_counts)]
@@ -37,8 +37,10 @@ setup_bulk_analysis=function() {
   for (subject_id in placebo_metadata$subject_id) {
     if(subject_id %in% high_viral_load_subjects) {
       viral_load_vector <<- c(viral_load_vector, "HIGH")
-    } else {
+    } else if (subject_id %in% low_viral_load_subjects) {
       viral_load_vector <<- c(viral_load_vector, "LOW")
+    } else {
+      viral_load_vector <<- c(viral_load_vector, "NOT_LABELED")
     }
   }
   placebo_metadata$viral_load <<- viral_load_vector
