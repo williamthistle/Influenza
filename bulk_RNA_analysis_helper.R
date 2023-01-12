@@ -1,3 +1,86 @@
+# Method to set up bulk analysis
+setup_bulk_analysis=function() {
+  # Read in count and metadata files
+  data_dir <<- "C:/Users/willi/Documents/local_data_files/"
+  gene_counts <<- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
+  all_metadata_file <<- paste0(base_dir, "all_metadata_sheet.tsv")
+  all_metadata <<- read.table(all_metadata_file, header = TRUE, sep = "\t")
+  # Currently, only capturing viral load for placebo subjects
+  viral_load_file <<- paste0(base_dir, "bulk_RNA_viral_load.tsv")
+  viral_load <<- read.table(viral_load_file, header = TRUE, sep = "\t")
+  viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
+  viral_load_primary <<- viral_load_primary[viral_load_primary$TRT01A == "PLACEBO",]
+  viral_load_primary$AVAL <<- as.numeric(viral_load_primary$AVAL)
+  # Organize by viral load (high to low) and grab top 13 subjects (cause that's what Tom used) - they will be high viral load
+  # and everything else will be low viral load
+  viral_load_primary <<- viral_load_primary[order(viral_load_primary$AVAL, decreasing = TRUE),]
+  high_viral_load_subjects <<- viral_load_primary$SUBJID[1:13]
+  # Take gene_id column from gene_counts and use contents as the rownames of gene_counts
+  gene.row.names <<- as.character(gene_counts$gene_id)
+  gene_counts <<- gene_counts[,2:ncol(gene_counts)]
+  gene_counts <<- as.data.frame(gene_counts)
+  rownames(gene_counts) <<- gene.row.names
+  # Only keep metadata for bulk RNA-seq aliquots
+  all_metadata <<- all_metadata[all_metadata$bulkRNA_seq == TRUE,]
+  # Add period into time point (by itself, time point isn't unique - we need period information
+  # to distinguish between D-1 in period 1 vs D-1 in period 2, for example)
+  all_metadata$time_point <<- paste0(all_metadata$period, "_", all_metadata$time_point)
+  # Make time point names safe for DESeq2
+  all_metadata$time_point[all_metadata$time_point == '1_D1 predose'] <<- '1_D_minus_1'
+  all_metadata$time_point[all_metadata$time_point == '2_D-2'] <<- '2_D_minus_2'
+  all_metadata$time_point[all_metadata$time_point == '2_D-1'] <<- '2_D_minus_1'
+  # Divide metadata into placebo and vaccinated
+  placebo_metadata <<- all_metadata[all_metadata$treatment == "PLACEBO",]
+  vaccinated_metadata <<- all_metadata[all_metadata$treatment == "MVA-NP+M1",]
+  # Add viral load into placebo metadata
+  viral_load_vector <<- c()
+  for (subject_id in placebo_metadata$subject_id) {
+    if(subject_id %in% high_viral_load_subjects) {
+      viral_load_vector <<- c(viral_load_vector, "HIGH")
+    } else {
+      viral_load_vector <<- c(viral_load_vector, "LOW")
+    }
+  }
+  placebo_metadata$viral_load <<- viral_load_vector
+  # Find placebo-associated and vaccinated-associated gene_counts
+  kept_aliquots <<- placebo_metadata$aliquot_id
+  placebo_counts <<- gene_counts[kept_aliquots]
+  kept_aliquots <<- vaccinated_metadata$aliquot_id
+  vaccinated_counts <<- gene_counts[kept_aliquots]
+  # Sort columns in gene_counts and rows for each so they're in same order (for DESeq2)
+  colnames(gene_counts) <<- sort(colnames(gene_counts))
+  rownames(all_metadata) <<- all_metadata$aliquot_id
+  rownames(all_metadata) <<- sort(rownames(all_metadata))
+  colnames(placebo_counts) <<- sort(colnames(placebo_counts))
+  rownames(placebo_metadata) <<- placebo_metadata$aliquot_id
+  rownames(placebo_metadata) <<- sort(rownames(placebo_metadata))
+  colnames(vaccinated_counts) <<- sort(colnames(vaccinated_counts))
+  rownames(vaccinated_metadata) <<- vaccinated_metadata$aliquot_id
+  rownames(vaccinated_metadata) <<- sort(rownames(vaccinated_metadata))
+  # Drop aliquot ID column (it's stored in rownames)
+  all_metadata <<- subset(all_metadata, select = -c(aliquot_id))
+  placebo_metadata <<- subset(placebo_metadata, select = -c(aliquot_id))
+  vaccinated_metadata <<- subset(vaccinated_metadata, select = -c(aliquot_id))
+  # Probably OK to round expected gene_counts from RSEM data. DESeq2 expects integers
+  gene_counts <<- round(gene_counts)
+  placebo_counts <<- round(placebo_counts)
+  vaccinated_counts <<- round(vaccinated_counts)
+  # Currently not filtering sex associated genes
+  #sex_associated_genes <<- find_sex_associated_genes(paste0(data_dir, "sex_associated_genes/"))
+  # Order factor levels for period 1, period 2, and all time points
+  period_1_factors <<- c("1_D_minus_1", "1_D2", "1_D8", "1_D28")
+  period_1_more_vaccination_data_factors <<- c("1_D_minus_1", "1_D8")
+  period_2_factors <<- c("2_D_minus_2", "2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28")
+  period_2_without_2_D_minus_2_factors <<- c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28")
+  all_factors <<- c(period_1_factors, period_2_factors)
+}
+
+
+
+
+
+
+# Method to find sex associated genes - not currently used
 find_sex_associated_genes=function(sex_associated_dir, padj_threshold = 0.05, log2fc_threshold = 0.1) {
   sex_associated_gene_files <- list.files(sex_associated_dir, pattern = ".csv")
   sex_associated_genes <- c()
