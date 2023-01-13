@@ -2,10 +2,28 @@ library(DESeq2)
 library(data.table)
 library(pheatmap)
 
+set.seed(1234)
+
 ##### SETUP #####
 base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
 setup_bulk_analysis()
+
+#### PERIOD 1 ####
+# Look at Period 1 DEGs - should find a bunch since vaccination did occur
+# 1 D2 vs 1 D minus 1 - 409 DEGs found
+vaccinated_period_1_D2_vs_D_minus_1_metadata <- vaccinated_metadata[vaccinated_metadata$time_point == "1_D2" | vaccinated_metadata$time_point == "1_D_minus_1",]
+vaccinated_period_1_D2_vs_D_minus_1_metadata <- vaccinated_period_1_D2_vs_D_minus_1_metadata[vaccinated_period_1_D2_vs_D_minus_1_metadata$subject_id 
+                                                                                                     %in% names(table(vaccinated_period_1_D2_vs_D_minus_1_metadata$subject_id)
+                                                                                                                [table(vaccinated_period_1_D2_vs_D_minus_1_metadata$subject_id) == 2]),]
+vaccinated_period_1_D2_vs_D_minus_1_counts <- vaccinated_counts[rownames(vaccinated_period_1_D2_vs_D_minus_1_metadata)]
+vaccinated_period_1_D2_vs_D_minus_1_analysis <- DESeqDataSetFromMatrix(countData = vaccinated_period_1_D2_vs_D_minus_1_counts,
+                                                                    colData = vaccinated_period_1_D2_vs_D_minus_1_metadata,
+                                                                    design = ~ subject_id + time_point)
+vaccinated_period_1_D2_vs_D_minus_1_analysis <- DESeq(vaccinated_period_1_D2_vs_D_minus_1_analysis)
+vaccinated_period_1_D2_vs_D_minus_1_analysis_results <- results(vaccinated_period_1_D2_vs_D_minus_1_analysis, contrast = c("time_point", "1_D2", "1_D_minus_1"), alpha = 0.05, lfcThreshold = 1)
+vaccinated_period_1_D2_vs_D_minus_1_analysis_results <- vaccinated_period_1_D2_vs_D_minus_1_analysis_results[order(vaccinated_period_1_D2_vs_D_minus_1_analysis_results$padj),]
+vaccinated_period_1_D2_vs_D_minus_1_analysis_results <- subset(vaccinated_period_1_D2_vs_D_minus_1_analysis_results, padj < 0.05)
 
 ##### ALL 10 TIMEPOINTS (PERIOD 1, PERIOD 2, BOTH PERIODS) #####
 # We will begin by using subjects that have all 10 timepoints for our tests
