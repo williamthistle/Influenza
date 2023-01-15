@@ -24,7 +24,21 @@ find_race_count = function(curr_df) {
   return(races)
 }
 
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+# Function to find total number of each age in dataframe
+find_age_count = function(curr_df) {
+  ages <- c()
+  visited_subjects <- c()
+  for (current_row in 1:nrow(curr_df)) {
+    if(!curr_df[current_row,]$subject_id %in% visited_subjects ) {
+      ages <- append(ages, curr_df[current_row,]$age)
+      visited_subjects <- append(visited_subjects, curr_df[current_row,]$subject_id)
+    }
+  }
+  return(ages)
+}
+
+
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 scRNA_data_list <- paste0(base_dir, "scRNA/scRNA_data_list.txt")
 scATAC_data_list <- paste0(base_dir, "scATAC/scATAC_data_list.txt")
 multiome_data_list <- paste0(base_dir, "multiome/multiome_data_list.txt")
@@ -385,7 +399,11 @@ print(paste0("The total number of D8 (Period 2) aliquots is: ", nrow(bulkRNAseq_
 print(paste0("The total number of D28 (Period 2) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D28" & bulkRNAseq_placebo_metadata_sheet_df$period == "2",])))
 print(paste0("The total number of unique subjects is: ", length(unique(bulkRNAseq_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects is: ", sum(find_sex_count(bulkRNAseq_placebo_metadata_sheet_df) == "M")))
-print(paste0("The total number of female subjects is: ", sum(find_sex_count(bulkRNAseq_placebo_metadata_sheet_df) == "F")))
+print(paste0("The total number of female subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == "F")))
+print(paste0("The total number of age 1 subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == 1)))
+print(paste0("The total number of age 2 subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == 2)))
+print(paste0("The total number of age 3 subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == 3)))
+print(paste0("The total number of age 4 subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == 4)))
 # Good sex ratio (22 male vs 24 female)
 bulkRNAseq_all_timepoints_placebo_metadata_sheet_df <- bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$subject_id %in% names(table(bulkRNAseq_placebo_metadata_sheet_df$subject_id)[table(bulkRNAseq_placebo_metadata_sheet_df$subject_id) == 10]),]
 print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(bulkRNAseq_all_timepoints_placebo_metadata_sheet_df$subject_id))))

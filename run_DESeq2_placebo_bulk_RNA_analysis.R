@@ -9,90 +9,62 @@ base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
 setup_bulk_analysis()
 
+run_deseq_bulk_analysis=function(counts, metadata, test_time, baseline_time) {
+  # Select the two relevant time points from our metadata
+  metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
+  # Remove subjects that only have one time point (not both)
+  metadata_subset <- metadata_subset[metadata_subset$subject_id  %in% names(table(metadata_subset$subject_id)[table(metadata_subset$subject_id) == 2]),]
+  # Select subset of counts associated with subjects
+  counts_subset <- counts[rownames(metadata_subset)]
+  # Run DESeq2
+  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  current_analysis <- DESeq(current_analysis)
+  # Grab results with alpha = 0.05 and lfcThreshold = 0.1
+  current_analysis_results <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.1)
+  current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
+  current_analysis_results <- subset(current_analysis_results, padj < 0.05)
+  # Grab results with alpha = 0.05 and lfcThreshold = 0.585 (1.5 fold increase)
+  current_analysis_results_1.5 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.585)
+  current_analysis_results_1.5 <- current_analysis_results_1.5[order(current_analysis_results_1.5$padj),]
+  current_analysis_results_1.5 <- subset(current_analysis_results_1.5, padj < 0.05)
+  # Grab results with alpha = 0.05 and lfcThreshold = 1
+  current_analysis_results_2 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 1)
+  current_analysis_results_2 <- current_analysis_results_2[order(current_analysis_results_2$padj),]
+  current_analysis_results_2 <- subset(current_analysis_results_2, padj < 0.05)
+  return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2))
+}
+
 #### PERIOD 1 ####
 # Look at Period 1 DEGs - shouldn't find many (or any) since vaccination didn't occur
-# 1 D2 vs 1 D minus 1 - 0 DEGs found
-placebo_period_1_D2_vs_D_minus_1_metadata <- placebo_metadata[placebo_metadata$time_point == "1_D2" | placebo_metadata$time_point == "1_D_minus_1",]
-placebo_period_1_D2_vs_D_minus_1_counts <- placebo_counts[rownames(placebo_period_1_D2_vs_D_minus_1_metadata)]
-placebo_period_1_D2_vs_D_minus_1_analysis <- DESeqDataSetFromMatrix(countData = placebo_period_1_D2_vs_D_minus_1_counts,
-                                                       colData = placebo_period_1_D2_vs_D_minus_1_metadata,
-                                                       design = ~ subject_id + time_point)
-placebo_period_1_D2_vs_D_minus_1_analysis <- DESeq(placebo_period_1_D2_vs_D_minus_1_analysis)
-placebo_period_1_D2_vs_D_minus_1_analysis_results <- results(placebo_period_1_D2_vs_D_minus_1_analysis, contrast = c("time_point", "1_D2", "1_D_minus_1"), alpha = 0.05, lfcThreshold = 0.1)
-placebo_period_1_D2_vs_D_minus_1_analysis_results <- placebo_period_1_D2_vs_D_minus_1_analysis_results[order(placebo_period_1_D2_vs_D_minus_1_analysis_results$padj),]
-placebo_period_1_D2_vs_D_minus_1_analysis_results <- subset(placebo_period_1_D2_vs_D_minus_1_analysis_results, padj < 0.05)
-# 1 D8 vs 1 D minus 1 - 0 DEGs found
-placebo_period_1_D8_vs_D_minus_1_metadata <- placebo_metadata[placebo_metadata$time_point == "1_D8" | placebo_metadata$time_point == "1_D_minus_1",]
-placebo_period_1_D8_vs_D_minus_1_counts <- placebo_counts[rownames(placebo_period_1_D8_vs_D_minus_1_metadata)]
-placebo_period_1_D8_vs_D_minus_1_analysis <- DESeqDataSetFromMatrix(countData = placebo_period_1_D8_vs_D_minus_1_counts,
-                                                                    colData = placebo_period_1_D8_vs_D_minus_1_metadata,
-                                                                    design = ~ subject_id + time_point)
-placebo_period_1_D8_vs_D_minus_1_analysis <- DESeq(placebo_period_1_D8_vs_D_minus_1_analysis)
-placebo_period_1_D8_vs_D_minus_1_analysis_results <- results(placebo_period_1_D8_vs_D_minus_1_analysis, contrast = c("time_point", "1_D8", "1_D_minus_1"), alpha = 0.05, lfcThreshold = 0.1)
-placebo_period_1_D8_vs_D_minus_1_analysis_results <- placebo_period_1_D8_vs_D_minus_1_analysis_results[order(placebo_period_1_D8_vs_D_minus_1_analysis_results$padj),]
-placebo_period_1_D8_vs_D_minus_1_analysis_results <- subset(placebo_period_1_D8_vs_D_minus_1_analysis_results, padj < 0.05)
-# 1 D28 vs 1 D minus 1 - 1 DEG found
-placebo_period_1_D28_vs_D_minus_1_metadata <- placebo_metadata[placebo_metadata$time_point == "1_D28" | placebo_metadata$time_point == "1_D_minus_1",]
-placebo_period_1_D28_vs_D_minus_1_counts <- placebo_counts[rownames(placebo_period_1_D28_vs_D_minus_1_metadata)]
-placebo_period_1_D28_vs_D_minus_1_analysis <- DESeqDataSetFromMatrix(countData = placebo_period_1_D28_vs_D_minus_1_counts,
-                                                                    colData = placebo_period_1_D28_vs_D_minus_1_metadata,
-                                                                    design = ~ subject_id + time_point)
-placebo_period_1_D28_vs_D_minus_1_analysis <- DESeq(placebo_period_1_D28_vs_D_minus_1_analysis)
-placebo_period_1_D28_vs_D_minus_1_analysis_results <- results(placebo_period_1_D28_vs_D_minus_1_analysis, contrast = c("time_point", "1_D28", "1_D_minus_1"), alpha = 0.05, lfcThreshold = 0.1)
-placebo_period_1_D28_vs_D_minus_1_analysis_results <- placebo_period_1_D28_vs_D_minus_1_analysis_results[order(placebo_period_1_D28_vs_D_minus_1_analysis_results$padj),]
-placebo_period_1_D28_vs_D_minus_1_analysis_results <- subset(placebo_period_1_D28_vs_D_minus_1_analysis_results, padj < 0.05)
+# 1 D2 vs 1 D minus 1 - 0/0 DEGs found
+placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis(placebo_counts, placebo_metadata,
+                                                                    "1_D2", "1_D_minus_1")
+# 1 D8 vs 1 D minus 1 - 1/0 DEGs found
+placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis(placebo_counts, placebo_metadata,
+                                                                    "1_D8", "1_D_minus_1")
+# 1 D28 vs 1 D minus 1 - 2/1 DEG found
+placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis(placebo_counts, placebo_metadata,
+                                                                    "1_D28", "1_D_minus_1")
 #### PERIOD 2 ####
 # Look at Period 2 DEGs
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
-# 2 DEGs found
-placebo_period_2_D_minus_1_vs_D_minus_2_metadata <- placebo_metadata[placebo_metadata$time_point == "2_D_minus_1" | placebo_metadata$time_point == "2_D_minus_2",]
-placebo_period_2_D_minus_1_vs_D_minus_2_metadata <- placebo_period_2_D_minus_1_vs_D_minus_2_metadata[placebo_period_2_D_minus_1_vs_D_minus_2_metadata$subject_id 
-                                                                                                     %in% names(table(placebo_period_2_D_minus_1_vs_D_minus_2_metadata$subject_id)
-                                                                                                                [table(placebo_period_2_D_minus_1_vs_D_minus_2_metadata$subject_id) == 2]),]
-placebo_period_2_D_minus_1_vs_D_minus_2_counts <- placebo_counts[rownames(placebo_period_2_D_minus_1_vs_D_minus_2_metadata)]
-placebo_period_2_D_minus_1_vs_D_minus_2_analysis <- DESeqDataSetFromMatrix(countData = placebo_period_2_D_minus_1_vs_D_minus_2_counts,
-                                                                     colData = placebo_period_2_D_minus_1_vs_D_minus_2_metadata,
-                                                                     design = ~ subject_id + time_point)
-placebo_period_2_D_minus_1_vs_D_minus_2_analysis <- DESeq(placebo_period_2_D_minus_1_vs_D_minus_2_analysis)
-placebo_period_2_D_minus_1_vs_D_minus_2_analysis_results <- results(placebo_period_2_D_minus_1_vs_D_minus_2_analysis, contrast = c("time_point", "2_D_minus_1", "2_D_minus_2"), alpha = 0.05, lfcThreshold = 0.1)
-placebo_period_2_D_minus_1_vs_D_minus_2_analysis_results <- placebo_period_2_D_minus_1_vs_D_minus_2_analysis_results[order(placebo_period_2_D_minus_1_vs_D_minus_2_analysis_results$padj),]
-placebo_period_2_D_minus_1_vs_D_minus_2_analysis_results <- subset(placebo_period_2_D_minus_1_vs_D_minus_2_analysis_results, padj < 0.05)
+# 460/2 DEGs found
+placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis(placebo_counts, placebo_metadata,
+                                                                     "2_D_minus_1", "2_D_minus_2")
 # 2 D2 vs 2 D minus 1 - 1 DEG
-placebo_period_2_D2_vs_D_minus_1_metadata <- placebo_metadata[placebo_metadata$time_point == "2_D2" | placebo_metadata$time_point == "2_D_minus_1",]
-placebo_period_2_D2_vs_D_minus_1_metadata <- placebo_period_2_D2_vs_D_minus_1_metadata[placebo_period_2_D2_vs_D_minus_1_metadata$subject_id 
-                                                                                                     %in% names(table(placebo_period_2_D2_vs_D_minus_1_metadata$subject_id)
-                                                                                                                [table(placebo_period_2_D2_vs_D_minus_1_metadata$subject_id) == 2]),]
-placebo_period_2_D2_vs_D_minus_1_counts <- placebo_counts[rownames(placebo_period_2_D2_vs_D_minus_1_metadata)]
-placebo_period_2_D2_vs_D_minus_1_analysis <- DESeqDataSetFromMatrix(countData = placebo_period_2_D2_vs_D_minus_1_counts,
-                                                                    colData = placebo_period_2_D2_vs_D_minus_1_metadata,
-                                                                    design = ~ subject_id + time_point)
-placebo_period_2_D2_vs_D_minus_1_analysis <- DESeq(placebo_period_2_D2_vs_D_minus_1_analysis)
-placebo_period_2_D2_vs_D_minus_1_analysis_results <- results(placebo_period_2_D2_vs_D_minus_1_analysis, contrast = c("time_point", "2_D2", "2_D_minus_1"), alpha = 0.05, lfcThreshold = 0.1)
-placebo_period_2_D2_vs_D_minus_1_analysis_results <- placebo_period_2_D2_vs_D_minus_1_analysis_results[order(placebo_period_2_D2_vs_D_minus_1_analysis_results$padj),]
-placebo_period_2_D2_vs_D_minus_1_analysis_results <- subset(placebo_period_2_D2_vs_D_minus_1_analysis_results, padj < 0.05)
+placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis(placebo_counts, placebo_metadata,
+                                                                           "2_D2", "2_D_minus_1")
+# 2 D5 vs 2 D minus 1 - 2409 DEGs
+placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis(placebo_counts, placebo_metadata,
+                                                                    "2_D5", "2_D_minus_1")
 # 2 D8 vs 2 D minus 1 - 27 DEGs
-placebo_period_2_D8_vs_D_minus_1_metadata <- placebo_metadata[placebo_metadata$time_point == "2_D8" | placebo_metadata$time_point == "2_D_minus_1",]
-placebo_period_2_D8_vs_D_minus_1_counts <- placebo_counts[rownames(placebo_period_2_D8_vs_D_minus_1_metadata)]
-placebo_period_2_D8_vs_D_minus_1_analysis <- DESeqDataSetFromMatrix(countData = placebo_period_2_D8_vs_D_minus_1_counts,
-                                                                           colData = placebo_period_2_D8_vs_D_minus_1_metadata,
-                                                                           design = ~ subject_id + time_point)
-placebo_period_2_D8_vs_D_minus_1_analysis <- DESeq(placebo_period_2_D8_vs_D_minus_1_analysis)
-placebo_period_2_D8_vs_D_minus_1_analysis_results <- results(placebo_period_2_D8_vs_D_minus_1_analysis, contrast = c("time_point", "2_D8", "2_D_minus_1"), alpha = 0.05, lfcThreshold = 0.1)
-placebo_period_2_D8_vs_D_minus_1_analysis_results <- placebo_period_2_D8_vs_D_minus_1_analysis_results[order(placebo_period_2_D8_vs_D_minus_1_analysis_results$padj),]
-placebo_period_2_D8_vs_D_minus_1_analysis_results <- subset(placebo_period_2_D8_vs_D_minus_1_analysis_results, padj < 0.05)
+placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis(placebo_counts, placebo_metadata,
+                                                                    "2_D8", "2_D_minus_1")
 # 2 D28 vs 2 D minus 1 - 1 DEG
-placebo_period_2_D28_vs_D_minus_1_metadata <- placebo_metadata[placebo_metadata$time_point == "2_D28" | placebo_metadata$time_point == "2_D_minus_1",]
-placebo_period_2_D28_vs_D_minus_1_counts <- placebo_counts[rownames(placebo_period_2_D28_vs_D_minus_1_metadata)]
-placebo_period_2_D28_vs_D_minus_1_analysis <- DESeqDataSetFromMatrix(countData = placebo_period_2_D28_vs_D_minus_1_counts,
-                                                                    colData = placebo_period_2_D28_vs_D_minus_1_metadata,
-                                                                    design = ~ subject_id + time_point)
-placebo_period_2_D28_vs_D_minus_1_analysis <- DESeq(placebo_period_2_D28_vs_D_minus_1_analysis)
-placebo_period_2_D28_vs_D_minus_1_analysis_results <- results(placebo_period_2_D28_vs_D_minus_1_analysis, contrast = c("time_point", "2_D28", "2_D_minus_1"), alpha = 0.05, lfcThreshold = 0.1)
-placebo_period_2_D28_vs_D_minus_1_analysis_results <- placebo_period_2_D28_vs_D_minus_1_analysis_results[order(placebo_period_2_D28_vs_D_minus_1_analysis_results$padj),]
-placebo_period_2_D28_vs_D_minus_1_analysis_results <- subset(placebo_period_2_D28_vs_D_minus_1_analysis_results, padj < 0.05)
-
-# LRT test for Period 2 - why not?
-# 5757 DEGs found (no fold change limit, though). 
+placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis(placebo_counts, placebo_metadata,
+                                                                    "2_D28", "2_D_minus_1")
+# LRT test for Period 2
+# 5757 DEGs found (note that LRT doesn't have a fold change threshold). 
 placebo_period_2_LRT_metadata <- placebo_metadata[placebo_metadata$time_point == "2_D28" | placebo_metadata$time_point == "2_D8" | 
                                                     placebo_metadata$time_point == "2_D5" | placebo_metadata$time_point == "2_D2" |
                                                     placebo_metadata$time_point == "2_D_minus_1",]
@@ -107,105 +79,12 @@ placebo_period_2_LRT_analysis <- DESeq(placebo_period_2_LRT_analysis, test = "LR
 placebo_period_2_LRT_analysis_results <- results(placebo_period_2_LRT_analysis, alpha = 0.05)
 placebo_period_2_LRT_analysis_results <- placebo_period_2_LRT_analysis_results[order(placebo_period_2_LRT_analysis_results$padj),]
 placebo_period_2_LRT_analysis_results <- subset(placebo_period_2_LRT_analysis_results, padj < 0.05)
-
-
-
-##### ALL 10 TIMEPOINTS (PERIOD 1, PERIOD 2, BOTH PERIODS) #####
-# First, we will use subjects that have all 10 timepoints for our tests
-full_time_placebo_metadata <- placebo_metadata[placebo_metadata$subject_id 
-                                               %in% names(table(placebo_metadata$subject_id)
-                                                          [table(placebo_metadata$subject_id) == 10]),]
-full_time_placebo_counts <- placebo_counts[rownames(full_time_placebo_metadata)]
-full_time_placebo_metadata$time_point <- as.factor(full_time_placebo_metadata$time_point)
-levels(full_time_placebo_metadata$time_point) <- all_factors
-full_time_placebo_metadata$sex <- as.factor(full_time_placebo_metadata$sex)
-full_time_placebo_metadata$age <- as.factor(full_time_placebo_metadata$age)
-full_time_placebo_metadata$viral_load <- as.factor(full_time_placebo_metadata$viral_load)
-full_time_placebo_time_point_analysis <- DESeqDataSetFromMatrix(countData = full_time_placebo_counts,
-                                                                   colData = full_time_placebo_metadata,
-                                                                   design = ~ time_point + sex + age)
-# LRT TESTS
-# It may make sense to focus primarily on Period 2 (pre- and post challenge)
-# since nothing happens during Period 1 for placebo subjects (good check that our differential expression 
-# is working properly at least)
-# PERIOD 1
-# Only keep period 1 metadata and placebo_counts
-period_1_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metadata$period == 1,]
-period_1_placebo_counts <- placebo_counts[rownames(period_1_placebo_metadata)]
-# Factorize time point (with associated factor levels) and sex
-period_1_placebo_metadata$time_point <- as.factor(period_1_placebo_metadata$time_point)
-#levels(period_1_placebo_metadata$time_point) <- period_1_factors
-period_1_placebo_metadata$sex <- as.factor(period_1_placebo_metadata$sex)
-period_1_placebo_metadata$age <- as.factor(period_1_placebo_metadata$age)
-# Run DESeq2 analysis
-period_1_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_1_placebo_counts,
-                              colData = period_1_placebo_metadata,
-                              design = ~ time_point + sex + age)
-period_1_time_point_analysis <- DESeq(period_1_time_point_analysis, test="LRT", reduced = ~ sex + age)
-period_1_time_point_analysis_results <- results(period_1_time_point_analysis, alpha = 0.05)
-period_1_time_point_analysis_results <- period_1_time_point_analysis_results[order(period_1_time_point_analysis_results$padj),]
-period_1_time_point_analysis_results <- subset(period_1_time_point_analysis_results, padj < 0.05)
-# PERIOD 2
-# Only keep period 2 metadata and placebo_counts
-period_2_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metadata$period == 2,]
-period_2_placebo_counts <- placebo_counts[rownames(period_2_placebo_metadata)]
-# Factorize time point (with associated factor levels) and sex
-period_2_placebo_metadata$time_point <- as.factor(period_2_placebo_metadata$time_point)
-#levels(period_2_placebo_metadata$time_point) <- period_2_factors
-period_2_placebo_metadata$sex <- as.factor(period_2_placebo_metadata$sex)
-period_2_placebo_metadata$age <- as.factor(period_2_placebo_metadata$age)
-# Run DESeq2 analysis
-period_2_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_2_placebo_counts,
-                                                       colData = period_2_placebo_metadata,
-                                                       design = ~ time_point + sex + age)
-period_2_time_point_analysis <- DESeq(period_2_time_point_analysis, test="LRT", reduced = ~ sex + age)
-period_2_time_point_analysis_results <- results(period_2_time_point_analysis, alpha = 0.05)
-period_2_time_point_analysis_results <- period_2_time_point_analysis_results[order(period_2_time_point_analysis_results$padj),]
-period_2_time_point_analysis_results <- subset(period_2_time_point_analysis_results, padj < 0.05)
-# PERIOD 2 MINUS 2 D-2
-# Because 2 D-2 and 2 D-1 are quite different, for now, let's just use 2 D-1 for Period 2 analysis
-# Remove 2 D-2
-period_2_without_2_D_minus_2_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metadata$period == 2,]
-period_2_without_2_D_minus_2_placebo_metadata <- period_2_without_2_D_minus_2_placebo_metadata[period_2_without_2_D_minus_2_placebo_metadata$time_point != "2_D_minus_2",]
-period_2_without_2_D_minus_2_placebo_counts <- placebo_counts[rownames(period_2_without_2_D_minus_2_placebo_metadata)]
-# Factorize time point (with associated factor levels) and sex
-period_2_without_2_D_minus_2_placebo_metadata$time_point <- as.factor(period_2_without_2_D_minus_2_placebo_metadata$time_point)
-#levels(period_2_without_2_D_minus_2_placebo_metadata$time_point) <- period_2_without_2_D_minus_2_factors
-period_2_without_2_D_minus_2_placebo_metadata$sex <- as.factor(period_2_without_2_D_minus_2_placebo_metadata$sex)
-period_2_without_2_D_minus_2_placebo_metadata$age <- as.factor(period_2_without_2_D_minus_2_placebo_metadata$age)
-# Run DESeq2 analysis
-period_2_without_2_D_minus_2_time_point_analysis <- DESeqDataSetFromMatrix(countData = period_2_without_2_D_minus_2_placebo_counts,
-                                                       colData = period_2_without_2_D_minus_2_placebo_metadata,
-                                                       design = ~ time_point + sex + age)
-period_2_without_2_D_minus_2_time_point_analysis <- DESeq(period_2_without_2_D_minus_2_time_point_analysis, test="LRT", reduced = ~ sex + age)
-
-
-
-
-
-period_2_without_2_D_minus_2_time_point_analysis_results <- results(period_2_without_2_D_minus_2_time_point_analysis, alpha = 0.05)
-period_2_without_2_D_minus_2_time_point_analysis_results <- period_2_without_2_D_minus_2_time_point_analysis_results[order(period_2_without_2_D_minus_2_time_point_analysis_results$padj),]
-period_2_without_2_D_minus_2_time_point_analysis_results <- subset(period_2_without_2_D_minus_2_time_point_analysis_results, padj < 0.05)
-# Run Wald tests
-period_2_without_2_D_minus_2_placebo_tests <- c()
-period_2_without_2_D_minus_2_placebo_wald_test_names <- resultsNames(period_2_without_2_D_minus_2_time_point_analysis)
-period_2_without_2_D_minus_2_placebo_wald_test_names <- period_2_without_2_D_minus_2_placebo_wald_test_names[c(-1, -length(period_2_without_2_D_minus_2_placebo_wald_test_names))]
-index <- 1
-for (current_name in period_2_without_2_D_minus_2_placebo_wald_test_names) {
-  current_results <- results(period_2_without_2_D_minus_2_time_point_analysis, name = current_name, test = "Wald", 
-                             alpha = 0.05, lfcThreshold = 0.1)
-  current_results <- current_results[order(current_results$padj),]
-  current_results <- subset(current_results, padj < 0.05)
-  period_2_without_2_D_minus_2_placebo_tests[[index]] <- current_results
-  index <- index + 1
-}
-
 # Create heatmap
-period_2_without_2_D_minus_2_time_point_analysis_betas <- coef(period_2_without_2_D_minus_2_time_point_analysis)
-period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting <- results(period_2_without_2_D_minus_2_time_point_analysis, alpha = 0.05)
+period_2_without_2_D_minus_2_time_point_analysis_betas <- coef(placebo_period_2_LRT_analysis)
+period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting <- results(placebo_period_2_LRT_analysis, alpha = 0.05)
 period_2_without_2_D_minus_2_time_point_analysis_20_topGenes <- head(order(period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting$padj),20)
-period_2_without_2_D_minus_2_time_point_analysis_20_mat <- period_2_without_2_D_minus_2_time_point_analysis_betas[period_2_without_2_D_minus_2_time_point_analysis_20_topGenes, -c(1, 6, 7, 8, 9)]
-period_2_without_2_D_minus_2_time_point_analysis_thr <- 3 
+period_2_without_2_D_minus_2_time_point_analysis_20_mat <- period_2_without_2_D_minus_2_time_point_analysis_betas[period_2_without_2_D_minus_2_time_point_analysis_20_topGenes, -c(1:23)]
+period_2_without_2_D_minus_2_time_point_analysis_thr <- 1.5
 period_2_without_2_D_minus_2_time_point_analysis_20_mat[period_2_without_2_D_minus_2_time_point_analysis_20_mat < -period_2_without_2_D_minus_2_time_point_analysis_thr] <- -period_2_without_2_D_minus_2_time_point_analysis_thr
 period_2_without_2_D_minus_2_time_point_analysis_20_mat[period_2_without_2_D_minus_2_time_point_analysis_20_mat > period_2_without_2_D_minus_2_time_point_analysis_thr] <- period_2_without_2_D_minus_2_time_point_analysis_thr
 colnames(period_2_without_2_D_minus_2_time_point_analysis_20_mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
@@ -225,7 +104,7 @@ period_2_without_2_D_minus_2_time_point_analysis_D28_gene_ontology_genes <- name
 write.table(period_2_without_2_D_minus_2_time_point_analysis_D28_gene_ontology_genes, paste0(data_dir, "period_2_without_2_D_minus_2_time_point_analysis_D28_gene_ontology_genes.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
 # Plot heatmap with top 200 genes (and clean up heatmap plot by removing row names and clustering)
 period_2_without_2_D_minus_2_time_point_analysis_200_topGenes <- head(order(period_2_without_2_D_minus_2_time_point_analysis_results_for_plotting$padj),200)
-period_2_without_2_D_minus_2_time_point_analysis_200_mat <- period_2_without_2_D_minus_2_time_point_analysis_betas[period_2_without_2_D_minus_2_time_point_analysis_200_topGenes, -c(1, 6, 7, 8, 9)]
+period_2_without_2_D_minus_2_time_point_analysis_200_mat <- period_2_without_2_D_minus_2_time_point_analysis_betas[period_2_without_2_D_minus_2_time_point_analysis_200_topGenes, -c(1:23)]
 colnames(period_2_without_2_D_minus_2_time_point_analysis_200_mat) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
 period_2_without_2_D_minus_2_time_point_analysis_200_mat[period_2_without_2_D_minus_2_time_point_analysis_200_mat < -period_2_without_2_D_minus_2_time_point_analysis_thr] <- -period_2_without_2_D_minus_2_time_point_analysis_thr
 period_2_without_2_D_minus_2_time_point_analysis_200_mat[period_2_without_2_D_minus_2_time_point_analysis_200_mat > period_2_without_2_D_minus_2_time_point_analysis_thr] <- period_2_without_2_D_minus_2_time_point_analysis_thr
