@@ -286,6 +286,11 @@ placebo_metadata_sheet_df <- all_metadata_sheet_df[all_metadata_sheet_df$treatme
 write.table(placebo_metadata_sheet_df, paste0(base_dir, "placebo_metadata_sheet.tsv"), sep = "\t",
             row.names = FALSE, quote = FALSE)
 
+# Write vaccinated metadata DF to file
+vaccinated_metadata_sheet_df <- all_metadata_sheet_df[all_metadata_sheet_df$treatment == "MVA-NP+M1",]
+write.table(vaccinated_metadata_sheet_df, paste0(base_dir, "vaccinated_metadata_sheet.tsv"), sep = "\t",
+            row.names = FALSE, quote = FALSE)
+
 
 
 
@@ -399,17 +404,41 @@ print(paste0("The total number of D8 (Period 2) aliquots is: ", nrow(bulkRNAseq_
 print(paste0("The total number of D28 (Period 2) aliquots is: ", nrow(bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$time_point == "D28" & bulkRNAseq_placebo_metadata_sheet_df$period == "2",])))
 print(paste0("The total number of unique subjects is: ", length(unique(bulkRNAseq_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects is: ", sum(find_sex_count(bulkRNAseq_placebo_metadata_sheet_df) == "M")))
-print(paste0("The total number of female subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == "F")))
+print(paste0("The total number of female subjects is: ", sum(find_sex_count(bulkRNAseq_placebo_metadata_sheet_df) == "F")))
+# Good sex ratio (22 male vs 24 female)
 print(paste0("The total number of age 1 subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == 1)))
 print(paste0("The total number of age 2 subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == 2)))
 print(paste0("The total number of age 3 subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == 3)))
 print(paste0("The total number of age 4 subjects is: ", sum(find_age_count(bulkRNAseq_placebo_metadata_sheet_df) == 4)))
-# Good sex ratio (22 male vs 24 female)
 bulkRNAseq_all_timepoints_placebo_metadata_sheet_df <- bulkRNAseq_placebo_metadata_sheet_df[bulkRNAseq_placebo_metadata_sheet_df$subject_id %in% names(table(bulkRNAseq_placebo_metadata_sheet_df$subject_id)[table(bulkRNAseq_placebo_metadata_sheet_df$subject_id) == 10]),]
 print(paste0("The total number of unique subjects with both D-1 and D28 timepoints is: ", length(unique(bulkRNAseq_all_timepoints_placebo_metadata_sheet_df$subject_id))))
 print(paste0("The total number of male subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(bulkRNAseq_all_timepoints_placebo_metadata_sheet_df) == "M")))
 print(paste0("The total number of female subjects with both D-1 and D28 timepoints is: ", sum(find_sex_count(bulkRNAseq_all_timepoints_placebo_metadata_sheet_df) == "F")))
 # Note bad sex ratio (7 male vs 16 female)
+print("*********** BULK RNA-SEQ (VACCINATED) ***********")
+bulkRNAseq_vaccinated_metadata_sheet_df <- vaccinated_metadata_sheet_df[vaccinated_metadata_sheet_df$bulkRNA_seq == TRUE,]
+print(paste0("The total number of aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df)))
+print(paste0("The total number of D-1 (Period 1) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D1 predose" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "1",])))
+print(paste0("The total number of D2 (Period 1) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D2" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "1",])))
+print(paste0("The total number of D8 (Period 1) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D8" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "1",])))
+print(paste0("The total number of D28 (Period 1) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D28" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "1",])))
+print(paste0("The total number of D-2 (Period 2) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D-2" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D-1 (Period 2) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D-1" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D2 (Period 2) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D2" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D5 (Period 2) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D5" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D8 (Period 2) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D8" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of D28 (Period 2) aliquots is: ", nrow(bulkRNAseq_vaccinated_metadata_sheet_df[bulkRNAseq_vaccinated_metadata_sheet_df$time_point == "D28" & bulkRNAseq_vaccinated_metadata_sheet_df$period == "2",])))
+print(paste0("The total number of unique subjects is: ", length(unique(bulkRNAseq_vaccinated_metadata_sheet_df$subject_id))))
+print(paste0("The total number of male subjects is: ", sum(find_sex_count(bulkRNAseq_vaccinated_metadata_sheet_df) == "M")))
+print(paste0("The total number of female subjects is: ", sum(find_sex_count(bulkRNAseq_vaccinated_metadata_sheet_df) == "F")))
+print(paste0("The total number of white subjects is: ", sum(find_race_count(bulkRNAseq_vaccinated_metadata_sheet_df) == "WHITE")))
+print(paste0("The total number of Asian subjects is: ", sum(find_race_count(bulkRNAseq_vaccinated_metadata_sheet_df) == "ASIAN")))
+print(paste0("The total number of black subjects is: ", sum(find_race_count(bulkRNAseq_vaccinated_metadata_sheet_df) == "BLACK OR AFRICAN AMERICAN")))
+# Good sex ratio (22 male vs 24 female)
+print(paste0("The total number of age 1 subjects is: ", sum(find_age_count(bulkRNAseq_vaccinated_metadata_sheet_df) == 1)))
+print(paste0("The total number of age 2 subjects is: ", sum(find_age_count(bulkRNAseq_vaccinated_metadata_sheet_df) == 2)))
+print(paste0("The total number of age 3 subjects is: ", sum(find_age_count(bulkRNAseq_vaccinated_metadata_sheet_df) == 3)))
+print(paste0("The total number of age 4 subjects is: ", sum(find_age_count(bulkRNAseq_vaccinated_metadata_sheet_df) == 4)))
 # Overall conclusions:
 # In general, really bad sex ratios throughout (way more females than males)
 # But Vincy didn't correct for it in her analysis, so maybe it's OK? 

@@ -83,6 +83,34 @@ setup_bulk_analysis=function() {
   #sex_associated_genes <<- find_sex_associated_genes(paste0(data_dir, "sex_associated_genes/"))
 }
 
+run_deseq_bulk_analysis=function(sample_type, counts, metadata, test_time, baseline_time, output_dir) {
+  # Select the two relevant time points from our metadata
+  metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
+  # Remove subjects that only have one time point (not both)
+  metadata_subset <- metadata_subset[metadata_subset$subject_id  %in% names(table(metadata_subset$subject_id)[table(metadata_subset$subject_id) == 2]),]
+  # Select subset of counts associated with subjects
+  counts_subset <- counts[rownames(metadata_subset)]
+  # Run DESeq2
+  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  current_analysis <- DESeq(current_analysis)
+  # Grab results with alpha = 0.05 and lfcThreshold = 0.1
+  current_analysis_results <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.1)
+  current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
+  current_analysis_results <- subset(current_analysis_results, padj < 0.05)
+  write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_0.1.txt", quote = FALSE, row.names = FALSE, col.names = FALSE))
+  # Grab results with alpha = 0.05 and lfcThreshold = 0.585 (1.5 fold increase)
+  current_analysis_results_1.5 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.585)
+  current_analysis_results_1.5 <- current_analysis_results_1.5[order(current_analysis_results_1.5$padj),]
+  current_analysis_results_1.5 <- subset(current_analysis_results_1.5, padj < 0.05)
+  write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_0.585.txt", quote = FALSE, row.names = FALSE, col.names = FALSE))
+  # Grab results with alpha = 0.05 and lfcThreshold = 1
+  current_analysis_results_2 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 1)
+  current_analysis_results_2 <- current_analysis_results_2[order(current_analysis_results_2$padj),]
+  current_analysis_results_2 <- subset(current_analysis_results_2, padj < 0.05)
+  write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_1.txt", quote = FALSE, row.names = FALSE, col.names = FALSE))
+  return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2))
+}
+
 # Method to find sex associated genes - not currently used
 find_sex_associated_genes=function(sex_associated_dir, padj_threshold = 0.05, log2fc_threshold = 0.1) {
   sex_associated_gene_files <- list.files(sex_associated_dir, pattern = ".csv")
