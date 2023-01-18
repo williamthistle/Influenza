@@ -23,7 +23,7 @@ placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", 
 #### PERIOD 2 ####
 # Look at Period 2 DEGs
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
-# 460/2/2 DEGs found
+# 460/2/2 DEGs found - seems weird that 460 are found, even with a low logFC threshold
 placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
                                                                      "2_D_minus_1", "2_D_minus_2", data_dir)
 # 2 D2 vs 2 D minus 1 - 101/1/1 DEGs
@@ -74,3 +74,22 @@ period_2_without_2_D_minus_2_time_point_analysis_200_mat[period_2_without_2_D_mi
 pheatmap(period_2_without_2_D_minus_2_time_point_analysis_200_mat, breaks=seq(from=-period_2_without_2_D_minus_2_time_point_analysis_thr, to=period_2_without_2_D_minus_2_time_point_analysis_thr, length=101),
          cluster_col=FALSE, fontsize_col=14, show_rownames = FALSE, cluster_row = FALSE, filename = paste0(data_dir, "period_2_without_2_D_minus_2_time_point_analysis_top_200_genes.png"))
 save.image(paste0(data_dir, "placebo_bulk_RNA_obj.RData"))
+
+#### HIGH VIRAL LOAD ####
+#### PERIOD 2 ####
+# 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
+# 170/0/0 DEGs found - seems weird that 170 are found, even with a low logFC threshold
+high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                           "2_D_minus_1", "2_D_minus_2", data_dir)
+# 2 D2 vs 2 D minus 1 - 1/0/0 DEGs
+high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                    "2_D2", "2_D_minus_1", data_dir, "high")
+# 2 D5 vs 2 D minus 1 - 2478/465/181 DEGs
+high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                    "2_D5", "2_D_minus_1", data_dir, "high")
+# 2 D8 vs 2 D minus 1 - 2789/534/200 DEGs
+high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                    "2_D8", "2_D_minus_1", data_dir, "high")
+# 2 D28 vs 2 D minus 1 - 4/0/0 DEGs
+high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                     "2_D28", "2_D_minus_1", data_dir, "high")

@@ -79,11 +79,15 @@ setup_bulk_analysis=function() {
   gene_counts <<- round(gene_counts)
   placebo_counts <<- round(placebo_counts)
   vaccinated_counts <<- round(vaccinated_counts)
+  # Grab high viral load placebo counts and metadata
+  high_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$viral_load == "HIGH",])
+  high_placebo_counts <<- placebo_counts[,high_placebo_aliquots]
+  high_placebo_metadata <<- placebo_metadata[high_placebo_aliquots,]
   # Currently not filtering sex associated genes
   #sex_associated_genes <<- find_sex_associated_genes(paste0(data_dir, "sex_associated_genes/"))
 }
 
-run_deseq_bulk_analysis=function(sample_type, counts, metadata, test_time, baseline_time, output_dir) {
+run_deseq_bulk_analysis=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA) {
   # Select the two relevant time points from our metadata
   metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
   # Remove subjects that only have one time point (not both)
@@ -97,17 +101,29 @@ run_deseq_bulk_analysis=function(sample_type, counts, metadata, test_time, basel
   current_analysis_results <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.1)
   current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
   current_analysis_results <- subset(current_analysis_results, padj < 0.05)
-  write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  if(is.na(output_name_prefix)) {
+    write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  } else {
+    write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  }
   # Grab results with alpha = 0.05 and lfcThreshold = 0.585 (1.5 fold increase)
   current_analysis_results_1.5 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.585)
   current_analysis_results_1.5 <- current_analysis_results_1.5[order(current_analysis_results_1.5$padj),]
   current_analysis_results_1.5 <- subset(current_analysis_results_1.5, padj < 0.05)
-  write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  if(is.na(output_name_prefix)) {
+    write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  } else {
+    write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)   
+  }
   # Grab results with alpha = 0.05 and lfcThreshold = 1
   current_analysis_results_2 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 1)
   current_analysis_results_2 <- current_analysis_results_2[order(current_analysis_results_2$padj),]
   current_analysis_results_2 <- subset(current_analysis_results_2, padj < 0.05)
-  write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  if(is.na(output_name_prefix)) {
+    write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  } else {
+    write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  }
   return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2))
 }
 
