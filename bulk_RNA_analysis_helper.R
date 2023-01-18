@@ -1,8 +1,8 @@
 # Method to set up bulk analysis
 setup_bulk_analysis=function() {
   # Read in count and metadata files
-  base_dir <<- "C:/Users/willi/Documents/GitHub/Influenza/"
-  data_dir <<- "C:/Users/willi/Documents/local_data_files/"
+  base_dir <<- "C:/Users/wat2/Documents/GitHub/Influenza/"
+  data_dir <<- "C:/Users/wat2/Documents/local_data_files/"
   gene_counts <<- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
   all_metadata_file <<- paste0(base_dir, "all_metadata_sheet.tsv")
   all_metadata <<- read.table(all_metadata_file, header = TRUE, sep = "\t")
@@ -12,10 +12,8 @@ setup_bulk_analysis=function() {
   viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
   viral_load_primary <<- viral_load_primary[viral_load_primary$TRT01A == "PLACEBO",]
   viral_load_primary$AVAL <<- as.numeric(viral_load_primary$AVAL)
-  # Organize by viral load (high to low). Top 13 subjects will be high viral load and bottom 10 will be low viral load
+  # Organize by viral load (high to low).
   viral_load_primary <<- viral_load_primary[order(viral_load_primary$AVAL, decreasing = TRUE),]
-  high_viral_load_subjects <<- viral_load_primary$SUBJID[1:13]
-  low_viral_load_subjects <<- viral_load_primary$SUBJID[(length(viral_load_primary$SUBJID) - 9):length(viral_load_primary$SUBJID)]
   # Take gene_id column from gene_counts and use contents as the rownames of gene_counts
   gene.row.names <<- as.character(gene_counts$gene_id)
   gene_counts <<- gene_counts[,2:ncol(gene_counts)]
@@ -42,19 +40,6 @@ setup_bulk_analysis=function() {
   # Divide metadata into placebo and vaccinated
   placebo_metadata <<- all_metadata[all_metadata$treatment == "PLACEBO",]
   vaccinated_metadata <<- all_metadata[all_metadata$treatment == "MVA-NP+M1",]
-  # Add viral load into placebo metadata
-  viral_load_vector <<- c()
-  for (subject_id in placebo_metadata$subject_id) {
-    if(subject_id %in% high_viral_load_subjects) {
-      viral_load_vector <<- c(viral_load_vector, "HIGH")
-    } else if (subject_id %in% low_viral_load_subjects) {
-      viral_load_vector <<- c(viral_load_vector, "LOW")
-    } else {
-      viral_load_vector <<- c(viral_load_vector, "NOT_LABELED")
-    }
-  }
-  placebo_metadata$viral_load <<- viral_load_vector
-  placebo_metadata$viral_load <<- factor(placebo_metadata$viral_load, levels = c("LOW", "HIGH", "NOT_LABELED"))
   # Find placebo-associated and vaccinated-associated gene_counts
   kept_aliquots <<- placebo_metadata$aliquot_id
   placebo_counts <<- gene_counts[kept_aliquots]
@@ -73,16 +58,11 @@ setup_bulk_analysis=function() {
   # Drop aliquot ID column (it's stored in rownames)
   all_metadata <<- subset(all_metadata, select = -c(aliquot_id))
   placebo_metadata <<- subset(placebo_metadata, select = -c(aliquot_id))
-  placebo_metadata$viral_load <<- as.factor(placebo_metadata$viral_load)
   vaccinated_metadata <<- subset(vaccinated_metadata, select = -c(aliquot_id))
   # Probably OK to round expected counts from RSEM data. DESeq2 expects integers
   gene_counts <<- round(gene_counts)
   placebo_counts <<- round(placebo_counts)
   vaccinated_counts <<- round(vaccinated_counts)
-  # Grab high viral load placebo counts and metadata
-  high_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$viral_load == "HIGH",])
-  high_placebo_counts <<- placebo_counts[,high_placebo_aliquots]
-  high_placebo_metadata <<- placebo_metadata[high_placebo_aliquots,]
   # Currently not filtering sex associated genes
   #sex_associated_genes <<- find_sex_associated_genes(paste0(data_dir, "sex_associated_genes/"))
 }
@@ -124,7 +104,16 @@ run_deseq_bulk_analysis=function(sample_type, counts, metadata, test_time, basel
   } else {
     write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
-  return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2))
+  # Grab results with alpha = 0.05 and lfcThreshold = 2
+  current_analysis_results_4 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 2)
+  current_analysis_results_4 <- current_analysis_results_4[order(current_analysis_results_4$padj),]
+  current_analysis_results_4 <- subset(current_analysis_results_4, padj < 0.05)
+  if(is.na(output_name_prefix)) {
+    write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  } else {
+    write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  }
+  return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2, current_analysis_results_4))
 }
 
 # Method to find sex associated genes - not currently used
