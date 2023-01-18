@@ -19,8 +19,6 @@ setup_bulk_analysis=function() {
   gene_counts <<- gene_counts[,2:ncol(gene_counts)]
   gene_counts <<- as.data.frame(gene_counts)
   rownames(gene_counts) <<- gene.row.names
-  # Only keep metadata for bulk RNA-seq aliquots
-  all_metadata <<- all_metadata[all_metadata$bulkRNA_seq == TRUE,]
   # Add period into time point (by itself, time point isn't unique - we need period information
   # to distinguish between D-1 in period 1 vs D-1 in period 2, for example)
   all_metadata$time_point <<- paste0(all_metadata$period, "_", all_metadata$time_point)
@@ -37,9 +35,11 @@ setup_bulk_analysis=function() {
   all_metadata$time_point <<- factor(all_metadata$time_point, levels = all_factors)
   all_metadata$sex <<- as.factor(all_metadata$sex)
   all_metadata$age <<- as.factor(all_metadata$age)
+  # Only keep metadata for bulk RNA-seq aliquots
+  bulk_metadata <<- all_metadata[all_metadata$bulkRNA_seq == TRUE,]
   # Divide metadata into placebo and vaccinated
-  placebo_metadata <<- all_metadata[all_metadata$treatment == "PLACEBO",]
-  vaccinated_metadata <<- all_metadata[all_metadata$treatment == "MVA-NP+M1",]
+  placebo_metadata <<- bulk_metadata[bulk_metadata$treatment == "PLACEBO",]
+  vaccinated_metadata <<- bulk_metadata[bulk_metadata$treatment == "MVA-NP+M1",]
   # Find placebo-associated and vaccinated-associated gene_counts
   kept_aliquots <<- placebo_metadata$aliquot_id
   placebo_counts <<- gene_counts[kept_aliquots]
@@ -47,8 +47,8 @@ setup_bulk_analysis=function() {
   vaccinated_counts <<- gene_counts[kept_aliquots]
   # Sort columns in gene_counts and rows for each so they're in same order (for DESeq2)
   colnames(gene_counts) <<- sort(colnames(gene_counts))
-  rownames(all_metadata) <<- all_metadata$aliquot_id
-  rownames(all_metadata) <<- sort(rownames(all_metadata))
+  rownames(bulk_metadata) <<- bulk_metadata$aliquot_id
+  rownames(bulk_metadata) <<- sort(rownames(bulk_metadata))
   colnames(placebo_counts) <<- sort(colnames(placebo_counts))
   rownames(placebo_metadata) <<- placebo_metadata$aliquot_id
   rownames(placebo_metadata) <<- sort(rownames(placebo_metadata))
@@ -56,7 +56,7 @@ setup_bulk_analysis=function() {
   rownames(vaccinated_metadata) <<- vaccinated_metadata$aliquot_id
   rownames(vaccinated_metadata) <<- sort(rownames(vaccinated_metadata))
   # Drop aliquot ID column (it's stored in rownames)
-  all_metadata <<- subset(all_metadata, select = -c(aliquot_id))
+  bulk_metadata <<- subset(bulk_metadata, select = -c(aliquot_id))
   placebo_metadata <<- subset(placebo_metadata, select = -c(aliquot_id))
   vaccinated_metadata <<- subset(vaccinated_metadata, select = -c(aliquot_id))
   # Probably OK to round expected counts from RSEM data. DESeq2 expects integers

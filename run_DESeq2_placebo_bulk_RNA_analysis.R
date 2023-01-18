@@ -11,6 +11,7 @@ setup_bulk_analysis()
 
 #### PERIOD 1 ####
 # Look at Period 1 DEGs - shouldn't find many (or any) since vaccination didn't occur
+# We don't need to separate high and low viral load people here since they're not infected yet?
 # 1 D2 vs 1 D minus 1 - 0/0/0 DEGs found
 placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
                                                                     "1_D2", "1_D_minus_1", data_dir)
@@ -73,7 +74,6 @@ period_2_without_2_D_minus_2_time_point_analysis_200_mat[period_2_without_2_D_mi
 period_2_without_2_D_minus_2_time_point_analysis_200_mat[period_2_without_2_D_minus_2_time_point_analysis_200_mat > period_2_without_2_D_minus_2_time_point_analysis_thr] <- period_2_without_2_D_minus_2_time_point_analysis_thr
 pheatmap(period_2_without_2_D_minus_2_time_point_analysis_200_mat, breaks=seq(from=-period_2_without_2_D_minus_2_time_point_analysis_thr, to=period_2_without_2_D_minus_2_time_point_analysis_thr, length=101),
          cluster_col=FALSE, fontsize_col=14, show_rownames = FALSE, cluster_row = FALSE, filename = paste0(data_dir, "period_2_without_2_D_minus_2_time_point_analysis_top_200_genes.png"))
-save.image(paste0(data_dir, "placebo_bulk_RNA_obj.RData"))
 
 #### HIGH VIRAL LOAD ####
 # Grab subject IDs with full time series of data
@@ -96,6 +96,7 @@ low_placebo_metadata <- placebo_metadata[low_placebo_aliquots,]
 #### PERIOD 2 HIGH VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 609/1/0/0 DEGs found - seems weird that 609 are found, even with a low logFC threshold
+# Could there be something that happened shortly before infection that made subjects more susceptible to getting sick?
 high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
                                                                            "2_D_minus_1", "2_D_minus_2", data_dir, "high")
 # 2 D2 vs 2 D minus 1 - 299/0/0/0 DEGs
@@ -130,3 +131,4 @@ low_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo
 low_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
                                                                           "2_D28", "2_D_minus_1", data_dir, "low")
 
+save.image(paste0(data_dir, "placebo_bulk_RNA_obj.RData"))
