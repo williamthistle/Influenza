@@ -5,7 +5,7 @@ library(pheatmap)
 set.seed(1234)
 
 ##### SETUP #####
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
 setup_bulk_analysis()
 
@@ -97,6 +97,7 @@ low_placebo_metadata <- placebo_metadata[low_placebo_aliquots,]
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 609/1/0/0 DEGs found - seems weird that 609 are found, even with a low logFC threshold
 # Could there be something that happened shortly before infection that made subjects more susceptible to getting sick?
+# Could it be a single patient (or two) messing everything up?
 high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
                                                                            "2_D_minus_1", "2_D_minus_2", data_dir, "high")
 # 2 D2 vs 2 D minus 1 - 299/0/0/0 DEGs
