@@ -116,6 +116,10 @@ run_deseq_bulk_analysis=function(sample_type, counts, metadata, test_time, basel
   return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2, current_analysis_results_4))
 }
 
+
+
+
+
 # Method to find sex associated genes - not currently used
 find_sex_associated_genes=function(sex_associated_dir, padj_threshold = 0.05, log2fc_threshold = 0.1) {
   sex_associated_gene_files <- list.files(sex_associated_dir, pattern = ".csv")
