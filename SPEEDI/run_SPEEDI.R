@@ -1,10 +1,11 @@
 home_dir <- "~/SPEEDI"
-source(paste0(home_dir, "/prototype_utils.R"))
 source(paste0(home_dir, "/prototype_API.R"))
 
-data_path <- "/data/home/wat2/multiome/snRNA_seq_data/"
-sample_id_list <- c("001c96c7a4adc441", "101f214ee96a731d")
-output_dir <- "/data/home/wat2/multiome/snRNA_seq_data_output/"
+data_path <- "/data/home/wat2/D28_multiome_preliminary/snRNA_seq_data/"
+sample_id_list <- list.dirs(data_path, recursive = FALSE)
+sample_id_list <- strsplit(sample_id_list, "/")
+sample_id_list <- unlist(lapply(sample_id_list, tail, n = 1L))
+output_dir <- "/data/home/wat2/D28_multiome_preliminary/snRNA_seq_data_output/"
 
 all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
 sc_obj <- FilterRawData(all_sc_exp_matrices, human = TRUE)
