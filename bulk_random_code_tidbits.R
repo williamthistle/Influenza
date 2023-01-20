@@ -1,4 +1,4 @@
-find_distribution_of_sc_metadata_for_subjects = function(list_of_subjects, metadata) {
+find_distribution_of_sc_metadata_for_subjects = function(list_of_subjects, metadata, output_name_prefix=NA) {
   # D1 aliquots (passing scRNA, passing multiome, and failing)
   total_D1_passing_scRNA <- c()
   total_D1_passing_scRNA_sex <- c()
@@ -14,8 +14,10 @@ find_distribution_of_sc_metadata_for_subjects = function(list_of_subjects, metad
   total_D28_failing <- c()
   total_D28_failing_sex <- c()
   # Full pass (D-1 and D28) subjects (passing scRNA and passing multiome)
+  total_full_pass_subjects_scRNA_aliquots <- c()
   total_full_pass_subjects_scRNA <- c()
   total_full_pass_subjects_scRNA_sex <- c()
+  total_full_pass_subjects_multiome_aliquots <- c()
   total_full_pass_subjects_multiome <- c()
   total_full_pass_subjects_multiome_sex <- c()
   for(subject in list_of_subjects) {
@@ -23,12 +25,15 @@ find_distribution_of_sc_metadata_for_subjects = function(list_of_subjects, metad
     current_sex <- as.character(subject_metadata$sex[1])
     # Gather information on a subject level
     # Check for full pass for current subject (first for scRNA-seq and then for multiome)
+    full_pass = FALSE
     if(sum(subject_metadata$scRNA_seq) == 2 & (sum(subject_metadata$passed_qc_scRNA_seq == "Pass") + sum(subject_metadata$passed_qc_scRNA_seq == "Good")) == 2) {
       total_full_pass_subjects_scRNA <- c(total_full_pass_subjects_scRNA, subject)
       total_full_pass_subjects_scRNA_sex <- c(total_full_pass_subjects_scRNA_sex, current_sex)
+      full_pass = TRUE
     } else if(sum(subject_metadata$multiome) == 2) {
       total_full_pass_subjects_multiome <- c(total_full_pass_subjects_multiome, subject)
       total_full_pass_subjects_multiome_sex <- c(total_full_pass_subjects_multiome_sex, current_sex)
+      full_pass = TRUE
     }
     # Gather information on an aliquot level
     for(aliquot_id in subject_metadata$aliquot_id) {
@@ -43,9 +48,15 @@ find_distribution_of_sc_metadata_for_subjects = function(list_of_subjects, metad
             total_D1_failing <- c(total_D1_failing, aliquot_id)
             total_D1_failing_sex <- c(total_D1_failing_sex, current_sex)
           }
+          if(full_pass) {
+            total_full_pass_subjects_scRNA_aliquots <- c(total_full_pass_subjects_scRNA_aliquots, aliquot_id)
+          }
         } else if(aliquot_subject_metadata$multiome == TRUE) {
           total_D1_passing_multiome <- c(total_D1_passing_multiome, aliquot_id)
           total_D1_passing_multiome_sex <- c(total_D1_passing_multiome_sex, current_sex)
+          if(full_pass) {
+            total_full_pass_subjects_multiome_aliquots <- c(total_full_pass_subjects_multiome_aliquots, aliquot_id)
+          }
         }
       # Gather info about D28
       } else if(aliquot_subject_metadata$time_point == "2_D28") {
@@ -57,13 +68,20 @@ find_distribution_of_sc_metadata_for_subjects = function(list_of_subjects, metad
             total_D28_failing <- c(total_D28_failing, aliquot_id)
             total_D28_failing_sex <- c(total_D28_failing_sex, current_sex)
           }
+          if(full_pass) {
+            total_full_pass_subjects_scRNA_aliquots <- c(total_full_pass_subjects_scRNA_aliquots, aliquot_id)
+          }
         } else if(aliquot_subject_metadata$multiome == TRUE) {
           total_D28_passing_multiome <- c(total_D28_passing_multiome, aliquot_id)
           total_D28_passing_multiome_sex <- c(total_D28_passing_multiome_sex, current_sex)
+          if(full_pass) {
+            total_full_pass_subjects_multiome_aliquots <- c(total_full_pass_subjects_multiome_aliquots, aliquot_id)
+          }
         }
       }
     }
   }
+  # Print report to output
   print("### BREAKDOWN OF SUBJECTS ###")
   print(paste0("Total full pass (D-1 and D28) scRNA subjects: ", length(total_full_pass_subjects_scRNA), " (", sum(total_full_pass_subjects_scRNA_sex == "M"), " Male, ", sum(total_full_pass_subjects_scRNA_sex == "F"), " Female)"))
   print(paste0("Total full pass (D-1 and D28) multiome subjects: ", length(total_full_pass_subjects_multiome), " (", sum(total_full_pass_subjects_multiome_sex == "M"), " Male, ", sum(total_full_pass_subjects_multiome_sex == "F"), " Female)"))
@@ -86,11 +104,83 @@ find_distribution_of_sc_metadata_for_subjects = function(list_of_subjects, metad
   D28_total_passing_female <- sum(total_D28_passing_scRNA_sex == "F") + sum(total_D28_passing_multiome_sex == "F")
   print(paste0("total D28 passing: ", D28_total_passing, " (", D28_total_passing_male, " Male, ", D28_total_passing_female, " Female)"))
   print(paste0("total D28 failing scRNA: ", length(total_D28_failing), " (", sum(total_D28_failing_sex == "M"), " Male, ", sum(total_D28_failing_sex == "F"), " Female)"))
+  # Print aliquots to file
+  aliquot_output <- ""
+  aliquot_output <- paste0(aliquot_output, "########\n")
+  aliquot_output <- paste0(aliquot_output, "FULL PASS (D-1 AND D28) scRNA SUBJECTS:\n")
+  aliquot_index <- 1
+  for(index in 1:length(total_full_pass_subjects_scRNA)) {
+    first_aliquot <- total_full_pass_subjects_scRNA_aliquots[aliquot_index]
+    second_aliquot <- total_full_pass_subjects_scRNA_aliquots[aliquot_index + 1]
+    first_aliquot_time <- metadata[metadata$aliquot_id == first_aliquot,]$time_point
+    second_aliquot_time <- metadata[metadata$aliquot_id == second_aliquot,]$time_point
+    if(first_aliquot_time == "2_D_minus_1") {
+      first_aliquot_time <- "D-1"
+      second_aliquot_time <- "D28"
+    } else if (first_aliquot_time == "2_D28") {
+      # Swap aliquots because we want D-1 listed first and D28 listed second
+      temp <- first_aliquot
+      first_aliquot <- second_aliquot
+      second_aliquot <- temp
+      first_aliquot_time <- "D-1"
+      second_aliquot_time <- "D28"
+    }
+    aliquot_output <- paste0(aliquot_output, total_full_pass_subjects_scRNA[index], " (" , total_full_pass_subjects_scRNA_sex[index], "): ", first_aliquot, " (", first_aliquot_time, ") and ", second_aliquot, " (", second_aliquot_time, ")\n")
+    aliquot_index <- aliquot_index + 2
+  }
+  aliquot_output <- paste0(aliquot_output, "########\n")
+  aliquot_output <- paste0(aliquot_output, "FULL PASS (D-1 AND D28) MULTIOME SUBJECTS:\n")
+  aliquot_index <- 1
+  for(index in 1:length(total_full_pass_subjects_multiome)) {
+    first_aliquot <- total_full_pass_subjects_multiome_aliquots[aliquot_index]
+    second_aliquot <- total_full_pass_subjects_multiome_aliquots[aliquot_index + 1]
+    first_aliquot_time <- metadata[metadata$aliquot_id == first_aliquot,]$time_point
+    second_aliquot_time <- metadata[metadata$aliquot_id == second_aliquot,]$time_point
+    if(first_aliquot_time == "2_D_minus_1") {
+      first_aliquot_time <- "D-1"
+      second_aliquot_time <- "D28"
+    } else if (first_aliquot_time == "2_D28") {
+      # Swap aliquots because we want D-1 listed first and D28 listed second
+      temp <- first_aliquot
+      first_aliquot <- second_aliquot
+      second_aliquot <- temp
+      first_aliquot_time <- "D-1"
+      second_aliquot_time <- "D28"
+    }
+    aliquot_output <- paste0(aliquot_output, total_full_pass_subjects_multiome[index], " (" , total_full_pass_subjects_multiome_sex[index], "): ", first_aliquot, " (", first_aliquot_time, ") and ", second_aliquot, " (", second_aliquot_time, ")\n")
+    aliquot_index <- aliquot_index + 2
+  }
+  aliquot_output <- paste0(aliquot_output, "########\n")
+  aliquot_output <- paste0(aliquot_output, "D-1 PASSING scRNA ALIQUOTS:\n")
+  for(index in 1:length(total_D1_passing_scRNA)) {
+    aliquot_output <- paste0(aliquot_output, total_D1_passing_scRNA[index], " (" , total_D1_passing_scRNA_sex[index], ")\n")
+  }
+  aliquot_output <- paste0(aliquot_output, "########\n")
+  aliquot_output <- paste0(aliquot_output, "D-1 PASSING MULTIOME ALIQUOTS:\n")
+  for(index in 1:length(total_D1_passing_multiome)) {
+    aliquot_output <- paste0(aliquot_output, total_D1_passing_multiome[index], " (" , total_D1_passing_multiome_sex[index], ")\n")
+  }
+  aliquot_output <- paste0(aliquot_output, "########\n")
+  aliquot_output <- paste0(aliquot_output, "D28 PASSING scRNA ALIQUOTS:\n")
+  for(index in 1:length(total_D28_passing_scRNA)) {
+    aliquot_output <- paste0(aliquot_output, total_D28_passing_scRNA[index], " (" , total_D28_passing_scRNA_sex[index], ")\n")
+  }
+  aliquot_output <- paste0(aliquot_output, "########\n")
+  aliquot_output <- paste0(aliquot_output, "D28 PASSING MULTIOME ALIQUOTS:\n")
+  for(index in 1:length(total_D28_passing_multiome)) {
+    aliquot_output <- paste0(aliquot_output, total_D28_passing_multiome[index], " (" , total_D28_passing_multiome_sex[index], ")\n")
+  }
+  aliquot_output <- paste0(aliquot_output, "########")
+  if(!is.na(output_name_prefix)) {
+    writeLines(aliquot_output, paste0(data_dir, output_name_prefix, "_aliquot_distribution.txt"))
+  } else {
+    writeLines(aliquot_output, paste0(data_dir, "aliquot_distribution.txt"))
+  }
 }
 
 
-find_distribution_of_sc_metadata_for_subjects(high_viral_load_subjects, all_metadata)
-find_distribution_of_sc_metadata_for_subjects(low_viral_load_subjects, all_metadata)
+find_distribution_of_sc_metadata_for_subjects(high_viral_load_subjects, all_metadata, "high")
+find_distribution_of_sc_metadata_for_subjects(low_viral_load_subjects, all_metadata, "low")
 
 
 
