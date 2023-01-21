@@ -395,9 +395,9 @@ IntegrateByBatch <- function(sc_obj) {
                                   k.weight = 100)
   DefaultAssay(integrated_obj) <- "integrated"
   
-  rm(sc_obj_list)
-  rm(features)
-  rm(anchors)
+  #rm(sc_obj_list)
+  #rm(features)
+  #rm(anchors)
   
   return(integrated_obj)
   # return(r)
