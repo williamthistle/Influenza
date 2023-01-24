@@ -17,14 +17,25 @@ sc_obj <- IntegrateByBatch(sc_obj)
 save.image(paste0(output_dir, "5_high_vs_low_viral_load_D28_placebo_multiome.RData"))
 sc_obj <- VisualizeIntegration(sc_obj)
 save.image(paste0(output_dir, "6_high_vs_low_viral_load_D28_placebo_multiome.RData"))
+load(paste0(output_dir, "6_high_vs_low_viral_load_D28_placebo_multiome.RData"))
 reference <- LoadReference("PBMC", human = TRUE)
+
+### Test ###
+# Remove certain cell types we're not interested in
+#idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+#reference <- reference[,-idx]
+#idx <- which(reference$celltype.l3 == "Treg Naive")
+#reference <- reference[,-idx]
+### Test ###
+
+
 sc_obj <- MapCellTypes(sc_obj, reference)
 # Print by cell type (majority vote)
 DimPlot(sc_obj, reduction = "umap", group.by = "predicted_celltype_majority_vote", label = TRUE,
         label.size = 3, repel = TRUE, raster = FALSE) + 
   labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
-ggsave(paste0(output_dir, paste0("high_vs_low_viral_load_D28_multiome", ".png")), device = "png", dpi = 300)
+ggsave(paste0(output_dir, paste0("high_vs_low_viral_load_D28_multiome_test", ".png")), device = "png", dpi = 300)
 save.image(paste0(output_dir, "7_high_vs_low_viral_load_D28_placebo_multiome.RData"))
 
 load(paste0(output_dir, "7_high_vs_low_viral_load_D28_placebo_multiome.RData"))
@@ -70,6 +81,7 @@ ggsave(paste0(output_dir, paste0("high_vs_low_viral_load_D28_multiome_without_me
 high_viral_load <- c("b82bb7c75d47dac1", "3c4540710e55f7b1", "6f609a68dca1261f", "7b54cfac7e67b0fa")
 low_viral_load <- c("abf6d19ee03be1e8", "216bb226181591dd", "d360f89cf9585dfe")
 all_viral_load <- c(high_viral_load, low_viral_load)
+viral_load_label <- c(rep("HIGH", length(high_viral_load)), rep("LOW", length(low_viral_load)))
 
 viral_load_vec <- c()
 for(current_sample in sc_obj.minus.clusters$sample) {
@@ -83,20 +95,21 @@ for(current_sample in sc_obj.minus.clusters$sample) {
 sc_obj.minus.clusters$viral_load <- viral_load_vec
 
 # Calculate cell type proportions 
-cell_type_proportions_df <- data.frame("Condition" = sub(".*_", "", all_viral_load), "Sample_name" = all_viral_load)
-total_cell_counts_df <- data.frame("Sample_name" = all_viral_load)
-cell_counts <- c()
+cell_type_proportions_df <- data.frame("Condition" = viral_load_label, "Sample_name" = all_viral_load)
+total_cell_counts_df <- data.frame("Condition" = viral_load_label, "Sample_name" = all_viral_load)
 # Find total cell counts for each sample
+total_cell_counts <- c()
 for (sample_id in all_viral_load) {
   idxPass <- which(sc_obj.minus.clusters$sample %in% sample_id)
   cellsPass <- names(sc_obj.minus.clusters$orig.ident[idxPass])
   sample_subset <- subset(x = sc_obj.minus.clusters, subset = cell_name %in% cellsPass)
-  cell_counts <- c(cell_counts, ncol(sample_subset))
+  total_cell_counts <- c(total_cell_counts, ncol(sample_subset))
 }
-total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
+total_cell_counts_df <- cbind(total_cell_counts_df, total_cell_counts)
 
 for (cell_type in unique(sc_obj.minus.clusters$predicted_celltype_majority_vote)) {
   cell_type_proportions <- vector()
+  cell_counts <- c()
   print(cell_type)
   # Grab cells associated with cell type
   idxPass <- which(sc_obj.minus.clusters$predicted_celltype_majority_vote %in% cell_type)
@@ -111,19 +124,24 @@ for (cell_type in unique(sc_obj.minus.clusters$predicted_celltype_majority_vote)
       cell_type_proportions <- append(cell_type_proportions, 0)
     } else {
       sample_subset <- subset(x = cells_subset, subset = cell_name %in% cellsPass)
-      cell_counts <- ncol(sample_subset)
-      cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+      cell_count <- ncol(sample_subset)
+      cell_counts <- c(cell_counts, cell_count)
+      cell_type_proportions <- append(cell_type_proportions, cell_count / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$total_cell_counts)
     }
   }
+  temp_df <- data.frame(cell_counts)
+  names(temp_df)[names(temp_df) == "cell_counts"] <- cell_type
+  total_cell_counts_df <- cbind(total_cell_counts_df, temp_df)
   temp_df <- data.frame(cell_type_proportions)
   names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
   cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
 }
 write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
-cell_type_proportions_plot <- ggplot(cell_type_proportions_df, aes(fill=condition, y=value, x=specie)) + 
-  geom_bar(position="stack", stat="identity")
+write.csv(total_cell_counts_df, file = paste0(output_dir, "RNA_cell_counts.csv"), quote = FALSE, row.names = FALSE)
+#cell_type_proportions_plot <- ggplot(cell_type_proportions_df, aes(fill=condition, y=value, x=specie)) + 
+#  geom_bar(position="stack", stat="identity")
   
-ggsave(paste0(output_dir, paste0("cell_type_proportions.png")), device = "png", dpi = 300)
+#ggsave(paste0(output_dir, paste0("cell_type_proportions.png")), device = "png", dpi = 300)
 
 # For one sample at a time
 for(sample_id in sample_id_list) {
