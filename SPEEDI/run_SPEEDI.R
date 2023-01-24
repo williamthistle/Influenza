@@ -1,23 +1,25 @@
 home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
 
-data_path <- "/data/home/wat2/high_vs_low_viral_load_D28/snRNA_seq_data/"
+naming_token <- "high_viral_load_D28"
+
+data_path <- paste0("/data/home/wat2/", naming_token, "/snRNA_seq_data/")
 sample_id_list <- list.dirs(data_path, recursive = FALSE)
 sample_id_list <- strsplit(sample_id_list, "/")
 sample_id_list <- unlist(lapply(sample_id_list, tail, n = 1L))
-output_dir <- "/data/home/wat2/high_vs_low_viral_load_D28/snRNA_seq_data_output/"
+output_dir <- paste0("/data/home/wat2/", naming_token, "/snRNA_seq_data_output/")
 
 all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
 sc_obj <- FilterRawData(all_sc_exp_matrices, human = TRUE)
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing(sc_obj, human = TRUE)
-save.image(paste0(output_dir, "3_high_vs_low_viral_load_D28_placebo_multiome.RData"))
+#save.image(paste0(output_dir, "3_", naming_token, ".RData"))
 sc_obj <- InferBatches(sc_obj)
 sc_obj <- IntegrateByBatch(sc_obj)
-save.image(paste0(output_dir, "5_high_vs_low_viral_load_D28_placebo_multiome.RData"))
+#save.image(paste0(output_dir, "5_", naming_token, ".RData"))
 sc_obj <- VisualizeIntegration(sc_obj)
-save.image(paste0(output_dir, "6_high_vs_low_viral_load_D28_placebo_multiome.RData"))
-load(paste0(output_dir, "6_high_vs_low_viral_load_D28_placebo_multiome.RData"))
+save.image(paste0(output_dir, "6_", naming_token, ".RData"))
+#load(paste0(output_dir, "6_", naming_token, ".RData"))
 reference <- LoadReference("PBMC", human = TRUE)
 
 ### Test ###
@@ -35,16 +37,16 @@ DimPlot(sc_obj, reduction = "umap", group.by = "predicted_celltype_majority_vote
         label.size = 3, repel = TRUE, raster = FALSE) + 
   labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
-ggsave(paste0(output_dir, paste0("high_vs_low_viral_load_D28_multiome_test", ".png")), device = "png", dpi = 300)
-save.image(paste0(output_dir, "7_high_vs_low_viral_load_D28_placebo_multiome.RData"))
+ggsave(paste0(output_dir, naming_token, "clusters_by_cell_type.png"), device = "png", dpi = 300)
+save.image(paste0(output_dir, "7_", naming_token, ".RData"))
 
-load(paste0(output_dir, "7_high_vs_low_viral_load_D28_placebo_multiome.RData"))
+load(paste0(output_dir, "7_", naming_token, ".RData"))
 # Print by cluster number
 DimPlot(sc_obj, reduction = "umap", group.by = "seurat_clusters", label = TRUE,
         label.size = 3, repel = TRUE, raster = FALSE) + 
   labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
-ggsave(paste0(output_dir, paste0("high_vs_low_viral_load_D28_multiome_clusters", ".png")), device = "png", dpi = 300)
+ggsave(paste0(output_dir, naming_token, "_clusters_by_cluster_number.png"), device = "png", dpi = 300)
 
 cell_names <- rownames(sc_obj@meta.data)
 sc_obj <- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
@@ -62,7 +64,7 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
           label.size = 3, repel = TRUE, raster = FALSE) + 
     labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
     theme(plot.title = element_text(hjust = 0.5))
-  ggsave(paste0(output_dir, paste0("high_vs_low_viral_load_D28_multiome_without_cluster_", cluster_id, ".png")), device = "png", dpi = 300)
+  ggsave(paste0(output_dir, naming_token, "_without_cluster_", cluster_id, ".png"), device = "png", dpi = 300)
 }
 
 # Remove messy clusters - 10 is maybe questionable to remove (removes CD4 Naive)
@@ -75,7 +77,7 @@ DimPlot(sc_obj.minus.clusters, reduction = "umap", group.by = "predicted_celltyp
         label.size = 3, repel = TRUE, raster = FALSE) + 
   labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
-ggsave(paste0(output_dir, paste0("high_vs_low_viral_load_D28_multiome_without_messy_clusters.png")), device = "png", dpi = 300)
+ggsave(paste0(output_dir, naming_token, "_without_messy_clusters.png"), device = "png", dpi = 300)
 
 # Assign viral load (high or low) to each cell
 high_viral_load <- c("b82bb7c75d47dac1", "3c4540710e55f7b1", "6f609a68dca1261f", "7b54cfac7e67b0fa")

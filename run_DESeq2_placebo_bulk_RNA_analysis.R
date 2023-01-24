@@ -28,48 +28,56 @@ high_placebo_metadata <- placebo_metadata[high_placebo_aliquots,]
 low_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id %in% low_viral_load_subjects,])
 low_placebo_counts <- placebo_counts[,low_placebo_aliquots]
 low_placebo_metadata <- placebo_metadata[low_placebo_aliquots,]
+# Grab combination of high and low viral load placebo counts and metadata
+both_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id %in% high_viral_load_subjects | placebo_metadata$subject_id %in% low_viral_load_subjects,])
+both_placebo_counts <- placebo_counts[,both_placebo_aliquots]
+both_placebo_metadata <- placebo_metadata[both_placebo_aliquots,]
+viral_load_for_metadata <- both_placebo_metadata$subject_id %in% high_viral_load_subjects
+viral_load_for_metadata <- replace(viral_load_for_metadata, viral_load_for_metadata == TRUE, "HIGH")
+viral_load_for_metadata <- replace(viral_load_for_metadata, viral_load_for_metadata == "FALSE", "LOW")
+both_placebo_metadata$viral_load <- viral_load_for_metadata
 # Now we are ready to run differential expression
 
 #### PERIOD 1 HIGH VIRAL LOAD ####
 # We expect ~0 DEGs because placebo was used (no actual vaccination)
 # 0/0/0/0 DEGs
-high_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                 "1_D2", "1_D_minus_1", data_dir, "high")
 # 0/0/0/0 DEGs
-high_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                 "1_D8", "1_D_minus_1", data_dir, "high")
 # 1/1/1/1 DEGs
-high_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                 "1_D28", "1_D_minus_1", data_dir, "high")
 #### PERIOD 1 LOW VIRAL LOAD ####
 # We expect ~0 DEGs because placebo was used (no actual vaccination)
 # 2/0/0/0 DEGs
-low_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                          "1_D2", "1_D_minus_1", data_dir, "low")
 # 0/0/0/0 DEGs
-low_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                          "1_D8", "1_D_minus_1", data_dir, "low")
 # 0/0/0/0 DEGs
-low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                           "1_D28", "1_D_minus_1", data_dir, "low")
 #### PERIOD 2 HIGH VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 609/1/0/0 DEGs found - seems weird that 609 are found, even with a low logFC threshold
 # Could there be something that happened shortly before infection that made subjects more susceptible to getting sick?
 # Could it be a single patient (or two) messing everything up?
-high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                 "2_D_minus_1", "2_D_minus_2", data_dir, "high")
 # 2 D2 vs 2 D minus 1 - 299/0/0/0 DEGs
-high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                          "2_D2", "2_D_minus_1", data_dir, "high")
 # 2 D5 vs 2 D minus 1 - 3432/600/228/51 DEGs
-high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                          "2_D5", "2_D_minus_1", data_dir, "high")
 # 2 D8 vs 2 D minus 1 - 1940/269/59/8 DEGs
-high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                          "2_D8", "2_D_minus_1", data_dir, "high")
 # 2 D28 vs 2 D minus 1 - 34/2/0/0 DEGs
-high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                           "2_D28", "2_D_minus_1", data_dir, "high")
 # Find length of intersection between D5 (1 FC) and D8 (1 FC)
 length(intersect(rownames(high_placebo_period_2_D5_vs_D_minus_1_results[[3]]), rownames(high_placebo_period_2_D8_vs_D_minus_1_results[[3]])))
@@ -113,19 +121,19 @@ pheatmap(high_placebo_period_2_LRT_analysis_200_mat, breaks=seq(from=-high_place
 #### PERIOD 2 LOW VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 0/0/0/0 DEGs found
-low_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                                "2_D_minus_1", "2_D_minus_2", data_dir, "low")
 # 2 D2 vs 2 D minus 1 - 1/1/1/1 DEGs
-low_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                         "2_D2", "2_D_minus_1", data_dir, "low")
 # 2 D5 vs 2 D minus 1 - 0/0/0/0 DEGs
-low_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                         "2_D5", "2_D_minus_1", data_dir, "low")
 # 2 D8 vs 2 D minus 1 - 0/0/0/0 DEGs
-low_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                         "2_D8", "2_D_minus_1", data_dir, "low")
 # 2 D28 vs 2 D minus 1 - 51/0/0/0 DEGs
-low_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                          "2_D28", "2_D_minus_1", data_dir, "low")
 # LRT test
 # 0 DEGs found (note that LRT doesn't have a fold change threshold)
@@ -147,7 +155,18 @@ low_placebo_period_2_LRT_analysis_results <- subset(low_placebo_period_2_LRT_ana
 save.image(paste0(data_dir, "placebo_bulk_RNA_obj.RData"))
 
 # Should I do high vs low viral load differential expression here? 
-
+# 2 D2 High vs 2 D2 Low - 134/131/131/128 DEGs
+placebo_period_2_D2_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
+                                                                        "2_D2", "HIGH", "LOW", data_dir, "D2")
+#2 D5 High vs 2 D5 Low - 1128/353/209/124 DEGs
+placebo_period_2_D5_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
+                                                                        "2_D5", "HIGH", "LOW", data_dir, "D5")
+# 2 D8 High vs 2 D8 Low - 336/212/193/185 DEGs
+placebo_period_2_D8_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
+                                                                        "2_D8", "HIGH", "LOW", data_dir, "D8")
+# 2 D28 High vs 2 D28 Low - 172/162/161/156 DEGs
+placebo_period_2_D28_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
+                                                                        "2_D28","HIGH", "LOW", data_dir, "D28")
 
 
 
@@ -186,29 +205,29 @@ save.image(paste0(data_dir, "placebo_bulk_RNA_obj.RData"))
 # Look at Period 1 DEGs - shouldn't find many (or any) since vaccination didn't occur
 # We don't need to separate high and low viral load people here since they're not infected yet?
 # 1 D2 vs 1 D minus 1 - 0/0/0 DEGs found
-#placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
+#placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts, placebo_metadata,
 #                                                                    "1_D2", "1_D_minus_1", data_dir)
 # 1 D8 vs 1 D minus 1 - 1/0/0 DEGs found
-#placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
+#placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts, placebo_metadata,
 #                                                                    "1_D8", "1_D_minus_1", data_dir)
 # 1 D28 vs 1 D minus 1 - 2/1/1 DEGs found
-#placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
+#placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts, placebo_metadata,
 #                                                                    "1_D28", "1_D_minus_1", data_dir)
 #### PERIOD 2 ####
 # Look at Period 2 DEGs
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 460/2/2 DEGs found - seems weird that 460 are found, even with a low logFC threshold
-#placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
+#placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts, placebo_metadata,
 #                                                                     "2_D_minus_1", "2_D_minus_2", data_dir)
 # 2 D2 vs 2 D minus 1 - 101/1/1 DEGs
-#placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
+#placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts, placebo_metadata,
 #                                                                           "2_D2", "2_D_minus_1", data_dir)
 # 2 D5 vs 2 D minus 1 - 2409/98/24 DEGs
-#placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
+#placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts, placebo_metadata,
 #                                                                    "2_D5", "2_D_minus_1", data_dir)
 # 2 D8 vs 2 D minus 1 - 2712/176/27 DEGs
-#placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
+#placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts, placebo_metadata,
 #                                                                    "2_D8", "2_D_minus_1", data_dir)
 # 2 D28 vs 2 D minus 1 - 2179/4/1 DEGs
-#placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", placebo_counts, placebo_metadata,
+#placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts, placebo_metadata,
 #                                                                    "2_D28", "2_D_minus_1", data_dir)
