@@ -1,7 +1,7 @@
 home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
 
-naming_token <- "low_viral_load_D28"
+naming_token <- "high_vs_low_viral_load_D28"
 
 data_path <- paste0("/data/home/wat2/", naming_token, "/snRNA_seq_data/")
 sample_id_list <- list.dirs(data_path, recursive = FALSE)
@@ -71,6 +71,37 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
 idxPass <- which(Idents(sc_obj) %in% c(3, 10, 14))
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
+# Find distribution of cells in each cluster - we can decide to eliminate those that are mixture of cells (majority vote can't save)
+cluster_distributions <- list()
+cluster_predictions <- vector()
+cluster_mean_S_score <- vector()
+cluster_mean_G2M_score <- vector()
+cluster_mean_CC_difference <- vector()
+cluster_ids <- vector()
+idx <- 1
+for (cluster in levels(sc_obj.minus.clusters)) {
+  idxPass <- which(Idents(sc_obj.minus.clusters) %in% cluster)
+  cellsPass <- names(sc_obj.minus.clusters$orig.ident[idxPass])
+  filtered_cluster <- subset(x = sc_obj.minus.clusters, subset = cell_name %in% cellsPass)
+  cluster_prediction <- sort(table(filtered_cluster$predicted_celltype_majority_vote), decreasing = TRUE)[1]
+  cluster_predictions <- append(cluster_predictions, cluster_prediction)
+  cluster_distributions[[idx]] <- table(filtered_cluster$predicted.id)
+  cluster_mean_S_score <- append(cluster_mean_S_score, mean(filtered_cluster$S.Score))
+  cluster_mean_G2M_score <- append(cluster_mean_G2M_score, mean(filtered_cluster$G2M.Score))
+  cluster_mean_CC_difference <- append(cluster_mean_CC_difference, mean(filtered_cluster$CC.Difference))
+  cluster_ids <- append(cluster_ids, cluster)
+  idx <- idx + 1
+}
+names(cluster_predictions) <- paste(levels(sc_obj.minus.clusters), "-", names(cluster_predictions))
+# Maybe high S score and high G2M score indicate Proliferating cluster?
+cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score, "G2M" = cluster_mean_G2M_score, "CC Diff" = cluster_mean_CC_difference)
+
+
+
+
+
+
 
 # Reprint by cell type (majority vote)
 DimPlot(sc_obj.minus.clusters, reduction = "umap", group.by = "predicted_celltype_majority_vote", label = TRUE,
