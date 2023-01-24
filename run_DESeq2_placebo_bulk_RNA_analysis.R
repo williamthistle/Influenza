@@ -5,21 +5,21 @@ library(pheatmap)
 set.seed(1234)
 
 ##### SETUP #####
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
 setup_bulk_analysis()
 
 # Grab the main 23 subjects (13 high viral load, 10 low viral load) that have all 10 time points
-full_time_series_metadata <- placebo_metadata[placebo_metadata$subject_id 
+placebo_full_time_series_metadata <- placebo_metadata[placebo_metadata$subject_id 
                                                                %in% names(table(placebo_metadata$subject_id)
                                                                           [table(placebo_metadata$subject_id) == 10]),]
 # Grab subject IDs for main 23 subjects
-full_time_series_subjects <- unique(full_time_series_metadata$subject_id)
+placebo_full_time_series_subjects <- unique(placebo_full_time_series_metadata$subject_id)
 # Reorder subject IDs according to viral load (high to low)
-full_time_series_subjects <- full_time_series_subjects[order(match(full_time_series_subjects,viral_load_primary$SUBJID))]
+full_time_series_subjects <- placebo_full_time_series_subjects[order(match(placebo_full_time_series_subjects,viral_load_primary$SUBJID))]
 # Top 13 will be high viral load and bottom 10 will be low viral load 
-high_viral_load_subjects <- full_time_series_subjects[1:13]
-low_viral_load_subjects <- tail(full_time_series_subjects, n = 10)
+high_viral_load_subjects <- placebo_full_time_series_subjects[1:13]
+low_viral_load_subjects <- tail(placebo_full_time_series_subjects, n = 10)
 # Grab high viral load placebo counts and metadata
 high_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id %in% high_viral_load_subjects,])
 high_placebo_counts <- placebo_counts[,high_placebo_aliquots]
@@ -71,6 +71,10 @@ high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis("placeb
 # 2 D28 vs 2 D minus 1 - 34/2/0/0 DEGs
 high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis("placebo", high_placebo_counts, high_placebo_metadata,
                                                                           "2_D28", "2_D_minus_1", data_dir, "high")
+# Find length of intersection between D5 (1 FC) and D8 (1 FC)
+length(intersect(rownames(high_placebo_period_2_D5_vs_D_minus_1_results[[3]]), rownames(high_placebo_period_2_D8_vs_D_minus_1_results[[3]])))
+# Find length of intersection between D5 (2 FC) and D8 (2 FC)
+length(intersect(rownames(high_placebo_period_2_D5_vs_D_minus_1_results[[4]]), rownames(high_placebo_period_2_D8_vs_D_minus_1_results[[4]])))
 # LRT test
 # 6431 DEGs found (note that LRT doesn't have a fold change threshold)
 high_placebo_period_2_LRT_metadata <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D28" | high_placebo_metadata$time_point == "2_D8" | 
@@ -142,7 +146,7 @@ low_placebo_period_2_LRT_analysis_results <- subset(low_placebo_period_2_LRT_ana
 
 save.image(paste0(data_dir, "placebo_bulk_RNA_obj.RData"))
 
-
+# Should I do high vs low viral load differential expression here? 
 
 
 

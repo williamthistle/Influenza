@@ -468,7 +468,7 @@ LoadReference <- function(tissue, human) {
 }
 
 FindMappingAnchors <- function(sc_obj, reference) {
-  DefaultAssay(sc_obj) <- "integrated"
+  DefaultAssay(sc_obj) <- "SCT"
   anchors <- FindTransferAnchors(reference = reference,
                                  query = sc_obj,
                                  normalization.method = "SCT",
@@ -479,18 +479,18 @@ FindMappingAnchors <- function(sc_obj, reference) {
 
 MajorityVote <- function(sc_obj) {
   message("Begin majority voting...")
-  DefaultAssay(sc_obj) <- "integrated"
+  DefaultAssay(sc_obj) <- "SCT"
   sc_obj <- FindNeighbors(sc_obj, reduction = "pca", dims = 1:30)
   sc_obj <- FindClusters(sc_obj, resolution = 1)
   sc_obj$predicted.id <- as.character(sc_obj$predicted.id)
     
   votes <- c()
-  cluster.dump <- as.numeric(levels(sc_obj$integrated_snn_res.1))
+  cluster.dump <- as.numeric(levels(sc_obj$SCT_snn_res.1))
   sc_obj$predicted_celltype_majority_vote <- sc_obj$seurat_clusters
   levels(sc_obj$predicted_celltype_majority_vote) <- as.character(levels(sc_obj$predicted_celltype_majority_vote))
   for (i in unique(sc_obj$predicted.id)) {
     cells <- names(sc_obj$predicted.id[sc_obj$predicted.id == i])
-    freq.table <- as.data.frame(table(sc_obj$integrated_snn_res.1[cells]))
+    freq.table <- as.data.frame(table(sc_obj$SCT_snn_res.1[cells]))
     freq.table <- freq.table[order(freq.table$Freq, decreasing = TRUE),]
     freq.table$diff <- abs(c(diff(freq.table$Freq), 0))
     p.values <- dixon.test(freq.table$diff)$p.value[[1]]
@@ -502,7 +502,7 @@ MajorityVote <- function(sc_obj) {
   
   if (length(cluster.dump) > 0) {
       for (i in cluster.dump) {
-          cells <- names(sc_obj$integrated_snn_res.1[sc_obj$integrated_snn_res.1 == i])
+          cells <- names(sc_obj$SCT_snn_res.1[sc_obj$SCT_snn_res.1 == i])
           freq.table <- as.data.frame(table(sc_obj$predicted.id[cells]))
           levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(i)] <- as.vector(freq.table$Var1)[which.max(freq.table$Freq)]
       }
