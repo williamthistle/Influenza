@@ -1,5 +1,5 @@
 home_dir <- "~/SPEEDI"
-source(paste0(home_dir, "/prototype_API.R"))
+source(paste0(home_dir, "/prototype_API_for_single_batch.R"))
 
 naming_token <- "low_viral_load_D28"
 
@@ -14,11 +14,11 @@ sc_obj <- FilterRawData(all_sc_exp_matrices, human = TRUE)
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing(sc_obj, human = TRUE)
 #save.image(paste0(output_dir, "3_", naming_token, ".RData"))
-sc_obj <- InferBatches(sc_obj)
-sc_obj <- IntegrateByBatch(sc_obj)
+#sc_obj <- InferBatches(sc_obj)
+#sc_obj <- IntegrateByBatch(sc_obj)
 #save.image(paste0(output_dir, "5_", naming_token, ".RData"))
 sc_obj <- VisualizeIntegration(sc_obj)
-save.image(paste0(output_dir, "6_", naming_token, ".RData"))
+#save.image(paste0(output_dir, "6_", naming_token, ".RData"))
 #load(paste0(output_dir, "6_", naming_token, ".RData"))
 reference <- LoadReference("PBMC", human = TRUE)
 
