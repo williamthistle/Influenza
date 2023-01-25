@@ -1,3 +1,5 @@
+library(clustree)
+
 home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
 
@@ -28,30 +30,6 @@ idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL"
 reference <- reference[,-idx]
 #idx <- which(reference$celltype.l3 == "Treg Naive")
 #reference <- reference[,-idx]
-
-idx <- grep("CD4 T", sc_obj$predicted.id)
-sc_obj$predicted.id[idx] <- "CD4 Memory"
-idx <- grep("CD8 T", sc_obj$predicted.id)
-sc_obj$predicted.id[idx] <- "CD8 Memory"
-idx <- grep("cDC", sc_obj$predicted.id)
-sc_obj$predicted.id[idx] <- "cDC"
-idx <- grep("Proliferating", sc_obj$predicted.id)
-sc_obj$predicted.id[idx] <- "Proliferating"
-idx <- grep("B", sc_obj$predicted.id)
-sc_obj$predicted.id[idx] <- "B"
-sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD4 Naive", "T Naive")
-sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD8 Naive", "T Naive")
-sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "NK_CD56bright", "NK")
-sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "ASDC", "CD14 Mono")
-#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "cDC", "CD14 Mono")
-sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Eryth", "CD14 Mono")
-#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "HSPC", "CD14 Mono")
-#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "pDC", "CD14 Mono")
-#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Plasmablast", "CD14 Mono")
-sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Platelet", "CD14 Mono")
-#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Treg", "T Naive")
-
-
 ### Test ###
 
 
@@ -61,8 +39,8 @@ DimPlot(sc_obj, reduction = "umap", group.by = "predicted_celltype_majority_vote
         label.size = 3, repel = TRUE, raster = FALSE) + 
   labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
-ggsave(paste0(output_dir, naming_token, "clusters_by_cell_type.png"), device = "png", dpi = 300)
-save.image(paste0(output_dir, "7_", naming_token, "reduced.references.RData"))
+ggsave(paste0(output_dir, naming_token, "clusters_by_cell_type.1.5.png"), device = "png", dpi = 300)
+#save.image(paste0(output_dir, "7_", naming_token, "reduced.references.RData"))
 
 load(paste0(output_dir, "7_", naming_token, "reduced.references.RData"))
 cell_names <- rownames(sc_obj@meta.data)
@@ -74,6 +52,12 @@ DimPlot(sc_obj, reduction = "umap", group.by = "seurat_clusters", label = TRUE,
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(paste0(output_dir, naming_token, "_clusters_by_cluster_number.png"), device = "png", dpi = 300)
 
+# Let's use clustree to try to figure out the best resolution
+for (res in seq(1.8, 2.4, 0.3)) {
+  sc_obj <- FindClusters(sc_obj, resolution = res)
+}
+clustree(sc_obj, prefix = "integrated_snn_res.")
+ggsave(paste0(output_dir, "sc_obj.cluster.trees_fewer_res.PNG"), device = "png", width = 8, height = 8, units = "in")
 
 # Let's remove one cluster at a time and see how plot looks after removing each cluster. This will give us a better idea
 # of which clusters are messy
@@ -88,7 +72,7 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
           label.size = 3, repel = TRUE, raster = FALSE) + 
     labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
     theme(plot.title = element_text(hjust = 0.5))
-  ggsave(paste0(output_dir, naming_token, "_without_cluster_", cluster_id, ".png"), device = "png", dpi = 300)
+  ggsave(paste0(output_dir, naming_token, "_without_cluster_", cluster_id, ".1.5.png"), device = "png", dpi = 300)
 }
 
 # Find distribution of cells in each cluster - we can decide to eliminate those that are mixture of cells (majority vote can't save)
@@ -116,28 +100,17 @@ names(cluster_predictions) <- paste(levels(sc_obj), "-", names(cluster_predictio
 # High S score and high G2M score seem to indicate Proliferating cluster
 cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score, "G2M" = cluster_mean_G2M_score, "CC Diff" = cluster_mean_CC_difference)
 
-# Remove messy clusters - 10 is maybe questionable to remove (removes CD4 Naive)
-idxPass <- which(Idents(sc_obj) %in% c(3, 9, 10, 14, 16))
+# Remove messy clusters
+idxPass <- which(Idents(sc_obj) %in% c(1, 3, 8, 16, 19, 20, 29))
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-
-# Change cluster 4 to NK
-levels(sc_obj.minus.clusters$predicted_celltype_majority_vote) <- c(levels(sc_obj.minus.clusters$predicted_celltype_majority_vote), "NK")
-idxPass <- which(Idents(sc_obj.minus.clusters) %in% c(4))
-sc_obj.minus.clusters$predicted_celltype_majority_vote[idxPass] <- "NK"
-# Make some substitutions
-idx <- grep("cDC", sc_obj.minus.clusters$predicted_celltype_majority_vote)
-levels(sc_obj.minus.clusters$predicted_celltype_majority_vote) <- c(levels(sc_obj.minus.clusters$predicted_celltype_majority_vote), "cDC")
-sc_obj.minus.clusters$predicted_celltype_majority_vote[idx] <- "cDC"
-
-
 
 # Reprint by cell type (majority vote)
 DimPlot(sc_obj.minus.clusters, reduction = "umap", group.by = "predicted_celltype_majority_vote", label = TRUE,
         label.size = 3, repel = TRUE, raster = FALSE) + 
-  labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
+  labs(title = "scRNA-seq Data Integration \n (7 Samples, 54248 Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
-ggsave(paste0(output_dir, naming_token, "_without_messy_clusters.reduced.reference.png"), device = "png", dpi = 300)
+ggsave(paste0(output_dir, naming_token, "_without_messy_clusters.reduced.reference.01-25.png"), device = "png", dpi = 300)
 
 # Assign viral load (high or low) to each cell
 high_viral_load <- c("b82bb7c75d47dac1", "3c4540710e55f7b1", "6f609a68dca1261f", "7b54cfac7e67b0fa")
@@ -156,10 +129,16 @@ for(current_sample in sc_obj.minus.clusters$sample) {
 
 sc_obj.minus.clusters$viral_load <- viral_load_vec
 
-# Calculate cell type proportions 
+# Reprint by viral load
+DimPlot(sc_obj.minus.clusters, reduction = "umap", group.by = "viral_load", label = TRUE,
+        label.size = 3, repel = TRUE, raster = FALSE) + 
+  labs(title = "scRNA-seq Data Integration \n (7 Samples, 54248 Cells)") + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(paste0(output_dir, naming_token, "_without_messy_clusters.reduced.reference.viral.load01-25.png"), device = "png", dpi = 300)
+
+# Calculate cell type proportions and cell counts for each cell type (split by sample)
 cell_type_proportions_df <- data.frame("Condition" = viral_load_label, "Sample_name" = all_viral_load)
 total_cell_counts_df <- data.frame("Condition" = viral_load_label, "Sample_name" = all_viral_load)
-# Find total cell counts for each sample
 total_cell_counts <- c()
 for (sample_id in all_viral_load) {
   idxPass <- which(sc_obj.minus.clusters$sample %in% sample_id)
@@ -198,29 +177,6 @@ for (cell_type in unique(sc_obj.minus.clusters$predicted_celltype_majority_vote)
   names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
   cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
 }
-write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
-write.csv(total_cell_counts_df, file = paste0(output_dir, "RNA_cell_counts.csv"), quote = FALSE, row.names = FALSE)
-#cell_type_proportions_plot <- ggplot(cell_type_proportions_df, aes(fill=condition, y=value, x=specie)) + 
-#  geom_bar(position="stack", stat="identity")
-  
-#ggsave(paste0(output_dir, paste0("cell_type_proportions.png")), device = "png", dpi = 300)
+write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion.reduced.references.01-25.csv"), quote = FALSE, row.names = FALSE)
+write.csv(total_cell_counts_df, file = paste0(output_dir, "RNA_cell_counts.reduced.references.01-25.csv"), quote = FALSE, row.names = FALSE)
 
-# For one sample at a time
-for(sample_id in sample_id_list) {
-  all_sc_exp_matrices <- Read_h5(data_path, sample_id)
-  sc_obj <- FilterRawData(all_sc_exp_matrices, human = TRUE)
-  sc_obj <- InitialProcessing(sc_obj, human = TRUE)
-  #sc_obj <- InferBatches(sc_obj)
-  #sc_obj <- IntegrateByBatch(sc_obj)
-  sc_obj <- VisualizeIntegration(sc_obj)
-  reference <- LoadReference("PBMC", human = TRUE)
-  sc_obj <- MapCellTypes(sc_obj, reference)
-  DimPlot(sc_obj, reduction = "umap", group.by = "predicted_celltype_majority_vote", label = TRUE,
-        label.size = 3, repel = TRUE, raster = FALSE) + 
-  labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
-  theme(plot.title = element_text(hjust = 0.5))
-  ggsave(paste0(output_dir, paste0(sample_id, ".png")), device = "png", dpi = 300)
-}
-
-#save.image(paste0(output_dir, "D28_placebo_multiome.RData"))
-load(paste0(output_dir, "D28_placebo_multiome.RData"))
