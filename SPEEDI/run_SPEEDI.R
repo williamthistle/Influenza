@@ -19,15 +19,39 @@ sc_obj <- IntegrateByBatch(sc_obj)
 #save.image(paste0(output_dir, "5_", naming_token, ".RData"))
 sc_obj <- VisualizeIntegration(sc_obj)
 save.image(paste0(output_dir, "6_", naming_token, ".RData"))
-#load(paste0(output_dir, "6_", naming_token, ".RData"))
+load(paste0(output_dir, "6_", naming_token, ".RData"))
 reference <- LoadReference("PBMC", human = TRUE)
 
 ### Test ###
 # Remove certain cell types we're not interested in
-#idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
-#reference <- reference[,-idx]
+idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+reference <- reference[,-idx]
 #idx <- which(reference$celltype.l3 == "Treg Naive")
 #reference <- reference[,-idx]
+
+idx <- grep("CD4 T", sc_obj$predicted.id)
+sc_obj$predicted.id[idx] <- "CD4 Memory"
+idx <- grep("CD8 T", sc_obj$predicted.id)
+sc_obj$predicted.id[idx] <- "CD8 Memory"
+idx <- grep("cDC", sc_obj$predicted.id)
+sc_obj$predicted.id[idx] <- "cDC"
+idx <- grep("Proliferating", sc_obj$predicted.id)
+sc_obj$predicted.id[idx] <- "Proliferating"
+idx <- grep("B", sc_obj$predicted.id)
+sc_obj$predicted.id[idx] <- "B"
+sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD4 Naive", "T Naive")
+sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD8 Naive", "T Naive")
+sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "NK_CD56bright", "NK")
+sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "ASDC", "CD14 Mono")
+#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "cDC", "CD14 Mono")
+sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Eryth", "CD14 Mono")
+#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "HSPC", "CD14 Mono")
+#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "pDC", "CD14 Mono")
+#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Plasmablast", "CD14 Mono")
+sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Platelet", "CD14 Mono")
+#sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Treg", "T Naive")
+
+
 ### Test ###
 
 
@@ -38,9 +62,11 @@ DimPlot(sc_obj, reduction = "umap", group.by = "predicted_celltype_majority_vote
   labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(paste0(output_dir, naming_token, "clusters_by_cell_type.png"), device = "png", dpi = 300)
-save.image(paste0(output_dir, "7_", naming_token, ".RData"))
+save.image(paste0(output_dir, "7_", naming_token, "reduced.references.RData"))
 
-load(paste0(output_dir, "7_", naming_token, ".RData"))
+load(paste0(output_dir, "7_", naming_token, "reduced.references.RData"))
+cell_names <- rownames(sc_obj@meta.data)
+sc_obj <- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
 # Print by cluster number
 DimPlot(sc_obj, reduction = "umap", group.by = "seurat_clusters", label = TRUE,
         label.size = 3, repel = TRUE, raster = FALSE) + 
@@ -48,8 +74,6 @@ DimPlot(sc_obj, reduction = "umap", group.by = "seurat_clusters", label = TRUE,
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(paste0(output_dir, naming_token, "_clusters_by_cluster_number.png"), device = "png", dpi = 300)
 
-cell_names <- rownames(sc_obj@meta.data)
-sc_obj <- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
 
 # Let's remove one cluster at a time and see how plot looks after removing each cluster. This will give us a better idea
 # of which clusters are messy
@@ -67,11 +91,6 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
   ggsave(paste0(output_dir, naming_token, "_without_cluster_", cluster_id, ".png"), device = "png", dpi = 300)
 }
 
-# Remove messy clusters - 10 is maybe questionable to remove (removes CD4 Naive)
-idxPass <- which(Idents(sc_obj) %in% c(3, 10, 14))
-cellsPass <- names(sc_obj$orig.ident[-idxPass])
-sc_obj.minus.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-
 # Find distribution of cells in each cluster - we can decide to eliminate those that are mixture of cells (majority vote can't save)
 cluster_distributions <- list()
 cluster_predictions <- vector()
@@ -80,10 +99,10 @@ cluster_mean_G2M_score <- vector()
 cluster_mean_CC_difference <- vector()
 cluster_ids <- vector()
 idx <- 1
-for (cluster in levels(sc_obj.minus.clusters)) {
-  idxPass <- which(Idents(sc_obj.minus.clusters) %in% cluster)
-  cellsPass <- names(sc_obj.minus.clusters$orig.ident[idxPass])
-  filtered_cluster <- subset(x = sc_obj.minus.clusters, subset = cell_name %in% cellsPass)
+for (cluster in levels(sc_obj)) {
+  idxPass <- which(Idents(sc_obj) %in% cluster)
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  filtered_cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
   cluster_prediction <- sort(table(filtered_cluster$predicted_celltype_majority_vote), decreasing = TRUE)[1]
   cluster_predictions <- append(cluster_predictions, cluster_prediction)
   cluster_distributions[[idx]] <- table(filtered_cluster$predicted.id)
@@ -93,13 +112,23 @@ for (cluster in levels(sc_obj.minus.clusters)) {
   cluster_ids <- append(cluster_ids, cluster)
   idx <- idx + 1
 }
-names(cluster_predictions) <- paste(levels(sc_obj.minus.clusters), "-", names(cluster_predictions))
-# Maybe high S score and high G2M score indicate Proliferating cluster?
+names(cluster_predictions) <- paste(levels(sc_obj), "-", names(cluster_predictions))
+# High S score and high G2M score seem to indicate Proliferating cluster
 cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score, "G2M" = cluster_mean_G2M_score, "CC Diff" = cluster_mean_CC_difference)
 
+# Remove messy clusters - 10 is maybe questionable to remove (removes CD4 Naive)
+idxPass <- which(Idents(sc_obj) %in% c(3, 9, 10, 14, 16))
+cellsPass <- names(sc_obj$orig.ident[-idxPass])
+sc_obj.minus.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
-
-
+# Change cluster 4 to NK
+levels(sc_obj.minus.clusters$predicted_celltype_majority_vote) <- c(levels(sc_obj.minus.clusters$predicted_celltype_majority_vote), "NK")
+idxPass <- which(Idents(sc_obj.minus.clusters) %in% c(4))
+sc_obj.minus.clusters$predicted_celltype_majority_vote[idxPass] <- "NK"
+# Make some substitutions
+idx <- grep("cDC", sc_obj.minus.clusters$predicted_celltype_majority_vote)
+levels(sc_obj.minus.clusters$predicted_celltype_majority_vote) <- c(levels(sc_obj.minus.clusters$predicted_celltype_majority_vote), "cDC")
+sc_obj.minus.clusters$predicted_celltype_majority_vote[idx] <- "cDC"
 
 
 
@@ -108,7 +137,7 @@ DimPlot(sc_obj.minus.clusters, reduction = "umap", group.by = "predicted_celltyp
         label.size = 3, repel = TRUE, raster = FALSE) + 
   labs(title = "scRNA-seq Data Integration \n (X Samples, X Cells)") + 
   theme(plot.title = element_text(hjust = 0.5))
-ggsave(paste0(output_dir, naming_token, "_without_messy_clusters.png"), device = "png", dpi = 300)
+ggsave(paste0(output_dir, naming_token, "_without_messy_clusters.reduced.reference.png"), device = "png", dpi = 300)
 
 # Assign viral load (high or low) to each cell
 high_viral_load <- c("b82bb7c75d47dac1", "3c4540710e55f7b1", "6f609a68dca1261f", "7b54cfac7e67b0fa")

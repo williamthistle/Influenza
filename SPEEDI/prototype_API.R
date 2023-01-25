@@ -483,8 +483,29 @@ MajorityVote <- function(sc_obj) {
   sc_obj <- FindNeighbors(sc_obj, reduction = "pca", dims = 1:30)
   sc_obj <- FindClusters(sc_obj, resolution = 1)
   sc_obj$predicted.id <- as.character(sc_obj$predicted.id)
+  
+  idx <- grep("CD4 T", sc_obj$predicted.id)
+  sc_obj$predicted.id[idx] <- "CD4 Memory"
+  idx <- grep("CD8 T", sc_obj$predicted.id)
+  sc_obj$predicted.id[idx] <- "CD8 Memory"
+  idx <- grep("cDC", sc_obj$predicted.id)
+  sc_obj$predicted.id[idx] <- "cDC"
+  idx <- grep("Proliferating", sc_obj$predicted.id)
+  sc_obj$predicted.id[idx] <- "Proliferating"
+  idx <- grep("B", sc_obj$predicted.id)
+  sc_obj$predicted.id[idx] <- "B"
+  sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD4 Naive", "T Naive")
+  sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD8 Naive", "T Naive")
+  sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "NK_CD56bright", "NK")
+  sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "ASDC", "CD14 Mono")
+  #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "cDC", "CD14 Mono")
+  sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Eryth", "CD14 Mono")
+  #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "HSPC", "CD14 Mono")
+  #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "pDC", "CD14 Mono")
+  #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Plasmablast", "CD14 Mono")
+  sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Platelet", "CD14 Mono")
+  #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Treg", "T Naive")
     
-  votes <- c()
   cluster.dump <- as.numeric(levels(sc_obj$integrated_snn_res.1))
   sc_obj$predicted_celltype_majority_vote <- sc_obj$seurat_clusters
   levels(sc_obj$predicted_celltype_majority_vote) <- as.character(levels(sc_obj$predicted_celltype_majority_vote))
