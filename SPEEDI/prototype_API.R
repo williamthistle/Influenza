@@ -21,7 +21,7 @@ SEED <- 1824409L
 set.seed(SEED)
 
 run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save_progress = TRUE, use_simplified_reference = FALSE) {
-  all_sc_exp_matrices <<- Read_h5(data_path, sample_id_list)
+  all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
   sc_obj <<- FilterRawData(all_sc_exp_matrices, human = TRUE)
   rm(all_sc_exp_matrices)
   # Doing global assignment because we need sc_obj to be part of the global environment when we save our .RData file
