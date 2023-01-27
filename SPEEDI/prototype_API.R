@@ -521,7 +521,7 @@ FindMappingAnchors <- function(sc_obj, reference) {
   return(anchors)
 }
 
-MajorityVote <- function(sc_obj, current_resolution = 1.5, current_resolution_attribute = "integrated_snn_res.1.5") {
+MajorityVote <- function(sc_obj, current_resolution = 3, current_resolution_attribute = "integrated_snn_res.1.5") {
   message("Begin majority voting...")
   DefaultAssay(sc_obj) <- "integrated"
   sc_obj <- FindNeighbors(sc_obj, reduction = "pca", dims = 1:30)
@@ -551,14 +551,18 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5, current_resolution_at
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Platelet", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Treg", "T Naive")
     
-  cluster.dump <- as.numeric(levels(sc_obj$integrated_snn_res.1.5))
+  cluster.dump <- as.numeric(levels(sc_obj$integrated_snn_res.3))
   sc_obj$predicted_celltype_majority_vote <- sc_obj$seurat_clusters
   levels(sc_obj$predicted_celltype_majority_vote) <- as.character(levels(sc_obj$predicted_celltype_majority_vote))
   for (i in unique(sc_obj$predicted.id)) {
+    print(i)
     cells <- names(sc_obj$predicted.id[sc_obj$predicted.id == i])
-    freq.table <- as.data.frame(table(sc_obj$integrated_snn_res.1.5[cells]))
+    freq.table <- as.data.frame(table(sc_obj$integrated_snn_res.3[cells]))
     freq.table <- freq.table[order(freq.table$Freq, decreasing = TRUE),]
     freq.table$diff <- abs(c(diff(freq.table$Freq), 0))
+    if(nrow(freq.table) > 30) {
+      freq.table <- freq.table[1:30,]
+    }
     p.values <- dixon.test(freq.table$diff)$p.value[[1]]
     max.index <- which.max(freq.table$diff)
     clusters <- as.numeric(as.character(freq.table$Var1[1:max.index]))
@@ -568,7 +572,7 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5, current_resolution_at
   
   if (length(cluster.dump) > 0) {
       for (i in cluster.dump) {
-          cells <- names(sc_obj$integrated_snn_res.1.5[sc_obj$integrated_snn_res.1.5 == i])
+          cells <- names(sc_obj$integrated_snn_res.3[sc_obj$integrated_snn_res.3 == i])
           freq.table <- as.data.frame(table(sc_obj$predicted.id[cells]))
           levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(i)] <- as.vector(freq.table$Var1)[which.max(freq.table$Freq)]
       }

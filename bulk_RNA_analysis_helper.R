@@ -63,6 +63,33 @@ setup_bulk_analysis=function() {
   gene_counts <<- round(gene_counts)
   placebo_counts <<- round(placebo_counts)
   vaccinated_counts <<- round(vaccinated_counts)
+  # Grab the main 23 subjects (13 high viral load, 10 low viral load) that have all 10 time points
+  placebo_full_time_series_metadata <<- placebo_metadata[placebo_metadata$subject_id 
+                                                        %in% names(table(placebo_metadata$subject_id)
+                                                                   [table(placebo_metadata$subject_id) == 10]),]
+  # Grab subject IDs for main 23 subjects
+  placebo_full_time_series_subjects <<- unique(placebo_full_time_series_metadata$subject_id)
+  # Reorder subject IDs according to viral load (high to low)
+  placebo_full_time_series_subjects <<- placebo_full_time_series_subjects[order(match(placebo_full_time_series_subjects,viral_load_primary$SUBJID))]
+  # Top 13 will be high viral load and bottom 10 will be low viral load 
+  high_viral_load_subjects <<- placebo_full_time_series_subjects[1:13]
+  low_viral_load_subjects <<- tail(placebo_full_time_series_subjects, n = 10)
+  # Grab high viral load placebo counts and metadata
+  high_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% high_viral_load_subjects,])
+  high_placebo_counts <<- placebo_counts[,high_placebo_aliquots]
+  high_placebo_metadata <<- placebo_metadata[high_placebo_aliquots,]
+  # Grab low viral load placebo counts and metadata
+  low_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% low_viral_load_subjects,])
+  low_placebo_counts <<- placebo_counts[,low_placebo_aliquots]
+  low_placebo_metadata <<- placebo_metadata[low_placebo_aliquots,]
+  # Grab combination of high and low viral load placebo counts and metadata
+  both_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% high_viral_load_subjects | placebo_metadata$subject_id %in% low_viral_load_subjects,])
+  both_placebo_counts <<- placebo_counts[,both_placebo_aliquots]
+  both_placebo_metadata <<- placebo_metadata[both_placebo_aliquots,]
+  viral_load_for_metadata <<- both_placebo_metadata$subject_id %in% high_viral_load_subjects
+  viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == TRUE, "HIGH")
+  viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == "FALSE", "LOW")
+  both_placebo_metadata$viral_load <<- viral_load_for_metadata
   # Currently not filtering sex associated genes
   #sex_associated_genes <<- find_sex_associated_genes(paste0(data_dir, "sex_associated_genes/"))
 }

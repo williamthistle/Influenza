@@ -25,26 +25,26 @@ if(!save_progress) {
 
 # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
 sample_count <- length(sample_id_list)
-cell_count <- length(sc_obj$cell_names)
+cell_count <- length(sc_obj$cell_name)
 current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
 print_UMAP(sc_obj, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, "_clusters_by_cell_type_messy.png")
 print_UMAP(sc_obj, "seurat_clusters", current_title, output_dir, naming_token, "_clusters_by_cluster_num_messy.png")
 
 # Let's use clustree to try to figure out the best clustering resolution
-for (res in seq(0, 3, 0.3)) {
+for (res in seq(3, 6, 0.3)) {
   sc_obj <- FindClusters(sc_obj, resolution = res)
 }
-clustree(sc_obj, prefix = "integrated_snn_res.")
-ggsave(paste0(output_dir, "sc_obj.cluster.trees.PNG"), device = "png", width = 8, height = 8, units = "in")
+clustree(sc_obj, prefix = "integrated_snn_res.3")
+ggsave(paste0(output_dir, naming_token, "_cluster.trees.PNG"), device = "png", width = 8, height = 8, units = "in")
 
 # Now, we should re-run our majority vote with the correct resolution
-best_res <- 1.5
+best_res <- 3
 associated_res_attribute <- paste0("integrated_snn_res.", best_res)
 sc_obj <- MajorityVote(sc_obj, best_res, associated_res_attribute)
 
 # To decide which clusters we need to remove, we will use two tactics:
 # 1. Capture information about cell type distributions in each cluster (and cluster mean S score, G2M score, and CC diff for cell cycle info)
-#   High S score and high G2M score seem to indicate Proliferating cluster
+#    High S score and high G2M score seem to indicate Proliferating cluster
 # 2. Remove one cluster at a time and see how plot looks after removing each cluster
 # 1
 cluster_distributions <- list()
@@ -76,10 +76,10 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
   idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
   cellsPass <- names(sc_obj$orig.ident[-idxPass])
   sc_obj.minus.current.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-  cell_count <- length(sc_obj.minus.current.cluster$cell_names)
+  cell_count <- length(sc_obj.minus.current.cluster$cell_name)
   current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   # Print cell type plot without cluster
-  print_UMAP(sc_obj.minus.current.cluster, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, "_clusters_by_cell_type_without_cluster_", cluster_id, ".png")
+  print_UMAP(sc_obj.minus.current.cluster, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, paste0("_clusters_by_cell_type_without_cluster_", cluster_id, ".png"))
 }
 
 # Remove messy clusters
@@ -88,7 +88,7 @@ idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 # Print cell type plot without messy clusters
-cell_count <- length(sc_obj.minus.current.cluster$cell_names)
+cell_count <- length(sc_obj.minus.current.cluster$cell_name)
 current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
 print_UMAP(sc_obj.minus.messy.clusters, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, "_clusters_by_cell_type_without_messy_clusters.png")
 
