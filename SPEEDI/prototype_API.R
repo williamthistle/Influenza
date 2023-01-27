@@ -38,7 +38,7 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   if(save_progress) {
     save.image(paste0(output_dir, "6_", naming_token, ".RData"))
   }
-  reference <<- LoadReference("PBMC", human = TRUE)
+  reference <- LoadReference("PBMC", human = TRUE)
   if(use_simplified_reference) {
     # Remove certain cell types we're not interested in
     idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
