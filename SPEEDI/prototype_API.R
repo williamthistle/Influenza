@@ -57,12 +57,84 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   return(sc_obj) 
 }
 
-print_UMAP <- function(sc_obj, group_by_category, plot_title, output_dir, naming_token, file_suffix) {
+print_UMAP <- function(sc_obj, sample_count, group_by_category, output_dir, naming_token, file_suffix) {
+  cell_count <- length(sc_obj$cell_name)
+  current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, label = TRUE,
         label.size = 3, repel = TRUE, raster = FALSE) + 
-  labs(title = plot_title) + 
+  labs(title = current_title) + 
   theme(plot.title = element_text(hjust = 0.5))
   ggsave(paste0(output_dir, naming_token, file_suffix), device = "png", dpi = 300)
+}
+
+calculate_props_and_counts <- function(sc_obj, condition, sample_names) {
+  cell_type_proportions_df <- data.frame("Condition" = condition, "Sample_name" = sample_names)
+  total_cell_counts_df <- data.frame("Condition" = condition, "Sample_name" = sample_names)
+  total_cell_counts <- c()
+  for (sample_id in sample_names) {
+    idxPass <- which(sc_obj$sample %in% sample_id)
+    cellsPass <- names(sc_obj$orig.ident[idxPass])
+    sample_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    total_cell_counts <- c(total_cell_counts, ncol(sample_subset))
+  }
+  total_cell_counts_df <- cbind(total_cell_counts_df, total_cell_counts)
+  for (cell_type in unique(sc_obj$predicted.id)) {
+    cell_type_proportions <- vector()
+    cell_counts <- c()
+    print(cell_type)
+    # Grab cells associated with cell type
+    idxPass <- which(sc_obj$predicted.id %in% cell_type)
+    print(length(idxPass))
+    cellsPass <- names(sc_obj$orig.ident[idxPass])
+    cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    for (sample_id in sample_names) {
+      # Subset further based on cells associated with sample ID
+      idxPass <- which(cells_subset$sample %in% sample_id)
+      cellsPass <- names(cells_subset$orig.ident[idxPass])
+      if (length(cellsPass) == 0) {
+        cell_counts <- c(cell_counts, 0)
+        cell_type_proportions <- append(cell_type_proportions, 0)
+      } else {
+        sample_subset <- subset(x = cells_subset, subset = cell_name %in% cellsPass)
+        cell_count <- ncol(sample_subset)
+        cell_counts <- c(cell_counts, cell_count)
+        cell_type_proportions <- append(cell_type_proportions, cell_count / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$total_cell_counts)
+      }
+    }
+    temp_df <- data.frame(cell_counts)
+    names(temp_df)[names(temp_df) == "cell_counts"] <- cell_type
+    total_cell_counts_df <- cbind(total_cell_counts_df, temp_df)
+    temp_df <- data.frame(cell_type_proportions)
+    names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
+    cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
+  }
+  return(list(cell_type_proportions_df, total_cell_counts_df))
+}
+
+capture_cluster_info <- function(sc_obj) {
+  cluster_distributions <- list()
+  cluster_predictions <- vector()
+  cluster_mean_S_score <- vector()
+  cluster_mean_G2M_score <- vector()
+  cluster_mean_CC_difference <- vector()
+  cluster_ids <- vector()
+  idx <- 1
+  for (cluster in levels(sc_obj)) {
+    idxPass <- which(Idents(sc_obj) %in% cluster)
+    cellsPass <- names(sc_obj$orig.ident[idxPass])
+    filtered_cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    cluster_prediction <- sort(table(filtered_cluster$predicted_celltype_majority_vote), decreasing = TRUE)[1]
+    cluster_predictions <- append(cluster_predictions, cluster_prediction)
+    cluster_distributions[[idx]] <- table(filtered_cluster$predicted.id)
+    cluster_mean_S_score <- append(cluster_mean_S_score, mean(filtered_cluster$S.Score))
+    cluster_mean_G2M_score <- append(cluster_mean_G2M_score, mean(filtered_cluster$G2M.Score))
+    cluster_mean_CC_difference <- append(cluster_mean_CC_difference, mean(filtered_cluster$CC.Difference))
+    cluster_ids <- append(cluster_ids, cluster)
+    idx <- idx + 1
+  }
+  names(cluster_predictions) <- paste(levels(sc_obj), "-", names(cluster_predictions))
+  cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score, "G2M" = cluster_mean_G2M_score, "CC Diff" = cluster_mean_CC_difference)
+  return(list(cluster_distributions, cluster_predictions, cell_cycle_df))
 }
 
 
@@ -117,6 +189,7 @@ Read_h5 <- function(data_path, sample_id_list) {
 
 FilterRawData <- function(all_sc_exp_matrices, human) {
   message("Step 2: Filtering out bad samples...")
+  testing_flag <- TRUE
   
   sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
                                assay = "RNA",
@@ -138,7 +211,10 @@ FilterRawData <- function(all_sc_exp_matrices, human) {
                                    col.name = "percent.rpl") 
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^HB[A|B]",
-                                   col.name = "percent.hb") 
+                                   col.name = "percent.hb")
+    sc_obj <- PercentageFeatureSet(object = sc_obj,
+                                   pattern = "^RP[SL]",
+                                   col.name = "percent.rp")
     
 
   } else {
@@ -153,7 +229,10 @@ FilterRawData <- function(all_sc_exp_matrices, human) {
                                    col.name = "percent.rpl") 
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^Hb[a|b]",
-                                   col.name = "percent.hb") 
+                                   col.name = "percent.hb")
+    sc_obj <- PercentageFeatureSet(object = sc_obj,
+                                   pattern = "^Rp[sl]",
+                                   col.name = "percent.rp")
   }
     
   objects <- SplitObject(sc_obj, split.by = "sample")
@@ -187,31 +266,44 @@ FilterRawData <- function(all_sc_exp_matrices, human) {
 #                             hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$counts,
 #                             decreasing = T)[1]
 #     lower_nF <- min(lower_nF_dec, lower_nF_inc)
-      
-    lower_nF <- kneedle(hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$breaks[-1],
+    current_sample_name <- unique(objects[[i]]$sample)
+    if(!testing_flag) {
+      lower_nF <- kneedle(hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$breaks[-1],
                         hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$counts)[1]
-    if (lower_nF > 1000) { lower_nF <- 1000 }
+      if (lower_nF > 1000) { lower_nF <- 1000 }
       
-    if (max(objects[[i]]$percent.mt) > 0) {
-        if (max(objects[[i]]$percent.mt) < 5) {
-            max_mt <- quantile(objects[[i]]$percent.mt, .99)
-        } else {
-          max_mt <- kneedle(hist(objects[[i]]$percent.mt, breaks=max(10, 0.5 * max(objects[[i]]$percent.mt)), plot=F)$breaks[-1],
-                            hist(objects[[i]]$percent.mt, breaks=max(10, 0.5 * max(objects[[i]]$percent.mt)), plot=F)$counts)[1]
-          max_mt <- max(max_mt, quantile(objects[[i]]$percent.mt, .75))
-        }
-    } else { max_mt <- 0}
+      if (max(objects[[i]]$percent.mt) > 0) {
+         if (max(objects[[i]]$percent.mt) < 5) {
+              max_mt <- quantile(objects[[i]]$percent.mt, .99)
+          } else {
+           max_mt <- kneedle(hist(objects[[i]]$percent.mt, breaks=max(10, 0.5 * max(objects[[i]]$percent.mt)), plot=F)$breaks[-1],
+                              hist(objects[[i]]$percent.mt, breaks=max(10, 0.5 * max(objects[[i]]$percent.mt)), plot=F)$counts)[1]
+            max_mt <- max(max_mt, quantile(objects[[i]]$percent.mt, .75))
+          }
+     } else { max_mt <- 0}
       
-    max_hb <- quantile(objects[[i]]$percent.hb, .99)
-    if (max_hb > 10) { max_hb <- 10 }
+     max_hb <- quantile(objects[[i]]$percent.hb, .99)
+     if (max_hb > 10) { max_hb <- 10 }
     
-    object <- subset(x = objects[[i]],
-                     subset = nFeature_RNA >= lower_nF &
-                       nFeature_RNA < quantile(objects[[i]]$nFeature_RNA, .99) &
-                       percent.mt <= max_mt &
-                       percent.rps <= quantile(objects[[i]]$percent.rps, .99) &
-                       percent.rpl <= quantile(objects[[i]]$percent.rpl, .99) &
-                       percent.hb <= max_hb)
+     object <- subset(x = objects[[i]],
+                       subset = nFeature_RNA >= lower_nF &
+                         nFeature_RNA < quantile(objects[[i]]$nFeature_RNA, .99) &
+                        percent.mt <= max_mt &
+                         percent.rps <= quantile(objects[[i]]$percent.rps, .99) &
+                        percent.rpl <= quantile(objects[[i]]$percent.rpl, .99) &
+                         percent.hb <= max_hb)
+    } else {
+      object <- subset(objects[[i]], nFeature_RNA > 900 & nFeature_RNA < 4000 & nCount_RNA < 10000 & percent.mt < 15 & percent.hb < 0.4 & percent.rp < 50)
+    }
+    if(!testing_flag) {
+      print(paste0("THRESHOLDS USED FOR SAMPLE", current_sample_name))
+      print(paste0("lower nFeature: ", lower_nF))
+      print(paste0("upper nFeature: ", quantile(objects[[i]]$nFeature_RNA, .99)))
+      print(paste0("max mt: ", max_mt))
+      print(paste0("max rps: ", quantile(objects[[i]]$percent.rps, .99)))
+      print(paste0("max rpl: ", quantile(objects[[i]]$percent.rpl, .99)))
+      print(paste0("max hb: ", max_hb))
+    }
 
     return(object)
   }
@@ -429,7 +521,7 @@ IntegrateByBatch <- function(sc_obj) {
                                       normalization.method = "SCT",
                                       anchor.features = features,
                                       reduction = "rpca",
-                                      k.anchor = 10)
+                                      k.anchor = 5)
 #    }
     
   message("Begin integration...")
@@ -521,7 +613,8 @@ FindMappingAnchors <- function(sc_obj, reference) {
   return(anchors)
 }
 
-MajorityVote <- function(sc_obj, current_resolution = 3, current_resolution_attribute = "integrated_snn_res.1.5") {
+MajorityVote <- function(sc_obj, current_resolution = 1.5) {
+  associated_res_attribute <- paste0("integrated_snn_res.", current_resolution)
   message("Begin majority voting...")
   DefaultAssay(sc_obj) <- "integrated"
   sc_obj <- FindNeighbors(sc_obj, reduction = "pca", dims = 1:30)
@@ -541,7 +634,7 @@ MajorityVote <- function(sc_obj, current_resolution = 3, current_resolution_attr
   #sc_obj$predicted.id[idx] <- "B"
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD4 Naive", "T Naive")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD8 Naive", "T Naive")
-  #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "NK_CD56bright", "NK")
+  sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "NK_CD56bright", "NK")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "ASDC", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "cDC", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Eryth", "CD14 Mono")
@@ -550,14 +643,16 @@ MajorityVote <- function(sc_obj, current_resolution = 3, current_resolution_attr
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Plasmablast", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Platelet", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Treg", "T Naive")
-    
-  cluster.dump <- as.numeric(levels(sc_obj$integrated_snn_res.3))
+  
+  #integrated_snn_res_values <- sc_obj[[associated_res_attribute]]$
+  
+  cluster.dump <- as.numeric(levels(sc_obj$integrated_snn_res.1.5))
   sc_obj$predicted_celltype_majority_vote <- sc_obj$seurat_clusters
   levels(sc_obj$predicted_celltype_majority_vote) <- as.character(levels(sc_obj$predicted_celltype_majority_vote))
   for (i in unique(sc_obj$predicted.id)) {
     print(i)
     cells <- names(sc_obj$predicted.id[sc_obj$predicted.id == i])
-    freq.table <- as.data.frame(table(sc_obj$integrated_snn_res.3[cells]))
+    freq.table <- as.data.frame(table(sc_obj$integrated_snn_res.1.5[cells]))
     freq.table <- freq.table[order(freq.table$Freq, decreasing = TRUE),]
     freq.table$diff <- abs(c(diff(freq.table$Freq), 0))
     if(nrow(freq.table) > 30) {
@@ -572,7 +667,7 @@ MajorityVote <- function(sc_obj, current_resolution = 3, current_resolution_attr
   
   if (length(cluster.dump) > 0) {
       for (i in cluster.dump) {
-          cells <- names(sc_obj$integrated_snn_res.3[sc_obj$integrated_snn_res.3 == i])
+          cells <- names(sc_obj$integrated_snn_res.1.5[sc_obj$integrated_snn_res.1.5 == i])
           freq.table <- as.data.frame(table(sc_obj$predicted.id[cells]))
           levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(i)] <- as.vector(freq.table$Var1)[which.max(freq.table$Freq)]
       }
