@@ -125,6 +125,17 @@ messy_clusters <- c(0, 9, 15, 28, 32) # For multiome F
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+# Manually override
+mono_clusters <- c(3, 4, 7, 17)
+for(cluster_id in mono_clusters) {
+  print(cluster_id)
+  idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  sc_obj.minus.messy.clusters$predicted_celltype_majority_vote[idxPass] <- "CD14 Mono"
+}
+print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, "_clusters_by_cell_type_without_messy_clusters-02-01.png")
+
+
 # The ideal resolution may have changed. Let's check now!
 for (res in seq(0, 3, 0.3)) {
   sc_obj.minus.messy.clusters <- FindClusters(sc_obj.minus.messy.clusters, resolution = res)
