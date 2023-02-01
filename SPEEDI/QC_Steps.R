@@ -57,6 +57,8 @@ for(current_sample in sc_obj$sample) {
 }
 sc_obj$viral_load <- viral_load_vec
 sc_obj$sample <- factor(sc_obj$sample, levels = c("3c4540710e55f7b1", "6f609a68dca1261f", "7b54cfac7e67b0fa", "b82bb7c75d47dac1", "216bb226181591dd", "abf6d19ee03be1e8", "d360f89cf9585dfe"))
+sc_obj_high_viral_load <- subset(sc_obj, subset = viral_load %in% "HIGH")
+sc_obj_low_viral_load <- subset(sc_obj, subset = viral_load %in% "LOW")
 p <- VlnPlot(sc_obj, features = c("nFeature_RNA"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = c("#FC4E07", "#FC4E07", "#FC4E07", "#FC4E07", 
                                                                                                                                                           "#2E9FDF", "#2E9FDF", "#2E9FDF")) +
                                                                                                                                                            xlab("Viral Load")

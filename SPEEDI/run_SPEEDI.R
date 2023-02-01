@@ -43,7 +43,6 @@ for(current_sample in sc_obj$sample) {
 }
 sc_obj$viral_load <- viral_load_vec
 
-
 # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
 print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, "_clusters_by_cell_type-2-01.png")
 print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, "_clusters_by_cluster_num-2-01.png")
@@ -56,6 +55,38 @@ print_UMAP(sc_obj, sample_count, "viral_load", output_dir, naming_token, "_clust
 raw_cell_tables <- calculate_props_and_counts(sc_obj, viral_load_label, all_viral_load)
 write.csv(raw_cell_tables[1], file = paste0(output_dir, naming_token, "_raw_RNA_cell_type_proportion_1-31.csv"), quote = FALSE, row.names = FALSE)
 write.csv(raw_cell_tables[2], file = paste0(output_dir, naming_token, "_raw_RNA_cell_counts_1-31.csv"), quote = FALSE, row.names = FALSE)
+
+# Let's also use Vincy's code to create a nice heatmap of cell type proportions
+sc_obj$sample <- factor(sc_obj$sample, levels = c("3c4540710e55f7b1", "6f609a68dca1261f", "7b54cfac7e67b0fa", "b82bb7c75d47dac1", "216bb226181591dd", "abf6d19ee03be1e8", "d360f89cf9585dfe"))
+raw_cell_type_proportion  <- as.matrix(table(sc_obj$sample, sc_obj$predicted.id))
+raw_cell_type_proportion <- apply(raw_cell_type_proportion, 1, function(x){x/sum(x)})
+# Combine B Cells
+rownames(raw_cell_type_proportion)[2] <- "B Cells"
+raw_cell_type_proportion[2,] <- raw_cell_type_proportion[2,] + raw_cell_type_proportion[3,] + raw_cell_type_proportion[4,]
+raw_cell_type_proportion <- raw_cell_type_proportion[-c(3, 4), ]
+# Combine Monocytes
+rownames(raw_cell_type_proportion)[3] <- "Monocytes"
+raw_cell_type_proportion[3,] <- raw_cell_type_proportion[3,] + raw_cell_type_proportion[4,]
+raw_cell_type_proportion <- raw_cell_type_proportion[-c(4), ]
+# Combine T Cells
+rownames(raw_cell_type_proportion)[4] <- "T Cells"
+raw_cell_type_proportion[4,] <- raw_cell_type_proportion[4,] + raw_cell_type_proportion[6,] + raw_cell_type_proportion[7,] + raw_cell_type_proportion[8,] + raw_cell_type_proportion[10,]
+raw_cell_type_proportion <- raw_cell_type_proportion[-c(6, 7, 8, 10), ]
+# Combine Rare T Cells
+rownames(raw_cell_type_proportion)[5] <- "Rare T Cells"
+raw_cell_type_proportion[5,] <- raw_cell_type_proportion[5,] + raw_cell_type_proportion[6,] + raw_cell_type_proportion[8,] + raw_cell_type_proportion[10,] + raw_cell_type_proportion[19,]
+raw_cell_type_proportion <- raw_cell_type_proportion[-c(6, 8, 10, 19), ]
+# Combine NK / ILC
+rownames(raw_cell_type_proportion)[9] <- "NK / ILC"
+raw_cell_type_proportion[9,] <- raw_cell_type_proportion[9,] + raw_cell_type_proportion[11,] + raw_cell_type_proportion[12,]
+raw_cell_type_proportion <- raw_cell_type_proportion[-c(11, 12), ]
+
+my_sample_col <- data.frame(sample = rep(c("HIGH", "LOW"), c(4,3))) #The study group by their order
+row.names(my_sample_col) <- colnames(raw_cell_type_proportion)
+
+library(pheatmap)
+output.plot <- pheatmap(raw_cell_type_proportion, annotation_col = my_sample_col, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE, number_format = "%.3f")
+ggsave(paste0(output_dir, naming_token, "_raw_cell_type_proportions_heatmap.PNG"), plot = output.plot, device = "png", width = 8, height = 8, units = "in")
 
 # Let's use clustree to try to figure out the best clustering resolution
 for (res in seq(0, 3, 0.3)) {
@@ -84,7 +115,7 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
   cell_count <- length(sc_obj.minus.current.cluster$cell_name)
   current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   # Print cell type plot without cluster
-  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, paste0("_clusters_by_cell_type_without_cluster_", cluster_id, ".png"))
+  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, paste0("_clusters_by_cell_type_without_cluster_", cluster_id, "_02-01.png"))
 }
 
 # To confirm the cell type associated with a given cluster, we can also find the cluster markers (example below)
