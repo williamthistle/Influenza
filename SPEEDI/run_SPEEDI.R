@@ -1,4 +1,5 @@
 library(clustree)
+library(pheatmap)
 
 home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
@@ -84,7 +85,6 @@ raw_cell_type_proportion <- raw_cell_type_proportion[-c(11, 12), ]
 my_sample_col <- data.frame(sample = rep(c("HIGH", "LOW"), c(4,3))) #The study group by their order
 row.names(my_sample_col) <- colnames(raw_cell_type_proportion)
 
-library(pheatmap)
 output.plot <- pheatmap(raw_cell_type_proportion, annotation_col = my_sample_col, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE, number_format = "%.3f")
 ggsave(paste0(output_dir, naming_token, "_raw_cell_type_proportions_heatmap.PNG"), plot = output.plot, device = "png", width = 8, height = 8, units = "in")
 
@@ -112,17 +112,15 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
   idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
   cellsPass <- names(sc_obj$orig.ident[-idxPass])
   sc_obj.minus.current.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-  cell_count <- length(sc_obj.minus.current.cluster$cell_name)
-  current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   # Print cell type plot without cluster
-  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, paste0("_clusters_by_cell_type_without_cluster_", cluster_id, "_02-01.png"))
+  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_cluster_", cluster_id, "_02-01.png"))
 }
 
 # To confirm the cell type associated with a given cluster, we can also find the cluster markers (example below)
-cluster43.markers <- FindMarkers(sc_obj, ident.1 = 43, min.pct = 0.25)
+cluster15.markers <- FindMarkers(sc_obj, ident.1 = 15, min.pct = 0.25)
 
 # Remove messy clusters
-messy_clusters <- c(1, 3, 8, 9, 16, 19, 20, 28) # For multiome F
+messy_clusters <- c(0, 9, 15, 28, 32) # For multiome F
 #messy_clusters <- c(9, 29, 40, 45, 47, 49, 50, 58, 60) # For multiome + scRNA-seq
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
