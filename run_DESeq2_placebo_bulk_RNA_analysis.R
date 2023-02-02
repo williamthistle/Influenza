@@ -5,7 +5,7 @@ library(pheatmap)
 set.seed(1234)
 
 ##### SETUP #####
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
 setup_bulk_analysis()
 
@@ -70,6 +70,9 @@ high_placebo_period_2_LRT_analysis <- DESeq(high_placebo_period_2_LRT_analysis, 
 high_placebo_period_2_LRT_analysis_results <- results(high_placebo_period_2_LRT_analysis, alpha = 0.05)
 high_placebo_period_2_LRT_analysis_results <- high_placebo_period_2_LRT_analysis_results[order(high_placebo_period_2_LRT_analysis_results$padj),]
 high_placebo_period_2_LRT_analysis_results <- subset(high_placebo_period_2_LRT_analysis_results, padj < 0.05)
+# Write top 2000 genes to file
+high_placebo_period_2_LRT_analysis_2000_topGenes <- rownames(high_placebo_period_2_LRT_analysis_results)[1:2000]
+write.table(high_placebo_period_2_LRT_analysis_2000_topGenes, file = paste0(data_dir, "LRT_top_200_genes.txt"), quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 # Plot heatmap with top 20 genes
 high_placebo_period_2_LRT_analysis_betas <- coef(high_placebo_period_2_LRT_analysis)
 high_placebo_period_2_LRT_analysis_results_for_plotting <- results(high_placebo_period_2_LRT_analysis, alpha = 0.05)
