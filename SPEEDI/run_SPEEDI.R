@@ -119,20 +119,118 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
 # To confirm the cell type associated with a given cluster, we can also find the cluster markers (example below)
 cluster15.markers <- FindMarkers(sc_obj, ident.1 = 15, min.pct = 0.25)
 
+# Investigate stats of different clusters - maybe doublets are at play for 9 and 15?
+cluster_ids <- c()
+num_cells <- c()
+num_cells_high <- c()
+num_cells_low <- c()
+cluster_mean_mito <- c()
+cluster_mean_nFeature <- c()
+cluster_mean_nCount <- c()
+cluster_mean_mito_high <- c()
+cluster_mean_nFeature_high <- c()
+cluster_mean_nCount_high <- c()
+cluster_mean_mito_low <- c()
+cluster_mean_nFeature_low <- c()
+cluster_mean_nCount_low <- c()
+
+for (cluster in levels(sc_obj)) {
+  cluster_ids <- append(cluster_ids, cluster)
+  # All
+  idxPass <- which(Idents(sc_obj) %in% cluster)
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  num_cells <- c(num_cells, length(cellsPass))
+  filtered_cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  cluster_mean_mito <- c(cluster_mean_mito, mean(filtered_cluster$percent.mt))
+  cluster_mean_nFeature <- c(cluster_mean_nFeature, mean(filtered_cluster$nFeature_RNA))
+  cluster_mean_nCount <- c(cluster_mean_nCount, mean(filtered_cluster$nCount_RNA))
+  # High
+  idxPass <- which(filtered_cluster$viral_load %in% "HIGH")
+  cellsPass <- names(filtered_cluster$orig.ident[idxPass])
+  num_cells_high <- c(num_cells_high, length(cellsPass))
+  if(length(cellsPass) > 0) {
+    filtered_cluster_high <- subset(x = filtered_cluster, subset = cell_name %in% cellsPass)
+    cluster_mean_mito_high <- c(cluster_mean_mito_high, mean(filtered_cluster_high$percent.mt))
+    cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, mean(filtered_cluster_high$nFeature_RNA))
+    cluster_mean_nCount_high <- c(cluster_mean_nCount_high, mean(filtered_cluster_high$nCount_RNA))
+  } else {
+    cluster_mean_mito_high <- c(cluster_mean_mito_high, NA)
+    cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, NA)
+    cluster_mean_nCount_high <- c(cluster_mean_nCount_high, NA)
+  }
+  idxPass <- which(filtered_cluster$viral_load %in% "LOW")
+  cellsPass <- names(filtered_cluster$orig.ident[idxPass])
+  num_cells_low <- c(num_cells_low, length(cellsPass))
+  if(length(cellsPass) > 0) {
+    filtered_cluster_low <- subset(x = filtered_cluster, subset = cell_name %in% cellsPass)
+    cluster_mean_mito_low <- c(cluster_mean_mito_low, mean(filtered_cluster_low$percent.mt)) 
+    cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, mean(filtered_cluster_low$nFeature_RNA))
+    cluster_mean_nCount_low <- c(cluster_mean_nCount_low, mean(filtered_cluster_low$nCount_RNA))
+  } else {
+    cluster_mean_mito_low <- c(cluster_mean_mito_low, NA) 
+    cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, NA)
+    cluster_mean_nCount_low <- c(cluster_mean_nCount_low, NA)
+  }
+}
+
+cluster_QC_stats_sorted_by_mt <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low, 
+                                            "mean_mito" = cluster_mean_mito, "mean_mito_high_viral" = cluster_mean_mito_high, "mean_mito_low_viral" = cluster_mean_mito_low,
+                                            "mean_mito_viral_diff" = abs(cluster_mean_mito_high - cluster_mean_mito_low))
+rownames(cluster_QC_stats_sorted_by_mt) <- cluster_QC_stats_sorted_by_mt$cluster
+cluster_QC_stats_sorted_by_mt <- cluster_QC_stats_sorted_by_mt[ , !(names(cluster_QC_stats_sorted_by_mt) %in% c("cluster"))]
+cluster_QC_stats_sorted_by_mt <- cluster_QC_stats_sorted_by_mt[order(cluster_QC_stats_sorted_by_mt$mean_mito, decreasing = TRUE),]
+cluster_QC_stats_sorted_by_nFeature <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,  
+                                                  "mean_nFeature" = cluster_mean_nFeature, "mean_nFeature_high_viral" = cluster_mean_nFeature_high, 
+                                                  "mean_nFeature_low_viral" = cluster_mean_nFeature_low, "mean_nFeature_diff" = abs(cluster_mean_nFeature_high - cluster_mean_nFeature_low))
+rownames(cluster_QC_stats_sorted_by_nFeature) <- cluster_QC_stats_sorted_by_nFeature$cluster
+cluster_QC_stats_sorted_by_nFeature <- cluster_QC_stats_sorted_by_nFeature[ , !(names(cluster_QC_stats_sorted_by_nFeature) %in% c("cluster"))]
+cluster_QC_stats_sorted_by_nFeature <- cluster_QC_stats_sorted_by_nFeature[order(cluster_QC_stats_sorted_by_nFeature$mean_nFeature, decreasing = TRUE),]
+cluster_QC_stats_sorted_by_nCount <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,  
+                                                "mean_nCount" = cluster_mean_nCount, "mean_nCount_high_viral" = cluster_mean_nCount_high, 
+                                                "mean_nCount_low_viral" = cluster_mean_nCount_low, "mean_nCount_diff" = abs(cluster_mean_nCount_high - cluster_mean_nCount_low))
+rownames(cluster_QC_stats_sorted_by_nCount) <- cluster_QC_stats_sorted_by_nCount$cluster
+cluster_QC_stats_sorted_by_nCount <- cluster_QC_stats_sorted_by_nCount[ , !(names(cluster_QC_stats_sorted_by_nCount) %in% c("cluster"))]
+cluster_QC_stats_sorted_by_nCount <- cluster_QC_stats_sorted_by_nCount[order(cluster_QC_stats_sorted_by_nCount$mean_nCount, decreasing = TRUE),]
+
+
+for(cluster_id in unique(sc_obj$seurat_clusters)) {
+  print(cluster_id)
+  # Remove current cluster
+  idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  sc_obj.current.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  
+  
+}
+
+
+
+
+idxPass <- which(Idents(sc_obj) %in% c(15))
+cellsPass <- names(sc_obj$orig.ident[idxPass])
+sc_obj.cluster.15 <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+idxPass <- which(Idents(sc_obj) %in% c(1))
+cellsPass <- names(sc_obj$orig.ident[idxPass])
+sc_obj.cluster.1 <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
+
 # Remove messy clusters
 messy_clusters <- c(0, 9, 15, 28, 32) # For multiome F
 #messy_clusters <- c(9, 29, 40, 45, 47, 49, 50, 58, 60) # For multiome + scRNA-seq
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
+
+
 # Manually override
-mono_clusters <- c(3, 4, 7, 17)
-for(cluster_id in mono_clusters) {
-  print(cluster_id)
-  idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
-  cellsPass <- names(sc_obj$orig.ident[idxPass])
-  sc_obj.minus.messy.clusters$predicted_celltype_majority_vote[idxPass] <- "CD14 Mono"
-}
+#mono_clusters <- c(3, 4, 7, 17)
+#for(cluster_id in mono_clusters) {
+#  print(cluster_id)
+#  idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
+#  cellsPass <- names(sc_obj$orig.ident[idxPass])
+#  sc_obj.minus.messy.clusters$predicted_celltype_majority_vote[idxPass] <- "CD14 Mono"
+#}
 print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, "_clusters_by_cell_type_without_messy_clusters-02-01.png")
 
 
