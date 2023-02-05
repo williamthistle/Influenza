@@ -7,7 +7,7 @@ home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
 
 # naming_token is used to select analysis and name output files
-naming_token <- "high_vs_low_viral_load_D28_minus_3c45"
+naming_token <- "high_vs_low_viral_load_D28"
 date <- Sys.Date()
 
 # data_path is where input data are stored
@@ -224,3 +224,10 @@ for(cluster_id in mono_clusters) {
   cellsPass <- names(sc_obj$orig.ident[idxPass])
   sc_obj.minus.messy.clusters$predicted_celltype_majority_vote[idxPass] <- "CD14 Mono"
 }
+
+# Select cells based on UMAP coordinates
+umap.coords <- as.data.frame(sc_obj[["umap"]]@cell.embeddings)
+umap.coords <- umap.coords[umap.coords$"UMAP_1" < -0.5 & umap.coords$"UMAP_1" > -2,]
+umap.coords <- umap.coords[umap.coords$"UMAP_2" < -5 & umap.coords$"UMAP_2" > -7,]
+cellsPass <- rownames(umap.coords)
+sc_obj.bridge.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
