@@ -112,29 +112,106 @@ calculate_props_and_counts <- function(sc_obj, condition, sample_names) {
 }
 
 capture_cluster_info <- function(sc_obj) {
+  cluster_ids <- vector()
   cluster_distributions <- list()
   cluster_predictions <- vector()
   cluster_mean_S_score <- vector()
   cluster_mean_G2M_score <- vector()
   cluster_mean_CC_difference <- vector()
-  cluster_ids <- vector()
+  num_cells <- c()
+  num_cells_high <- c()
+  num_cells_low <- c()
+  cluster_mean_mito <- c()
+  cluster_mean_mito_high <- c()
+  cluster_mean_mito_low <- c()
+  cluster_mean_nFeature <- c()
+  cluster_mean_nFeature_high <- c()
+  cluster_mean_nFeature_low <- c()
+  cluster_mean_nCount <- c()
+  cluster_mean_nCount_high <- c()
+  cluster_mean_nCount_low <- c()
+  cluster_mean_rp <- c()
+  cluster_mean_rp_high <- c()
+  cluster_mean_rp_low <- c()
   idx <- 1
   for (cluster in levels(sc_obj)) {
+    cluster_ids <- append(cluster_ids, cluster)
     idxPass <- which(Idents(sc_obj) %in% cluster)
     cellsPass <- names(sc_obj$orig.ident[idxPass])
+    num_cells <- c(num_cells, length(cellsPass))
     filtered_cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    cluster_mean_mito <- c(cluster_mean_mito, mean(filtered_cluster$percent.mt))
+    cluster_mean_nFeature <- c(cluster_mean_nFeature, mean(filtered_cluster$nFeature_RNA))
+    cluster_mean_nCount <- c(cluster_mean_nCount, mean(filtered_cluster$nCount_RNA))
+    cluster_mean_rp <- c(cluster_mean_rp, mean(filtered_cluster$percent.rp))
     cluster_prediction <- sort(table(filtered_cluster$predicted_celltype_majority_vote), decreasing = TRUE)[1]
     cluster_predictions <- append(cluster_predictions, cluster_prediction)
     cluster_distributions[[idx]] <- table(filtered_cluster$predicted.id)
     cluster_mean_S_score <- append(cluster_mean_S_score, mean(filtered_cluster$S.Score))
     cluster_mean_G2M_score <- append(cluster_mean_G2M_score, mean(filtered_cluster$G2M.Score))
     cluster_mean_CC_difference <- append(cluster_mean_CC_difference, mean(filtered_cluster$CC.Difference))
-    cluster_ids <- append(cluster_ids, cluster)
+    # High
+    idxPass <- which(filtered_cluster$viral_load %in% "HIGH")
+    cellsPass <- names(filtered_cluster$orig.ident[idxPass])
+    num_cells_high <- c(num_cells_high, length(cellsPass))
+    if(length(cellsPass) > 0) {
+      filtered_cluster_high <- subset(x = filtered_cluster, subset = cell_name %in% cellsPass)
+      cluster_mean_mito_high <- c(cluster_mean_mito_high, mean(filtered_cluster_high$percent.mt))
+      cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, mean(filtered_cluster_high$nFeature_RNA))
+      cluster_mean_nCount_high <- c(cluster_mean_nCount_high, mean(filtered_cluster_high$nCount_RNA))
+      cluster_mean_rp_high <- c(cluster_mean_rp_high, mean(filtered_cluster_high$percent.rp))
+    } else {
+      cluster_mean_mito_high <- c(cluster_mean_mito_high, NA)
+      cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, NA)
+      cluster_mean_nCount_high <- c(cluster_mean_nCount_high, NA)
+      cluster_mean_rp_high <- c(cluster_mean_rp_high, NA)
+    }
+    # Low
+    idxPass <- which(filtered_cluster$viral_load %in% "LOW")
+    cellsPass <- names(filtered_cluster$orig.ident[idxPass])
+    num_cells_low <- c(num_cells_low, length(cellsPass))
+    if(length(cellsPass) > 0) {
+      filtered_cluster_low <- subset(x = filtered_cluster, subset = cell_name %in% cellsPass)
+      cluster_mean_mito_low <- c(cluster_mean_mito_low, mean(filtered_cluster_low$percent.mt)) 
+      cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, mean(filtered_cluster_low$nFeature_RNA))
+      cluster_mean_nCount_low <- c(cluster_mean_nCount_low, mean(filtered_cluster_low$nCount_RNA))
+      cluster_mean_rp_low <- c(cluster_mean_rp_low, mean(filtered_cluster_low$percent.rp))
+    } else {
+      cluster_mean_mito_low <- c(cluster_mean_mito_low, NA) 
+      cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, NA)
+      cluster_mean_nCount_low <- c(cluster_mean_nCount_low, NA)
+      cluster_mean_rp_low <- c(cluster_mean_rp_low, NA)
+    }
     idx <- idx + 1
   }
   names(cluster_predictions) <- paste(levels(sc_obj), "-", names(cluster_predictions))
   cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score, "G2M" = cluster_mean_G2M_score, "CC Diff" = cluster_mean_CC_difference)
-  return(list(cluster_distributions, cluster_predictions, cell_cycle_df))
+  cluster_QC_stats_sorted_by_mt <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low, 
+                                              "mean_mito" = cluster_mean_mito, "mean_mito_high_viral" = cluster_mean_mito_high, "mean_mito_low_viral" = cluster_mean_mito_low,
+                                              "mean_mito_viral_diff" = abs(cluster_mean_mito_high - cluster_mean_mito_low))
+  rownames(cluster_QC_stats_sorted_by_mt) <- cluster_QC_stats_sorted_by_mt$cluster
+  cluster_QC_stats_sorted_by_mt <- cluster_QC_stats_sorted_by_mt[ , !(names(cluster_QC_stats_sorted_by_mt) %in% c("cluster"))]
+  cluster_QC_stats_sorted_by_mt <- cluster_QC_stats_sorted_by_mt[order(cluster_QC_stats_sorted_by_mt$mean_mito, decreasing = TRUE),]
+  cluster_QC_stats_sorted_by_nFeature <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,  
+                                                    "mean_nFeature" = cluster_mean_nFeature, "mean_nFeature_high_viral" = cluster_mean_nFeature_high, 
+                                                    "mean_nFeature_low_viral" = cluster_mean_nFeature_low, "mean_nFeature_diff" = abs(cluster_mean_nFeature_high - cluster_mean_nFeature_low))
+  rownames(cluster_QC_stats_sorted_by_nFeature) <- cluster_QC_stats_sorted_by_nFeature$cluster
+  cluster_QC_stats_sorted_by_nFeature <- cluster_QC_stats_sorted_by_nFeature[ , !(names(cluster_QC_stats_sorted_by_nFeature) %in% c("cluster"))]
+  cluster_QC_stats_sorted_by_nFeature <- cluster_QC_stats_sorted_by_nFeature[order(cluster_QC_stats_sorted_by_nFeature$mean_nFeature, decreasing = TRUE),]
+  cluster_QC_stats_sorted_by_nCount <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,  
+                                                  "mean_nCount" = cluster_mean_nCount, "mean_nCount_high_viral" = cluster_mean_nCount_high, 
+                                                  "mean_nCount_low_viral" = cluster_mean_nCount_low, "mean_nCount_diff" = abs(cluster_mean_nCount_high - cluster_mean_nCount_low))
+  rownames(cluster_QC_stats_sorted_by_nCount) <- cluster_QC_stats_sorted_by_nCount$cluster
+  cluster_QC_stats_sorted_by_nCount <- cluster_QC_stats_sorted_by_nCount[ , !(names(cluster_QC_stats_sorted_by_nCount) %in% c("cluster"))]
+  cluster_QC_stats_sorted_by_nCount <- cluster_QC_stats_sorted_by_nCount[order(cluster_QC_stats_sorted_by_nCount$mean_nCount, decreasing = TRUE),]
+  
+  cluster_QC_stats_sorted_by_rp <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,  
+                                              "mean_rp" = cluster_mean_rp, "mean_rp_high_viral" = cluster_mean_rp_high, 
+                                              "mean_rp_low_viral" = cluster_mean_rp_low, "mean_rp_diff" = abs(cluster_mean_rp_high - cluster_mean_rp_low))
+  rownames(cluster_QC_stats_sorted_by_rp) <- cluster_QC_stats_sorted_by_rp$cluster
+  cluster_QC_stats_sorted_by_rp <- cluster_QC_stats_sorted_by_rp[ , !(names(cluster_QC_stats_sorted_by_rp) %in% c("cluster"))]
+  cluster_QC_stats_sorted_by_rp <- cluster_QC_stats_sorted_by_rp[order(cluster_QC_stats_sorted_by_rp$mean_rp, decreasing = TRUE),]
+  return(list(cluster_distributions, cluster_predictions, cell_cycle_df, cluster_QC_stats_sorted_by_mt, cluster_QC_stats_sorted_by_nFeature, cluster_QC_stats_sorted_by_nCount, cluster_QC_stats_sorted_by_rp))
 }
 
 

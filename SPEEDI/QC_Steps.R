@@ -85,3 +85,11 @@ n <- length(nCount_vs_nFeature_plots)
 nCol <- floor(sqrt(n))
 nCount_vs_nFeature_plots <- do.call("grid.arrange", c(nCount_vs_nFeature_plots, ncol=nCol))
 ggsave(paste0(output_dir, naming_token, "_nCount_vs_nFeature_plots.png"), plot = nCount_vs_nFeature_plots, device = "png", width = 15, height = 15, units = "in")
+
+# RUN AFTER STEP 3 - see what unintegrated plots look like
+cell_count <- length(sc_obj$cell_name)
+current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
+DimPlot(sc_obj, reduction = "umap", group.by = "sample", split.by = "sample", ncol = 3, repel = TRUE, raster = FALSE) + 
+  labs(title = current_title) + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(paste0(output_dir, naming_token, "_preintegrated_clusters_by_sample.png"), device = "png", dpi = 300, width = 8, height = 8, units = "in")
