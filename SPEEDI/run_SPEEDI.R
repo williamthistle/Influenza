@@ -231,11 +231,3 @@ umap.coords <- umap.coords[umap.coords$"UMAP_1" < -0.5 & umap.coords$"UMAP_1" > 
 umap.coords <- umap.coords[umap.coords$"UMAP_2" > -0.5 & umap.coords$"UMAP_2" < 5,]
 cellsPass <- rownames(umap.coords)
 sc_obj.bridge.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-
-
-cell_count <- length(sc_obj$cell_name)
-current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
-DimPlot(sc_obj, reduction = "umap", group.by = "sample", split.by = "sample", ncol = 3, repel = TRUE, raster = FALSE) + 
-  labs(title = current_title) + 
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(paste0(output_dir, naming_token, "_preintegrated_clusters_by_sample_5.png"), device = "png", dpi = 300, width = 10, height = 10, units = "in")
