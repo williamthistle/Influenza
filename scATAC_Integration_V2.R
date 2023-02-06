@@ -12,58 +12,21 @@ library(BSgenome.Hsapiens.UCSC.hg38)
 
 set.seed(1)
 
-# Set project dir - used to organize different projects
-project_dir <- "~/PLACEBO_FLU_1/"
-if (!dir.exists(project_dir)) {dir.create(project_dir)}
-# We can either process pre, post, or all data - TO DO
-data_processing_choices <- c("pre", "post", "all")
-data_processing_choice <- data_processing_choices[3]
-# Location of scATAC data - data are organized by aliquot ID
-# Note that aliquot ID and sample ID are different since multiple sample types
-# (scRNA-seq, scATAC-seq) can come from the same aliquot
-# However, in the context of analyzing samples from a single sample type,
-# you can consider aliquots and samples basically equivalent
-data_dir <- paste0(project_dir, "scATAC_seq_data/")
-if (!dir.exists(data_dir)) {dir.create(data_dir)}
-output_dir <- paste0(project_dir, "scATAC_seq_data_output/")
-if (!dir.exists(output_dir)) {dir.create(output_dir)}
-sample_metadata <- read.csv(paste0(project_dir, "current_sample_metadata_minus_8d5be1a4937a7ad3.csv"))
-sample_assay_types <- read.csv(paste0(project_dir, "current_set_of_scRNA_and_scATAC_seq_samples.txt"), sep = "\t")
-# Look in base scATAC dir to get list of all potential aliquots
-# We will only use aliquots that are paired (D-1 and D28)
-aliquot_list <- list.dirs(data_dir, recursive = FALSE)
-aliquot_list <- strsplit(aliquot_list, "/")
-aliquot_list <- unlist(lapply(aliquot_list, tail, n = 1L))
-# D1.id stores aliquot IDs for day -1 samples
-# D28.id stores aliquot IDs for day 28 samples
-print("Grabbing Day -1 and D28 aliquot IDs from metadata file")
-D1.id <- c()
-D28.id <- c()
-for (aliquot in aliquot_list) {
-  # Grab current sample metadata, subject associated with sample, and then check to see whether subject has two samples
-  # (D-1 and D28)
-  current_sample = sample_metadata[sample_metadata$X_aliquot_id == aliquot,]
-  current_subject = current_sample$SUBJECT_ID
-  all_samples_associated_with_current_subject = sample_metadata[sample_metadata$SUBJECT_ID == current_subject ,]
-  if (nrow(all_samples_associated_with_current_subject) == 2) {
-    # Now, we grab our D-1 and D28 aliquot names.
-    # If D-1 is not already in D1.id AND we have scRNA-seq data from both D-1 and D28 aliquots AND we have scRNA-seq data from both D-1 and D28 aliquots,  
-    # then add D-1 to D1.id and D28 to D28.id
-    d_negative_1_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D-1",]$X_aliquot_id
-    d_28_aliquot <- all_samples_associated_with_current_subject[all_samples_associated_with_current_subject$Time_Point == "D28",]$X_aliquot_id
-    d_negative_1_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_negative_1_aliquot,]
-    presence_of_d_negative_1_RNA <- d_negative_1_aliquot_sample_assays$scRNA_seq
-    d_28_aliquot_sample_assays <- sample_assay_types[sample_assay_types$aliquot_name == d_28_aliquot,]
-    presence_of_d_28_RNA <- d_28_aliquot_sample_assays$scRNA_seq
-    if (d_negative_1_aliquot %in% D1.id == FALSE & d_negative_1_aliquot %in% aliquot_list & d_28_aliquot %in% aliquot_list & presence_of_d_negative_1_RNA == "Yes" & presence_of_d_28_RNA == "Yes") {
-      D1.id <- append(D1.id, d_negative_1_aliquot)
-      D28.id <- append(D28.id, d_28_aliquot)
-    }
-  }
-}
+# naming_token is used to select analysis and name output files
+naming_token <- "high_vs_low_viral_load_D28"
+date <- Sys.Date()
+# data_path is where input data are stored
+data_path <- paste0("/data/home/wat2/", naming_token, "/ATAC_seq_data/")
+# Get list of samples that will be processed
+sample_id_list <- list.dirs(data_path, recursive = FALSE)
+sample_id_list <- strsplit(sample_id_list, "/")
+sample_id_list <- unlist(lapply(sample_id_list, tail, n = 1L))
+sample_count <- length(sample_id_list)
+output_dir <- paste0("/data/home/wat2/", naming_token, "/ATAC_seq_data_output/")
+viral_load_info <- read.table(paste0(home_dir, "/viral_load_info.tsv"), sep = "\t", header = TRUE)
 
 # Read in input files and label each sample as D1 or D28 in metadata
-inputFiles <- paste0(data_dir, c(D1.id, D28.id), "/outs/fragments.tsv.gz")
+inputFiles <- paste0(data_dir, sample_id_list, "/outs/fragments.tsv.gz")
 names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:length(D1.id), "_D1"), paste0("Sample_", 1:length(D28.id), "_D28"))
 metadata <- c(rep("D1", length(D1.id)), rep("D28", length(D28.id)))
 names(metadata) <- c(paste0("Sample_", 1:length(D1.id), "_D1"), paste0("Sample_", 1:length(D28.id), "_D28"))
