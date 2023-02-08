@@ -11,6 +11,7 @@ library(openxlsx)
 library(BSgenome.Hsapiens.UCSC.hg38)
 
 set.seed(1)
+home_dir <- "~/SPEEDI"
 
 # naming_token is used to select analysis and name output files
 naming_token <- "high_vs_low_viral_load_D28"

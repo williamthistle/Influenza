@@ -43,6 +43,7 @@ library(kBET)
 library(irlba)
 library(kneedle)
 library(scCustomize)
+library(scDblFinder)
 
 # Check if the input matrix is dgCMatrix
 #

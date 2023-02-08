@@ -1,13 +1,12 @@
 library(clustree)
 library(pheatmap)
-library(DoubletFinder)
 library(scDblFinder)
 
 home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
 
 # naming_token is used to select analysis and name output files
-naming_token <- "high_vs_low_viral_load_D28"
+naming_token <- "high_vs_low_viral_load_D28_doublet_removal"
 date <- Sys.Date()
 
 # data_path is where input data are stored
@@ -68,8 +67,17 @@ for(current_sample in sc_obj$sample) {
 sc_obj$viral_load <- viral_load_vec
 
 # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
-print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, "_clusters_by_cell_type_", date, ".png")
-print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, "_clusters_by_cluster_num_", date, ".png")
+print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, ".png"))
+print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_", date, ".png"))
+print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_", date, ".png"))
+
+# Split by cluster
+cell_count <- length(sc_obj$cell_name)
+current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
+DimPlot(sc_obj, reduction = "umap", group.by = "predicted.id", split.by = "seurat_clusters", ncol = 5, repel = TRUE, raster = FALSE) + 
+  labs(title = current_title) + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(paste0(output_dir, naming_token, "_clusters_by_cluster_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
 
 # Print viral load plot
 print_UMAP(sc_obj, sample_count, "viral_load", output_dir, naming_token, "_clusters_by_viral_load", date, ".png")

@@ -20,10 +20,21 @@ g2m.genes <- cc.genes.updated.2019$g2m.genes
 SEED <- 1824409L
 set.seed(SEED)
 
-run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save_progress = TRUE, use_simplified_reference = FALSE) {
+run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save_progress = TRUE, use_simplified_reference = FALSE, remove_doublets = FALSE) {
   all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
   sc_obj <<- FilterRawData(all_sc_exp_matrices, human = TRUE)
   rm(all_sc_exp_matrices)
+  # Find doublets
+  if(remove_doublets) {
+    sce <- scDblFinder(as.SingleCellExperiment(sc_obj), samples = "sample")
+    sc_obj <<- as.Seurat(sce)
+    # See distribution of doublets in each sample
+    doublet_sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "doublet")
+    print(table(doublet_sc_obj$sample))
+    # Remove doublets
+    sc_obj <<- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
+    rm(sce)
+  }
   # Doing global assignment because we need sc_obj to be part of the global environment when we save our .RData file
   sc_obj <<- InitialProcessing(sc_obj, human = TRUE)
   if(save_progress) {
