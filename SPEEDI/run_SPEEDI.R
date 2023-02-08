@@ -28,13 +28,13 @@ if(!save_progress) {
 
 #load(paste0(output_dir, "7_", naming_token, ".RData"))
 
-# Add cell names to Seurat object - only needed if SPEEDI functions are used directly
+# Add cell names to Seurat object - only needed if SPEEDI functions are used directly (as opposed to run_SPEEDI wrapper)
 #cell_names <- rownames(sc_obj@meta.data)
 #sc_obj <- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
-# Assign viral load (high or low) to each cell
+
+# Assign metadata to each cell
 high_viral_load <- c()
 low_viral_load <- c()
-neither_viral_load <- c()
 for(sample_id in unique(sc_obj$sample)) {
   if(sample_id %in% viral_load_info$aliquot) {
     current_info <- viral_load_info[viral_load_info$aliquot == sample_id,]
@@ -43,25 +43,20 @@ for(sample_id in unique(sc_obj$sample)) {
     } else {
       low_viral_load <- c(low_viral_load, sample_id)
     }
-  } else {
-    neither_viral_load <- c(neither_viral_load, sample_id)
   }
 }
 
 high_viral_load <- sort(high_viral_load)
 low_viral_load <- sort(low_viral_load)
-neither_viral_load <- sort(neither_viral_load)
 
-all_viral_load <- c(high_viral_load, low_viral_load, neither_viral_load)
-viral_load_label <- c(rep("HIGH", length(high_viral_load)), rep("LOW", length(low_viral_load)), rep("NEITHER", length(neither_viral_load)))
+all_viral_load <- c(high_viral_load, low_viral_load)
+viral_load_label <- c(rep("HIGH", length(high_viral_load)), rep("LOW", length(low_viral_load)))
 viral_load_vec <- c()
 for(current_sample in sc_obj$sample) {
   if(current_sample %in% high_viral_load) {
     viral_load_vec <- c(viral_load_vec, "HIGH")
   } else if(current_sample %in% low_viral_load) {
     viral_load_vec <- c(viral_load_vec, "LOW")
-  } else {
-    viral_load_vec <- c(viral_load_vec, "NEITHER")
   }
 }
 sc_obj$viral_load <- viral_load_vec

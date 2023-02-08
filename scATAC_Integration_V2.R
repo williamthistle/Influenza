@@ -26,11 +26,30 @@ sample_count <- length(sample_id_list)
 output_dir <- paste0("/data/home/wat2/", naming_token, "/ATAC_seq_data_output/")
 viral_load_info <- read.table(paste0(home_dir, "/viral_load_info.tsv"), sep = "\t", header = TRUE)
 
-# Read in input files and label each sample as D1 or D28 in metadata
-inputFiles <- paste0(data_dir, sample_id_list, "/outs/fragments.tsv.gz")
-names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:length(D1.id), "_D1"), paste0("Sample_", 1:length(D28.id), "_D28"))
-metadata <- c(rep("D1", length(D1.id)), rep("D28", length(D28.id)))
-names(metadata) <- c(paste0("Sample_", 1:length(D1.id), "_D1"), paste0("Sample_", 1:length(D28.id), "_D28"))
+# Identify high / low viral load samples
+high_viral_load <- c()
+low_viral_load <- c()
+for(sample_id in sample_id_list) {
+  if(sample_id %in% viral_load_info$aliquot) {
+    current_info <- viral_load_info[viral_load_info$aliquot == sample_id,]
+    if(current_info$viral_load == "high") {
+      high_viral_load <- c(high_viral_load, sample_id)
+    } else {
+      low_viral_load <- c(low_viral_load, sample_id)
+    }
+  } else {
+    stop("You have a sample that is not labeled as high or low viral load. Not currently supported.")
+  }
+}
+
+high_viral_load <- sort(high_viral_load)
+low_viral_load <- sort(low_viral_load)
+
+# Label each sample as high or low viral load in input file paths and metadata
+inputFiles <- paste0(data_path, sample_id_list, "/outs/atac_fragments.tsv.gz")
+names(inputFiles) <- names(metadata) <- c(paste0("Sample_", 1:length(high_viral_load), "_HVL"), paste0("Sample_", 1:length(low_viral_load), "_LVL"))
+metadata <- c(rep("HVL", length(high_viral_load)), rep("LVL", length(low_viral_load)))
+names(metadata) <- c(paste0("Sample_", 1:length(high_viral_load), "_HVL"), paste0("Sample_", 1:length(low_viral_load), "_LVL"))
 
 addArchRGenome("hg38")
 
@@ -67,16 +86,16 @@ image_dir <- paste0(output_dir, "images/")
 if (!dir.exists(image_dir)) {dir.create(image_dir)}
 save.image(paste0(image_dir, "atac_after_filtering_doublets.RData"))
 
-# List available matrices in project
+# List information about available matrices in project
 getAvailableMatrices(proj)
 #------------------------------------------------------------------------------------------------
-# add condition metadata (D1 or D28) to cells in project
+# add condition metadata (HVL or LVL) to cells in project
 aa<-proj$Sample
-idxSample <- which(str_detect(proj$Sample, "D1"))
-aa[idxSample]<-'D1'
+idxSample <- which(str_detect(proj$Sample, "HVL"))
+aa[idxSample]<-'HVL'
 
-idxSample <- which(str_detect(proj$Sample, "D28"))
-aa[idxSample]<-'D28'
+idxSample <- which(str_detect(proj$Sample, "LVL"))
+aa[idxSample]<-'LVL'
 
 proj <- addCellColData(ArchRProj = proj, data = aa, cells = proj$cellNames,name = "Conditions", force = TRUE)
 
