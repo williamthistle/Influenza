@@ -286,7 +286,7 @@ names(cluster_predictions) <- paste(unique(proj.filtered$Clusters), "-", names(c
 
 #Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
 # OLD - idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C12", "C16", "C25", "C30", "C47"))
-idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C12", "C13", "C16", "C17", "C22", "C24", "C25", "C30","C31", "C33", "C34", "C36", "C44", "C45", "C46", "C47"))
+idxPass <- which(proj.filtered$Clusters %in% c("C1", "C2", "C3", "C4", "C6", "C7", "C8", "C11", "C12", "C13", "C14", "C15", "C16", "C18", "C22", "C23", "C25"))
 cellsPass <- proj.filtered$cellNames[-idxPass]
 proj.filtered <- proj.filtered[cellsPass, ]
 #p3 <- plotEmbedding(ArchRProj = proj.filtered.minus.clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
