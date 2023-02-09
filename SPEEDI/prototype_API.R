@@ -31,6 +31,7 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
     # See distribution of doublets in each sample
     doublet_sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "doublet")
     print(table(doublet_sc_obj$sample))
+    rm(doublet_sc_obj)
     # Remove doublets
     sc_obj <<- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
     rm(sce)
@@ -277,7 +278,7 @@ Read_h5 <- function(data_path, sample_id_list) {
 
 FilterRawData <- function(all_sc_exp_matrices, human) {
   message("Step 2: Filtering out bad samples...")
-  testing_flag <- TRUE
+  testing_flag <- FALSE
   
   sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
                                assay = "RNA",

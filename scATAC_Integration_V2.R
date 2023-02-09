@@ -26,6 +26,9 @@ sample_count <- length(sample_id_list)
 output_dir <- paste0("/data/home/wat2/", naming_token, "/ATAC_seq_data_output/")
 viral_load_info <- read.table(paste0(home_dir, "/viral_load_info.tsv"), sep = "\t", header = TRUE)
 
+image_dir <- paste0(output_dir, "images/")
+if (!dir.exists(image_dir)) {dir.create(image_dir)}
+
 # Identify high / low viral load samples
 high_viral_load <- c()
 low_viral_load <- c()
@@ -82,8 +85,6 @@ proj <- ArchRProject(
 # Filter out doublets (fake cells)
 proj <- filterDoublets(ArchRProj = proj)
 
-image_dir <- paste0(output_dir, "images/")
-if (!dir.exists(image_dir)) {dir.create(image_dir)}
 save.image(paste0(image_dir, "atac_after_filtering_doublets.RData"))
 
 # List information about available matrices in project
