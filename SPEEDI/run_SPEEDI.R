@@ -6,7 +6,7 @@ home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
 
 # naming_token is used to select analysis and name output files
-naming_token <- "high_vs_low_viral_load_D28_doublet_removal"
+naming_token <- "high_vs_low_viral_load_D28_V2"
 date <- Sys.Date()
 
 # data_path is where input data are stored
