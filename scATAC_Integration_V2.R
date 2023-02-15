@@ -48,7 +48,7 @@ for(sample_id in sample_id_list) {
 high_viral_load <- sort(high_viral_load)
 low_viral_load <- sort(low_viral_load)
 all_viral_load <- c(high_viral_load, low_viral_load)
-sample_id_list <- sample_id_list[order(match(sample_id_list,all_viral_load))]
+sample_id_list <- sample_id_list[order(match(sample_id_list, all_viral_load))]
 
 # Label each sample as high or low viral load in input file paths and metadata
 inputFiles <- paste0(data_path, sample_id_list, "/outs/atac_fragments.tsv.gz")
@@ -110,15 +110,15 @@ p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", 
 plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 
 # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-idxPass <- which(proj$TSSEnrichment >= 6 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
+idxPass <- which(proj$TSSEnrichment >= 10 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
-# Print out cells
-write.table(proj$cellNames, file = paste0(output_dir, "filtered_ATAC_cells.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE)
 
+write.table(proj$cellNames, file = paste0(output_dir, "ATAC_filtered_cells.txt"), quote = FALSE, col.names = FALSE, row.names = FALSE)
 # List number of D1 and D28 cells and list number of cells remaining for each sample
 table(proj$Conditions)
 table(proj$Sample)
+
 
 
 # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 

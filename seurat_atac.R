@@ -40,6 +40,8 @@ pbmc <- NucleosomeSignal(object = pbmc)
 pbmc <- TSSEnrichment(object = pbmc, fast = FALSE)
 # Fraction of reads in peaks (since my CellRanger metadata doesn't seem to include this info)
 total_fragments <- CountFragments("C:/Users/wat2/Desktop/ATAC/atac_fragments.tsv.gz")
+pbmc_fragments <- total_fragments[total_fragments$CB %in% colnames(pbmc),]
+pbmc_fragments <-
 pbmc$fragments <- total_fragments[colnames(pbmc), "frequency_count"]
 pbmc <- FRiP(
   object = pbmc,
