@@ -22,33 +22,33 @@ set.seed(SEED)
 
 run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save_progress = TRUE, use_simplified_reference = FALSE, remove_doublets = FALSE) {
   all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
-  sc_obj <<- FilterRawData(all_sc_exp_matrices, human = TRUE)
+  assign("sc_obj", FilterRawData(all_sc_exp_matrices, human = TRUE), envir = .GlobalEnv)
   rm(all_sc_exp_matrices)
   # Find doublets
   if(remove_doublets) {
-    sce <- scDblFinder(as.SingleCellExperiment(sc_obj), samples = "sample")
-    sc_obj <<- as.Seurat(sce)
+    assign("sc_obj", as.Seurat(scDblFinder(as.SingleCellExperiment(sc_obj), samples = "sample")), envir = .GlobalEnv)
     # See distribution of doublets in each sample
     doublet_sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "doublet")
     print(table(doublet_sc_obj$sample))
     rm(doublet_sc_obj)
     # Remove doublets
-    sc_obj <<- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
-    rm(sce)
+    assign("sc_obj", subset(x = sc_obj, subset = scDblFinder.class %in% "singlet"), envir = .GlobalEnv)
+    message(paste0("After removing doublets, data has ", dim(sc_obj)[2], " barcodes and ", dim(sc_obj)[1], " transcripts."))
   }
-  # Doing global assignment because we need sc_obj to be part of the global environment when we save our .RData file
-  sc_obj <<- InitialProcessing(sc_obj, human = TRUE)
+  
+  
+  assign("sc_obj", InitialProcessing(sc_obj, human = TRUE), envir = .GlobalEnv)
   if(save_progress) {
-    save.image(paste0(output_dir, "3_", naming_token, ".RData"))
+    save(sc_obj, file = paste0(output_dir, "3_", naming_token, "_sc_obj.rds"))
   }
-  sc_obj <<- InferBatches(sc_obj)
-  sc_obj <<- IntegrateByBatch(sc_obj)
+  assign("sc_obj", InferBatches(sc_obj), envir = .GlobalEnv)
+  assign("sc_obj", IntegrateByBatch(sc_obj), envir = .GlobalEnv)
   if(save_progress) {
-    save.image(paste0(output_dir, "5_", naming_token, ".RData"))
+    save(sc_obj, file = paste0(output_dir, "5_", naming_token, "_sc_obj.rds"))
   }
-  sc_obj <<- VisualizeIntegration(sc_obj)
+  assign("sc_obj", VisualizeIntegration(sc_obj), envir = .GlobalEnv)
   if(save_progress) {
-    save.image(paste0(output_dir, "6_", naming_token, ".RData"))
+    save(sc_obj, file = paste0(output_dir, "6_", naming_token, "_sc_obj.rds"))
   }
   reference <- LoadReference("PBMC", human = TRUE)
   if(use_simplified_reference) {
@@ -58,13 +58,13 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
     #idx <- which(reference$celltype.l3 == "Treg Naive")
     #reference <- reference[,-idx]
   }
-  sc_obj <<- MapCellTypes(sc_obj, reference)
+  assign("sc_obj", MapCellTypes(sc_obj, reference), envir = .GlobalEnv)
   rm(reference)
   # Add cell names as a metadata column - this is handy for selecting subsets of cells
   cell_names <- rownames(sc_obj@meta.data)
-  sc_obj <<- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
+  assign("sc_obj", AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
   if(save_progress) {
-    save.image(paste0(output_dir, "7_", naming_token, ".RData"))
+    save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
   }
   return(sc_obj) 
 }
@@ -244,7 +244,7 @@ Read_h5 <- function(data_path, sample_id_list) {
   message(paste0("Number of cores: ", n.cores))
   
   registerDoMC(n.cores)
-  message("Begin parallizing...")
+  message("Begin parallelizing...")
   
   all_sc_exp_matrices <- foreach(
     i = 1:length(sample_id_list),
@@ -276,17 +276,17 @@ Read_h5 <- function(data_path, sample_id_list) {
   return(all_sc_exp_matrices)
 }
 
-FilterRawData <- function(all_sc_exp_matrices, human) {
+FilterRawData <- function(sc_obj, human) {
   message("Step 2: Filtering out bad samples...")
-  testing_flag <- FALSE
+  testing_flag <- TRUE
   
-  sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
-                               assay = "RNA",
-                               min.cells = 3,
-                               min.features = 3,
-                               project = "unbias")
+  #sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
+  #                             assay = "RNA",
+  #                             min.cells = 3,
+  #                             min.features = 3,
+  #                             project = "unbias")
   
-  sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
+  #sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
   
   if (human) {
     sc_obj <- PercentageFeatureSet(object = sc_obj,
@@ -382,7 +382,7 @@ FilterRawData <- function(all_sc_exp_matrices, human) {
                         percent.rpl <= quantile(objects[[i]]$percent.rpl, .99) &
                          percent.hb <= max_hb)
     } else {
-      object <- subset(objects[[i]], nFeature_RNA > 900 & nFeature_RNA < 4000 & nCount_RNA < 10000 & percent.mt < 15 & percent.hb < 0.4 & percent.rp < 50)
+      object <- subset(objects[[i]], nFeature_RNA > 900 & nFeature_RNA < 4000 & nCount_RNA < 10000 & percent.mt < 15 & percent.hb < 0.4 & percent.rp < 4.5)
     }
     if(!testing_flag) {
       print(paste0("THRESHOLDS USED FOR SAMPLE", current_sample_name))

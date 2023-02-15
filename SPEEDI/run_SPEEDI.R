@@ -6,7 +6,7 @@ home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
 
 # naming_token is used to select analysis and name output files
-naming_token <- "high_vs_low_viral_load_D28_V2"
+naming_token <- "high_vs_low_viral_load_D28_V3"
 date <- Sys.Date()
 
 # data_path is where input data are stored
@@ -27,6 +27,7 @@ if(!save_progress) {
 }
 
 #load(paste0(output_dir, "7_", naming_token, ".RData"))
+#load(paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
 
 # Add cell names to Seurat object - only needed if SPEEDI functions are used directly (as opposed to run_SPEEDI wrapper)
 #cell_names <- rownames(sc_obj@meta.data)
@@ -75,7 +76,12 @@ DimPlot(sc_obj, reduction = "umap", group.by = "predicted.id", split.by = "seura
 ggsave(paste0(output_dir, naming_token, "_clusters_by_cluster_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
 
 # Print viral load plot
-print_UMAP(sc_obj, sample_count, "viral_load", output_dir, naming_token, "_clusters_by_viral_load", date, ".png")
+print_UMAP(sc_obj, sample_count, "viral_load", output_dir, naming_token, paste0("_clusters_by_viral_load_", date, ".png"))
+
+# See overlap between ATAC and RNA-seq
+filtered_ATAC_cells <- read.table(paste0(output_dir, "filtered_ATAC_cells.txt"), comment.char = "")
+filtered_ATAC_cells <- filtered_ATAC_cells$V1
+
 
 # Let's see what the cell type proportions are for our raw data (using predicted.id)
 # We aren't that concerned about what the majority vote says right now because we still need to clean up our clusters
@@ -144,12 +150,12 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
 }
 
 # Remove messy clusters
-messy_clusters <- c(0, 9, 15, 28, 32) # For multiome F
+messy_clusters <- c(25, 27) # For multiome F
 #messy_clusters <- c(9, 29, 40, 45, 47, 49, 50, 58, 60) # For multiome + scRNA-seq
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, "_clusters_by_cell_type_without_messy_clusters-02-01.png")
+print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_messy_clusters", date, ".png"))
 
 
 # The ideal resolution may have changed. Let's check now!
@@ -237,7 +243,7 @@ for(cluster_id in mono_clusters) {
 
 # Select cells based on UMAP coordinates
 umap.coords <- as.data.frame(sc_obj[["umap"]]@cell.embeddings)
-umap.coords <- umap.coords[umap.coords$"UMAP_1" < -0.5 & umap.coords$"UMAP_1" > -2,]
-umap.coords <- umap.coords[umap.coords$"UMAP_2" > -0.5 & umap.coords$"UMAP_2" < 5,]
+umap.coords <- umap.coords[umap.coords$"UMAP_1" > 0 & umap.coords$"UMAP_1" < 2,]
+umap.coords <- umap.coords[umap.coords$"UMAP_2" > -1 & umap.coords$"UMAP_2" < 2,]
 cellsPass <- rownames(umap.coords)
 sc_obj.bridge.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
