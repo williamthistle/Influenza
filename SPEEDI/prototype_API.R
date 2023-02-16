@@ -280,13 +280,13 @@ FilterRawData <- function(sc_obj, human) {
   message("Step 2: Filtering out bad samples...")
   testing_flag <- TRUE
   
-  #sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
-  #                             assay = "RNA",
-  #                             min.cells = 3,
-  #                             min.features = 3,
-  #                             project = "unbias")
+  sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
+                               assay = "RNA",
+                               min.cells = 3,
+                               min.features = 3,
+                               project = "unbias")
   
-  #sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
+  sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
   
   if (human) {
     sc_obj <- PercentageFeatureSet(object = sc_obj,
