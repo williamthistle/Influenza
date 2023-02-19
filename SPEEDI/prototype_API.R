@@ -276,7 +276,7 @@ FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
     message("Number of doublets removed in each sample:")
     print(table(doublet_sc_obj$sample))
     rm(doublet_sc_obj)
-    #sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
+    sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
   }
 
   if (human) {

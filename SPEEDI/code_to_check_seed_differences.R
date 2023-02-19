@@ -33,11 +33,37 @@ cell_names <- rownames(sc_obj_3@meta.data)
 assign("sc_obj_3", AddMetaData(sc_obj_3, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
 cell_names <- rownames(sc_obj_4@meta.data)
 assign("sc_obj_4", AddMetaData(sc_obj_4, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
-length(sc_obj_3$cell_name)
-length(sc_obj_4$cell_name)
-length(intersect(sc_obj_3$cell_name, sc_obj_4$cell_name))
-non_overlapping_cells <- setdiff(sc_obj_3$cell_name, sc_obj_4$cell_name)
-test <- subset(sc_obj_3, cell_name %in% non_overlapping_cells)
+
+doublet_sc_obj_3 <- subset(x = sc_obj_3, subset = scDblFinder.class %in% "doublet")
+doublet_sc_obj_4 <- subset(x = sc_obj_4, subset = scDblFinder.class %in% "doublet")
+non_overlapping_cells_in_sc_obj_3 <- setdiff(doublet_sc_obj_3$cell_name, doublet_sc_obj_4$cell_name)
+non_overlapping_cells_in_sc_obj_4 <- setdiff(doublet_sc_obj_4$cell_name, doublet_sc_obj_3$cell_name)
+
+
+# How did SEED 3 score cells that were found to be doublets in SEED 3 but not SEED 4?
+sc_obj_3_doublets_only_3 <- subset(x = sc_obj_3, subset = cell_name %in% non_overlapping_cells_in_sc_obj_3)
+mean(sc_obj_3_doublets_only_3$scDblFinder.score)
+median(sc_obj_3_doublets_only_3$scDblFinder.score)
+min(sc_obj_3_doublets_only_3$scDblFinder.score)
+max(sc_obj_3_doublets_only_3$scDblFinder.score)
+# How did SEED 4 score cells that were found to be doublets in SEED 3 but not SEED 4?
+sc_obj_4_doublets_only_3 <- subset(x = sc_obj_4, subset = cell_name %in% non_overlapping_cells_in_sc_obj_3)
+mean(sc_obj_4_doublets_only_3$scDblFinder.score)
+median(sc_obj_4_doublets_only_3$scDblFinder.score)
+min(sc_obj_4_doublets_only_3$scDblFinder.score)
+max(sc_obj_4_doublets_only_3$scDblFinder.score)
+# How did SEED 3 score cells that were found to be doublets in SEED 4 but not SEED 3?
+sc_obj_3_doublets_only_4 <- subset(x = sc_obj_3, subset = cell_name %in% non_overlapping_cells_in_sc_obj_4)
+mean(sc_obj_3_doublets_only_4$scDblFinder.score)
+median(sc_obj_3_doublets_only_4$scDblFinder.score)
+min(sc_obj_3_doublets_only_4$scDblFinder.score)
+max(sc_obj_3_doublets_only_4$scDblFinder.score)
+# How did SEED 4 score cells that were found to be doublets in SEED 4 but not SEED 3?
+sc_obj_4_doublets_only_4 <- subset(x = sc_obj_4, subset = cell_name %in% non_overlapping_cells_in_sc_obj_4)
+mean(sc_obj_4_doublets_only_4$scDblFinder.score)
+median(sc_obj_4_doublets_only_4$scDblFinder.score)
+min(sc_obj_4_doublets_only_4$scDblFinder.score)
+max(sc_obj_4_doublets_only_4$scDblFinder.score)
 
 
 
