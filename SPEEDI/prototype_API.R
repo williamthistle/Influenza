@@ -22,21 +22,8 @@ set.seed(SEED)
 
 run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save_progress = TRUE, use_simplified_reference = FALSE, remove_doublets = FALSE) {
   all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
-  assign("sc_obj", FilterRawData(all_sc_exp_matrices, human = TRUE), envir = .GlobalEnv)
+  assign("sc_obj", FilterRawData(all_sc_exp_matrices, human = TRUE, remove_doublets = FALSE), envir = .GlobalEnv)
   rm(all_sc_exp_matrices)
-  # Find doublets
-  if(remove_doublets) {
-    assign("sc_obj", as.Seurat(scDblFinder(as.SingleCellExperiment(sc_obj), samples = "sample")), envir = .GlobalEnv)
-    # See distribution of doublets in each sample
-    doublet_sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "doublet")
-    print(table(doublet_sc_obj$sample))
-    rm(doublet_sc_obj)
-    # Remove doublets
-    assign("sc_obj", subset(x = sc_obj, subset = scDblFinder.class %in% "singlet"), envir = .GlobalEnv)
-    message(paste0("After removing doublets, data has ", dim(sc_obj)[2], " barcodes and ", dim(sc_obj)[1], " transcripts."))
-  }
-  
-  
   assign("sc_obj", InitialProcessing(sc_obj, human = TRUE), envir = .GlobalEnv)
   if(save_progress) {
     save(sc_obj, file = paste0(output_dir, "3_", naming_token, "_sc_obj.rds"))
@@ -44,37 +31,30 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   assign("sc_obj", InferBatches(sc_obj), envir = .GlobalEnv)
   assign("sc_obj", IntegrateByBatch(sc_obj), envir = .GlobalEnv)
   if(save_progress) {
-    save(sc_obj, file = paste0(output_dir, "5_", naming_token, "_sc_obj.rds"))
+    saveRDS(sc_obj, file = paste0(output_dir, "5_", naming_token, "_sc_obj.rds"))
   }
   assign("sc_obj", VisualizeIntegration(sc_obj), envir = .GlobalEnv)
   if(save_progress) {
     save(sc_obj, file = paste0(output_dir, "6_", naming_token, "_sc_obj.rds"))
   }
   reference <- LoadReference("PBMC", human = TRUE)
-  if(use_simplified_reference) {
-    # Remove certain cell types we're not interested in
-    idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
-    reference <- reference[,-idx]
-    #idx <- which(reference$celltype.l3 == "Treg Naive")
-    #reference <- reference[,-idx]
-  }
   assign("sc_obj", MapCellTypes(sc_obj, reference), envir = .GlobalEnv)
   rm(reference)
   # Add cell names as a metadata column - this is handy for selecting subsets of cells
   cell_names <- rownames(sc_obj@meta.data)
   assign("sc_obj", AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
   if(save_progress) {
-    save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
+    saveRDS(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
   }
-  return(sc_obj) 
+  return(sc_obj)
 }
 
 print_UMAP <- function(sc_obj, sample_count, group_by_category, output_dir, naming_token, file_suffix) {
   cell_count <- length(sc_obj$cell_name)
   current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, label = TRUE,
-        label.size = 3, repel = TRUE, raster = FALSE) + 
-  labs(title = current_title) + 
+        label.size = 3, repel = TRUE, raster = FALSE) +
+  labs(title = current_title) +
   theme(plot.title = element_text(hjust = 0.5))
   ggsave(paste0(output_dir, naming_token, file_suffix), device = "png", dpi = 300)
 }
@@ -184,12 +164,12 @@ capture_cluster_info <- function(sc_obj) {
     num_cells_low <- c(num_cells_low, length(cellsPass))
     if(length(cellsPass) > 0) {
       filtered_cluster_low <- subset(x = filtered_cluster, subset = cell_name %in% cellsPass)
-      cluster_mean_mito_low <- c(cluster_mean_mito_low, mean(filtered_cluster_low$percent.mt)) 
+      cluster_mean_mito_low <- c(cluster_mean_mito_low, mean(filtered_cluster_low$percent.mt))
       cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, mean(filtered_cluster_low$nFeature_RNA))
       cluster_mean_nCount_low <- c(cluster_mean_nCount_low, mean(filtered_cluster_low$nCount_RNA))
       cluster_mean_rp_low <- c(cluster_mean_rp_low, mean(filtered_cluster_low$percent.rp))
     } else {
-      cluster_mean_mito_low <- c(cluster_mean_mito_low, NA) 
+      cluster_mean_mito_low <- c(cluster_mean_mito_low, NA)
       cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, NA)
       cluster_mean_nCount_low <- c(cluster_mean_nCount_low, NA)
       cluster_mean_rp_low <- c(cluster_mean_rp_low, NA)
@@ -198,27 +178,27 @@ capture_cluster_info <- function(sc_obj) {
   }
   names(cluster_predictions) <- paste(levels(sc_obj), "-", names(cluster_predictions))
   cell_cycle_df <- data.frame("Cluster" = cluster_ids, "S" = cluster_mean_S_score, "G2M" = cluster_mean_G2M_score, "CC Diff" = cluster_mean_CC_difference)
-  cluster_QC_stats_sorted_by_mt <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low, 
+  cluster_QC_stats_sorted_by_mt <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,
                                               "mean_mito" = cluster_mean_mito, "mean_mito_high_viral" = cluster_mean_mito_high, "mean_mito_low_viral" = cluster_mean_mito_low,
                                               "mean_mito_viral_diff" = abs(cluster_mean_mito_high - cluster_mean_mito_low))
   rownames(cluster_QC_stats_sorted_by_mt) <- cluster_QC_stats_sorted_by_mt$cluster
   cluster_QC_stats_sorted_by_mt <- cluster_QC_stats_sorted_by_mt[ , !(names(cluster_QC_stats_sorted_by_mt) %in% c("cluster"))]
   cluster_QC_stats_sorted_by_mt <- cluster_QC_stats_sorted_by_mt[order(cluster_QC_stats_sorted_by_mt$mean_mito, decreasing = TRUE),]
-  cluster_QC_stats_sorted_by_nFeature <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,  
-                                                    "mean_nFeature" = cluster_mean_nFeature, "mean_nFeature_high_viral" = cluster_mean_nFeature_high, 
+  cluster_QC_stats_sorted_by_nFeature <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,
+                                                    "mean_nFeature" = cluster_mean_nFeature, "mean_nFeature_high_viral" = cluster_mean_nFeature_high,
                                                     "mean_nFeature_low_viral" = cluster_mean_nFeature_low, "mean_nFeature_diff" = abs(cluster_mean_nFeature_high - cluster_mean_nFeature_low))
   rownames(cluster_QC_stats_sorted_by_nFeature) <- cluster_QC_stats_sorted_by_nFeature$cluster
   cluster_QC_stats_sorted_by_nFeature <- cluster_QC_stats_sorted_by_nFeature[ , !(names(cluster_QC_stats_sorted_by_nFeature) %in% c("cluster"))]
   cluster_QC_stats_sorted_by_nFeature <- cluster_QC_stats_sorted_by_nFeature[order(cluster_QC_stats_sorted_by_nFeature$mean_nFeature, decreasing = TRUE),]
-  cluster_QC_stats_sorted_by_nCount <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,  
-                                                  "mean_nCount" = cluster_mean_nCount, "mean_nCount_high_viral" = cluster_mean_nCount_high, 
+  cluster_QC_stats_sorted_by_nCount <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,
+                                                  "mean_nCount" = cluster_mean_nCount, "mean_nCount_high_viral" = cluster_mean_nCount_high,
                                                   "mean_nCount_low_viral" = cluster_mean_nCount_low, "mean_nCount_diff" = abs(cluster_mean_nCount_high - cluster_mean_nCount_low))
   rownames(cluster_QC_stats_sorted_by_nCount) <- cluster_QC_stats_sorted_by_nCount$cluster
   cluster_QC_stats_sorted_by_nCount <- cluster_QC_stats_sorted_by_nCount[ , !(names(cluster_QC_stats_sorted_by_nCount) %in% c("cluster"))]
   cluster_QC_stats_sorted_by_nCount <- cluster_QC_stats_sorted_by_nCount[order(cluster_QC_stats_sorted_by_nCount$mean_nCount, decreasing = TRUE),]
-  
-  cluster_QC_stats_sorted_by_rp <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,  
-                                              "mean_rp" = cluster_mean_rp, "mean_rp_high_viral" = cluster_mean_rp_high, 
+
+  cluster_QC_stats_sorted_by_rp <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,
+                                              "mean_rp" = cluster_mean_rp, "mean_rp_high_viral" = cluster_mean_rp_high,
                                               "mean_rp_low_viral" = cluster_mean_rp_low, "mean_rp_diff" = abs(cluster_mean_rp_high - cluster_mean_rp_low))
   rownames(cluster_QC_stats_sorted_by_rp) <- cluster_QC_stats_sorted_by_rp$cluster
   cluster_QC_stats_sorted_by_rp <- cluster_QC_stats_sorted_by_rp[ , !(names(cluster_QC_stats_sorted_by_rp) %in% c("cluster"))]
@@ -229,23 +209,23 @@ capture_cluster_info <- function(sc_obj) {
 
 Read_h5 <- function(data_path, sample_id_list) {
   message("Step 1: Reading all samples...")
-  
+
   # Make reading data parallel
   if (Sys.getenv("SLURM_NTASKS_PER_NODE") == "") {
     n.cores <- as.numeric(detectCores())
   } else {
     n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
   }
-  
+
   if (n.cores > length(sample_id_list)) {
     n.cores <- length(sample_id_list)
   }
-  
+
   message(paste0("Number of cores: ", n.cores))
-  
+
   registerDoMC(n.cores)
   message("Begin parallelizing...")
-  
+
   all_sc_exp_matrices <- foreach(
     i = 1:length(sample_id_list),
     .combine = 'cbind',
@@ -254,10 +234,10 @@ Read_h5 <- function(data_path, sample_id_list) {
     library(hdf5r)
 #     print(paste0(sample_id_list[[i]], "/filtered_feature_bc_matrix"))
 #     sc_matrix <- Read10X(paste0(sample_id_list[[i]], "/filtered_feature_bc_matrix"))
-    
+
     print(paste0(data_path, sample_id_list[[i]], "/outs/filtered_feature_bc_matrix.h5"))
     sc_matrix <- Read10X_h5(paste0(data_path, sample_id_list[[i]], "/outs/filtered_feature_bc_matrix.h5"))
-    
+
     if (class(x = sc_matrix) == "list") {
       sc_exp_matrix <- sc_matrix$`Gene Expression`
     } else {
@@ -271,51 +251,62 @@ Read_h5 <- function(data_path, sample_id_list) {
     colnames(sc_exp_matrix) <- paste0(prefix, colnames(sc_exp_matrix))
     return(sc_exp_matrix)
   }
-  
+
   message(paste0("Raw data has ", dim(all_sc_exp_matrices)[2], " barcodes and ", dim(all_sc_exp_matrices)[1], " transcripts."))
   return(all_sc_exp_matrices)
 }
 
-FilterRawData <- function(sc_obj, human) {
+FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
   message("Step 2: Filtering out bad samples...")
   testing_flag <- TRUE
-  
+
   sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
                                assay = "RNA",
                                min.cells = 3,
                                min.features = 3,
                                project = "unbias")
-  
+
   sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
-  
+
+  if(remove_doublets) {
+    message("Removing doublets...")
+    sc_obj <- Seurat::as.Seurat(scDblFinder::scDblFinder(Seurat::as.SingleCellExperiment(sc_obj), samples = "sample", BPPARAM=MulticoreParam(7, RNGseed=SEED)))
+    # See distribution of doublets in each sample
+    doublet_sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "doublet")
+    message("Number of doublets removed in each sample:")
+    print(table(doublet_sc_obj$sample))
+    rm(doublet_sc_obj)
+    sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
+  }
+
   if (human) {
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^MT-",
-                                   col.name = "percent.mt") 
+                                   col.name = "percent.mt")
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^RPS",
-                                   col.name = "percent.rps") 
+                                   col.name = "percent.rps")
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^RPL",
-                                   col.name = "percent.rpl") 
+                                   col.name = "percent.rpl")
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^HB[A|B]",
                                    col.name = "percent.hb")
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^RP[SL]",
                                    col.name = "percent.rp")
-    
+
 
   } else {
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^mt-",
-                                   col.name = "percent.mt") 
+                                   col.name = "percent.mt")
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^Rps",
-                                   col.name = "percent.rps") 
+                                   col.name = "percent.rps")
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^Rpl",
-                                   col.name = "percent.rpl") 
+                                   col.name = "percent.rpl")
     sc_obj <- PercentageFeatureSet(object = sc_obj,
                                    pattern = "^Hb[a|b]",
                                    col.name = "percent.hb")
@@ -323,31 +314,31 @@ FilterRawData <- function(sc_obj, human) {
                                    pattern = "^Rp[sl]",
                                    col.name = "percent.rp")
   }
-    
+
   objects <- SplitObject(sc_obj, split.by = "sample")
 
-    
+
   if (Sys.getenv("SLURM_NTASKS_PER_NODE") == "") {
     n.cores <- as.numeric(detectCores())
   } else {
     n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
   }
-  
+
   if (n.cores > length(objects)) {
     n.cores <- length(objects)
   }
-  
+
   message(paste0("Number of cores: ", n.cores))
-  
+
   registerDoMC(n.cores)
   message("Begin parallizing...")
-  
+
   sc_obj <- foreach(
     i = 1:length(objects),
     .combine = 'merge',
     .packages = c("Seurat", "base")
-  ) %dopar% {  
- 
+  ) %dopar% {
+
 #     lower_nF_dec <- kneedle(hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$breaks[-1],
 #                             hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$counts,
 #                             decreasing = F)[1]
@@ -360,7 +351,7 @@ FilterRawData <- function(sc_obj, human) {
       lower_nF <- kneedle(hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$breaks[-1],
                         hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$counts)[1]
       if (lower_nF > 1000) { lower_nF <- 1000 }
-      
+
       if (max(objects[[i]]$percent.mt) > 0) {
          if (max(objects[[i]]$percent.mt) < 5) {
               max_mt <- quantile(objects[[i]]$percent.mt, .99)
@@ -370,10 +361,10 @@ FilterRawData <- function(sc_obj, human) {
             max_mt <- max(max_mt, quantile(objects[[i]]$percent.mt, .75))
           }
      } else { max_mt <- 0}
-      
+
      max_hb <- quantile(objects[[i]]$percent.hb, .99)
      if (max_hb > 10) { max_hb <- 10 }
-    
+
      object <- subset(x = objects[[i]],
                        subset = nFeature_RNA >= lower_nF &
                          nFeature_RNA < quantile(objects[[i]]$nFeature_RNA, .99) &
@@ -382,7 +373,7 @@ FilterRawData <- function(sc_obj, human) {
                         percent.rpl <= quantile(objects[[i]]$percent.rpl, .99) &
                          percent.hb <= max_hb)
     } else {
-      object <- subset(objects[[i]], nFeature_RNA > 900 & nFeature_RNA < 4000 & nCount_RNA < 10000 & percent.mt < 15 & percent.hb < 0.4 & percent.rp < 4.5)
+      object <- subset(objects[[i]], nFeature_RNA > 900 & nFeature_RNA < 4000 & nCount_RNA < 10000 & percent.mt < 15 & percent.hb < 0.4 & percent.rp < 50)
     }
     if(!testing_flag) {
       print(paste0("THRESHOLDS USED FOR SAMPLE", current_sample_name))
@@ -430,14 +421,14 @@ InitialProcessing <- function(sc_obj, human) {
 
 InferBatches <- function(sc_obj) {
   message("Step 4: Infer heterogeneous groups for integration...")
-  
+
   sc_obj <- FindNeighbors(object = sc_obj, dims = 1:30)
   sc_obj <- FindClusters(object = sc_obj, resolution = 0.1, algorithm = 2, random.seed = SEED)
 #   if (length(levels(sc_obj$seurat_clusters)) > 20) {
 #       sc_obj <- FindClusters(object = sc_obj, resolution = 0.02, algorithm = 2, random.seed = SEED)
 #   }
-    
-  
+
+
   # Use LISI metric to guess batch labels
   X <- sc_obj@reductions$umap@cell.embeddings
   meta_data <- data.frame(sc_obj$sample)
@@ -459,7 +450,7 @@ InferBatches <- function(sc_obj) {
     agg.res$freq <- data.frame(table(res$batch))$Freq[which(data.frame(table(res$batch))$Var1 %in% agg.res$batch)]
     lisi.res <- rbind(lisi.res, agg.res)
   }
-  
+
   p.values <- list()
   used.sample.dump <- c()
   batch.assign <- list()
@@ -480,17 +471,17 @@ InferBatches <- function(sc_obj) {
         lisi.res.sub <- lisi.res.sub[1:30,]
       }
       lisi.res.sub$diff.scaled.score <- abs(c(diff(lisi.res.sub$scaled.score), 0))
-        
+
       if (dim(lisi.res.sub)[1] >= 3) {
         p.values[[i]] <- dixon.test(lisi.res.sub$diff.scaled.score)$p.value[[1]]
       } else {
         p.values[[i]] <- 1
       }
-    
+
       if (p.values[[i]] < 0.05) {
         max.index <- which.max(lisi.res.sub$diff.scaled.score)
         samples.of.batch <- lisi.res.sub$batch[1:max.index]
-        
+
         if (any(samples.of.batch %in% used.sample.dump)) {
           if (!all(samples.of.batch %in% used.sample.dump)) {
             used.index <- which(samples.of.batch %in% used.sample.dump)
@@ -516,26 +507,26 @@ InferBatches <- function(sc_obj) {
       }
     }
   }
-    
+
   batch <- as.factor(sc_obj$sample)
-    
+
   if (length(batch.assign) > 0) {
       levels.batch <- levels(batch)
-      for (i in 1:length(batch.assign)) { 
-          levels.batch[which(levels(batch) %in% batch.assign[[i]])] <- i 
+      for (i in 1:length(batch.assign)) {
+          levels.batch[which(levels(batch) %in% batch.assign[[i]])] <- i
       }
       levels.batch[!levels.batch %in% c(1:length(batch.assign))] <- length(batch.assign)+1
       levels(batch) <- levels.batch
       sc_obj$batch <- as.character(batch)
   }
-    
+
   else {
       message("No batch effect detected!")
       sc_obj$batch <- "No Batch"
   }
 
   print(unique(batch))
-    
+
 #   saveRDS(sc_obj, paste0(home_dir, "/unintegrated.object.RData"))
   return(sc_obj)
 }
@@ -543,24 +534,24 @@ InferBatches <- function(sc_obj) {
 IntegrateByBatch <- function(sc_obj) {
   message("Step 5: Integrate samples based on inferred groups...")
   sc_obj_list <- SplitObject(sc_obj, split.by = "batch")
-  
-  
+
+
   if (Sys.getenv("SLURM_NTASKS_PER_NODE") == "") {
     n.cores <- as.numeric(detectCores())
   } else {
     n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
   }
-  
+
   if (n.cores > length(sc_obj_list)) {
     n.cores <- length(sc_obj_list)
   }
-  
+
   message(paste0("Number of cores: ", n.cores))
-  
+
   registerDoMC(n.cores)
   message("Begin parallizing...")
 
-  
+
   r <- foreach(
     i = 1:length(sc_obj_list),
     .combine = 'c',
@@ -584,20 +575,20 @@ IntegrateByBatch <- function(sc_obj) {
   }
   message(paste0(length(r), " samples transformed."))
   message("... Done parallizing")
-  
-  
+
+
   message("Select integration features...")
   features <- SelectIntegrationFeatures(object.list = r, nfeatures = 3000)
   r <- PrepSCTIntegration(object.list = r, anchor.features = features)
-    
+
   message("Find integration anchors...")
-  
-  
+
+
 #   anchors <- FindIntegrationAnchors(object.list = r,
 #                                     normalization.method = "SCT",
 #                                     anchor.features = features)
 
-#   if (length(sc_obj_list) > 10) { 
+#   if (length(sc_obj_list) > 10) {
 #     message("...use reference-based integration...")
 #     anchors <- FindIntegrationAnchors(object.list = r,
 #                                       reference = 1,
@@ -612,18 +603,18 @@ IntegrateByBatch <- function(sc_obj) {
                                       reduction = "rpca",
                                       k.anchor = 5)
 #    }
-    
+
   message("Begin integration...")
 #   integrated_obj <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
   integrated_obj <- IntegrateData(anchorset = anchors,
                                   normalization.method = "SCT",
                                   k.weight = 100)
   DefaultAssay(integrated_obj) <- "integrated"
-  
+
   rm(sc_obj_list)
   rm(features)
   rm(anchors)
-  
+
   return(integrated_obj)
   # return(r)
 }
@@ -639,54 +630,54 @@ VisualizeIntegration <- function(sc_obj) {
   sc_obj <- RunUMAP(sc_obj, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
 #   sc_obj <- RunUMAP(sc_obj, reduction = "prcomp", dims = 1:30, seed.use = SEED, return.model = T)
   DefaultAssay(sc_obj) <- "SCT"
-  sc_obj <- PrepSCTFindMarkers(sc_obj)
+  #sc_obj <- PrepSCTFindMarkers(sc_obj)
   return(sc_obj)
 }
 
 LoadReference <- function(tissue, human) {
   if (human) {
-    if (tissue == "Adipose") { 
+    if (tissue == "Adipose") {
         InstallData("adiposeref")
         return(data("adiposeref")) }
-      
-    if (tissue == "Bone Marrow") { 
+
+    if (tissue == "Bone Marrow") {
         InstallData("bonemarrowref")
         return(data("bonemarrowref")) }
-      
-    if (tissue == "Fetus") { 
+
+    if (tissue == "Fetus") {
         InstallData("fetusref")
         return(data("fetusref")) }
-      
-    if (tissue == "Heart") { 
+
+    if (tissue == "Heart") {
         InstallData("heartref")
         return(data("heartref")) }
-      
-    if (tissue == "Cortex") { 
+
+    if (tissue == "Cortex") {
         InstallData("humancortexref")
         return(data("humancortexref")) }
-      
-    if (tissue == "Kidney") { 
+
+    if (tissue == "Kidney") {
         InstallData("kidneyref")
         return(data("kidneyref")) }
-      
-    if (tissue == "Lung") { 
+
+    if (tissue == "Lung") {
         InstallData("lungref")
         return(data("lungref")) }
-      
-    if (tissue == "Pancreas") { 
+
+    if (tissue == "Pancreas") {
         InstallData("pancreasref")
         return(data("pancreasref")) }
-      
-    if (tissue == "PBMC") { 
+
+    if (tissue == "PBMC") {
         reference <- LoadH5Seurat(paste0(home_dir, "/reference/pbmc_multimodal.h5seurat"))
         return(reference) }
-      
-    if (tissue == "Tonsil") { 
+
+    if (tissue == "Tonsil") {
         InstallData("tonsilref")
         return(data("tonsilref")) }
   }
   if (!human) {
-    if (tissue == "Cortex") { 
+    if (tissue == "Cortex") {
         InstallData("mousecortexref")
         return(data("mousecortexref")) }
   }
@@ -710,7 +701,7 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5) {
   # TODO: Add code to find the best resolution (e.g., by using Clustree?)
   sc_obj <- FindClusters(sc_obj, resolution = current_resolution)
   sc_obj$predicted.id <- as.character(sc_obj$predicted.id)
-  
+
   #idx <- grep("CD4 T", sc_obj$predicted.id)
   #sc_obj$predicted.id[idx] <- "CD4 Memory"
   #idx <- grep("CD8 T", sc_obj$predicted.id)
@@ -732,9 +723,9 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5) {
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Plasmablast", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Platelet", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Treg", "T Naive")
-  
+
   #integrated_snn_res_values <- sc_obj[[associated_res_attribute]]$
-  
+
   cluster.dump <- as.numeric(levels(sc_obj$integrated_snn_res.1.5))
   sc_obj$predicted_celltype_majority_vote <- sc_obj$seurat_clusters
   levels(sc_obj$predicted_celltype_majority_vote) <- as.character(levels(sc_obj$predicted_celltype_majority_vote))
@@ -753,7 +744,7 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5) {
     levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(clusters)] <- i
     cluster.dump <- cluster.dump[!cluster.dump %in% clusters]
   }
-  
+
   if (length(cluster.dump) > 0) {
       for (i in cluster.dump) {
           cells <- names(sc_obj$integrated_snn_res.1.5[sc_obj$integrated_snn_res.1.5 == i])
@@ -761,7 +752,7 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5) {
           levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(i)] <- as.vector(freq.table$Var1)[which.max(freq.table$Freq)]
       }
   }
-    
+
 
   message("...End majority voting")
   return(sc_obj)

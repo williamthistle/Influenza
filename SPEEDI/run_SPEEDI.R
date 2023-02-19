@@ -1,6 +1,7 @@
 library(clustree)
 library(pheatmap)
 library(scDblFinder)
+library(BiocParallel)
 
 home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
@@ -70,8 +71,8 @@ print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste
 # Split by cluster
 cell_count <- length(sc_obj$cell_name)
 current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
-DimPlot(sc_obj, reduction = "umap", group.by = "predicted.id", split.by = "seurat_clusters", ncol = 5, repel = TRUE, raster = FALSE) + 
-  labs(title = current_title) + 
+DimPlot(sc_obj, reduction = "umap", group.by = "predicted.id", split.by = "seurat_clusters", ncol = 5, repel = TRUE, raster = FALSE) +
+  labs(title = current_title) +
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(paste0(output_dir, naming_token, "_clusters_by_cluster_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
 
@@ -216,7 +217,7 @@ write.csv(processed_cell_tables[2], file = paste0(output_dir, naming_token, "_RN
 
 # Demo of how to get more UMAP axis ticks
 test <- DimPlot(sc_obj.minus.messy.clusters, reduction = "umap", group.by = "predicted_celltype_majority_vote", label = TRUE,
-                label.size = 3, repel = TRUE, raster = FALSE) 
+                label.size = 3, repel = TRUE, raster = FALSE)
 test <- test + scale_x_continuous(breaks = scales::pretty_breaks(n = 20)) +
   scale_y_continuous(breaks = scales::pretty_breaks(n = 20))
 ggsave(paste0(output_dir, "test.png"), device = "png", dpi = 300)
