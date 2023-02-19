@@ -17,3 +17,51 @@ for (i in 1:10) {
   print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_", date, SEED, ".png"))
   print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_", date, SEED, ".png"))
 }
+
+# Maybe I should process all the cells and then look at the doublet scores for the ones in the bridge clusters?
+SEED <- 3
+set.seed(SEED)
+all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
+assign("sc_obj_3", FilterRawData(all_sc_exp_matrices, human = TRUE, remove_doublets = TRUE), envir = .GlobalEnv)
+rm(all_sc_exp_matrices)
+SEED <- 4
+set.seed(SEED)
+all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
+assign("sc_obj_4", FilterRawData(all_sc_exp_matrices, human = TRUE, remove_doublets = TRUE), envir = .GlobalEnv)
+rm(all_sc_exp_matrices)
+cell_names <- rownames(sc_obj_3@meta.data)
+assign("sc_obj_3", AddMetaData(sc_obj_3, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
+cell_names <- rownames(sc_obj_4@meta.data)
+assign("sc_obj_4", AddMetaData(sc_obj_4, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
+length(sc_obj_3$cell_name)
+length(sc_obj_4$cell_name)
+length(intersect(sc_obj_3$cell_name, sc_obj_4$cell_name))
+non_overlapping_cells <- setdiff(sc_obj_3$cell_name, sc_obj_4$cell_name)
+test <- subset(sc_obj_3, cell_name %in% non_overlapping_cells)
+
+
+
+# SC3
+#Step 2: Filtering out bad samples...
+#Removing doublets...
+#Number of doublets removed in each sample:
+
+#216bb226181591dd 3c4540710e55f7b1 6f609a68dca1261f 7b54cfac7e67b0fa
+#2815             3683             3998             4370
+#abf6d19ee03be1e8 b82bb7c75d47dac1 d360f89cf9585dfe
+#2381             1575             3832
+
+# SC4
+#Number of doublets removed in each sample:
+
+#216bb226181591dd 3c4540710e55f7b1 6f609a68dca1261f 7b54cfac7e67b0fa
+#2733             3803             4031             4379
+#abf6d19ee03be1e8 b82bb7c75d47dac1 d360f89cf9585dfe
+#2249             1603             3776
+
+# > length(sc_obj_3$cell_name)
+# [1] 53018
+# > length(sc_obj_4$cell_name)
+# [1] 53032
+# > length(intersect(sc_obj_3$cell_name, sc_obj_4$cell_name))
+# [1] 51272
