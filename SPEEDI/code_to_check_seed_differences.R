@@ -13,9 +13,10 @@ for (i in 1:10) {
   rm(reference)
   cell_names <- rownames(sc_obj@meta.data)
   assign("sc_obj", AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
-  print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, SEED, ".png"))
-  print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_", date, SEED, ".png"))
-  print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_", date, SEED, ".png"))
+  print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, SEED, "_SPEEDI.png"))
+  print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_", date, SEED, "_SPEEDI.png"))
+  print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_", date, SEED, "_SPEEDI.png"))
+  save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj_with_doublets_intact_SPEEDI.rds"))
 }
 
 # Maybe I should process all the cells and then look at the doublet scores for the ones in the bridge clusters?
@@ -91,3 +92,13 @@ max(sc_obj_4_doublets_only_4$scDblFinder.score)
 # [1] 53032
 # > length(intersect(sc_obj_3$cell_name, sc_obj_4$cell_name))
 # [1] 51272
+
+
+# Calculate what it looks like after removing increasing numbers of doublets
+for (i in seq(0.9, 0.1, by=-0.1)) {
+  sc_obj_doublets_removed <- subset(x = sc_obj, subset = scDblFinder.score < i)
+  sc_obj_doublets_removed <- RunPCA(sc_obj_doublets_removed, npcs = 30, approx = T, verbose = T, seed.use = SEED)
+  sc_obj_doublets_removed <- RunUMAP(sc_obj_doublets_removed, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
+  sc_obj_doublets_removed <- MajorityVote(sc_obj_doublets_removed)
+  print_UMAP(sc_obj_doublets_removed, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, "_", i, ".png"))
+}

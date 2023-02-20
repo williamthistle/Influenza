@@ -258,7 +258,7 @@ Read_h5 <- function(data_path, sample_id_list) {
 
 FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
   message("Step 2: Filtering out bad samples...")
-  testing_flag <- TRUE
+  testing_flag <- FALSE
 
   sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
                                assay = "RNA",
@@ -276,7 +276,7 @@ FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
     message("Number of doublets removed in each sample:")
     print(table(doublet_sc_obj$sample))
     rm(doublet_sc_obj)
-    sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
+    #sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
   }
 
   if (human) {
