@@ -714,7 +714,7 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5) {
   #sc_obj$predicted.id[idx] <- "B"
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD4 Naive", "T Naive")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "CD8 Naive", "T Naive")
-  sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "NK_CD56bright", "NK")
+  #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "NK_CD56bright", "NK")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "ASDC", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "cDC", "CD14 Mono")
   #sc_obj$predicted.id <- replace(sc_obj$predicted.id, sc_obj$predicted.id == "Eryth", "CD14 Mono")

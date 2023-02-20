@@ -151,7 +151,7 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
 }
 
 # Remove messy clusters
-messy_clusters <- c(5, 7, 11, 17, 19, 23, 29) # For multiome F
+messy_clusters <- c(4) # For multiome F
 #messy_clusters <- c(9, 29, 40, 45, 47, 49, 50, 58, 60) # For multiome + scRNA-seq
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
