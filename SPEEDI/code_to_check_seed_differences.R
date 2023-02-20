@@ -97,8 +97,39 @@ max(sc_obj_4_doublets_only_4$scDblFinder.score)
 # Calculate what it looks like after removing increasing numbers of doublets
 for (i in seq(0.9, 0.1, by=-0.1)) {
   sc_obj_doublets_removed <- subset(x = sc_obj, subset = scDblFinder.score < i)
-  sc_obj_doublets_removed <- RunPCA(sc_obj_doublets_removed, npcs = 30, approx = T, verbose = T, seed.use = SEED)
-  sc_obj_doublets_removed <- RunUMAP(sc_obj_doublets_removed, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
+  #sc_obj_doublets_removed <- RunPCA(sc_obj_doublets_removed, npcs = 30, approx = T, verbose = T, seed.use = SEED)
+  #sc_obj_doublets_removed <- RunUMAP(sc_obj_doublets_removed, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
   sc_obj_doublets_removed <- MajorityVote(sc_obj_doublets_removed)
-  print_UMAP(sc_obj_doublets_removed, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, "_", i, "_SPEEDI.png"))
+  print_UMAP(sc_obj_doublets_removed, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, "_", i, "_NO_REPCA.png"))
 }
+
+# See overlap between ATAC and RNA-seq
+filtered_ATAC_cells <- read.table(paste0(home_dir, "/ATAC_filtered_cells.txt"), comment.char = "")
+filtered_ATAC_cells <- filtered_ATAC_cells$V1
+sc_obj_overlap_ATAC <- subset(sc_obj, cell_name %in% filtered_ATAC_cells)
+# 36129 remain after overlap
+sc_obj_overlap_ATAC <- RunPCA(sc_obj_overlap_ATAC, npcs = 30, approx = T, verbose = T, seed.use = SEED)
+sc_obj_overlap_ATAC <- RunUMAP(sc_obj_overlap_ATAC, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
+sc_obj_overlap_ATAC <- MajorityVote(sc_obj_overlap_ATAC)
+print_UMAP(sc_obj_overlap_ATAC, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, "_ATAC_overlap.png"))
+for (i in seq(0.9, 0.1, by=-0.1)) {
+  sc_obj_overlap_ATAC_doublets_removed <- subset(x = sc_obj_overlap_ATAC, subset = scDblFinder.score < i)
+  sc_obj_overlap_ATAC_doublets_removed <- RunPCA(sc_obj_overlap_ATAC_doublets_removed, npcs = 30, approx = T, verbose = T, seed.use = SEED)
+  sc_obj_overlap_ATAC_doublets_removed <- RunUMAP(sc_obj_overlap_ATAC_doublets_removed, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
+  sc_obj_overlap_ATAC_doublets_removed <- MajorityVote(sc_obj_overlap_ATAC_doublets_removed)
+  print_UMAP(sc_obj_overlap_ATAC_doublets_removed, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, "_", i, "_ATAC_overlap.png"))
+}
+
+
+
+
+messy_clusters <- c(5, 19, 23, 29) # For multiome F
+#messy_clusters <- c(9, 29, 40, 45, 47, 49, 50, 58, 60) # For multiome + scRNA-seq
+idxPass <- which(Idents(sc_obj) %in% messy_clusters)
+cellsPass <- names(sc_obj$orig.ident[-idxPass])
+sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+sc_obj.minus.messy.clusters <- RunPCA(sc_obj.minus.messy.clusters, npcs = 30, approx = T, verbose = T, seed.use = SEED)
+sc_obj.minus.messy.clusters <- RunUMAP(sc_obj.minus.messy.clusters, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
+sc_obj.minus.messy.clusters <- MajorityVote(sc_obj.minus.messy.clusters)
+print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_without_messy_clusters_", date, ".png"))
+
