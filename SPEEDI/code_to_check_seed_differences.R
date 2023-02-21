@@ -137,3 +137,109 @@ for (res in seq(0, 3, 0.3)) {
 }
 clustree(sc_obj.minus.messy.clusters, prefix = "integrated_snn_res.")
 ggsave(paste0(output_dir, naming_token, "_cluster.trees", date, ".png"), device = "png", width = 8, height = 8, units = "in")
+
+
+
+
+# Code to generate table of which cells are removed at each doublet threshold
+removed_doublets_by_cell_type_df <- data.frame("Cell type" = unique(sc_obj$predicted.id))
+previous_i <- 1
+for (i in seq(0.95, 0.05, by=-0.05)) {
+  sc_obj_doublets_removed <- subset(x = sc_obj, subset = scDblFinder.score > i & scDblFinder.score <= previous_i)
+  cell_counts <- c()
+  for(current_cell_type in unique(sc_obj$predicted.id)) {
+    # Grab cells associated with cell type
+    idxPass <- which(sc_obj_doublets_removed$predicted.id %in% current_cell_type)
+    cellsPass <- names(sc_obj_doublets_removed$orig.ident[idxPass])
+    if (length(cellsPass) == 0) {
+      cell_counts <- c(cell_counts, 0)
+    } else {
+      cell_counts <- c(cell_counts, length(cellsPass))
+    }
+  }
+  temp_df <- data.frame(cell_counts)
+  names(temp_df)[names(temp_df) == "cell_counts"] <- paste0("Range: ", i, " to ", previous_i)
+  removed_doublets_by_cell_type_df <- cbind(removed_doublets_by_cell_type_df, temp_df)
+  previous_i <- i
+}
+summed_cells_removed <- apply(removed_doublets_by_cell_type_df[,2:ncol(removed_doublets_by_cell_type_df)], 1, function(x){sum(x)})
+removed_doublets_by_cell_type_df$`Total Cells Removed` <- summed_cells_removed
+# Calculate percentage of cells removed per cell type
+total_cells <- c()
+percentage_of_cells_removed <- c()
+i <- 1
+for(current_cell_type in unique(sc_obj$predicted.id)) {
+  # Grab cells associated with cell type
+  idxPass <- which(sc_obj$predicted.id %in% current_cell_type)
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  total_cells <- c(total_cells, length(cellsPass))
+  percentage_of_cells_removed <- c(percentage_of_cells_removed, summed_cells_removed[i] / length(cellsPass))
+  i <- i + 1
+}
+removed_doublets_by_cell_type_df$`Total Cells` <- total_cells
+removed_doublets_by_cell_type_df$`Percentage of Cells Removed` <- percentage_of_cells_removed
+column_sums <- apply(removed_doublets_by_cell_type_df[,2:ncol(removed_doublets_by_cell_type_df)], 2, function(x){sum(x)})
+column_sums <- append(column_sums, "Sum", after = 0)
+column_sums[length(column_sums)] <- "N/A"
+removed_doublets_by_cell_type_df[nrow(removed_doublets_by_cell_type_df) + 1,] = column_sums
+
+write.csv(removed_doublets_by_cell_type_df, file = paste0(output_dir, naming_token, "_removed_doublets_by_cell_type_", date, ".csv"), quote = FALSE, row.names = FALSE)
+
+# Code to generate table of number of doublets removed at each doublet threshold per sample
+removed_doublets_by_sample_df <- data.frame("Sample" = unique(sc_obj$sample))
+previous_i <- 1
+for (i in seq(0.95, 0.05, by=-0.05)) {
+  sc_obj_doublets_removed <- subset(x = sc_obj, subset = scDblFinder.score > i & scDblFinder.score <= previous_i)
+  sample_counts <- c()
+  for(current_sample in unique(sc_obj$sample)) {
+    # Grab cells associated with sample
+    idxPass <- which(sc_obj_doublets_removed$sample %in% current_sample)
+    cellsPass <- names(sc_obj_doublets_removed$orig.ident[idxPass])
+    if (length(cellsPass) == 0) {
+      sample_counts <- c(sample_counts, 0)
+    } else {
+      sample_counts <- c(sample_counts, length(cellsPass))
+    }
+  }
+  temp_df <- data.frame(sample_counts)
+  names(temp_df)[names(temp_df) == "sample_counts"] <- paste0("Range: ", i, " to ", previous_i)
+  removed_doublets_by_sample_df <- cbind(removed_doublets_by_sample_df, temp_df)
+  previous_i <- i
+}
+summed_cells_removed <- apply(removed_doublets_by_sample_df[,2:ncol(removed_doublets_by_sample_df)], 1, function(x){sum(x)})
+removed_doublets_by_sample_df$`Total Cells Removed` <- summed_cells_removed
+# Calculate percentage of cells removed per cell type
+total_cells <- c()
+percentage_of_cells_removed <- c()
+i <- 1
+for(current_sample in unique(sc_obj$sample)) {
+  # Grab cells associated with cell type
+  idxPass <- which(sc_obj$sample %in% current_sample)
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  total_cells <- c(total_cells, length(cellsPass))
+  percentage_of_cells_removed <- c(percentage_of_cells_removed, summed_cells_removed[i] / length(cellsPass))
+  i <- i + 1
+}
+removed_doublets_by_sample_df$`Total Cells` <- total_cells
+removed_doublets_by_sample_df$`Percentage of Cells for Cell Type Removed` <- percentage_of_cells_removed
+column_sums <- apply(removed_doublets_by_sample_df[,2:ncol(removed_doublets_by_sample_df)], 2, function(x){sum(x)})
+column_sums <- append(column_sums, "Sum", after = 0)
+column_sums[length(column_sums)] <- "N/A"
+removed_doublets_by_sample_df[nrow(removed_doublets_by_sample_df) + 1,] = column_sums
+
+write.csv(removed_doublets_by_sample_df, file = paste0(output_dir, naming_token, "_removed_doublets_by_sample_", date, ".csv"), quote = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
+# Feature plot on doublet score
+FeaturePlot(sc_obj, features = "scDblFinder.score")
+ggsave(paste0(output_dir, naming_token, "_doublet_score_feature_plot_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
+
+# Ridge plot on doublet score (per sample)
+ridge_plot_for_doublets <- RidgePlot(sc_obj, features = 'scDblFinder.score', group.by = "sample")
+ridge_plot_for_doublets <- ridge_plot_for_doublets + scale_x_continuous(breaks = scales::pretty_breaks(n = 20))
+ggsave(paste0(output_dir, naming_token, "_doublet_score_ridge_plot_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
