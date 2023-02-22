@@ -258,7 +258,7 @@ Read_h5 <- function(data_path, sample_id_list) {
 
 FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
   message("Step 2: Filtering out bad samples...")
-  testing_flag <- FALSE
+  testing_flag <- TRUE
 
   sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
                                assay = "RNA",
