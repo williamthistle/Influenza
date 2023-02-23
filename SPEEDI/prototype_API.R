@@ -689,8 +689,7 @@ FindMappingAnchors <- function(sc_obj, reference) {
                                  query = sc_obj,
                                  normalization.method = "SCT",
                                  recompute.residuals = T,
-                                 reference.reduction = "spca",
-                                 verbose = TRUE)
+                                 reference.reduction = "spca")
   return(anchors)
 }
 

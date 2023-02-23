@@ -254,7 +254,8 @@ gene_expression <- sc_obj@assays$RNA@data[-c(grep("^MT-", row.names(sc_obj@assay
 singler.fine <- SingleR(test = gene_expression,
                         ref = reference@assays$SCT@data, 
                         labels = reference$celltype.l2,
-                        aggr.ref=TRUE)
+                        aggr.ref=TRUE,
+                        BPPARAM=MulticoreParam(7))
 
 labels <- singler.fine$pruned.labels
 names(labels) <- row.names(singler.fine)
