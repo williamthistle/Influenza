@@ -127,10 +127,10 @@ for (res in seq(0, 3, 0.3)) {
   sc_obj <- FindClusters(sc_obj, resolution = res)
 }
 clustree(sc_obj, prefix = "integrated_snn_res.")
-ggsave(paste0(output_dir, naming_token, "_cluster.trees", date, ".png"), device = "png", width = 8, height = 8, units = "in")
+ggsave(paste0(output_dir, naming_token, "_cluster.trees_", date, ".png"), device = "png", width = 20, height = 20, units = "in")
 
-# Now, we should re-run our majority vote with the correct resolution
-best_res <- 1.5
+# Now, we should re-run our majority vote with the best resolution
+best_res <- 1.8
 sc_obj <- MajorityVote(sc_obj, best_res)
 
 # To decide which clusters we need to remove, we will use two tactics:
@@ -248,3 +248,37 @@ umap.coords <- umap.coords[umap.coords$"UMAP_1" > 0 & umap.coords$"UMAP_1" < 4,]
 umap.coords <- umap.coords[umap.coords$"UMAP_2" > -4 & umap.coords$"UMAP_2" < 1,]
 cellsPass <- rownames(umap.coords)
 sc_obj.bridge.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
+# Run SingleR cell annotation
+gene_expression <- sc_obj@assays$RNA@data[-c(grep("^MT-", row.names(sc_obj@assays$RNA@data)), grep("^RP[SL]", row.names(sc_obj@assays$RNA@data))),]
+singler.fine <- SingleR(test = gene_expression,
+                        ref = reference@assays$SCT@data, 
+                        labels = reference$celltype.l2,
+                        aggr.ref=TRUE)
+
+labels <- singler.fine$pruned.labels
+names(labels) <- row.names(singler.fine)
+sc_obj$SingleR_labels <- labels
+save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj_with_singleR.rds"))
+
+# Look at platelets
+idxPass <- which(sc_obj$predicted.id.with.platelets %in% "Platelet")
+cellsPass <- names(sc_obj$orig.ident[idxPass])
+cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+table(cells_subset$SingleR_labels)
+# Can also remove platelets from reference, and we see vast majority are labeled as CD14 monocytes
+
+sc_obj$predicted.id <- sc_obj$SingleR_labels
+sc_obj$predicted.id <- ifelse(is.na(sc_obj$predicted.id), "NA", sc_obj$predicted.id)
+
+
+for(cell_type in unique(sc_obj$predicted.id)) {
+  print(cell_type)
+  idxPass <- which(sc_obj$predicted.id %in% cell_type)
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  print(median(cells_subset$predicted.id.score))
+}
+
+
+ggsave(paste0(output_dir, naming_token, "_query_and_reference_overlayed_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
