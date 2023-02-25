@@ -152,7 +152,7 @@ clustree(sc_obj, prefix = "integrated_snn_res.")
 ggsave(paste0(output_dir, naming_token, "_cluster.trees_", date, ".png"), device = "png", width = 20, height = 20, units = "in")
 
 # Now, we should re-run our majority vote with the best resolution
-best_res <- 1.8
+best_res <- 2.4
 sc_obj <- MajorityVote(sc_obj, best_res)
 
 # To decide which clusters we need to remove, we will use two tactics:
@@ -306,7 +306,9 @@ for(cell_type in unique(sc_obj$predicted.id)) {
 ggsave(paste0(output_dir, naming_token, "_query_and_reference_overlayed_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
 
 # Find markers for each cluster
-for(cluster_id in unique(sc_obj$seurat_clusters)) {
+cluster_ids <- unique(sc_obj$seurat_clusters)
+cluster_ids <- cluster_ids[6:length(cluster_ids)]
+for(cluster_id in cluster_ids) {
   print(cluster_id)
   cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id)
   write.table(cluster.markers, paste0(output_dir, "7_", naming_token, "_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
