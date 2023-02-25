@@ -34,6 +34,10 @@ if(!save_progress) {
 #cell_names <- rownames(sc_obj@meta.data)
 #sc_obj <- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
 
+# Remove cell types which we don't believe in
+#idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+#reference <- reference[,-idx]
+
 # Assign metadata to each cell
 high_viral_load <- c()
 low_viral_load <- c()
@@ -62,6 +66,24 @@ for(current_sample in sc_obj$sample) {
   }
 }
 sc_obj$viral_load <- viral_load_vec
+
+# Combine cell types and re-do majority vote
+sc_obj$old.predicted.id <- predicted.id
+Cell_type_combined = sc_obj$predicted.id
+idx <- grep("CD4 T", Cell_type_combined)
+Cell_type_combined[idx] <- "CD4 Memory"
+idx <- grep("CD8 T", Cell_type_combined)
+Cell_type_combined[idx] <- "CD8 Memory"
+idx <- grep("cDC", Cell_type_combined)
+Cell_type_combined[idx] <- "cDC"
+idx <- grep("CD4 Proliferating", Cell_type_combined)
+Cell_type_combined[idx] <- "T Proliferating"
+idx <- grep("CD8 Proliferating", Cell_type_combined)
+Cell_type_combined[idx] <- "T Proliferating"
+sc_obj$predicted.id <- Cell_type_combined
+sc_obj <- MajorityVote(sc_obj)
+
+
 
 # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
 print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, ".png"))
@@ -123,7 +145,7 @@ output.plot <- pheatmap(raw_cell_type_proportion, annotation_col = my_sample_col
 ggsave(paste0(output_dir, naming_token, "_raw_cell_type_proportions_heatmap_", date, ".png"), plot = output.plot, device = "png", width = 8, height = 8, units = "in")
 
 # Let's use clustree to try to figure out the best clustering resolution
-for (res in seq(0, 3, 0.3)) {
+for (res in seq(0, 6, 0.3)) {
   sc_obj <- FindClusters(sc_obj, resolution = res)
 }
 clustree(sc_obj, prefix = "integrated_snn_res.")
@@ -256,7 +278,6 @@ singler.fine <- SingleR(test = gene_expression,
                         labels = reference$celltype.l2,
                         aggr.ref=TRUE,
                         BPPARAM=MulticoreParam(7))
-
 labels <- singler.fine$pruned.labels
 names(labels) <- row.names(singler.fine)
 sc_obj$SingleR_labels <- labels
@@ -283,3 +304,11 @@ for(cell_type in unique(sc_obj$predicted.id)) {
 
 
 ggsave(paste0(output_dir, naming_token, "_query_and_reference_overlayed_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
+
+# Find markers for each cluster
+for(cluster_id in unique(sc_obj$seurat_clusters)) {
+  print(cluster_id)
+  cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id)
+  write.table(cluster.markers, paste0(output_dir, "7_", naming_token, "_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
+}
+

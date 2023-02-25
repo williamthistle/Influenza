@@ -100,7 +100,9 @@ for (i in seq(0.9, 0.1, by=-0.1)) {
   sc_obj_doublets_removed <- RunPCA(sc_obj_doublets_removed, npcs = 30, approx = T, verbose = T, seed.use = SEED)
   sc_obj_doublets_removed <- RunUMAP(sc_obj_doublets_removed, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
   sc_obj_doublets_removed <- MajorityVote(sc_obj_doublets_removed)
-  print_UMAP(sc_obj_doublets_removed, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, "_", i, "_NO_REPCA.png"))
+  print_UMAP(sc_obj_doublets_removed, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, "_", i, ".png"))
+  print_UMAP(sc_obj_doublets_removed, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_", date, "_", i, ".png"))
+  print_UMAP(sc_obj_doublets_removed, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_", date, "_", i, ".png"))
 }
 
 # See overlap between ATAC and RNA-seq

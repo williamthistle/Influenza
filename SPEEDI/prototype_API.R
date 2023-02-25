@@ -44,7 +44,7 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   cell_names <- rownames(sc_obj@meta.data)
   assign("sc_obj", AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
   if(save_progress) {
-    saveRDS(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
+    save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
   }
   return(sc_obj)
 }
@@ -125,6 +125,9 @@ capture_cluster_info <- function(sc_obj) {
   cluster_mean_rp <- c()
   cluster_mean_rp_high <- c()
   cluster_mean_rp_low <- c()
+  cluster_mean_doublet <- c()
+  cluster_mean_doublet_high <- c()
+  cluster_mean_doublet_low <- c()
   idx <- 1
   for (cluster in levels(sc_obj)) {
     cluster_ids <- append(cluster_ids, cluster)
@@ -136,6 +139,7 @@ capture_cluster_info <- function(sc_obj) {
     cluster_mean_nFeature <- c(cluster_mean_nFeature, mean(filtered_cluster$nFeature_RNA))
     cluster_mean_nCount <- c(cluster_mean_nCount, mean(filtered_cluster$nCount_RNA))
     cluster_mean_rp <- c(cluster_mean_rp, mean(filtered_cluster$percent.rp))
+    cluster_mean_doublet <- c(cluster_mean_doublet, mean(filtered_cluster$scDblFinder.score))
     cluster_prediction <- sort(table(filtered_cluster$predicted_celltype_majority_vote), decreasing = TRUE)[1]
     cluster_predictions <- append(cluster_predictions, cluster_prediction)
     cluster_distributions[[idx]] <- table(filtered_cluster$predicted.id)
@@ -152,11 +156,13 @@ capture_cluster_info <- function(sc_obj) {
       cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, mean(filtered_cluster_high$nFeature_RNA))
       cluster_mean_nCount_high <- c(cluster_mean_nCount_high, mean(filtered_cluster_high$nCount_RNA))
       cluster_mean_rp_high <- c(cluster_mean_rp_high, mean(filtered_cluster_high$percent.rp))
+      cluster_mean_doublet_high <- c(cluster_mean_doublet_high, mean(filtered_cluster_high$scDblFinder.score))
     } else {
       cluster_mean_mito_high <- c(cluster_mean_mito_high, NA)
       cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, NA)
       cluster_mean_nCount_high <- c(cluster_mean_nCount_high, NA)
       cluster_mean_rp_high <- c(cluster_mean_rp_high, NA)
+      cluster_mean_doublet_high <- c(cluster_mean_doublet_high, NA)
     }
     # Low
     idxPass <- which(filtered_cluster$viral_load %in% "LOW")
@@ -168,11 +174,13 @@ capture_cluster_info <- function(sc_obj) {
       cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, mean(filtered_cluster_low$nFeature_RNA))
       cluster_mean_nCount_low <- c(cluster_mean_nCount_low, mean(filtered_cluster_low$nCount_RNA))
       cluster_mean_rp_low <- c(cluster_mean_rp_low, mean(filtered_cluster_low$percent.rp))
+      cluster_mean_doublet_low <- c(cluster_mean_doublet_low, mean(filtered_cluster_low$scDblFinder.score))
     } else {
       cluster_mean_mito_low <- c(cluster_mean_mito_low, NA)
       cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, NA)
       cluster_mean_nCount_low <- c(cluster_mean_nCount_low, NA)
       cluster_mean_rp_low <- c(cluster_mean_rp_low, NA)
+      cluster_mean_doublet_low <- c(cluster_mean_doublet_low, NA)
     }
     idx <- idx + 1
   }
@@ -203,7 +211,15 @@ capture_cluster_info <- function(sc_obj) {
   rownames(cluster_QC_stats_sorted_by_rp) <- cluster_QC_stats_sorted_by_rp$cluster
   cluster_QC_stats_sorted_by_rp <- cluster_QC_stats_sorted_by_rp[ , !(names(cluster_QC_stats_sorted_by_rp) %in% c("cluster"))]
   cluster_QC_stats_sorted_by_rp <- cluster_QC_stats_sorted_by_rp[order(cluster_QC_stats_sorted_by_rp$mean_rp, decreasing = TRUE),]
-  return(list(cluster_distributions, cluster_predictions, cell_cycle_df, cluster_QC_stats_sorted_by_mt, cluster_QC_stats_sorted_by_nFeature, cluster_QC_stats_sorted_by_nCount, cluster_QC_stats_sorted_by_rp))
+  
+  
+  cluster_QC_stats_sorted_by_doublet <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,
+                                              "mean_doublet" = cluster_mean_doublet, "mean_doublet_high_viral" = cluster_mean_doublet_high,
+                                              "mean_doublet_low_viral" = cluster_mean_doublet_low, "mean_doublet_diff" = abs(cluster_mean_doublet_high - cluster_mean_doublet_low))
+  rownames(cluster_QC_stats_sorted_by_doublet) <- cluster_QC_stats_sorted_by_doublet$cluster
+  cluster_QC_stats_sorted_by_doublet <- cluster_QC_stats_sorted_by_doublet[ , !(names(cluster_QC_stats_sorted_by_doublet) %in% c("cluster"))]
+  cluster_QC_stats_sorted_by_doublet <- cluster_QC_stats_sorted_by_doublet[order(cluster_QC_stats_sorted_by_doublet$mean_doublet, decreasing = TRUE),]
+  return(list(cluster_distributions, cluster_predictions, cell_cycle_df, cluster_QC_stats_sorted_by_mt, cluster_QC_stats_sorted_by_nFeature, cluster_QC_stats_sorted_by_nCount, cluster_QC_stats_sorted_by_rp, cluster_QC_stats_sorted_by_doublet))
 }
 
 
@@ -688,7 +704,7 @@ FindMappingAnchors <- function(sc_obj, reference) {
   anchors <- FindTransferAnchors(reference = reference,
                                  query = sc_obj,
                                  normalization.method = "SCT",
-                                 recompute.residuals = T,
+                                 recompute.residuals = F,
                                  reference.reduction = "spca")
   return(anchors)
 }
@@ -706,8 +722,8 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5) {
   #sc_obj$predicted.id[idx] <- "CD4 Memory"
   #idx <- grep("CD8 T", sc_obj$predicted.id)
   #sc_obj$predicted.id[idx] <- "CD8 Memory"
-  idx <- grep("cDC", sc_obj$predicted.id)
-  sc_obj$predicted.id[idx] <- "cDC"
+  #idx <- grep("cDC", sc_obj$predicted.id)
+  #sc_obj$predicted.id[idx] <- "cDC"
   #idx <- grep("Proliferating", sc_obj$predicted.id)
   #sc_obj$predicted.id[idx] <- "Proliferating"
   #idx <- grep("B", sc_obj$predicted.id)
