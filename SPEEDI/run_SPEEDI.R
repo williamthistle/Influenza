@@ -307,7 +307,7 @@ ggsave(paste0(output_dir, naming_token, "_query_and_reference_overlayed_", date,
 
 # Find markers for each cluster
 cluster_ids <- unique(sc_obj$seurat_clusters)
-cluster_ids <- cluster_ids[6:length(cluster_ids)]
+cluster_ids <- cluster_ids[25:length(cluster_ids)]
 for(cluster_id in cluster_ids) {
   print(cluster_id)
   cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id)
