@@ -245,3 +245,14 @@ ggsave(paste0(output_dir, naming_token, "_doublet_score_feature_plot_", date, ".
 ridge_plot_for_doublets <- RidgePlot(sc_obj, features = 'scDblFinder.score', group.by = "sample")
 ridge_plot_for_doublets <- ridge_plot_for_doublets + scale_x_continuous(breaks = scales::pretty_breaks(n = 20))
 ggsave(paste0(output_dir, naming_token, "_doublet_score_ridge_plot_", date, ".png"), device = "png", dpi = 300, width = 20, height = 20, units = "in")
+
+
+# Code to parse marker tables
+marker_dir <- "C:/Users/willi/Desktop/multiome junk/02-24/combined_cell_types/2.4/cluster_markers"
+marker_files <- list.files(marker_dir, full.names = TRUE)
+for(marker_file in marker_files) {
+  marker_file_content <- read.table(marker_file)
+  marker_file_content <- marker_file_content[marker_file_content$avg_log2FC > 0,]
+  marker_file_content <- marker_file_content[marker_file_content$p_val_adj < 0.05,]
+  write.table(marker_file_content, paste0(marker_file, ".UPDATED"), quote = FALSE, sep = "\t")
+}
