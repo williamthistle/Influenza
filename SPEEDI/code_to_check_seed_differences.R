@@ -301,36 +301,21 @@ for(marker_file in marker_files) {
   negative_fc_markers_1 <- negative_fc_markers[negative_fc_markers$avg_log2FC < -1,] 
   negative_fc_markers_2 <- negative_fc_markers[negative_fc_markers$avg_log2FC < -2,]
   write.table(positive_fc_markers_0.1, paste0(output_dir, "0.1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
-  write.table(positive_fc_markers_0.1$X, paste0(output_dir, "GENES_0.1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
+  write.table(positive_fc_markers_0.1$X, paste0(output_dir, "GENES_0.1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   write.table(positive_fc_markers_0.585, paste0(output_dir, "0.585_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
-  write.table(positive_fc_markers_0.585$X, paste0(output_dir, "GENES_0.585_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
+  write.table(positive_fc_markers_0.585$X, paste0(output_dir, "GENES_0.585_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   write.table(positive_fc_markers_1, paste0(output_dir, "1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
-  write.table(positive_fc_markers_1$X, paste0(output_dir, "GENES_1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
+  write.table(positive_fc_markers_1$X, paste0(output_dir, "GENES_1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   write.table(positive_fc_markers_2, paste0(output_dir, "2_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
-  write.table(positive_fc_markers_2$X, paste0(output_dir, "GENES_2_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
+  write.table(positive_fc_markers_2$X, paste0(output_dir, "GENES_2_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   write.table(negative_fc_markers_0.1, paste0(output_dir, "0.1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
-  write.table(negative_fc_markers_0.1$X, paste0(output_dir, "GENES_0.1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
+  write.table(negative_fc_markers_0.1$X, paste0(output_dir, "GENES_0.1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   write.table(negative_fc_markers_0.585, paste0(output_dir, "0.585_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
-  write.table(negative_fc_markers_0.585$X, paste0(output_dir, "GENES_0.585_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
+  write.table(negative_fc_markers_0.585$X, paste0(output_dir, "GENES_0.585_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   write.table(negative_fc_markers_1, paste0(output_dir, "1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
-  write.table(negative_fc_markers_1$X, paste0(output_dir, "GENES_1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  
+  write.table(negative_fc_markers_1$X, paste0(output_dir, "GENES_1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   write.table(negative_fc_markers_2, paste0(output_dir, "2_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-
-  write.table(negative_fc_markers_2$X, paste0(output_dir, "GENES_2_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(negative_fc_markers_2$X, paste0(output_dir, "GENES_2_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
 }
 
 
