@@ -97,9 +97,10 @@ max(sc_obj_4_doublets_only_4$scDblFinder.score)
 # Calculate what it looks like after removing increasing numbers of doublets
 for (i in seq(0.9, 0.1, by=-0.1)) {
   sc_obj_doublets_removed <- subset(x = sc_obj, subset = scDblFinder.score < i)
+  sc_obj_doublets_removed <- ScaleData(sc_obj_doublets_removed, verbose = T)
   sc_obj_doublets_removed <- RunPCA(sc_obj_doublets_removed, npcs = 30, approx = T, verbose = T, seed.use = SEED)
   sc_obj_doublets_removed <- RunUMAP(sc_obj_doublets_removed, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
-  sc_obj_doublets_removed <- MajorityVote(sc_obj_doublets_removed)
+  sc_obj_doublets_removed <- MapCellTypes(sc_obj_doublets_removed, reference)
   print_UMAP(sc_obj_doublets_removed, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, "_", i, ".png"))
   print_UMAP(sc_obj_doublets_removed, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_", date, "_", i, ".png"))
   print_UMAP(sc_obj_doublets_removed, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_", date, "_", i, ".png"))
@@ -248,11 +249,13 @@ ggsave(paste0(output_dir, naming_token, "_doublet_score_ridge_plot_", date, ".pn
 
 
 # Code to parse marker tables
-marker_dir <- "C:/Users/willi/Desktop/multiome junk/02-24/combined_cell_types/2.4/cluster_markers"
-marker_files <- list.files(marker_dir, full.names = TRUE)
+marker_dir <- "C:/Users/willi/Desktop/multiome junk/02-24/combined_cell_types/2.4/cluster_markers/SCT"
+output_dir <- "C:/Users/willi/Desktop/multiome junk/02-24/combined_cell_types/2.4/cluster_markers/SCT/UPDATED/"
+marker_files <- list.files(marker_dir, pattern = "*.txt$", full.names = TRUE)
 for(marker_file in marker_files) {
   marker_file_content <- read.table(marker_file)
   marker_file_content <- marker_file_content[marker_file_content$avg_log2FC > 0,]
   marker_file_content <- marker_file_content[marker_file_content$p_val_adj < 0.05,]
-  write.table(marker_file_content, paste0(marker_file, ".UPDATED"), quote = FALSE, sep = "\t")
+  marker_file_content <- marker_file_content[order(marker_file_content$pct.1, decreasing = TRUE),]
+  write.table(marker_file_content, paste0(output_dir, basename(marker_file)), quote = FALSE, sep = "\t")
 }

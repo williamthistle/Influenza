@@ -28,15 +28,15 @@ if(!save_progress) {
 }
 
 #load(paste0(output_dir, "7_", naming_token, ".RData"))
-#load(paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
+#load(paste0(output_dir, "7_", naming_token, "_sc_obj_scaled.rds"))
 
 # Add cell names to Seurat object - only needed if SPEEDI functions are used directly (as opposed to run_SPEEDI wrapper)
 #cell_names <- rownames(sc_obj@meta.data)
 #sc_obj <- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
 
 # Remove cell types which we don't believe in
-#idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
-#reference <- reference[,-idx]
+idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+reference <- reference[,-idx]
 
 # Assign metadata to each cell
 high_viral_load <- c()
@@ -76,19 +76,17 @@ idx <- grep("CD8 T", Cell_type_combined)
 Cell_type_combined[idx] <- "CD8 Memory"
 idx <- grep("cDC", Cell_type_combined)
 Cell_type_combined[idx] <- "cDC"
-idx <- grep("CD4 Proliferating", Cell_type_combined)
-Cell_type_combined[idx] <- "T Proliferating"
-idx <- grep("CD8 Proliferating", Cell_type_combined)
-Cell_type_combined[idx] <- "T Proliferating"
+idx <- grep("Proliferating", Cell_type_combined)
+Cell_type_combined[idx] <- "Proliferating"
 sc_obj$predicted.id <- Cell_type_combined
-sc_obj <- MajorityVote(sc_obj)
+sc_obj <- MajorityVote(sc_obj, 2.4)
 
 
 
 # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
-print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, ".png"))
-print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_", date, ".png"))
-print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_", date, ".png"))
+print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_doublets_intact_", date, ".png"))
+print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_doublets_intact_", date, ".png"))
+print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_doublets_intact_", date, ".png"))
 
 # Split by cluster
 cell_count <- length(sc_obj$cell_name)
@@ -173,12 +171,14 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
 }
 
 # Remove messy clusters
-messy_clusters <- c(4) # For multiome F
+#messy_clusters <- c(3, 21, 27) # For multiome F - previous non-scaled
+messy_clusters <- c(4, 20, 29) # For multiome F - scaled
+messy_clusters <- c(0, 2, 21, 22, 34) # for multiome F - doublets intact
 #messy_clusters <- c(9, 29, 40, 45, 47, 49, 50, 58, 60) # For multiome + scRNA-seq
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_messy_clusters", date, ".png"))
+print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_messy_clusters_doublets_intact_", date, ".png"))
 
 
 # The ideal resolution may have changed. Let's check now!
@@ -186,7 +186,7 @@ for (res in seq(0, 3, 0.3)) {
   sc_obj.minus.messy.clusters <- FindClusters(sc_obj.minus.messy.clusters, resolution = res)
 }
 clustree(sc_obj.minus.messy.clusters, prefix = "integrated_snn_res.")
-ggsave(paste0(output_dir, naming_token, "_cluster.trees.minus.messy.clusters.PNG"), device = "png", width = 8, height = 8, units = "in")
+ggsave(paste0(output_dir, naming_token, "_cluster.trees.minus.messy.clusters.PNG"), device = "png", width = 20, height = 20, units = "in")
 
 # Redo majority vote with updated resolution - here, 1.2 looks the best
 sc_obj.minus.messy.clusters <- MajorityVote(sc_obj.minus.messy.clusters)
@@ -256,18 +256,19 @@ cellsPass <- names(sc_obj$orig.ident[idxPass])
 sc_obj.cluster.1 <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
 # Manually override cluster labels
-mono_clusters <- c(3, 4, 7, 17)
-for(cluster_id in mono_clusters) {
+NK_cluster <- c(19)
+for(cluster_id in NK_cluster) {
   print(cluster_id)
-  idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
-  cellsPass <- names(sc_obj$orig.ident[idxPass])
-  sc_obj.minus.messy.clusters$predicted_celltype_majority_vote[idxPass] <- "CD14 Mono"
+  majority_vote <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote
+  idxPass <- which(Idents(sc_obj.minus.messy.clusters) %in% c(cluster_id))
+  majority_vote[idxPass] <- "NK"
+  sc_obj.minus.messy.clusters$predicted_celltype_majority_vote <- majority_vote
 }
 
 # Select cells based on UMAP coordinates
 umap.coords <- as.data.frame(sc_obj[["umap"]]@cell.embeddings)
-umap.coords <- umap.coords[umap.coords$"UMAP_1" > 0 & umap.coords$"UMAP_1" < 4,]
-umap.coords <- umap.coords[umap.coords$"UMAP_2" > -4 & umap.coords$"UMAP_2" < 1,]
+umap.coords <- umap.coords[umap.coords$"UMAP_1" > 0 & umap.coords$"UMAP_1" < 2,]
+umap.coords <- umap.coords[umap.coords$"UMAP_2" > -3 & umap.coords$"UMAP_2" < 0,]
 cellsPass <- rownames(umap.coords)
 sc_obj.bridge.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
@@ -307,10 +308,12 @@ ggsave(paste0(output_dir, naming_token, "_query_and_reference_overlayed_", date,
 
 # Find markers for each cluster
 cluster_ids <- unique(sc_obj$seurat_clusters)
-cluster_ids <- cluster_ids[41]
 for(cluster_id in cluster_ids) {
   print(cluster_id)
-  cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id)
+  cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id, assay = "SCT")
   write.table(cluster.markers, paste0(output_dir, "7_", naming_token, "_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
 }
 
+# Alternative
+cluster.markers <- FindAllMarkers(sc_obj, assay = "SCT")
+write.table(cluster.markers, paste0(output_dir, "7_", naming_token, "_cluster_markers_scaled.txt"), quote = FALSE, sep = "\t")

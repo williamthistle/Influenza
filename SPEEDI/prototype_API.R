@@ -646,7 +646,7 @@ VisualizeIntegration <- function(sc_obj) {
   sc_obj <- RunUMAP(sc_obj, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
 #   sc_obj <- RunUMAP(sc_obj, reduction = "prcomp", dims = 1:30, seed.use = SEED, return.model = T)
   DefaultAssay(sc_obj) <- "SCT"
-  #sc_obj <- PrepSCTFindMarkers(sc_obj)
+  sc_obj <- PrepSCTFindMarkers(sc_obj)
   return(sc_obj)
 }
 
