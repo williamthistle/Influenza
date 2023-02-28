@@ -112,8 +112,8 @@ write.csv(raw_cell_tables[2], file = paste0(output_dir, naming_token, "_raw_RNA_
 
 # Let's also use Vincy's code to create a nice heatmap of cell type proportions
 sc_obj$sample <- factor(sc_obj$sample, levels = all_viral_load)
-raw_cell_type_proportion  <- as.matrix(table(sc_obj$sample, sc_obj$predicted.id))
-raw_cell_type_proportion <- apply(raw_cell_type_proportion, 1, function(x){x/sum(x)})
+voting_cell_type_proportion  <- as.matrix(table(sc_obj$sample, sc_obj$predicted_celltype_majority_vote))
+voting_cell_type_proportion <- apply(voting_cell_type_proportion, 1, function(x){x/sum(x)})
 # Combine B Cells
 rownames(raw_cell_type_proportion)[2] <- "B Cells"
 raw_cell_type_proportion[2,] <- raw_cell_type_proportion[2,] + raw_cell_type_proportion[3,] + raw_cell_type_proportion[4,]
@@ -135,12 +135,11 @@ rownames(raw_cell_type_proportion)[9] <- "NK / ILC"
 raw_cell_type_proportion[9,] <- raw_cell_type_proportion[9,] + raw_cell_type_proportion[11,] + raw_cell_type_proportion[12,]
 raw_cell_type_proportion <- raw_cell_type_proportion[-c(11, 12), ]
 
-#my_sample_col <- data.frame(sample = rep(c("HIGH", "LOW"), c(4,3))) #The study group by their order
 my_sample_col <- data.frame(sample = rep(c("HIGH", "LOW"), c(length(high_viral_load),length(low_viral_load)))) #The study group by their order
-row.names(my_sample_col) <- colnames(raw_cell_type_proportion)
+row.names(my_sample_col) <- colnames(voting_cell_type_proportion)
 
-output.plot <- pheatmap(raw_cell_type_proportion, annotation_col = my_sample_col, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE, number_format = "%.3f")
-ggsave(paste0(output_dir, naming_token, "_raw_cell_type_proportions_heatmap_", date, ".png"), plot = output.plot, device = "png", width = 8, height = 8, units = "in")
+output.plot <- pheatmap(voting_cell_type_proportion, annotation_col = my_sample_col, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE, number_format = "%.3f")
+ggsave(paste0(output_dir, naming_token, "_voting_cell_type_proportions_heatmap_", date, ".png"), plot = output.plot, device = "png", width = 8, height = 8, units = "in")
 
 # Let's use clustree to try to figure out the best clustering resolution
 for (res in seq(0, 6, 0.3)) {
@@ -156,81 +155,37 @@ sc_obj <- MajorityVote(sc_obj, best_res)
 # To decide which clusters we need to remove, we will use two tactics:
 # 1. Capture information about cell type distributions in each cluster (and cluster mean S score, G2M score, and CC diff for cell cycle info)
 #    High S score and high G2M score seem to indicate Proliferating cluster
-# 2. Remove one cluster at a time and see how plot looks after removing each cluster
 # 1
 raw_cluster_info <- capture_cluster_info(sc_obj)
-# 2
-for(cluster_id in unique(sc_obj$seurat_clusters)) {
-  print(cluster_id)
-  # Remove current cluster
-  idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
-  cellsPass <- names(sc_obj$orig.ident[-idxPass])
-  sc_obj.minus.current.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-  # Print cell type plot without cluster
-  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_cluster_", cluster_id, "_", date, ".png"))
-}
 
 # Remove messy clusters
 #messy_clusters <- c(3, 21, 27) # For multiome F - previous non-scaled
-messy_clusters <- c(4, 20, 29) # For multiome F - scaled
-messy_clusters <- c(0, 2, 21, 22, 34) # for multiome F - doublets intact
+messy_clusters <- c(4, 20, 29, 36) # For multiome F - scaled
+#messy_clusters <- c(0, 2, 21, 22, 34) # for multiome F - doublets intact
 #messy_clusters <- c(9, 29, 40, 45, 47, 49, 50, 58, 60) # For multiome + scRNA-seq
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_messy_clusters_doublets_intact_", date, ".png"))
 
-
-# The ideal resolution may have changed. Let's check now!
-for (res in seq(0, 3, 0.3)) {
-  sc_obj.minus.messy.clusters <- FindClusters(sc_obj.minus.messy.clusters, resolution = res)
+print("Performing differential expression between groups (HIGH and LOW) for each cell type")
+for (cell_type in unique(sc_obj$predicted_celltype_majority_vote)) {
+  print(cell_type)
+  idxPass <- which(sc_obj$predicted_celltype_majority_vote %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  print(table(cells_subset$viral_load))
+  DefaultAssay(cells_subset) <- "SCT"
+  Idents(cells_subset) <- "viral_load"
+  diff_markers <- FindMarkers(cells_subset, ident.1 = "HIGH", ident.2 = "LOW", assay = "SCT", recorrect_umi = FALSE, logfc.threshold = 0, min.pct = 0)
+  #diff_markers$p_val_adj = p.adjust(diff_markers$p_val, method='fdr')
+  #diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
+  #diff_markers <- diff_markers[diff_markers$p_val_adj < 0.05,]
+  print(nrow(diff_markers))
+  cell_type <- sub(" ", "_", cell_type)
+  write.csv(diff_markers, paste0(output_dir, "HIGH-vs-LOW-degs-", cell_type, ".csv"), quote = FALSE)
 }
-clustree(sc_obj.minus.messy.clusters, prefix = "integrated_snn_res.")
-ggsave(paste0(output_dir, naming_token, "_cluster.trees.minus.messy.clusters.PNG"), device = "png", width = 20, height = 20, units = "in")
-
-# Redo majority vote with updated resolution - here, 1.2 looks the best
-sc_obj.minus.messy.clusters <- MajorityVote(sc_obj.minus.messy.clusters)
-# Print cell type plot without messy clusters
-cell_count <- length(sc_obj.minus.messy.clusters$cell_name)
-current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
-print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, "_clusters_by_cell_type_without_messy_clusters.png")
-
-# Update cluster predictions and produce new plots
-processed_cluster_info <- capture_cluster_info(sc_obj.minus.messy.clusters)
-#2
-for(cluster_id in unique(sc_obj.minus.messy.clusters$seurat_clusters)) {
-  print(cluster_id)
-  # Remove current cluster
-  idxPass <- which(Idents(sc_obj.minus.messy.clusters) %in% c(cluster_id))
-  cellsPass <- names(sc_obj.minus.messy.clusters$orig.ident[-idxPass])
-  sc_obj.minus.current.cluster <- subset(x = sc_obj.minus.messy.clusters, subset = cell_name %in% cellsPass)
-  cell_count <- length(sc_obj.minus.current.cluster$cell_name)
-  current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
-  # Print cell type plot without cluster
-  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, paste0("_clusters_by_cell_type_minus_messy_clusters_without_cluster_", cluster_id, ".png"))
-}
-
-# Remove some more messy clusters, I guess
-messy_clusters_round_2 <- c(1, 11)
-idxPass <- which(Idents(sc_obj.minus.messy.clusters) %in% messy_clusters_round_2)
-cellsPass <- names(sc_obj.minus.messy.clusters$orig.ident[-idxPass])
-sc_obj.minus.messy.clusters <- subset(x = sc_obj.minus.messy.clusters, subset = cell_name %in% cellsPass)
-
-# Plot again
-cell_count <- length(sc_obj.minus.messy.clusters$cell_name)
-current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
-print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, "_clusters_by_cell_type_without_messy_clusters_round_2.png")
-
-# Print viral load plot
-print_UMAP(sc_obj.minus.messy.clusters, "viral_load", current_title, output_dir, naming_token, "_clusters_by_viral_load_without_messy_clusters.png")
-
-# Calculate cell type proportions and cell counts for each cell type (split by sample)
-processed_cell_tables <- calculate_props_and_counts(sc_obj.minus.messy.clusters, viral_load_label, all_viral_load)
-write.csv(processed_cell_tables[1], file = paste0(output_dir, naming_token, "_RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
-write.csv(processed_cell_tables[2], file = paste0(output_dir, naming_token, "_RNA_cell_counts.csv"), quote = FALSE, row.names = FALSE)
-
-
-
 
 
 
@@ -256,7 +211,7 @@ cellsPass <- names(sc_obj$orig.ident[idxPass])
 sc_obj.cluster.1 <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
 # Manually override cluster labels
-NK_cluster <- c(19)
+NK_cluster <- c(17)
 for(cluster_id in NK_cluster) {
   print(cluster_id)
   majority_vote <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote
@@ -264,6 +219,16 @@ for(cluster_id in NK_cluster) {
   majority_vote[idxPass] <- "NK"
   sc_obj.minus.messy.clusters$predicted_celltype_majority_vote <- majority_vote
 }
+
+CD8_memory_cluster <- c(9)
+for(cluster_id in CD8_memory_cluster) {
+  print(cluster_id)
+  majority_vote <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote
+  idxPass <- which(Idents(sc_obj.minus.messy.clusters) %in% c(cluster_id))
+  majority_vote[idxPass] <- "CD8 Memory"
+  sc_obj.minus.messy.clusters$predicted_celltype_majority_vote <- majority_vote
+}
+
 
 # Select cells based on UMAP coordinates
 umap.coords <- as.data.frame(sc_obj[["umap"]]@cell.embeddings)
@@ -317,3 +282,68 @@ for(cluster_id in cluster_ids) {
 # Alternative
 cluster.markers <- FindAllMarkers(sc_obj, assay = "SCT")
 write.table(cluster.markers, paste0(output_dir, "7_", naming_token, "_cluster_markers_scaled.txt"), quote = FALSE, sep = "\t")
+
+
+
+
+
+# The ideal resolution may have changed. Let's check now!
+for (res in seq(0, 3, 0.3)) {
+  sc_obj.minus.messy.clusters <- FindClusters(sc_obj.minus.messy.clusters, resolution = res)
+}
+clustree(sc_obj.minus.messy.clusters, prefix = "integrated_snn_res.")
+ggsave(paste0(output_dir, naming_token, "_cluster.trees.minus.messy.clusters.PNG"), device = "png", width = 20, height = 20, units = "in")
+
+# Redo majority vote with updated resolution - here, 1.2 looks the best
+sc_obj.minus.messy.clusters <- MajorityVote(sc_obj.minus.messy.clusters)
+# Print cell type plot without messy clusters
+cell_count <- length(sc_obj.minus.messy.clusters$cell_name)
+current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
+print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, "_clusters_by_cell_type_without_messy_clusters.png")
+
+# Update cluster predictions and produce new plots
+processed_cluster_info <- capture_cluster_info(sc_obj.minus.messy.clusters)
+#2
+for(cluster_id in unique(sc_obj.minus.messy.clusters$seurat_clusters)) {
+  print(cluster_id)
+  # Remove current cluster
+  idxPass <- which(Idents(sc_obj.minus.messy.clusters) %in% c(cluster_id))
+  cellsPass <- names(sc_obj.minus.messy.clusters$orig.ident[-idxPass])
+  sc_obj.minus.current.cluster <- subset(x = sc_obj.minus.messy.clusters, subset = cell_name %in% cellsPass)
+  cell_count <- length(sc_obj.minus.current.cluster$cell_name)
+  current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
+  # Print cell type plot without cluster
+  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, paste0("_clusters_by_cell_type_minus_messy_clusters_without_cluster_", cluster_id, ".png"))
+}
+
+# Remove some more messy clusters, I guess
+messy_clusters_round_2 <- c(1, 11)
+idxPass <- which(Idents(sc_obj.minus.messy.clusters) %in% messy_clusters_round_2)
+cellsPass <- names(sc_obj.minus.messy.clusters$orig.ident[-idxPass])
+sc_obj.minus.messy.clusters <- subset(x = sc_obj.minus.messy.clusters, subset = cell_name %in% cellsPass)
+
+# Plot again
+cell_count <- length(sc_obj.minus.messy.clusters$cell_name)
+current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
+print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", current_title, output_dir, naming_token, "_clusters_by_cell_type_without_messy_clusters_round_2.png")
+
+# Print viral load plot
+print_UMAP(sc_obj.minus.messy.clusters, "viral_load", current_title, output_dir, naming_token, "_clusters_by_viral_load_without_messy_clusters.png")
+
+# Calculate cell type proportions and cell counts for each cell type (split by sample)
+processed_cell_tables <- calculate_props_and_counts(sc_obj.minus.messy.clusters, viral_load_label, all_viral_load)
+write.csv(processed_cell_tables[1], file = paste0(output_dir, naming_token, "_RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
+write.csv(processed_cell_tables[2], file = paste0(output_dir, naming_token, "_RNA_cell_counts.csv"), quote = FALSE, row.names = FALSE)
+
+# 2. Remove one cluster at a time and see how plot looks after removing each cluster
+for(cluster_id in unique(sc_obj$seurat_clusters)) {
+  print(cluster_id)
+  # Remove current cluster
+  idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
+  cellsPass <- names(sc_obj$orig.ident[-idxPass])
+  sc_obj.minus.current.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  # Print cell type plot without cluster
+  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_cluster_", cluster_id, "_", date, ".png"))
+}
+
+

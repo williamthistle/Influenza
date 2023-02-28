@@ -259,3 +259,32 @@ for(marker_file in marker_files) {
   marker_file_content <- marker_file_content[order(marker_file_content$pct.1, decreasing = TRUE),]
   write.table(marker_file_content, paste0(output_dir, basename(marker_file)), quote = FALSE, sep = "\t")
 }
+
+
+# Code to parse marker table in one file
+marker_file <- "C:/Users/wat2/Desktop/02-28/7_high_vs_low_viral_load_D28_V3_cluster_markers_scaled.txt"
+output_dir <- "C:/Users/wat2/Desktop/02-28/UPDATED/"
+marker_file_content <- read.table(marker_file)
+for(cluster_id in unique(marker_file_content$cluster)) {
+  current_cluster_content <- marker_file_content[marker_file_content$cluster == cluster_id,]
+  current_cluster_content <- current_cluster_content[current_cluster_content$avg_log2FC > 0,]
+  current_cluster_content <- current_cluster_content[current_cluster_content$p_val_adj < 0.05,]
+  current_cluster_content <- current_cluster_content[order(current_cluster_content$pct.1, decreasing = TRUE),]
+  write.table(current_cluster_content, paste0(output_dir, cluster_id, "_", basename(marker_file)), quote = FALSE, sep = "\t")
+}
+
+# Code to parse DEG markers into positive and negative fold change and change Bonferroni to FDR
+marker_dir <- "C:/Users/wat2/Desktop/02-28/DEGs/Unfiltered"
+output_dir <- "C:/Users/wat2/Desktop/02-28/DEGs/Unfiltered/UPDATED/"
+marker_files <- list.files(marker_dir, pattern = "*.csv$", full.names = TRUE)
+for(marker_file in marker_files) {
+  marker_file_content <- read.table(marker_file, sep = ",", header = TRUE)
+  marker_file_content$p_val_adj <- p.adjust(marker_file_content$p_val, method='fdr')
+  
+  marker_file_content <- marker_file_content[marker_file_content$avg_log2FC > 0,]
+  marker_file_content <- marker_file_content[marker_file_content$p_val_adj < 0.05,]
+  marker_file_content <- marker_file_content[order(marker_file_content$pct.1, decreasing = TRUE),]
+  write.table(marker_file_content, paste0(output_dir, basename(marker_file)), quote = FALSE, sep = "\t")
+}
+
+
