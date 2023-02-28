@@ -274,48 +274,44 @@ for(cluster_id in unique(marker_file_content$cluster)) {
 }
 
 # Code to parse DEG markers into positive and negative fold change and change Bonferroni to FDR
-marker_dir <- "C:/Users/wat2/Desktop/02-28/DEGs/Unfiltered"
-output_dir <- "C:/Users/wat2/Desktop/02-28/DEGs/Unfiltered/UPDATED/"
+marker_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/"
+output_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/"
+dir.create(file.path(output_dir), showWarnings = FALSE)
+pos_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/POSITIVE/"
+unfiltered_pos_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/POSITIVE/UNFILTERED/"
+neg_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/NEGATIVE/"
+unfiltered_neg_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/NEGATIVE/UNFILTERED/"
+dir.create(file.path(pos_dir), showWarnings = FALSE)
+dir.create(file.path(neg_dir), showWarnings = FALSE)
+dir.create(file.path(unfiltered_pos_dir), showWarnings = FALSE)
+dir.create(file.path(unfiltered_neg_dir), showWarnings = FALSE)
 marker_files <- list.files(marker_dir, pattern = "*.csv$", full.names = TRUE)
+fc_thresholds <- c(0.1, 0.585, 1, 2)
+for(threshold in fc_thresholds) {
+  dir.create(file.path(paste0(pos_dir, threshold)), showWarnings = FALSE)
+  dir.create(file.path(paste0(neg_dir, threshold)), showWarnings = FALSE)
+}
 for(marker_file in marker_files) {
   marker_file_content <- read.table(marker_file, sep = ",", header = TRUE)
   marker_file_content$p_val_adj <- p.adjust(marker_file_content$p_val, method='fdr')
   positive_fc_markers <- marker_file_content[marker_file_content$avg_log2FC > 0,]
   negative_fc_markers <- marker_file_content[marker_file_content$avg_log2FC < 0,]
-  write.table(positive_fc_markers, paste0(output_dir, "UNFILTERED_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers, paste0(output_dir, "UNFILTERED_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(positive_fc_markers, paste0(unfiltered_pos_dir, "UNFILTERED_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(negative_fc_markers, paste0(unfiltered_neg_dir, "UNFILTERED_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
   # Should I adjust p value based on only positive or negative values? Probably not
   positive_fc_markers <- positive_fc_markers[positive_fc_markers$p_val_adj < 0.05,]
   negative_fc_markers <- negative_fc_markers[negative_fc_markers$p_val_adj < 0.05,]
-  write.table(positive_fc_markers, paste0(output_dir, "POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(positive_fc_markers$X, paste0(output_dir, "GENES_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(negative_fc_markers, paste0(output_dir, "NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers$X, paste0(output_dir, "GENES_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+  write.table(positive_fc_markers, paste0(pos_dir, "POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(positive_fc_markers$X, paste0(pos_dir, "GENES_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+  write.table(negative_fc_markers, paste0(neg_dir, "NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(negative_fc_markers$X, paste0(neg_dir, "GENES_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   # 0.1, 0.585, 1, 2
-  positive_fc_markers_0.1 <- positive_fc_markers[positive_fc_markers$avg_log2FC > 0.1,]
-  positive_fc_markers_0.585 <- positive_fc_markers[positive_fc_markers$avg_log2FC > 0.585,]
-  positive_fc_markers_1 <- positive_fc_markers[positive_fc_markers$avg_log2FC > 1,]
-  positive_fc_markers_2 <- positive_fc_markers[positive_fc_markers$avg_log2FC > 2,]
-  negative_fc_markers_0.1 <- negative_fc_markers[negative_fc_markers$avg_log2FC < -0.1,]
-  negative_fc_markers_0.585 <- negative_fc_markers[negative_fc_markers$avg_log2FC < -0.585,]
-  negative_fc_markers_1 <- negative_fc_markers[negative_fc_markers$avg_log2FC < -1,] 
-  negative_fc_markers_2 <- negative_fc_markers[negative_fc_markers$avg_log2FC < -2,]
-  write.table(positive_fc_markers_0.1, paste0(output_dir, "0.1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(positive_fc_markers_0.1$X, paste0(output_dir, "GENES_0.1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(positive_fc_markers_0.585, paste0(output_dir, "0.585_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(positive_fc_markers_0.585$X, paste0(output_dir, "GENES_0.585_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(positive_fc_markers_1, paste0(output_dir, "1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(positive_fc_markers_1$X, paste0(output_dir, "GENES_1_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(positive_fc_markers_2, paste0(output_dir, "2_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(positive_fc_markers_2$X, paste0(output_dir, "GENES_2_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(negative_fc_markers_0.1, paste0(output_dir, "0.1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers_0.1$X, paste0(output_dir, "GENES_0.1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(negative_fc_markers_0.585, paste0(output_dir, "0.585_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers_0.585$X, paste0(output_dir, "GENES_0.585_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(negative_fc_markers_1, paste0(output_dir, "1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers_1$X, paste0(output_dir, "GENES_1_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(negative_fc_markers_2, paste0(output_dir, "2_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers_2$X, paste0(output_dir, "GENES_2_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+  for(threshold in fc_thresholds) {
+    current_positive_fc_markers <- positive_fc_markers[positive_fc_markers$avg_log2FC > threshold,]
+    current_negative_fc_markers <- negative_fc_markers[negative_fc_markers$avg_log2FC < -threshold,]
+    write.table(current_positive_fc_markers, paste0(pos_dir, threshold, "/POS_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+    write.table(current_positive_fc_markers$X, paste0(pos_dir, threshold, "/GENES_POS_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+    write.table(current_negative_fc_markers, paste0(neg_dir, threshold, "/NEG_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+    write.table(current_negative_fc_markers$X, paste0(neg_dir, threshold, "/GENES_NEG_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+  }
 }
-
-
