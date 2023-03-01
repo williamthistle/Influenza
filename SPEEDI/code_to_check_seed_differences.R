@@ -275,12 +275,12 @@ for(cluster_id in unique(marker_file_content$cluster)) {
 
 # Code to parse DEG markers into positive and negative fold change and change Bonferroni to FDR
 marker_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/"
-output_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/"
+output_dir <- paste0(marker_dir, "PROCESSED/")
 dir.create(file.path(output_dir), showWarnings = FALSE)
-pos_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/POSITIVE/"
-unfiltered_pos_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/POSITIVE/UNFILTERED/"
-neg_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/NEGATIVE/"
-unfiltered_neg_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/PROCESSED/NEGATIVE/UNFILTERED/"
+pos_dir <- paste0(output_dir, "POSITIVE/")
+unfiltered_pos_dir <- paste0(pos_dir, "UNFILTERED/")
+neg_dir <- paste0(output_dir, "NEGATIVE/")
+unfiltered_neg_dir <- paste0(neg_dir, "UNFILTERED/")
 dir.create(file.path(pos_dir), showWarnings = FALSE)
 dir.create(file.path(neg_dir), showWarnings = FALSE)
 dir.create(file.path(unfiltered_pos_dir), showWarnings = FALSE)
