@@ -277,9 +277,9 @@ for(cluster_id in unique(marker_file_content$cluster)) {
 marker_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/"
 output_dir <- paste0(marker_dir, "PROCESSED/")
 dir.create(file.path(output_dir), showWarnings = FALSE)
-pos_dir <- paste0(output_dir, "POSITIVE/")
+pos_dir <- paste0(output_dir, "UPREGULATED_IN_HIGH_VIRAL_LOAD/")
 unfiltered_pos_dir <- paste0(pos_dir, "UNFILTERED/")
-neg_dir <- paste0(output_dir, "NEGATIVE/")
+neg_dir <- paste0(output_dir, "UPREGULATED_IN_LOW_VIRAL_LOAD/")
 unfiltered_neg_dir <- paste0(neg_dir, "UNFILTERED/")
 dir.create(file.path(pos_dir), showWarnings = FALSE)
 dir.create(file.path(neg_dir), showWarnings = FALSE)
@@ -303,17 +303,17 @@ for(marker_file in marker_files) {
   positive_fc_markers <- positive_fc_markers[positive_fc_markers$pct.1 >= 0.1 | positive_fc_markers$pct.2 >= 0.1,]
   negative_fc_markers <- negative_fc_markers[negative_fc_markers$p_val_adj < 0.05,]
   negative_fc_markers <- negative_fc_markers[negative_fc_markers$pct.1 >= 0.1 | negative_fc_markers$pct.2 >= 0.1,]
-  write.table(positive_fc_markers, paste0(pos_dir, "POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(positive_fc_markers$X, paste0(pos_dir, "GENES_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(negative_fc_markers, paste0(neg_dir, "NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers$X, paste0(neg_dir, "GENES_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+  write.table(positive_fc_markers, paste0(pos_dir, "UP_IN_HVL_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(positive_fc_markers$X, paste0(pos_dir, "GENES_UP_IN_HVL_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+  write.table(negative_fc_markers, paste0(neg_dir, "UP_IN_LVL", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(negative_fc_markers$X, paste0(neg_dir, "GENES_UP_IN_LVL", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   # 0.1, 0.585, 1, 2
   for(threshold in fc_thresholds) {
     current_positive_fc_markers <- positive_fc_markers[positive_fc_markers$avg_log2FC > threshold,]
     current_negative_fc_markers <- negative_fc_markers[negative_fc_markers$avg_log2FC < -threshold,]
-    write.table(current_positive_fc_markers, paste0(pos_dir, threshold, "/POS_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-    write.table(current_positive_fc_markers$X, paste0(pos_dir, threshold, "/GENES_POS_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-    write.table(current_negative_fc_markers, paste0(neg_dir, threshold, "/NEG_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-    write.table(current_negative_fc_markers$X, paste0(neg_dir, threshold, "/GENES_NEG_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+    write.table(current_positive_fc_markers, paste0(pos_dir, threshold, "/UP_IN_HVL_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+    write.table(current_positive_fc_markers$X, paste0(pos_dir, threshold, "/GENES_UP_IN_HVL_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+    write.table(current_negative_fc_markers, paste0(neg_dir, threshold, "/UP_IN_LVL", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+    write.table(current_negative_fc_markers$X, paste0(neg_dir, threshold, "/GENES_UP_IN_LVL", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   }
 }
