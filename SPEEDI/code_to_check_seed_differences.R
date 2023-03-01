@@ -300,7 +300,9 @@ for(marker_file in marker_files) {
   write.table(negative_fc_markers, paste0(unfiltered_neg_dir, "UNFILTERED_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
   # Should I adjust p value based on only positive or negative values? Probably not
   positive_fc_markers <- positive_fc_markers[positive_fc_markers$p_val_adj < 0.05,]
+  positive_fc_markers <- positive_fc_markers[positive_fc_markers$pct.1 >= 0.1 | positive_fc_markers$pct.2 >= 0.1,]
   negative_fc_markers <- negative_fc_markers[negative_fc_markers$p_val_adj < 0.05,]
+  negative_fc_markers <- negative_fc_markers[negative_fc_markers$pct.1 >= 0.1 | negative_fc_markers$pct.2 >= 0.1,]
   write.table(positive_fc_markers, paste0(pos_dir, "POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
   write.table(positive_fc_markers$X, paste0(pos_dir, "GENES_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   write.table(negative_fc_markers, paste0(neg_dir, "NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
