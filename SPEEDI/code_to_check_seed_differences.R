@@ -274,7 +274,7 @@ for(cluster_id in unique(marker_file_content$cluster)) {
 }
 
 # Code to parse DEG markers into positive and negative fold change and change Bonferroni to FDR
-marker_dir <- "C:/Users/willi/Desktop/multiome junk/02-28/DEGs/"
+marker_dir <- "C:/Users/wat2/Desktop/02-28/DEGs/"
 output_dir <- paste0(marker_dir, "PROCESSED/")
 dir.create(file.path(output_dir), showWarnings = FALSE)
 pos_dir <- paste0(output_dir, "UPREGULATED_IN_HIGH_VIRAL_LOAD/")
@@ -284,36 +284,98 @@ unfiltered_neg_dir <- paste0(neg_dir, "UNFILTERED/")
 dir.create(file.path(pos_dir), showWarnings = FALSE)
 dir.create(file.path(neg_dir), showWarnings = FALSE)
 dir.create(file.path(unfiltered_pos_dir), showWarnings = FALSE)
+dir.create(file.path(paste0(unfiltered_pos_dir, "GENES/")), showWarnings = FALSE)
 dir.create(file.path(unfiltered_neg_dir), showWarnings = FALSE)
+dir.create(file.path(paste0(unfiltered_neg_dir, "GENES/")), showWarnings = FALSE)
 marker_files <- list.files(marker_dir, pattern = "*.csv$", full.names = TRUE)
-fc_thresholds <- c(0.1, 0.585, 1, 2)
+fc_thresholds <- c(0, 0.1, 0.585, 1, 2)
 for(threshold in fc_thresholds) {
   dir.create(file.path(paste0(pos_dir, threshold)), showWarnings = FALSE)
+  dir.create(file.path(paste0(pos_dir, threshold, "/GENES/")), showWarnings = FALSE)
   dir.create(file.path(paste0(neg_dir, threshold)), showWarnings = FALSE)
+  dir.create(file.path(paste0(neg_dir, threshold, "/GENES/")), showWarnings = FALSE)
 }
 for(marker_file in marker_files) {
   marker_file_content <- read.table(marker_file, sep = ",", header = TRUE)
   marker_file_content$p_val_adj <- p.adjust(marker_file_content$p_val, method='fdr')
   positive_fc_markers <- marker_file_content[marker_file_content$avg_log2FC > 0,]
   negative_fc_markers <- marker_file_content[marker_file_content$avg_log2FC < 0,]
-  write.table(positive_fc_markers, paste0(unfiltered_pos_dir, "UNFILTERED_POS_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers, paste0(unfiltered_neg_dir, "UNFILTERED_NEG_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(positive_fc_markers, paste0(unfiltered_pos_dir, "UP_IN_HVL_UNFILTERED_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(positive_fc_markers$X, paste0(unfiltered_pos_dir, "GENES/GENES_UP_IN_HVL_UNFILTERED_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(negative_fc_markers, paste0(unfiltered_neg_dir, "UP_IN_LVL_UNFILTERED_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
+  write.table(negative_fc_markers$X, paste0(unfiltered_neg_dir, "GENES/GENES_UP_IN_LVL_UNFILTERED_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
   # Should I adjust p value based on only positive or negative values? Probably not
   positive_fc_markers <- positive_fc_markers[positive_fc_markers$p_val_adj < 0.05,]
   positive_fc_markers <- positive_fc_markers[positive_fc_markers$pct.1 >= 0.1 | positive_fc_markers$pct.2 >= 0.1,]
   negative_fc_markers <- negative_fc_markers[negative_fc_markers$p_val_adj < 0.05,]
   negative_fc_markers <- negative_fc_markers[negative_fc_markers$pct.1 >= 0.1 | negative_fc_markers$pct.2 >= 0.1,]
-  write.table(positive_fc_markers, paste0(pos_dir, "UP_IN_HVL_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(positive_fc_markers$X, paste0(pos_dir, "GENES_UP_IN_HVL_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
-  write.table(negative_fc_markers, paste0(neg_dir, "UP_IN_LVL", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-  write.table(negative_fc_markers$X, paste0(neg_dir, "GENES_UP_IN_LVL", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   # 0.1, 0.585, 1, 2
   for(threshold in fc_thresholds) {
     current_positive_fc_markers <- positive_fc_markers[positive_fc_markers$avg_log2FC > threshold,]
     current_negative_fc_markers <- negative_fc_markers[negative_fc_markers$avg_log2FC < -threshold,]
     write.table(current_positive_fc_markers, paste0(pos_dir, threshold, "/UP_IN_HVL_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-    write.table(current_positive_fc_markers$X, paste0(pos_dir, threshold, "/GENES_UP_IN_HVL_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+    write.table(current_positive_fc_markers$X, paste0(pos_dir, threshold, "/GENES/GENES_UP_IN_HVL_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
     write.table(current_negative_fc_markers, paste0(neg_dir, threshold, "/UP_IN_LVL", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-    write.table(current_negative_fc_markers$X, paste0(neg_dir, threshold, "/GENES_UP_IN_LVL", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+    write.table(current_negative_fc_markers$X, paste0(neg_dir, threshold, "/GENES/GENES_UP_IN_LVL", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   }
 }
+
+# Parse info about DEGs into summary table
+split_path <- function(x) if (dirname(x)==x) x else c(basename(x),split_path(dirname(x)))
+
+gene_files <- list.files(output_dir, pattern = "*.csv$", recursive = TRUE, full.names = TRUE)
+gene_files <- gene_files[grep("GENES", gene_files)]
+gene_files <- gene_files[-grep("UNFILTERED", gene_files)]
+
+file_names <- c()
+fold_changes <- c()
+upregulated_groups <- c()
+numbers_of_DEGs <- c()
+humanbase_categories <- c()
+
+b_humanbase <- c("B-lymphocyte", "lymphocyte", "blood")
+t_humanbase <- c("T-lymphocyte", "lymphocyte", "blood")
+nk_humanbase <- c("natural killer cell", "lymphocyte", "blood")
+mono_humanbase <- c("monocyte", "leukocyte", "blood")
+else_humanbase <- c("blood")
+
+# Don't parse empty files
+gene_files <- gene_files[file.size(gene_files) != 0L]
+
+for(gene_file in gene_files) {
+  gene_tokens <- split_path(gene_file)
+  base_file_name <- gene_tokens[1]
+  gene_file_content <- read.table(gene_file, sep = ",")
+  gene_file_content <- gene_file_content$V1
+  fold_change <- gene_tokens[3]
+  upregulated_group <- gene_tokens[4]
+  if(grepl("HIGH", upregulated_group, fixed = TRUE)) {
+    upregulated_group <- "HIGH"
+  } else {
+    upregulated_group <- "LOW"
+  }
+  number_of_DEGs <- length(gene_file_content)
+  
+  if(grepl("B_", base_file_name, fixed = TRUE)) {
+    humanbase_tokens <- b_humanbase
+  } else if (grepl("CD4_", base_file_name, fixed = TRUE)) {
+    humanbase_tokens <- t_humanbase
+  } else if (grepl("CD8_", base_file_name, fixed = TRUE)) {
+    humanbase_tokens <- t_humanbase
+  } else if (grepl("Mono", base_file_name, fixed = TRUE)) {
+    humanbase_tokens <- mono_humanbase
+  } else if (grepl("NK", base_file_name, fixed = TRUE)) {
+    humanbase_tokens <- nk_humanbase
+  } else {
+    humanbase_tokens <- else_humanbase
+  }
+  for(humanbase_token in humanbase_tokens) {
+    file_names <- c(file_names, base_file_name)
+    humanbase_categories <- c(humanbase_categories, humanbase_token)
+    fold_changes <- c(fold_changes, fold_change)
+    upregulated_groups <- c(upregulated_groups, upregulated_group)
+    numbers_of_DEGs <- c(numbers_of_DEGs, number_of_DEGs)
+  }
+}
+summary_df <- data.frame("File Name" = file_names, "Fold Change Threshold" = fold_changes, "Upregulated Group" = upregulated_groups, "Upregulated Gene Count" = numbers_of_DEGs, "HumanBase Network" = humanbase_categories)
+write.table(summary_df, file = paste0(output_dir, "summary.csv"), sep = ",", quote = FALSE)
