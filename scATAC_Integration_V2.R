@@ -127,7 +127,7 @@ cellsPass <- proj$cellNames[idxPass]
 proj <- proj[cellsPass, ]
 
 snRNA_seq_cells <- snRNA_seq_cells[snRNA_seq_cells$cells %in% proj$cellNames,]
-snRNA_seq_cells$cells <- snRNA_seq_cells$cells[order(match(snRNA_seq_cells$cells,proj$cellNames))]
+snRNA_seq_cells <- snRNA_seq_cells[order(match(snRNA_seq_cells$cells,proj$cellNames)),]
 snRNA_seq_cell_votes <- snRNA_seq_cells$voted_type
 
 proj <- addCellColData(ArchRProj = proj, data = snRNA_seq_cell_votes, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
@@ -247,7 +247,7 @@ table(proj$Sample)
 table(proj$Cell_type_combined)
 
 # Get cell_type_voting info and add to ArchR project
-cM <- as.matrix(confusionMatrix(proj$Clusters, proj$Cell_type_combined))
+cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
 pre_cluster <- rownames(cM)
 max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
 
@@ -269,10 +269,10 @@ for (cluster in unique_cluster_ids) {
   cellsPass <- proj$cellNames[idxPass]
   filtered_cluster <-proj[cellsPass,]
   cluster_predictions <- append(cluster_predictions, table(filtered_cluster$Cell_type_voting))
-  cluster_distributions[[idx]] <- table(filtered_cluster$Cell_type_voting)
+  cluster_distributions[[idx]] <- table(filtered_cluster$predictedGroup)
   idx <- idx + 1
 }
-names(cluster_predictions) <- paste(unique(proj$Clusters), "-", names(cluster_predictions))
+names(cluster_predictions) <- paste(unique_cluster_ids, "-", names(cluster_predictions))
 
 #Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
 # OLD - idxPass <- which(proj$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C12", "C16", "C25", "C30", "C47"))
