@@ -277,25 +277,28 @@ for(cluster_id in unique(marker_file_content$cluster)) {
 marker_dir <- "C:/Users/wat2/Desktop/02-28/DEGs/"
 output_dir <- paste0(marker_dir, "PROCESSED/")
 dir.create(file.path(output_dir), showWarnings = FALSE)
-pos_dir <- paste0(output_dir, "UPREGULATED_IN_HIGH_VIRAL_LOAD/")
-unfiltered_pos_dir <- paste0(pos_dir, "UNFILTERED/")
-neg_dir <- paste0(output_dir, "UPREGULATED_IN_LOW_VIRAL_LOAD/")
-unfiltered_neg_dir <- paste0(neg_dir, "UNFILTERED/")
-dir.create(file.path(pos_dir), showWarnings = FALSE)
-dir.create(file.path(neg_dir), showWarnings = FALSE)
-dir.create(file.path(unfiltered_pos_dir), showWarnings = FALSE)
-dir.create(file.path(paste0(unfiltered_pos_dir, "GENES/")), showWarnings = FALSE)
-dir.create(file.path(unfiltered_neg_dir), showWarnings = FALSE)
-dir.create(file.path(paste0(unfiltered_neg_dir, "GENES/")), showWarnings = FALSE)
 marker_files <- list.files(marker_dir, pattern = "*.csv$", full.names = TRUE)
 fc_thresholds <- c(0, 0.1, 0.585, 1, 2)
-for(threshold in fc_thresholds) {
-  dir.create(file.path(paste0(pos_dir, threshold)), showWarnings = FALSE)
-  dir.create(file.path(paste0(pos_dir, threshold, "/GENES/")), showWarnings = FALSE)
-  dir.create(file.path(paste0(neg_dir, threshold)), showWarnings = FALSE)
-  dir.create(file.path(paste0(neg_dir, threshold, "/GENES/")), showWarnings = FALSE)
-}
 for(marker_file in marker_files) {
+  cell_type <- substring(marker_file, tail(unlist(gregexpr('-', marker_file)), n=1) + 1, nchar(marker_file) - 4)
+  cell_dir <- paste0(output_dir, cell_type, "/")
+  dir.create(file.path(cell_dir), showWarnings = FALSE)
+  pos_dir <- paste0(cell_dir, "UPREGULATED_IN_HIGH_VIRAL_LOAD/")
+  neg_dir <- paste0(cell_dir, "UPREGULATED_IN_LOW_VIRAL_LOAD/")
+  dir.create(file.path(pos_dir), showWarnings = FALSE)
+  dir.create(file.path(neg_dir), showWarnings = FALSE)
+  unfiltered_pos_dir <- paste0(pos_dir, "UNFILTERED/")
+  unfiltered_neg_dir <- paste0(neg_dir, "UNFILTERED/")
+  dir.create(file.path(unfiltered_pos_dir), showWarnings = FALSE)
+  dir.create(file.path(paste0(unfiltered_pos_dir, "GENES/")), showWarnings = FALSE)
+  dir.create(file.path(unfiltered_neg_dir), showWarnings = FALSE)
+  dir.create(file.path(paste0(unfiltered_neg_dir, "GENES/")), showWarnings = FALSE)
+  for(threshold in fc_thresholds) {
+    dir.create(file.path(paste0(pos_dir, threshold)), showWarnings = FALSE)
+    dir.create(file.path(paste0(pos_dir, threshold, "/GENES/")), showWarnings = FALSE)
+    dir.create(file.path(paste0(neg_dir, threshold)), showWarnings = FALSE)
+    dir.create(file.path(paste0(neg_dir, threshold, "/GENES/")), showWarnings = FALSE)
+  }
   marker_file_content <- read.table(marker_file, sep = ",", header = TRUE)
   marker_file_content$p_val_adj <- p.adjust(marker_file_content$p_val, method='fdr')
   positive_fc_markers <- marker_file_content[marker_file_content$avg_log2FC > 0,]
@@ -328,10 +331,12 @@ gene_files <- gene_files[grep("GENES", gene_files)]
 gene_files <- gene_files[-grep("UNFILTERED", gene_files)]
 
 file_names <- c()
+cell_types <- c()
 fold_changes <- c()
 upregulated_groups <- c()
 numbers_of_DEGs <- c()
 humanbase_categories <- c()
+cell_types <- c()
 
 b_humanbase <- c("B-lymphocyte", "lymphocyte", "blood")
 t_humanbase <- c("T-lymphocyte", "lymphocyte", "blood")
@@ -344,6 +349,7 @@ gene_files <- gene_files[file.size(gene_files) != 0L]
 
 for(gene_file in gene_files) {
   gene_tokens <- split_path(gene_file)
+  cell_type <- gene_tokens[5]
   base_file_name <- gene_tokens[1]
   gene_file_content <- read.table(gene_file, sep = ",")
   gene_file_content <- gene_file_content$V1
@@ -371,11 +377,14 @@ for(gene_file in gene_files) {
   }
   for(humanbase_token in humanbase_tokens) {
     file_names <- c(file_names, base_file_name)
+    cell_types <- c(cell_types, cell_type)
     humanbase_categories <- c(humanbase_categories, humanbase_token)
     fold_changes <- c(fold_changes, fold_change)
     upregulated_groups <- c(upregulated_groups, upregulated_group)
     numbers_of_DEGs <- c(numbers_of_DEGs, number_of_DEGs)
   }
 }
-summary_df <- data.frame("File Name" = file_names, "Fold Change Threshold" = fold_changes, "Upregulated Group" = upregulated_groups, "Upregulated Gene Count" = numbers_of_DEGs, "HumanBase Network" = humanbase_categories)
-write.table(summary_df, file = paste0(output_dir, "summary.csv"), sep = ",", quote = FALSE)
+summary_df <- data.frame("File Name" = file_names, "Cell Type" = cell_types, "Fold Change Threshold" = fold_changes, "Upregulated Group" = upregulated_groups, "Upregulated Gene Count" = numbers_of_DEGs, "HumanBase Network" = humanbase_categories)
+summary_df <- summary_df[order(summary_df$Fold.Change.Threshold),]
+summary_df <- summary_df[summary_df$Upregulated.Gene.Count >= 10,]
+write.table(summary_df, file = paste0(output_dir, "summary.csv"), sep = ",", quote = FALSE, row.names = FALSE)
