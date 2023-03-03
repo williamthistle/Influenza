@@ -168,6 +168,10 @@ cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_messy_clusters_doublets_intact_", date, ".png"))
 
+# Get list of cells to use for snATAC-seq
+cells_for_ATAC <- data.frame("cells" = sc_obj$cell_name, voted_type = sc_obj$predicted.id)
+write.csv(cells_for_ATAC, file = paste0(output_dir, naming_token, "_final_cell_names_", date, ".csv"), quote = FALSE, row.names = FALSE)
+
 print("Performing differential expression between groups (HIGH and LOW) for each cell type")
 for (cell_type in unique(sc_obj$predicted_celltype_majority_vote)) {
   print(cell_type)

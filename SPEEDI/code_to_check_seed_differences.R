@@ -319,7 +319,7 @@ for(marker_file in marker_files) {
     write.table(current_positive_fc_markers, paste0(pos_dir, threshold, "/UP_IN_HVL_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
     write.table(current_positive_fc_markers$X, paste0(pos_dir, threshold, "/GENES/GENES_UP_IN_HVL_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
     write.table(current_negative_fc_markers, paste0(neg_dir, threshold, "/UP_IN_LVL", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE)
-    write.table(current_negative_fc_markers$X, paste0(neg_dir, threshold, "/GENES/GENES_UP_IN_LVL", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
+    write.table(current_negative_fc_markers$X, paste0(neg_dir, threshold, "/GENES/GENES_UP_IN_LVL_", threshold, "_", basename(marker_file)), quote = FALSE, sep = ",", row.names = FALSE, col.names = FALSE)
   }
 }
 
