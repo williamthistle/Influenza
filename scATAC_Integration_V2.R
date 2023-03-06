@@ -9,6 +9,7 @@ library(SeuratDisk)
 library(dplyr)
 library(openxlsx)
 library(BSgenome.Hsapiens.UCSC.hg38)
+library(outliers)
 
 set.seed(1)
 home_dir <- "~/SPEEDI"
@@ -110,7 +111,7 @@ p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", 
 plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 
 # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
+idxPass <- which(proj$TSSEnrichment >= 10 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
 
@@ -120,17 +121,38 @@ table(proj$Conditions)
 table(proj$Sample)
 
 # Subset based on snRNA-seq cells and label cell types
-snRNA_seq_cells <- read.csv(paste0(output_dir, "high_vs_low_viral_load_D28_V3_final_cell_names_2023-03-02.csv"), comment.char = "")
+curated_snRNA_seq_cells <- read.csv(paste0(output_dir, "high_vs_low_viral_load_D28_V3_final_cell_names_curated_2023-03-06.csv"), comment.char = "")
+uncurated_snRNA_seq_cells <- read.csv(paste0(output_dir, "high_vs_low_viral_load_D28_V3_final_cell_names_uncurated_2023-03-06.csv"), comment.char = "")
 
-idxPass <- which(proj$cellNames %in% snRNA_seq_cells$cells) 
+# Subset based on predictions we're fully confident in
+idxPass <- which(proj$cellNames %in% curated_snRNA_seq_cells$cells) 
 cellsPass <- proj$cellNames[idxPass]
 proj <- proj[cellsPass, ]
 
-snRNA_seq_cells <- snRNA_seq_cells[snRNA_seq_cells$cells %in% proj$cellNames,]
-snRNA_seq_cells <- snRNA_seq_cells[order(match(snRNA_seq_cells$cells,proj$cellNames)),]
-snRNA_seq_cell_votes <- snRNA_seq_cells$voted_type
+curated_snRNA_seq_cells <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells %in% proj$cellNames,]
+curated_snRNA_seq_cells <- curated_snRNA_seq_cells[order(match(curated_snRNA_seq_cells$cells,proj$cellNames)),]
+snRNA_seq_cell_votes <- curated_snRNA_seq_cells$voted_type
 
 proj <- addCellColData(ArchRProj = proj, data = snRNA_seq_cell_votes, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
+
+
+# Use both predictions we're fully confident in and those we're less confident in
+predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
+for(current_row in 1:nrow(predicted_snATAC_cells)) {
+  current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
+  if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
+    current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
+  }
+  predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
+}
+
+# Only keep cells which we have a voted type for (no N/A)
+predicted_snATAC_cells <- predicted_snATAC_cells[predicted_snATAC_cells$voted_type != "N/A",]
+kept_cells <- predicted_snATAC_cells$cell_name
+proj <- proj[kept_cells, ]
+
+# Add predicted type
+proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
 
 
 
@@ -187,11 +209,10 @@ proj <- addGeneIntegrationMatrix(
   seRNA = scRNA,
   addToArrow = FALSE,
   groupRNA = "celltype.l2",
-  nameCell = "predictedCell_2",
-  nameGroup = "predictedGroup_2",
-  nameScore = "predictedScore_2",
+  nameCell = "predictedCell",
+  nameGroup = "predictedGroup",
+  nameScore = "predictedScore",
   normalization.method = "SCT",
-  reference.reduction = "spca",
   force = TRUE
 )
 
@@ -247,8 +268,8 @@ table(proj$Conditions)
 table(proj$Sample)
 table(proj$Cell_type_combined)
 
-# Get cell_type_voting info and add to ArchR project
-cM <- as.matrix(confusionMatrix(proj$Clusters, proj$Cell_type_combined))
+# First voting scheme
+cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
 pre_cluster <- rownames(cM)
 max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
 
@@ -258,6 +279,40 @@ for (m in c(1:length(pre_cluster))){
   Cell_type_voting[idxSample] <- max_celltype[m]
 }
 proj <- addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
+
+# Alternative voting scheme
+cluster.dump <- unique(proj$Clusters)
+proj$Cell_type_voting <- proj$Clusters
+for (i in unique(proj$predictedGroup)) {
+  print(i)
+  idxPass <- which(proj$predictedGroup %in% i)
+  cellsPass <- proj$cellNames[idxPass]
+  sub_proj <- proj[cellsPass, ]
+  freq.table <- as.data.frame(table(sub_proj$Clusters))
+  freq.table <- freq.table[order(freq.table$Freq, decreasing = TRUE),]
+  freq.table$diff <- abs(c(diff(freq.table$Freq), 0))
+  if(nrow(freq.table) > 30) {
+    freq.table <- freq.table[1:30,]
+  }
+  p.values <- dixon.test(freq.table$diff)$p.value[[1]]
+  max.index <- which.max(freq.table$diff)
+  clusters <- as.character(freq.table$Var1[1:max.index])
+  proj$Cell_type_voting[proj$Cell_type_voting %in% clusters] <- i
+  cluster.dump <- cluster.dump[!cluster.dump %in% clusters]
+}
+
+if (length(cluster.dump) > 0) {
+  for (i in cluster.dump) {
+    idxPass <- which(proj$Cell_type_voting %in% i)
+    cellsPass <- proj$cellNames[idxPass]
+    sub_proj <- proj[cellsPass, ]
+    freq.table <- as.data.frame(table(sub_proj$predictedGroup))
+    proj$Cell_type_voting[proj$Cell_type_voting %in% i] <- as.vector(freq.table$Var1)[which.max(freq.table$Freq)]
+  }
+}
+
+
+
 
 # See how clusters are distributed
 cluster_predictions <- vector()
@@ -294,7 +349,7 @@ p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type
 p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
 
 
-plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_Final.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_Curated_And_Uncurated_GeneIntegration_Plus_snRNA.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
   labs(title = "scATAC-seq Data Integration \n (12 Samples, 44K Cells)") + 
   theme(plot.title = element_text(hjust = 0.5)) + theme(legend.text=element_text(size=12)) +
