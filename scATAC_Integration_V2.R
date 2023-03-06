@@ -110,7 +110,7 @@ p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", 
 plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 
 # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-idxPass <- which(proj$TSSEnrichment >= 10 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
+idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
 
@@ -187,15 +187,16 @@ proj <- addGeneIntegrationMatrix(
   seRNA = scRNA,
   addToArrow = FALSE,
   groupRNA = "celltype.l2",
-  nameCell = "predictedCell",
-  nameGroup = "predictedGroup",
-  nameScore = "predictedScore",
+  nameCell = "predictedCell_2",
+  nameGroup = "predictedGroup_2",
+  nameScore = "predictedScore_2",
   normalization.method = "SCT",
+  reference.reduction = "spca",
   force = TRUE
 )
 
 rm(scRNA)
-save.image(paste0(image_dir, "atac_after_gene_integration_matrix.RData"))
+save.image(paste0(image_dir, "atac_after_gene_integration_matrix_with_filtering.RData"))
 
 # Plot integrated data with cell type predictions 
 pal <- paletteDiscrete(values = proj$predictedGroup)
@@ -247,7 +248,7 @@ table(proj$Sample)
 table(proj$Cell_type_combined)
 
 # Get cell_type_voting info and add to ArchR project
-cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
+cM <- as.matrix(confusionMatrix(proj$Clusters, proj$Cell_type_combined))
 pre_cluster <- rownames(cM)
 max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
 

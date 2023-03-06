@@ -26,7 +26,7 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   rm(all_sc_exp_matrices)
   assign("sc_obj", InitialProcessing(sc_obj, human = TRUE), envir = .GlobalEnv)
   if(save_progress) {
-    save(sc_obj, file = paste0(output_dir, "3_", naming_token, "_sc_obj.rds"))
+    save(sc_obj, file = paste0(output_dir, "3_", naming_token, "_sc_obj_full.rds"))
   }
   assign("sc_obj", InferBatches(sc_obj), envir = .GlobalEnv)
   assign("sc_obj", IntegrateByBatch(sc_obj), envir = .GlobalEnv)
@@ -44,7 +44,7 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   cell_names <- rownames(sc_obj@meta.data)
   assign("sc_obj", AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
   if(save_progress) {
-    save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
+    save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj_full.rds"))
   }
   return(sc_obj)
 }
@@ -646,7 +646,7 @@ VisualizeIntegration <- function(sc_obj) {
   sc_obj <- RunUMAP(sc_obj, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
 #   sc_obj <- RunUMAP(sc_obj, reduction = "prcomp", dims = 1:30, seed.use = SEED, return.model = T)
   DefaultAssay(sc_obj) <- "SCT"
-  sc_obj <- PrepSCTFindMarkers(sc_obj)
+  #sc_obj <- PrepSCTFindMarkers(sc_obj)
   return(sc_obj)
 }
 

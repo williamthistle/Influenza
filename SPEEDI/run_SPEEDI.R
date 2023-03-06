@@ -68,7 +68,7 @@ for(current_sample in sc_obj$sample) {
 sc_obj$viral_load <- viral_load_vec
 
 # Combine cell types and re-do majority vote
-sc_obj$old.predicted.id <- predicted.id
+sc_obj$old.predicted.id <- sc_obj$predicted.id
 Cell_type_combined = sc_obj$predicted.id
 idx <- grep("CD4 T", Cell_type_combined)
 Cell_type_combined[idx] <- "CD4 Memory"
