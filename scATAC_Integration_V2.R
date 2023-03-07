@@ -111,7 +111,7 @@ p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", 
 plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 
 # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-idxPass <- which(proj$TSSEnrichment >= 10 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
+idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
 
@@ -224,7 +224,7 @@ pal <- paletteDiscrete(values = proj$predictedGroup)
 
 p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
 
-plotPDF(p1, name = "Integrated_annotated.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+plotPDF(p1, name = "Integrated_annotated_70000.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
 # Combine cell types
 Cell_type_combined = proj$predictedGroup
@@ -349,7 +349,7 @@ p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type
 p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
 
 
-plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_Curated_And_Uncurated_GeneIntegration_Plus_snRNA.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_Curated_70000.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
   labs(title = "scATAC-seq Data Integration \n (12 Samples, 44K Cells)") + 
   theme(plot.title = element_text(hjust = 0.5)) + theme(legend.text=element_text(size=12)) +
