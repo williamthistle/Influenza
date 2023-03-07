@@ -175,7 +175,7 @@ cells_for_ATAC <- data.frame("cells" = sc_obj$cell_name, voted_type = sc_obj$pre
 write.csv(cells_for_ATAC, file = paste0(output_dir, naming_token, "_final_cell_names_uncurated_", date, ".csv"), quote = FALSE, row.names = FALSE)
 # Next, we write the cells and predicted cell types from the curated (filtered snRNA-seq set of cells)
 load("~/high_vs_low_viral_load_D28_V3/RNA_seq_data_output/7_high_vs_low_viral_load_D28_V3_sc_obj_scaled_minus_messy_clusters.rds")
-cells_for_ATAC <- data.frame("cells" = sc_obj$cell_name, voted_type = sc_obj$predicted.id)
+cells_for_ATAC <- data.frame("cells" = sc_obj$cell_name, voted_type = sc_obj$predicted_celltype_majority_vote)
 write.csv(cells_for_ATAC, file = paste0(output_dir, naming_token, "_final_cell_names_curated_", date, ".csv"), quote = FALSE, row.names = FALSE)
 
 

@@ -121,41 +121,8 @@ table(proj$Conditions)
 table(proj$Sample)
 
 # Subset based on snRNA-seq cells and label cell types
-curated_snRNA_seq_cells <- read.csv(paste0(output_dir, "high_vs_low_viral_load_D28_V3_final_cell_names_curated_2023-03-06.csv"), comment.char = "")
+curated_snRNA_seq_cells <- read.csv(paste0(output_dir, "high_vs_low_viral_load_D28_V3_final_cell_names_curated_2023-03-07.csv"), comment.char = "")
 uncurated_snRNA_seq_cells <- read.csv(paste0(output_dir, "high_vs_low_viral_load_D28_V3_final_cell_names_uncurated_2023-03-06.csv"), comment.char = "")
-
-# Subset based on predictions we're fully confident in
-idxPass <- which(proj$cellNames %in% curated_snRNA_seq_cells$cells) 
-cellsPass <- proj$cellNames[idxPass]
-proj <- proj[cellsPass, ]
-
-curated_snRNA_seq_cells <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells %in% proj$cellNames,]
-curated_snRNA_seq_cells <- curated_snRNA_seq_cells[order(match(curated_snRNA_seq_cells$cells,proj$cellNames)),]
-snRNA_seq_cell_votes <- curated_snRNA_seq_cells$voted_type
-
-proj <- addCellColData(ArchRProj = proj, data = snRNA_seq_cell_votes, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
-
-
-# Use both predictions we're fully confident in and those we're less confident in
-predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
-for(current_row in 1:nrow(predicted_snATAC_cells)) {
-  current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
-  if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
-    current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
-  }
-  predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
-}
-
-# Only keep cells which we have a voted type for (no N/A)
-predicted_snATAC_cells <- predicted_snATAC_cells[predicted_snATAC_cells$voted_type != "N/A",]
-kept_cells <- predicted_snATAC_cells$cell_name
-proj <- proj[kept_cells, ]
-
-# Add predicted type
-proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
-
-
-
 
 # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 
 # and add cluster information (addClusters)
@@ -164,7 +131,7 @@ proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "Iter
                         clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
                         varFeatures = 15000, dims = 2:30)
 proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
-proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 4, knnAssign = 30, maxClusters = NULL, force = TRUE)
+proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 5, knnAssign = 30, maxClusters = NULL, force = TRUE)
 
 save.image(paste0(image_dir, "atac_after_lsi_umap_clusters_1.RData"))
 
@@ -224,7 +191,19 @@ pal <- paletteDiscrete(values = proj$predictedGroup)
 
 p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
 
-plotPDF(p1, name = "Integrated_annotated_70000.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+plotPDF(p1, name = "Integrated_annotated_gene_integration_matrix.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+
+# Add in snRNA-seq predictions from clusters
+predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
+for(current_row in 1:nrow(predicted_snATAC_cells)) {
+  current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
+  if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
+    current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
+    predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
+  }
+}
+
+proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
 
 # Combine cell types
 Cell_type_combined = proj$predictedGroup
@@ -243,18 +222,20 @@ Cell_type_combined[idx] <- "Proliferating"
 idx <- grep("B", Cell_type_combined)
 Cell_type_combined[idx] <- "B"
 
-proj <- addCellColData(ArchRProj = proj, data = Cell_type_combined, cells = proj$cellNames, name = "Cell_type_combined", force = TRUE)
+proj <- addCellColData(ArchRProj = proj, data = Cell_type_combined, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
+
+
 
 # Plot integrated data with cell type predictions (combined)
-pal <- paletteDiscrete(values = proj$Cell_type_combined)
-p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_combined", embedding = "UMAP", pal = pal, force = TRUE)
+pal <- paletteDiscrete(values = proj$predictedGroup)
+p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
 
-plotPDF(p1, name = "Integrated_annotated_combined.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+plotPDF(p1, name = "Integrated_annotated_combined_gene_integration_matrix.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
 # Combine more cell types
-proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "CD4 Naive", "T Naive")
-proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "CD8 Naive", "T Naive")
-proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "NK_CD56bright", "NK")
+proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD4 Naive", "T Naive")
+proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD8 Naive", "T Naive")
+proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "NK_CD56bright", "NK")
 proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "ASDC", "CD14 Mono")
 proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "cDC", "CD14 Mono")
 proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "Eryth", "CD14 Mono")
@@ -262,11 +243,13 @@ proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combi
 proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "pDC", "CD14 Mono")
 proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "Plasmablast", "CD14 Mono")
 proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "Platelet", "CD14 Mono")
-proj$Cell_type_combined <- replace(proj$Cell_type_combined, proj$Cell_type_combined == "Treg", "T Naive")
+proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "Treg", "T Naive")
 
 table(proj$Conditions)
 table(proj$Sample)
-table(proj$Cell_type_combined)
+table(proj$predictedGroup)
+
+
 
 # First voting scheme
 cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
@@ -279,6 +262,15 @@ for (m in c(1:length(pre_cluster))){
   Cell_type_voting[idxSample] <- max_celltype[m]
 }
 proj <- addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
+
+p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
+p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
+p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
+
+
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1_With_snRNA_5_Combined_T.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+
 
 # Alternative voting scheme
 cluster.dump <- unique(proj$Clusters)
@@ -294,7 +286,11 @@ for (i in unique(proj$predictedGroup)) {
   if(nrow(freq.table) > 30) {
     freq.table <- freq.table[1:30,]
   }
+  if(length(unique(freq.table$diff)) == 1) {
+    next
+  }
   p.values <- dixon.test(freq.table$diff)$p.value[[1]]
+  print(p.values)
   max.index <- which.max(freq.table$diff)
   clusters <- as.character(freq.table$Var1[1:max.index])
   proj$Cell_type_voting[proj$Cell_type_voting %in% clusters] <- i
@@ -311,12 +307,19 @@ if (length(cluster.dump) > 0) {
   }
 }
 
+p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
+p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
+p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
 
 
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_2_With_snRNA_5_Combined_T.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
 # See how clusters are distributed
-cluster_predictions <- vector()
-cluster_distributions <- list()
+cluster_cell_type_predictions <- vector()
+cluster_cell_type_distributions <- list()
+cluster_sample_distributions <- list()
+cluster_conditions_distributions <- list()
 idx <- 1
 unique_cluster_ids <- unique(proj$Clusters)
 unique_cluster_ids <- unique_cluster_ids[order(nchar(unique_cluster_ids), unique_cluster_ids)]
@@ -324,38 +327,59 @@ for (cluster in unique_cluster_ids) {
   idxPass <- which(proj$Clusters %in% cluster)
   cellsPass <- proj$cellNames[idxPass]
   filtered_cluster <-proj[cellsPass,]
-  cluster_predictions <- append(cluster_predictions, table(filtered_cluster$Cell_type_voting))
-  cluster_distributions[[idx]] <- table(filtered_cluster$predictedGroup)
+  cluster_cell_type_predictions <- append(cluster_cell_type_predictions, table(filtered_cluster$Cell_type_voting))
+  cluster_cell_type_distributions[[idx]] <- table(filtered_cluster$predictedGroup)
+  cluster_sample_distributions[[idx]] <- table(filtered_cluster$Sample)
+  cluster_conditions_distributions[[idx]] <- table(filtered_cluster$Conditions)
   idx <- idx + 1
 }
-names(cluster_predictions) <- paste(unique_cluster_ids, "-", names(cluster_predictions))
+names(cluster_cell_type_predictions) <- paste(unique_cluster_ids, "-", names(cluster_cell_type_predictions))
+
+# Override vote for 3 to make it CD16 Mono
+idxPass <- which(proj$Clusters %in% c("C3"))
+proj$Cell_type_voting[idxPass] <- "CD16 Mono"
 
 #Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
-# OLD - idxPass <- which(proj$Clusters %in% c("C1", "C2", "C3", "C4", "C5", "C6", "C12", "C16", "C25", "C30", "C47"))
-idxPass <- which(proj$Clusters %in% c("C1", "C2", "C3", "C4", "C6", "C7", "C8", "C11", "C12", "C13", "C14", "C15", "C16", "C18", "C22", "C23", "C25"))
+#idxPass <- which(proj$Clusters %in% c("C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25")) - very thorough
+#idxPass <- which(proj$Clusters %in% c("C1", "C2", "C3", "C4", "C6", "C24", "C25", "C26", "C27", "C29", "C30", "C31", "C32")) # Res 4
+idxPass <- which(proj$Clusters %in% c("C2", "C12", "C13", "C14", "C15", "C23", "C24", "C25", "C26", "C27", "C28", "C29", "C30", "C31", "C32", "C34", "C35", "C41")) # Res 5
 cellsPass <- proj$cellNames[-idxPass]
-proj <- proj[cellsPass, ]
-#p3 <- plotEmbedding(ArchRProj = proj.minus.clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
-#plotPDF(p3, name = "test.pdf", ArchRProj = proj.minus.clusters, addDOC = FALSE, width = 5, height = 5)
+proj_minus_clusters <- proj[cellsPass, ]
+
+
+
+
 save.image(paste0(output_dir, "atac_after_removing_clusters.RData"))
 
-
+for (cell_type in unique(proj_minus_clusters$Cell_type_voting)) {
+  print(cell_type)
+  idxPass <- which(proj_minus_clusters$Cell_type_voting %in% cell_type)
+  cellsPass <- proj_minus_clusters$cellNames[idxPass]
+  filtered_cluster <-proj[cellsPass,]
+  print(length(cellsPass))
+  print(table(filtered_cluster$Conditions))
+}
 
 
 # Print final integrated data with cell type predictions
-p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
-p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
-p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
+p1 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
+p2 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+p3 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
+p4 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
 
 
-plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_Curated_70000.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+
+
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1_With_snRNA_minus_clusters_combined_T_5_CD16Mono_Override_FINAL.pdf", ArchRProj = proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
 plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
   labs(title = "scATAC-seq Data Integration \n (12 Samples, 44K Cells)") + 
   theme(plot.title = element_text(hjust = 0.5)) + theme(legend.text=element_text(size=12)) +
   theme(plot.title = element_text(face="bold", size=16)) +
   theme(axis.title=element_text(size=14))
 ggsave(paste0(output_dir, "Integrated_ATAC_plot.png"), device = "png", dpi = 300)
+
+# Set up for peak calling and other MAGICAL tasks
+proj <- proj_minus_clusters
 
 # Create cell type proportion file for MAGICAL
 cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = names(metadata))
@@ -423,7 +447,7 @@ for (cell_type in unique(proj.2$Cell_type_voting)) {
   # Find DAPs
   marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "Conditions",
                                      testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), maxCells = 15000,
-                                     useGroups = "D28", bgdGroups = "D1")
+                                     useGroups = "HVL", bgdGroups = "LVL")
   # Grab relevant stats
   marker_log_2_fc <- assays(marker_D28_D1)$Log2FC
   marker_mean <- assays(marker_D28_D1)$Mean
@@ -436,7 +460,7 @@ for (cell_type in unique(proj.2$Cell_type_voting)) {
   cell_type <- sub(" ", "_", cell_type)
   list_of_datasets <- list("Log2FC" = marker_log_2_fc, "Mean" = marker_mean, "FDR" = marker_fdr, "Pval" = marker_pval, 
                            "MeanDiff" = marker_mean_diff, "AUC" = marker_auc, "MeanBGD" = marker_mean_bgd)
-  write.xlsx(list_of_datasets, file = paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff.xlsx"), colNames = FALSE)
+  write.xlsx(list_of_datasets, file = paste0(differential_peaks_dir, cell_type, "_", "HVL_LVL_diff.xlsx"), colNames = FALSE)
 }
 
 # Create Peaks.txt file for MAGICAL
@@ -477,7 +501,7 @@ for (i in c(1:length(Cell_types))){
   rownames(pseudo_bulk)<-peaks@elementMetadata$idx
   
   for (s in c(1:length(sample.names))){
-    idxMatch <- which(str_detect(peak_count$Cell_type_voting,Cell_types[i]) & str_detect(peak_count$Sample,sample.names[s]))
+    idxMatch <- which(str_detect(peak_count$Cell_type_voting,Cell_types[i]) & str_detect(as.character(peak_count$Sample),sample.names[s]))
     if (length(idxMatch)>1){
       pseudo_bulk[,s] = Matrix::rowSums(peak_count@assays@data$PeakMatrix[,idxMatch])
     }
@@ -493,33 +517,34 @@ for (i in c(1:length(Cell_types))){
 
 
 
-#####remove cells with a more stringent TSS Enrichment threshold
-idxPass <- which(proj$TSSEnrichment >= 15) 
+
+# Subset based on predictions we're fully confident in
+idxPass <- which(proj$cellNames %in% curated_snRNA_seq_cells$cells) 
 cellsPass <- proj$cellNames[idxPass]
-proj.filtered<-proj[cellsPass, ]
+proj <- proj[cellsPass, ]
 
-table(proj.filtered$Conditions)
-table(proj.filtered$Sample)
-table(proj.filtered$Cell_type_combined)
+curated_snRNA_seq_cells <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells %in% proj$cellNames,]
+curated_snRNA_seq_cells <- curated_snRNA_seq_cells[order(match(curated_snRNA_seq_cells$cells,proj$cellNames)),]
+snRNA_seq_cell_votes <- curated_snRNA_seq_cells$voted_type
 
-# Redo dimensionality reduction, UMAP, clustering
-addArchRThreads(threads = 8)
-proj.filtered <- addIterativeLSI(ArchRProj = proj.filtered, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
-                        clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
-                        varFeatures = 15000, dims = 2:30)
-proj.filtered <- addUMAP(ArchRProj = proj.filtered, reducedDims = "IterativeLSI", force = TRUE)
-proj.filtered <- addClusters(input = proj.filtered, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 3, knnAssign = 30, maxClusters = NULL, force = TRUE)
+proj <- addCellColData(ArchRProj = proj, data = snRNA_seq_cell_votes, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
 
-save.image(paste0(image_dir, "atac_after_lsi_umap_clusters_2.RData"))
 
-# Recalculate Rand index (see above)
-adjustedRandIndex(proj.filtered$Sample, proj.filtered$Clusters)
-adjustedRandIndex(proj.filtered$Conditions, proj.filtered$Clusters)
+# Use both predictions we're fully confident in and those we're less confident in
+predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
+for(current_row in 1:nrow(predicted_snATAC_cells)) {
+  current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
+  if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
+    current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
+  }
+  predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
+}
 
-# Plot integrated data with cell type predictions (combined) after TSS filtering
-p1 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
-p2 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-p3 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "Cell_type_combined", embedding = "UMAP", force = TRUE)
-p4 <- plotEmbedding(ArchRProj = proj.filtered, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
+# Only keep cells which we have a voted type for (no N/A)
+predicted_snATAC_cells <- predicted_snATAC_cells[predicted_snATAC_cells$voted_type != "N/A",]
+kept_cells <- predicted_snATAC_cells$cell_name
+proj <- proj[kept_cells, ]
 
-plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Filtered_TSS15.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+# Add predicted type
+proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
+
