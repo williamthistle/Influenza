@@ -2,6 +2,7 @@ library(clustree)
 library(pheatmap)
 library(scDblFinder)
 library(BiocParallel)
+library(stringr)
 
 home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
@@ -179,9 +180,35 @@ cells_for_ATAC <- data.frame("cells" = sc_obj$cell_name, voted_type = sc_obj$pre
 write.csv(cells_for_ATAC, file = paste0(output_dir, naming_token, "_final_cell_names_curated_", date, ".csv"), quote = FALSE, row.names = FALSE)
 
 
+# Check how many cells from each condition are present for each cell type
+for (cell_type in unique(sc_obj$predicted_celltype_majority_vote)) {
+  print(cell_type)
+  idxPass <- which(sc_obj$predicted_celltype_majority_vote %in% cell_type)
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  sample_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  print(length(cellsPass))
+  print(table(sample_subset$viral_load))
+}
 
 
 
+# Combine cell types for MAGICAL analysis (B, T Naive, and NK)
+Cell_type_combined <- sc_obj$predicted_celltype_majority_vote
+levels(Cell_type_combined) <- c(levels(Cell_type_combined), "T Naive", "B")
+idx <- grep("CD4 Naive", Cell_type_combined)
+Cell_type_combined[idx] <- "T Naive"
+idx <- grep("CD8 Naive", Cell_type_combined)
+Cell_type_combined[idx] <- "T Naive"
+idx <- grep("Treg", Cell_type_combined)
+Cell_type_combined[idx] <- "T Naive"
+idx <- grep("NK_CD56bright", Cell_type_combined)
+Cell_type_combined[idx] <- "NK"
+idx <- grep("B", Cell_type_combined)
+Cell_type_combined[idx] <- "B"
+
+sc_obj$magical_cell_types <- Cell_type_combined
+
+### FOR NORMAL DEG ANALYSES
 print("Performing differential expression between groups (HIGH and LOW) for each cell type")
 for (cell_type in unique(sc_obj$predicted_celltype_majority_vote)) {
   print(cell_type)
@@ -199,6 +226,100 @@ for (cell_type in unique(sc_obj$predicted_celltype_majority_vote)) {
   print(nrow(diff_markers))
   cell_type <- sub(" ", "_", cell_type)
   write.csv(diff_markers, paste0(output_dir, "HIGH-vs-LOW-degs-", cell_type, ".csv"), quote = FALSE)
+}
+
+### ADDITIONAL FOR MAGICAL ###
+magical_cell_types_additional_analysis <- c("T Naive", "NK", "B")
+print("Performing differential expression between groups (HIGH and LOW) for each cell type for MAGICAL")
+for (cell_type in magical_cell_types_additional_analysis) {
+  print(cell_type)
+  idxPass <- which(sc_obj$magical_cell_types %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  print(table(cells_subset$viral_load))
+  DefaultAssay(cells_subset) <- "SCT"
+  Idents(cells_subset) <- "viral_load"
+  diff_markers <- FindMarkers(cells_subset, ident.1 = "HIGH", ident.2 = "LOW", assay = "SCT", recorrect_umi = FALSE, logfc.threshold = 0, min.pct = 0)
+  #diff_markers$p_val_adj = p.adjust(diff_markers$p_val, method='fdr')
+  #diff_markers <- diff_markers[diff_markers$avg_log2FC > 0.1 | diff_markers$avg_log2FC < -0.1,]
+  #diff_markers <- diff_markers[diff_markers$p_val_adj < 0.05,]
+  print(nrow(diff_markers))
+  cell_type <- sub(" ", "_", cell_type)
+  write.csv(diff_markers, paste0(output_dir, "HIGH-vs-LOW-degs-MAGICAL-", cell_type, ".csv"), quote = FALSE)
+}
+
+# Create cell type proportion file for MAGICAL
+cell_type_proportions_df <- data.frame("Condition" = viral_load_label, "Sample_name" = all_viral_load)
+total_cell_counts_df <- data.frame("Sample_name" = all_viral_load)
+cell_counts <- vector()
+# Find total cell counts for each sample
+for (sample_id in all_viral_load) {
+  idxPass <- which(sc_obj$sample %in% sample_id)
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  sample_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  cell_counts <- append(cell_counts, ncol(sample_subset))
+}
+total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
+
+for (cell_type in unique(sc_obj$magical_cell_types)) {
+  cell_type_proportions <- vector()
+  print(cell_type)
+  # Grab cells associated with cell type
+  idxPass <- which(sc_obj$magical_cell_types %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  for (sample_id in all_viral_load) {
+    # Subset further based on cells associated with sample ID
+    idxPass <- which(cells_subset$sample %in% sample_id)
+    cellsPass <- names(cells_subset$orig.ident[idxPass])
+    if (length(cellsPass) == 0) {
+      cell_type_proportions <- append(cell_type_proportions, 0)
+    } else {
+      sample_subset <- subset(x = cells_subset, subset = cell_name %in% cellsPass)
+      cell_counts <- ncol(sample_subset)
+      cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+    }
+  }
+  temp_df <- data.frame(cell_type_proportions)
+  names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
+  cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
+}
+write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
+
+
+
+print("Computing pseudobulk counts for each cell type")
+for (cell_type in unique(sc_obj$magical_cell_types)) {
+  print(cell_type)
+  idxPass <- which(sc_obj$magical_cell_types %in% cell_type)
+  print(length(idxPass))
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  # Subset again by each sample name
+  # Sum by row
+  # Keep as vector in list
+  cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  cells_pseudobulk <- list()
+  for (sample_name in unique(sc_obj$sample)) {
+    idxMatch <- which(str_detect(as.character(cells_subset$magical_cell_types),as.character(cell_type)) & str_detect(as.character(cells_subset$sample), sample_name))
+    if (length(idxMatch)>1) {
+      samples_subset <- subset(x = cells_subset, subset = sample %in% sample_name)
+      samples_data <- samples_subset@assays$SCT@counts
+      samples_data <- rowSums(as.matrix(samples_data))
+      cells_pseudobulk[[sample_name]] <- samples_data
+    } else {
+      cells_pseudobulk[[sample_name]] <- numeric(nrow(sc_obj@assays$SCT))
+    }
+  }
+  final_cells_pseudobulk_df <- bind_cols(cells_pseudobulk[1])
+  for (idx in 2:length(unique(sc_obj$sample))) {
+    final_cells_pseudobulk_df <- bind_cols(final_cells_pseudobulk_df, cells_pseudobulk[idx])
+  }
+  final_cells_pseudobulk_df <- as.data.frame(final_cells_pseudobulk_df)
+  rownames(final_cells_pseudobulk_df) <- names(cells_pseudobulk[[1]])
+  cell_type <- sub(" ", "_", cell_type)
+  write.csv(final_cells_pseudobulk_df, paste0(output_dir, "pseudo_bulk_RNA_count_", cell_type, ".csv"))
 }
 
 
