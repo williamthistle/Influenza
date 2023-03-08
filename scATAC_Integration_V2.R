@@ -115,7 +115,7 @@ idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$Doubl
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
 
-write.table(proj$cellNames, file = paste0(output_dir, "ATAC_filtered_cells_10.txt"), quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(proj$cellNames, file = paste0(output_dir, "ATAC_all_cells.txt"), quote = FALSE, col.names = FALSE, row.names = FALSE)
 # List number of D1 and D28 cells and list number of cells remaining for each sample
 table(proj$Conditions)
 table(proj$Sample)

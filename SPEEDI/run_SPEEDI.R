@@ -80,7 +80,7 @@ Cell_type_combined[idx] <- "cDC"
 idx <- grep("Proliferating", Cell_type_combined)
 Cell_type_combined[idx] <- "Proliferating"
 sc_obj$predicted.id <- Cell_type_combined
-sc_obj <- MajorityVote(sc_obj, 2.4)
+sc_obj <- MajorityVote(sc_obj, 1.5)
 
 
 

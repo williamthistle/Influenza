@@ -28,9 +28,9 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   cell_names <- rownames(sc_obj@meta.data)
   assign("sc_obj", AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name"), envir = .GlobalEnv)
   # Find intersection between good quality ATAC and our RNA-seq cells
-  filtered_ATAC_cells <- read.table("~/high_vs_low_viral_load_D28/ATAC_seq_data_output/ATAC_filtered_cells_8.txt", comment.char = "")
+  filtered_ATAC_cells <- read.table("~/high_vs_low_viral_load_D28/ATAC_seq_data_output/ATAC_all_cells.txt", comment.char = "")
   filtered_ATAC_cells <- filtered_ATAC_cells$V1
-  sc_obj_ATAC_overlap_8 <- subset(sc_obj, cell_name %in% filtered_ATAC_cells)
+  sc_obj_ATAC_overlap_all <- subset(sc_obj, cell_name %in% filtered_ATAC_cells)
   assign("sc_obj", InitialProcessing(sc_obj, human = TRUE), envir = .GlobalEnv)
   if(save_progress) {
     save(sc_obj, file = paste0(output_dir, "3_", naming_token, "_sc_obj_full.rds"))
