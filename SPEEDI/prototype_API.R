@@ -51,7 +51,7 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
 
 print_UMAP <- function(sc_obj, sample_count, group_by_category, output_dir, naming_token, file_suffix) {
   cell_count <- length(sc_obj$cell_name)
-  current_title <- paste0("scRNA-seq and/or snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
+  current_title <- paste0("snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, label = TRUE,
         label.size = 3, repel = TRUE, raster = FALSE) +
   labs(title = current_title) +

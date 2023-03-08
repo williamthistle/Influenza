@@ -371,8 +371,8 @@ p4 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", na
 
 
 plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1_With_snRNA_minus_clusters_combined_T_5_CD16Mono_Override_FINAL.pdf", ArchRProj = proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
-plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
-  labs(title = "scATAC-seq Data Integration \n (12 Samples, 44K Cells)") + 
+plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
+  labs(title = "snATAC-seq Data Integration \n (7 Samples, 42K Cells)") + 
   theme(plot.title = element_text(hjust = 0.5)) + theme(legend.text=element_text(size=12)) +
   theme(plot.title = element_text(face="bold", size=16)) +
   theme(axis.title=element_text(size=14))
