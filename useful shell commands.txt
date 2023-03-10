@@ -9,7 +9,7 @@ for f in $(find /GlobusCollab/Troyanskaya/MRSA-MSSA/scATAC/ECHO/MSSM_Data_Transf
 done
 
 # MOVE FILES FROM SERVER TO SERVER
-rsync -av --relative --files-from=filelist.txt . wat2@lumos:~/multiome/
+rsync -av --relative --files-from=filelist.txt / wat2@lumos:multiome/
 
 # NOT USING ANYTHING BELOW, BUT MAYBE IT'LL COME IN HANDY?
 
