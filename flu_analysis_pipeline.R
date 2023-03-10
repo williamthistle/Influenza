@@ -80,17 +80,15 @@ all_sex_samples <- c(male_samples, female_samples)
 sample_id_list <- sample_id_list[order(match(sample_id_list, all_viral_load_samples))]
 
 # Parameters for processing both RNA-seq and ATAC data
-# rerun: If files are already present, overwrite them (don't just move on) 
 # save_progress: If you want to save your progress
-rerun <- FALSE
 save_progress <- FALSE
 # Parameters for processing RNA-seq
 # record_doublets: If you want to run scDblFinder and record which cells are doublets
-# run_qc: If you want to plot QC metrics
+# run_qc: If you want to plot QC metrics (and not run the rest of the pipeline)
 # run_soup: If you want to remove ambient RNA using SoupX
 record_doublets = FALSE
 run_qc = FALSE
-run_soup = TRUE
+run_soup = FALSE
 # Parameters for processing ATAC-seq data
 # TODO
 ################## ANALYSIS ##################
