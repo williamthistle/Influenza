@@ -51,7 +51,7 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   assign("sc_obj", MapCellTypes(sc_obj, reference), envir = .GlobalEnv)
   rm(reference)
   if(save_progress) {
-    save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj_ATAC.rds"))
+    save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj.rds"))
   }
   return(sc_obj)
 }
