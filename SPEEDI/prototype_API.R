@@ -20,9 +20,9 @@ g2m.genes <- cc.genes.updated.2019$g2m.genes
 SEED <- 1824409L
 set.seed(SEED)
 
-run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save_progress = TRUE, use_simplified_reference = FALSE, remove_doublets = FALSE) {
+run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save_progress = FALSE, remove_doublets = FALSE, run_qc = FALSE, run_soup = FALSE) {
   all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
-  assign("sc_obj", FilterRawData(all_sc_exp_matrices, human = TRUE, remove_doublets = TRUE), envir = .GlobalEnv)
+  assign("sc_obj", FilterRawData(all_sc_exp_matrices, human = TRUE, remove_doublets = FALSE), envir = .GlobalEnv)
   rm(all_sc_exp_matrices)
   # Add cell names as a metadata column - this is handy for selecting subsets of cells
   cell_names <- rownames(sc_obj@meta.data)
@@ -279,9 +279,10 @@ Read_h5 <- function(data_path, sample_id_list) {
   return(all_sc_exp_matrices)
 }
 
-FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
+FilterRawData <- function(sc_obj, human = TRUE, record_doublets = FALSE, adaptive_QC_thresholds = TRUE, 
+                          min_nFeature = 900, max_nFeature = 4000, max_nCount = 1000, max_percent_mt = 0.15, 
+                          max_percent_hb = 0.4, max_percent_rp = 50) {
   message("Step 2: Filtering out bad samples...")
-  testing_flag <- TRUE
 
   sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
                                assay = "RNA",
@@ -291,15 +292,14 @@ FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
 
   sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
 
-  if(remove_doublets) {
-    message("Removing doublets...")
+  if(record_doublets) {
+    message("Recording doublets...")
     sc_obj <- Seurat::as.Seurat(scDblFinder::scDblFinder(Seurat::as.SingleCellExperiment(sc_obj), samples = "sample", BPPARAM=MulticoreParam(7, RNGseed=SEED)))
     # See distribution of doublets in each sample
     doublet_sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "doublet")
     message("Number of doublets removed in each sample:")
     print(table(doublet_sc_obj$sample))
     rm(doublet_sc_obj)
-    #sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
   }
 
   if (human) {
@@ -370,7 +370,7 @@ FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
 #                             decreasing = T)[1]
 #     lower_nF <- min(lower_nF_dec, lower_nF_inc)
     current_sample_name <- unique(objects[[i]]$sample)
-    if(!testing_flag) {
+    if(adaptive_QC_thresholds) {
       lower_nF <- kneedle(hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$breaks[-1],
                         hist(objects[[i]]$nFeature_RNA, breaks=100, plot=F)$counts)[1]
       if (lower_nF > 1000) { lower_nF <- 1000 }
@@ -396,9 +396,9 @@ FilterRawData <- function(sc_obj, human, remove_doublets = FALSE) {
                         percent.rpl <= quantile(objects[[i]]$percent.rpl, .99) &
                          percent.hb <= max_hb)
     } else {
-      object <- subset(objects[[i]], nFeature_RNA > 900 & nFeature_RNA < 4000 & nCount_RNA < 10000 & percent.mt < 15 & percent.hb < 0.4 & percent.rp < 50)
+      object <- subset(objects[[i]], nFeature_RNA > min_nFeature & nFeature_RNA < max_nFeature & nCount_RNA < max_nCount & percent.mt < max_percent_mt & percent.hb < max_percent_hb & percent.rp < max_percent_rp)
     }
-    if(!testing_flag) {
+    if(adaptive_QC_thresholds) {
       print(paste0("THRESHOLDS USED FOR SAMPLE", current_sample_name))
       print(paste0("lower nFeature: ", lower_nF))
       print(paste0("upper nFeature: ", quantile(objects[[i]]$nFeature_RNA, .99)))
@@ -645,7 +645,7 @@ IntegrateByBatch <- function(sc_obj) {
 
 
 
-VisualizeIntegration <- function(sc_obj) {
+VisualizeIntegration <- function(sc_obj, prep_sct_find_markers = TRUE) {
   set.seed(1824409L)
   sc_obj <- ScaleData(sc_obj, verbose = T)
 #   sc_obj <- PCA(sc_obj)
@@ -653,7 +653,9 @@ VisualizeIntegration <- function(sc_obj) {
   sc_obj <- RunUMAP(sc_obj, reduction = "pca", dims = 1:30, seed.use = SEED, return.model = T)
 #   sc_obj <- RunUMAP(sc_obj, reduction = "prcomp", dims = 1:30, seed.use = SEED, return.model = T)
   DefaultAssay(sc_obj) <- "SCT"
-  #sc_obj <- PrepSCTFindMarkers(sc_obj)
+  if(prep_sct_find_markers) {
+    sc_obj <- PrepSCTFindMarkers(sc_obj)
+  }
   return(sc_obj)
 }
 
@@ -706,12 +708,17 @@ LoadReference <- function(tissue, human) {
   }
 }
 
-FindMappingAnchors <- function(sc_obj, reference) {
+FindMappingAnchors <- function(sc_obj, reference, data_type = "scRNA") {
   DefaultAssay(sc_obj) <- "integrated"
+  if(data_type == "scRNA") {
+    recompute.residuals.value <- "T"
+  } else {
+    recompute.residuals.value <- "F"
+  }
   anchors <- FindTransferAnchors(reference = reference,
                                  query = sc_obj,
                                  normalization.method = "SCT",
-                                 recompute.residuals = F,
+                                 recompute.residuals = recompute.residuals.value,
                                  reference.reduction = "spca")
   return(anchors)
 }
@@ -783,9 +790,9 @@ MajorityVote <- function(sc_obj, current_resolution = 1.5) {
   return(sc_obj)
 }
 
-MapCellTypes <- function(sc_obj, reference) {
+MapCellTypes <- function(sc_obj, reference, data_type = "scRNA") {
   message("Step 6: Reference-based cell type mapping...")
-  anchors <- FindMappingAnchors(sc_obj, reference)
+  anchors <- FindMappingAnchors(sc_obj, reference, data_type)
   sc_obj <- MapQuery(anchorset = anchors,
                      query = sc_obj,
                      reference = reference,

@@ -3,8 +3,13 @@ for f in $(find /GlobusCollab/Troyanskaya/MRSA-MSSA/scATAC/ECHO/MSSM_Data_Transf
     echo "$f" >> filelist.txt;
 done
 
+# CREATE FILE LIST OF FILES FOLLOWING CERTAIN PATTERN (MULTIPLE PATTERNS)
+for f in $(find /GlobusCollab/Troyanskaya/MRSA-MSSA/scATAC/ECHO/MSSM_Data_Transfer/Vaccitech_Multiome_Coded/*/outs/ -iname "atac_fragments.tsv.gz" -o -iname "atac_fragments.tsv.gz.tbi" -o -iname "raw_feature_bc_matrix.h5" -o -iname "filtered_feature_bc_matrix.h5" -o -iname "per_barcode_metrics.csv" -o -iname "web_summary.html" -o -type d -iname "analysis" -o -type d -iname "raw_feature_bc_matrix" -o -type d -iname "filtered_feature_bc_matrix"); do 
+    echo "$f" >> filelist2.txt;
+done
+
 # MOVE FILES FROM SERVER TO SERVER
-rsync -av --relative --files-from=filelist.txt . wat2@lumos:~/scATAC_seq_data/
+rsync -av --relative --files-from=filelist.txt / wat2@lumos:multiome/
 
 # NOT USING ANYTHING BELOW, BUT MAYBE IT'LL COME IN HANDY?
 

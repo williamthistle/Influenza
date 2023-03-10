@@ -109,7 +109,7 @@ ggsave(paste0(output_dir, "test.png"), device = "png", dpi = 300)
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 dap_df <- read.table("MAGICAL_daps.txt", sep = "\t", header = TRUE)
-cell_type_order <- c("T Naive", "CD4 Memory", "NK", "CD14 Mono", "CD16 Mono", "MAIT", "B", "CD8 Memory")
+cell_type_order <- c("CD14 Mono", "CD16 Mono", "B", "T Naive", "CD4 Memory", "NK", "CD8 Memory", "pDC")
 cell_type_order <- rev(cell_type_order)
 ggplot(dap_df, aes(x=Cell.Type, y=DAPs, fill=Cell.Type, )) +
   geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
@@ -125,7 +125,8 @@ ggplot(dap_df, aes(x=Cell.Type, y=DAPs, fill=Cell.Type, )) +
 ggsave("DAPs.png", device = "png", dpi = 300)
 
 deg_df <- read.table("MAGICAL_degs.txt", sep = "\t", header = TRUE)
-cell_type_order <- c("B", "T Naive", "CD4 Memory", "MAIT", "CD8 Memory", "NK", "CD16 Mono", "CD14 Mono")
+cell_type_order <- c("CD16 Mono", "NK", "CD8 Memory", "pDC", "B", "CD14 Mono", "T Naive", "CD4 Memory")
+cell_type_order <- rev(cell_type_order)
 ggplot(deg_df, aes(x=Cell.Type, y=DEGs, fill=Cell.Type, )) +
   geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
   xlab("Cell Type") + ylab("Number of DEGs") + ggtitle("DEGs per Cell Type") +
@@ -140,7 +141,8 @@ ggplot(deg_df, aes(x=Cell.Type, y=DEGs, fill=Cell.Type, )) +
 ggsave("DEGs.png", device = "png", dpi = 300)
 
 mag_associations_df <- read.table("MAGICAL_associations.txt", sep = "\t", header = TRUE)
-cell_type_order <- c("CD8 Memory", "B", "MAIT", "CD4 Memory", "CD16 Mono", "CD14 Mono", "NK", "T Naive")
+cell_type_order <- c("CD14 Mono", "CD16 Mono", "B", "T Naive", "NK", "CD4 Memory", "CD8 Memory", "pDC")
+cell_type_order <- rev(cell_type_order)
 ggplot(mag_associations_df, aes(x=Cell.Type, y=MAGICAL.Associations, fill=Cell.Type)) +
   geom_bar(stat="identity")+theme_minimal()+coord_flip() + scale_x_discrete(limits = cell_type_order) +
   xlab("Cell Type") + ylab("Number of MAGICAL Associations") + ggtitle("MAGICAL Associations per Cell Type") +

@@ -94,14 +94,3 @@ DimPlot(sc_obj, reduction = "umap", group.by = "sample", split.by = "sample", nc
   labs(title = current_title) + 
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(paste0(output_dir, naming_token, "_preintegrated_clusters_by_sample.png"), device = "png", dpi = 300, width = 8, height = 8, units = "in")
-
-# Find doublets
-sce <- scDblFinder(as.SingleCellExperiment(sc_obj), samples = "sample")
-sc_obj <- as.Seurat(sce)
-# See distribution of doublets in each sample
-doublet_sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "doublet")
-print(table(doublet_sc_obj$sample))
-# Remove doublets
-sc_obj <- subset(x = sc_obj, subset = scDblFinder.class %in% "singlet")
-
-
