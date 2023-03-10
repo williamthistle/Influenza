@@ -1,3 +1,4 @@
+### SEED EXPERIMENTS ###
 for (i in 1:10) {
   SEED <- i
   set.seed(SEED)

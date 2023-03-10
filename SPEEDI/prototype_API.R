@@ -5,15 +5,15 @@
 # Date:  08/08/2022
 #------------------------------------------------
 
-home_dir <- "~/SPEEDI"
-source(paste0(home_dir, "/prototype_utils.R"))
+SPEEDI_dir <- "~/SPEEDI"
+source(paste0(SPEEDI_dir, "/prototype_utils.R"))
 
 # Human CC Genes
 s.genes <- cc.genes.updated.2019$s.genes
 g2m.genes <- cc.genes.updated.2019$g2m.genes
 
 # Mouse CC Genes
-#cc.gene.updated.mouse <- readRDS(paste0(home_dir, "/cc.gene.updated.mouse.rds"))
+#cc.gene.updated.mouse <- readRDS(paste0(SPEEDI_dir, "/cc.gene.updated.mouse.rds"))
 #m.s.genes <- cc.gene.updated.mouse$m.s.genes
 #m.g2m.genes <- cc.gene.updated.mouse$m.g2m.genes
 
@@ -56,14 +56,154 @@ run_SPEEDI <- function(data_path, output_dir, sample_id_list, naming_token, save
   return(sc_obj)
 }
 
-print_UMAP <- function(sc_obj, sample_count, group_by_category, output_dir, naming_token, file_suffix) {
+create_seurat_object_with_info <- function(all_sc_exp_matrices) {
+  sc_obj <- CreateSeuratObject(counts = all_sc_exp_matrices,
+                               assay = "RNA",
+                               min.cells = 3,
+                               min.features = 3,
+                               project = "flu")
+  sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
+  sc_obj <- PercentageFeatureSet(object = sc_obj,
+                                 pattern = "^MT-",
+                                 col.name = "percent.mt") 
+  sc_obj <- PercentageFeatureSet(object = sc_obj,
+                                 pattern = "^RPS",
+                                 col.name = "percent.rps") 
+  sc_obj <- PercentageFeatureSet(object = sc_obj,
+                                 pattern = "^RPL",
+                                 col.name = "percent.rpl") 
+  sc_obj <- PercentageFeatureSet(object = sc_obj,
+                                 pattern = "^HB[A|B]",
+                                 col.name = "percent.hb")
+  sc_obj <- PercentageFeatureSet(object = sc_obj,
+                                 pattern = "^RP[SL]",
+                                 col.name = "percent.rp")
+  # Adding cell_names as metadata is useful (e.g., for subsetting)
+  cell_names <- rownames(sc_obj@meta.data)
+  sc_obj <- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
+  return(sc_obj)
+}
+
+add_sample_metadata <- function(sc_obj, high_viral_load_samples, low_viral_load_samples,
+                                d28_samples, d_minus_1_samples, male_samples, female_samples) {
+  # Add viral load metadata
+  viral_load_metadata <- vector(length = sc_obj$sample)
+  idxPass <- which(sc_obj$sample %in% high_viral_load_samples)
+  viral_load_metadata[idxPass] <- "HVL"
+  idxPass <- which(sc_obj$sample %in% low_viral_load_samples)
+  viral_load_metadata[idxPass] <- "LVL"
+  sc_obj$viral_load <- viral_load_metadata
+  # Add day metadata
+  day_metadata <- vector(length = sc_obj$sample)
+  idxPass <- which(sc_obj$sample %in% d28_samples)
+  day_metadata[idxPass] <- "D28"
+  idxPass <- which(sc_obj$sample %in% d_minus_1_samples)
+  day_metadata[idxPass] <- "D_MINUS_1"
+  sc_obj$day <- day_metadata
+  # Add sex metadata
+  sex_metadata <- vector(length = sc_obj$sample)
+  idxPass <- which(sc_obj$sample %in% male_samples)
+  sex_metadata[idxPass] <- "MALE"
+  idxPass <- which(sc_obj$sample %in% female_samples)
+  sex_metadata[idxPass] <- "FEMALE"
+  sc_obj$sex <- sex_metadata
+  # By default, we'll group samples by viral load (high then low)
+  sc_obj$sample <- factor(sc_obj$sample, levels = all_viral_load)
+  return(sc_obj)
+}
+
+process_matrices_through_soup <- function(data_path, sample_id_list) {
+  sample_id <- sample_id_list[1]
+  # Load data and estimate soup profile
+  sc <- load10X(paste0(data_path, sample_id, "/outs/"))
+  # Estimate rho
+  sc <- autoEstCont(sc, forceAccept = TRUE)
+  # Clean the data
+  all_sc_exp_matrices <- adjustCounts(sc)
+  # Add sample name
+  prefix <- paste0(sample_id, "#")
+  colnames(all_sc_exp_matrices) <- paste0(prefix, colnames(all_sc_exp_matrices))
+  rest_of_sample_list <- sample_id_list[2:length(sample_id_list)]
+  for(sample_id in rest_of_sample_list) {
+    print(sample_id)
+    # Load data and estimate soup profile
+    sc = load10X(paste0(data_path, sample_id, "/outs/"))
+    # Estimate rho
+    sc = autoEstCont(sc, forceAccept = TRUE)
+    # Clean the data
+    sc_exp_matrix = adjustCounts(sc)
+    # Add sample name
+    prefix <- paste0(sample_id, "#")
+    colnames(sc_exp_matrix) <- paste0(prefix, colnames(sc_exp_matrix))
+    # Add to list of all matrices
+    all_sc_exp_matrices <- cbind(all_sc_exp_matrices, sc_exp_matrix)
+  }
+}
+
+generate_qc_plots <- function(all_sc_exp_matrices, plot_dir, run_soup, date, high_viral_load_samples, low_viral_load_samples,
+                                d28_samples, d_minus_1_samples, male_samples, female_samples) {
+  sc_obj <- create_seurat_object_with_info(all_sc_exp_matrices)
+  sc_obj <- add_sample_metadata(sc_obj, high_viral_load_samples, low_viral_load_samples,
+                                d28_samples, d_minus_1_samples, male_samples, female_samples)
+  # Set up plotting colors
+  plotting_colors <- c(rep("FC4E07", length(high_viral_load_samples)), rep("2E9FDF", length(low_viral_load_samples)))
+  # Create violin plots for nFeature_RNA, nCount_RNA, percent.mt, percent.hp, and percent.rp
+  p <- VlnPlot(sc_obj, features = c("nFeature_RNA"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
+    xlab("Viral Load")
+  ggsave(paste0(plot_dir, "nFeature_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+  p <- VlnPlot(sc_obj, features = c("nCount_RNA"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
+    xlab("Viral Load")
+  ggsave(paste0(plot_dir, "nCount_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+  p <- VlnPlot(sc_obj, features = c("percent.mt"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
+    xlab("Viral Load")
+  ggsave(paste0(plot_dir, "percentMT_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+
+  p <- VlnPlot(sc_obj, features = c("percent.hb"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
+    xlab("Viral Load")
+  ggsave(paste0(plot_dir, "percentHB_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+
+  p <- VlnPlot(sc_obj, features = c("percent.rp"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
+    xlab("Viral Load")
+  ggsave(paste0(plot_dir, "percentRP_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+  # Create nCount vs nFeature scatter plot for each sample
+  individual_samples <- SplitObject(sc_obj, split.by = "sample")
+  # Visualize nCount vs nFeature via scatter plot for each sample
+  nCount_vs_nFeature_plots <- list()
+  for (i in 1:length(individual_samples)) {
+    p <- FeatureScatter(individual_samples[[i]], feature1 = "nCount_RNA", feature2 = "nFeature_RNA", group.by = "sample")
+    nCount_vs_nFeature_plots[[i]] <- p
+  }
+  n <- length(nCount_vs_nFeature_plots)
+  nCol <- floor(sqrt(n))
+  nCount_vs_nFeature_plots <- do.call("grid.arrange", c(nCount_vs_nFeature_plots, ncol=nCol))
+  ggsave(paste0(plot_dir, "nCount_vs_nFeature_plots_", date, "_soup_", run_soup, ".png"), plot = nCount_vs_nFeature_plots, device = "png", width = 15, height = 15, units = "in")
+  return(sc_obj)
+}
+
+combine_cell_types <- function(sc_obj, resolution = 1.5) {
+  sc_obj$old.predicted.id <- sc_obj$predicted.id
+  Cell_type_combined = sc_obj$predicted.id
+  idx <- grep("CD4 T", Cell_type_combined)
+  Cell_type_combined[idx] <- "CD4 Memory"
+  idx <- grep("CD8 T", Cell_type_combined)
+  Cell_type_combined[idx] <- "CD8 Memory"
+  idx <- grep("cDC", Cell_type_combined)
+  Cell_type_combined[idx] <- "cDC"
+  idx <- grep("Proliferating", Cell_type_combined)
+  Cell_type_combined[idx] <- "Proliferating"
+  sc_obj$predicted.id <- Cell_type_combined
+  sc_obj <- MajorityVote(sc_obj, resolution)
+  return(sc_obj)
+}
+
+print_UMAP <- function(sc_obj, sample_count, group_by_category, plot_dir, file_name) {
   cell_count <- length(sc_obj$cell_name)
   current_title <- paste0("snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, label = TRUE,
         label.size = 3, repel = TRUE, raster = FALSE) +
   labs(title = current_title) +
   theme(plot.title = element_text(hjust = 0.5))
-  ggsave(paste0(output_dir, naming_token, file_suffix), device = "png", dpi = 300)
+  ggsave(paste0(plot_dir, file_name), device = "png", dpi = 300)
 }
 
 calculate_props_and_counts <- function(sc_obj, condition, sample_names) {
@@ -280,7 +420,7 @@ Read_h5 <- function(data_path, sample_id_list) {
 }
 
 FilterRawData <- function(sc_obj, human = TRUE, record_doublets = FALSE, adaptive_QC_thresholds = TRUE, 
-                          min_nFeature = 900, max_nFeature = 4000, max_nCount = 1000, max_percent_mt = 0.15, 
+                          min_nFeature = 900, max_nFeature = 4000, max_nCount = 10000, max_percent_mt = 15, 
                           max_percent_hb = 0.4, max_percent_rp = 50) {
   message("Step 2: Filtering out bad samples...")
 
@@ -288,9 +428,12 @@ FilterRawData <- function(sc_obj, human = TRUE, record_doublets = FALSE, adaptiv
                                assay = "RNA",
                                min.cells = 3,
                                min.features = 3,
-                               project = "unbias")
+                               project = "flu")
 
   sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
+  # Adding cell_names as metadata is useful (e.g., for subsetting)
+  cell_names <- rownames(sc_obj@meta.data)
+  sc_obj <- AddMetaData(sc_obj, metadata = cell_names, col.name = "cell_name")
 
   if(record_doublets) {
     message("Recording doublets...")
@@ -550,7 +693,7 @@ InferBatches <- function(sc_obj) {
 
   print(unique(batch))
 
-#   saveRDS(sc_obj, paste0(home_dir, "/unintegrated.object.RData"))
+#   saveRDS(sc_obj, paste0(SPEEDI_dir, "/unintegrated.object.RData"))
   return(sc_obj)
 }
 
@@ -694,7 +837,7 @@ LoadReference <- function(tissue, human) {
         return(data("pancreasref")) }
 
     if (tissue == "PBMC") {
-        reference <- LoadH5Seurat(paste0(home_dir, "/reference/pbmc_multimodal.h5seurat"))
+        reference <- LoadH5Seurat(paste0("~/SPEEDI/reference/pbmc_multimodal.h5seurat"))
         return(reference) }
 
     if (tissue == "Tonsil") {
