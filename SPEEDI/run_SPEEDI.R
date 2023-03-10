@@ -8,7 +8,7 @@ home_dir <- "~/SPEEDI"
 source(paste0(home_dir, "/prototype_API.R"))
 
 # naming_token is used to select analysis and name output files
-naming_token <- "high_vs_low_viral_load_D28_V4"
+naming_token <- "orig_analysis"
 date <- Sys.Date()
 
 # data_path is where input data are stored
@@ -85,9 +85,9 @@ sc_obj <- MajorityVote(sc_obj, 1.5)
 
 
 # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
-print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_doublets_intact_", date, ".png"))
-print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_doublets_intact_", date, ".png"))
-print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_doublets_intact_", date, ".png"))
+print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_majority_vote_", date, ".png"))
+print_UMAP(sc_obj, sample_count, "seurat_clusters", output_dir, naming_token, paste0("_clusters_by_cluster_num_", date, ".png"))
+print_UMAP(sc_obj, sample_count, "predicted.id", output_dir, naming_token, paste0("_clusters_by_cell_type_", date, ".png"))
 
 # Split by cluster
 cell_count <- length(sc_obj$cell_name)
