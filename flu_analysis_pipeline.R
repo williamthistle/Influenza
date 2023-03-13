@@ -38,7 +38,7 @@ all_sample_id_list <- strsplit(all_sample_id_list, "/")
 all_sample_id_list <- unlist(lapply(all_sample_id_list, tail, n = 1L))
 
 # data_token is used to choose subset of data that we want to analyze (pre-defined in flu_data_tokens.tsv)
-data_token <- "female_hvl_vs_lvl_multiome"
+data_token <- "all_multiome"
 # Create directory for this particular data in the analysis directory if it doesn't exist
 base_analysis_dir <- paste0(home_dir, data_type, "/analysis/", data_token, "/")
 if (!dir.exists(base_analysis_dir)) {dir.create(base_analysis_dir)}
@@ -69,8 +69,8 @@ sample_metadata <- sample_metadata[sample_metadata$aliquot %in% sample_id_list,]
 high_viral_load_samples <- sort(sample_metadata[sample_metadata$viral_load == "high",]$aliquot)
 low_viral_load_samples <- sort(sample_metadata[sample_metadata$viral_load == "low",]$aliquot)
 all_viral_load_samples <- c(high_viral_load_samples, low_viral_load_samples)
-d28_samples <- sort(sample_metadata[sample_metadata$viral_load == "2_D28",]$aliquot)
-d_minus_1_samples <- sort(sample_metadata[sample_metadata$viral_load == "2_D_minus_1",]$aliquot)
+d28_samples <- sort(sample_metadata[sample_metadata$time_point == "2_D28",]$aliquot)
+d_minus_1_samples <- sort(sample_metadata[sample_metadata$time_point == "2_D_minus_1",]$aliquot)
 all_day_samples <- c(d28_samples, d_minus_1_samples)
 male_samples <- sort(sample_metadata[sample_metadata$sex == "M",]$aliquot)
 female_samples <- sort(sample_metadata[sample_metadata$sex == "F",]$aliquot)
@@ -102,8 +102,8 @@ if(analysis_type == "RNA_seq") {
   }
   # Run QC (optional)
   if(run_qc) {
-    sc_obj <- generate_qc_plots(all_sc_exp_matrices, plot_dir, run_soup, date, high_viral_load_samples, low_viral_load_samples,
-                      d28_samples, d_minus_1_samples, male_samples, female_samples)
+    sc_obj <- generate_qc_plots(all_sc_exp_matrices, plot_dir, date, high_viral_load_samples, low_viral_load_samples,
+                    d28_samples, d_minus_1_samples, male_samples, female_samples)
     # If you run QC, you probably don't want to proceed with the rest of the pipeline, so we stop here
   } else {
     # Step 2 - filter raw data (either with adaptive thresholds or strict thresholds)
@@ -136,13 +136,39 @@ if(analysis_type == "RNA_seq") {
     sc_obj <- MapCellTypes(sc_obj, reference, data_type = "snRNA")
     rm(reference)
     # Combine cell types and re-do majority vote
-    sc_obj <- combine_cell_types(sc_obj, resolution = 1.5)
+    sc_obj <- combine_cell_types_initial(sc_obj, resolution = 1.5)
     # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
-    print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("clusters_by_cell_type_majority_vote_", date, ".png"))
-    print_UMAP(sc_obj, sample_count, "seurat_clusters", plot_dir, paste0("clusters_by_cluster_num_", date, ".png"))
-    print_UMAP(sc_obj, sample_count, "predicted.id", plot_dir, paste0("clusters_by_cell_type_", date, ".png"))
-    # We always want to save our final sc_obj the end
-    save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
+    print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("pre.clusters_by_cell_type_majority_vote_", date, ".png"))
+    print_UMAP(sc_obj, sample_count, "seurat_clusters", plot_dir, paste0("pre.clusters_by_cluster_num_", date, ".png"))
+    print_UMAP(sc_obj, sample_count, "predicted.id", plot_dir, paste0("pre.clusters_by_cell_type_", date, ".png"))
+    print_UMAP(sc_obj, sample_count, "viral_load", plot_dir, paste0("pre.clusters_by_viral_load_", date, ".png"))
+    # We always want to save our sc_obj after processing data through SPEEDI
+    save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
+    # Load sc_obj
+    load(file = paste0(analysis_dir, "7_sc_obj.rds"))
+    # We can use clustree to help us figure out the best resolution
+    print_clustree_plot(sc_obj, plot_dir, date)
+    # Re-run majority vote with best resolution
+    best_res <- 3
+    sc_obj <- MajorityVote(sc_obj, best_res)
+    # To decide which clusters we need to remove, we will capture information about clusters and remove messy clusters
+    raw_cluster_info <- capture_cluster_info(sc_obj)
+    # Remove messy clusters and print plots
+    messy_clusters <- c(0,18,25,28,35,36,38,39,41,42,44,45,46,49,50,52,53,59)
+    idxPass <- which(Idents(sc_obj) %in% messy_clusters)
+    cellsPass <- names(sc_obj$orig.ident[-idxPass])
+    sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    print(table(sc_obj.minus.messy.clusters$sample))
+    print_celltype_counts(sc_obj.minus.messy.clusters)
+    print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
+    print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
+    print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))
+    print_UMAP(sc_obj.minus.messy.clusters, sample_count, "viral_load", plot_dir, paste0("post.clusters_by_viral_load_", date, ".png"))
+    sc_obj <- combine_cell_types_magical(sc_obj, 1.5)
+    run_differential_expression(sc_obj, analysis_dir, "viral_load")
+    run_differential_expression(sc_obj, analysis_dir, "day")
+    run_differential_expression(sc_obj, analysis_dir, "sex")
+
   }
 } else if(analysis_type == "ATAC_seq") {
   

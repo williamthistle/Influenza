@@ -87,28 +87,28 @@ create_seurat_object_with_info <- function(all_sc_exp_matrices) {
 add_sample_metadata <- function(sc_obj, high_viral_load_samples, low_viral_load_samples,
                                 d28_samples, d_minus_1_samples, male_samples, female_samples) {
   # Add viral load metadata
-  viral_load_metadata <- vector(length = sc_obj$sample)
+  viral_load_metadata <- vector(length = length(sc_obj$sample))
   idxPass <- which(sc_obj$sample %in% high_viral_load_samples)
   viral_load_metadata[idxPass] <- "HVL"
   idxPass <- which(sc_obj$sample %in% low_viral_load_samples)
   viral_load_metadata[idxPass] <- "LVL"
   sc_obj$viral_load <- viral_load_metadata
   # Add day metadata
-  day_metadata <- vector(length = sc_obj$sample)
+  day_metadata <- vector(length = length(sc_obj$sample))
   idxPass <- which(sc_obj$sample %in% d28_samples)
   day_metadata[idxPass] <- "D28"
   idxPass <- which(sc_obj$sample %in% d_minus_1_samples)
   day_metadata[idxPass] <- "D_MINUS_1"
   sc_obj$day <- day_metadata
   # Add sex metadata
-  sex_metadata <- vector(length = sc_obj$sample)
+  sex_metadata <- vector(length = length(sc_obj$sample))
   idxPass <- which(sc_obj$sample %in% male_samples)
   sex_metadata[idxPass] <- "MALE"
   idxPass <- which(sc_obj$sample %in% female_samples)
   sex_metadata[idxPass] <- "FEMALE"
   sc_obj$sex <- sex_metadata
   # By default, we'll group samples by viral load (high then low)
-  sc_obj$sample <- factor(sc_obj$sample, levels = all_viral_load)
+  sc_obj$sample <- factor(sc_obj$sample, levels = c(high_viral_load_samples, low_viral_load_samples))
   return(sc_obj)
 }
 
@@ -140,31 +140,39 @@ process_matrices_through_soup <- function(data_path, sample_id_list) {
   }
 }
 
-generate_qc_plots <- function(all_sc_exp_matrices, plot_dir, run_soup, date, high_viral_load_samples, low_viral_load_samples,
+generate_qc_plots <- function(all_sc_exp_matrices, plot_dir, date, high_viral_load_samples, low_viral_load_samples,
                                 d28_samples, d_minus_1_samples, male_samples, female_samples) {
   sc_obj <- create_seurat_object_with_info(all_sc_exp_matrices)
   sc_obj <- add_sample_metadata(sc_obj, high_viral_load_samples, low_viral_load_samples,
                                 d28_samples, d_minus_1_samples, male_samples, female_samples)
   # Set up plotting colors
-  plotting_colors <- c(rep("FC4E07", length(high_viral_load_samples)), rep("2E9FDF", length(low_viral_load_samples)))
-  # Create violin plots for nFeature_RNA, nCount_RNA, percent.mt, percent.hp, and percent.rp
-  p <- VlnPlot(sc_obj, features = c("nFeature_RNA"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
-    xlab("Viral Load")
-  ggsave(paste0(plot_dir, "nFeature_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
-  p <- VlnPlot(sc_obj, features = c("nCount_RNA"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
-    xlab("Viral Load")
-  ggsave(paste0(plot_dir, "nCount_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
-  p <- VlnPlot(sc_obj, features = c("percent.mt"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
-    xlab("Viral Load")
-  ggsave(paste0(plot_dir, "percentMT_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+  viral_load_plotting_colors <- c(rep("#FC4E07", length(high_viral_load_samples)), rep("#2E9FDF", length(low_viral_load_samples)))
+  day_plotting_colors <- c(rep("#FC4E07", length(d28_samples)), rep("#2E9FDF", length(d_minus_1_samples)))
+  sex_plotting_colors <- c(rep("#FC4E07", length(male_samples)), rep("#2E9FDF", length(female_samples)))
+  # Loops for plotting
+  group.by.categories <- c("viral_load", "day", "sex")
+  plotting.colors <- list(viral_load_plotting_colors, day_plotting_colors, sex_plotting_colors)
+  for(index in 1:length(group.by.categories)) {
+    current_category <- group.by.categories[index]
+    current_plotting_colors <- plotting.colors[[index]]
+    # VIRAL LOAD QC PLOTS
+    p <- VlnPlot(sc_obj, features = c("nFeature_RNA"), split.by = "sample", group.by = current_category, raster = FALSE) + scale_fill_manual(values = current_plotting_colors) +
+      xlab(current_category)
+    ggsave(paste0(plot_dir, "nFeature_violin_plots_", date, "_category_", current_category, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+    p <- VlnPlot(sc_obj, features = c("nCount_RNA"), split.by = "sample", group.by = current_category, raster = FALSE) + scale_fill_manual(values = current_plotting_colors) +
+      xlab(current_category)
+    ggsave(paste0(plot_dir, "nCount_violin_plots_", date, "_category_", current_category, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+    p <- VlnPlot(sc_obj, features = c("percent.mt"), split.by = "sample", group.by = current_category, raster = FALSE) + scale_fill_manual(values = current_plotting_colors) +
+      xlab(current_category)
+    ggsave(paste0(plot_dir, "percentMT_violin_plots_", date, "_category_", current_category, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+    p <- VlnPlot(sc_obj, features = c("percent.hb"), split.by = "sample", group.by = current_category, raster = FALSE) + scale_fill_manual(values = current_plotting_colors) +
+      xlab(current_category)
+    ggsave(paste0(plot_dir, "percentHB_violin_plots_", date, "_category_", current_category, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+    p <- VlnPlot(sc_obj, features = c("percent.rp"), split.by = "sample", group.by = current_category, raster = FALSE) + scale_fill_manual(values = current_plotting_colors) +
+      xlab(current_category)
+    ggsave(paste0(plot_dir, "percentRP_violin_plots_", date, "_category_", current_category, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
+  }
 
-  p <- VlnPlot(sc_obj, features = c("percent.hb"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
-    xlab("Viral Load")
-  ggsave(paste0(plot_dir, "percentHB_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
-
-  p <- VlnPlot(sc_obj, features = c("percent.rp"), split.by = "sample", group.by = "viral_load", raster = FALSE) + scale_fill_manual(values = plotting_colors) +
-    xlab("Viral Load")
-  ggsave(paste0(plot_dir, "percentRP_violin_plots_", date, "_soup_", run_soup, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
   # Create nCount vs nFeature scatter plot for each sample
   individual_samples <- SplitObject(sc_obj, split.by = "sample")
   # Visualize nCount vs nFeature via scatter plot for each sample
@@ -176,13 +184,34 @@ generate_qc_plots <- function(all_sc_exp_matrices, plot_dir, run_soup, date, hig
   n <- length(nCount_vs_nFeature_plots)
   nCol <- floor(sqrt(n))
   nCount_vs_nFeature_plots <- do.call("grid.arrange", c(nCount_vs_nFeature_plots, ncol=nCol))
-  ggsave(paste0(plot_dir, "nCount_vs_nFeature_plots_", date, "_soup_", run_soup, ".png"), plot = nCount_vs_nFeature_plots, device = "png", width = 15, height = 15, units = "in")
-  return(sc_obj)
+  ggsave(paste0(plot_dir, "nCount_vs_nFeature_plots_", date,".png"), plot = nCount_vs_nFeature_plots, device = "png", width = 20, height = 20, units = "in")
+  rm(individual_samples)
+  rm(sc_obj)
 }
 
-combine_cell_types <- function(sc_obj, resolution = 1.5) {
+print_clustree_plot <- function(sc_obj, plot_dir, date) {
+  for (res in seq(0, 6, 0.3)) {
+    sc_obj <- FindClusters(sc_obj, resolution = res)
+  }
+  clustree(sc_obj, prefix = "integrated_snn_res.")
+  ggsave(paste0(plot_dir, "cluster.trees_", date, ".png"), device = "png", width = 20, height = 20, units = "in")
+}
+
+# Check how many cells from each condition are present for each cell type
+print_celltype_counts <- function(sc_obj) {
+  for (cell_type in unique(sc_obj$predicted_celltype_majority_vote)) {
+    print(cell_type)
+    idxPass <- which(sc_obj$predicted_celltype_majority_vote %in% cell_type)
+    cellsPass <- names(sc_obj$orig.ident[idxPass])
+    sample_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    print(length(cellsPass))
+    print(table(sample_subset$viral_load))
+  }
+}
+
+combine_cell_types_initial <- function(sc_obj, resolution = 1.5) {
   sc_obj$old.predicted.id <- sc_obj$predicted.id
-  Cell_type_combined = sc_obj$predicted.id
+  Cell_type_combined <- sc_obj$predicted.id
   idx <- grep("CD4 T", Cell_type_combined)
   Cell_type_combined[idx] <- "CD4 Memory"
   idx <- grep("CD8 T", Cell_type_combined)
@@ -194,6 +223,97 @@ combine_cell_types <- function(sc_obj, resolution = 1.5) {
   sc_obj$predicted.id <- Cell_type_combined
   sc_obj <- MajorityVote(sc_obj, resolution)
   return(sc_obj)
+}
+
+combine_cell_types_magical <- function(sc_obj, resolution = 1.5) {
+  Cell_type_combined <- sc_obj$predicted_celltype_majority_vote
+  levels(Cell_type_combined) <- c(levels(Cell_type_combined), "T Naive", "B")
+  idx <- grep("CD4 Naive", Cell_type_combined)
+  Cell_type_combined[idx] <- "T Naive"
+  idx <- grep("CD8 Naive", Cell_type_combined)
+  Cell_type_combined[idx] <- "T Naive"
+  idx <- grep("Treg", Cell_type_combined)
+  Cell_type_combined[idx] <- "T Naive"
+  idx <- grep("NK_CD56bright", Cell_type_combined)
+  Cell_type_combined[idx] <- "NK"
+  idx <- grep("B", Cell_type_combined)
+  Cell_type_combined[idx] <- "B"
+  sc_obj$magical_cell_types <- Cell_type_combined
+  return(sc_obj)
+}
+
+run_differential_expression <- function(sc_obj, analysis_dir, group) {
+  print(paste0("Performing differential expression for group ", group, " for each cell type"))
+  all_cell_types <- union(unique(sc_obj$predicted_celltype_majority_vote), unique(sc_obj$magical_cell_types))
+  for (cell_type in all_cell_types) {
+    print(cell_type)
+    if(cell_type %in% unique(sc_obj$predicted_celltype_majority_vote)) {
+      idxPass <- which(sc_obj$predicted_celltype_majority_vote %in% cell_type)
+    } else {
+      idxPass <- which(sc_obj$magical_cell_types %in% cell_type)
+      print("This cell type is for MAGICAL processing")
+    }
+    print(length(idxPass))
+    cellsPass <- names(sc_obj$orig.ident[idxPass])
+    cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    # TODO: Make this print table for relevant group
+    print(table(cells_subset$viral_load))
+    DefaultAssay(cells_subset) <- "SCT"
+    Idents(cells_subset) <- group
+    if(group == "viral_load") {
+      first_group <- "HIGH"
+      second_group <- "LOW"
+    } else if(group == "day") {
+      first_group <- "D28"
+      second_group <- "D_minus_1"
+    } else if(group == "sex") {
+      first_group <- "MALE"
+      second_group <- "FEMALE"
+    }
+    diff_markers <- FindMarkers(cells_subset, ident.1 = first_group, ident.2 = second_group, assay = "SCT", recorrect_umi = FALSE, logfc.threshold = 0, min.pct = 0)
+    cell_type <- sub(" ", "_", cell_type)
+    write.csv(diff_markers, paste0(analysis_dir, "HIGH-vs-LOW-degs-", cell_type, ".csv"), quote = FALSE)
+  }
+}
+
+create_magical_cell_type_proportion_file <- function(sc_obj, group) {
+  cell_type_proportions_df <- data.frame("Condition" = viral_load_label, "Sample_name" = all_viral_load)
+  total_cell_counts_df <- data.frame("Sample_name" = all_viral_load)
+  cell_counts <- vector()
+  # Find total cell counts for each sample
+  for (sample_id in all_viral_load) {
+    idxPass <- which(sc_obj$sample %in% sample_id)
+    cellsPass <- names(sc_obj$orig.ident[idxPass])
+    sample_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    cell_counts <- append(cell_counts, ncol(sample_subset))
+  }
+  total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
+  
+  for (cell_type in unique(sc_obj$magical_cell_types)) {
+    cell_type_proportions <- vector()
+    print(cell_type)
+    # Grab cells associated with cell type
+    idxPass <- which(sc_obj$magical_cell_types %in% cell_type)
+    print(length(idxPass))
+    cellsPass <- names(sc_obj$orig.ident[idxPass])
+    cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    for (sample_id in all_viral_load) {
+      # Subset further based on cells associated with sample ID
+      idxPass <- which(cells_subset$sample %in% sample_id)
+      cellsPass <- names(cells_subset$orig.ident[idxPass])
+      if (length(cellsPass) == 0) {
+        cell_type_proportions <- append(cell_type_proportions, 0)
+      } else {
+        sample_subset <- subset(x = cells_subset, subset = cell_name %in% cellsPass)
+        cell_counts <- ncol(sample_subset)
+        cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+      }
+    }
+    temp_df <- data.frame(cell_type_proportions)
+    names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
+    cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
+  }
+  write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
 }
 
 print_UMAP <- function(sc_obj, sample_count, group_by_category, plot_dir, file_name) {
@@ -286,7 +406,7 @@ capture_cluster_info <- function(sc_obj) {
     cluster_mean_nFeature <- c(cluster_mean_nFeature, mean(filtered_cluster$nFeature_RNA))
     cluster_mean_nCount <- c(cluster_mean_nCount, mean(filtered_cluster$nCount_RNA))
     cluster_mean_rp <- c(cluster_mean_rp, mean(filtered_cluster$percent.rp))
-    cluster_mean_doublet <- c(cluster_mean_doublet, mean(filtered_cluster$scDblFinder.score))
+    #cluster_mean_doublet <- c(cluster_mean_doublet, mean(filtered_cluster$scDblFinder.score))
     cluster_prediction <- sort(table(filtered_cluster$predicted_celltype_majority_vote), decreasing = TRUE)[1]
     cluster_predictions <- append(cluster_predictions, cluster_prediction)
     cluster_distributions[[idx]] <- table(filtered_cluster$predicted.id)
@@ -303,13 +423,13 @@ capture_cluster_info <- function(sc_obj) {
       cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, mean(filtered_cluster_high$nFeature_RNA))
       cluster_mean_nCount_high <- c(cluster_mean_nCount_high, mean(filtered_cluster_high$nCount_RNA))
       cluster_mean_rp_high <- c(cluster_mean_rp_high, mean(filtered_cluster_high$percent.rp))
-      cluster_mean_doublet_high <- c(cluster_mean_doublet_high, mean(filtered_cluster_high$scDblFinder.score))
+      #cluster_mean_doublet_high <- c(cluster_mean_doublet_high, mean(filtered_cluster_high$scDblFinder.score))
     } else {
       cluster_mean_mito_high <- c(cluster_mean_mito_high, NA)
       cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, NA)
       cluster_mean_nCount_high <- c(cluster_mean_nCount_high, NA)
       cluster_mean_rp_high <- c(cluster_mean_rp_high, NA)
-      cluster_mean_doublet_high <- c(cluster_mean_doublet_high, NA)
+      #cluster_mean_doublet_high <- c(cluster_mean_doublet_high, NA)
     }
     # Low
     idxPass <- which(filtered_cluster$viral_load %in% "LOW")
@@ -321,13 +441,13 @@ capture_cluster_info <- function(sc_obj) {
       cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, mean(filtered_cluster_low$nFeature_RNA))
       cluster_mean_nCount_low <- c(cluster_mean_nCount_low, mean(filtered_cluster_low$nCount_RNA))
       cluster_mean_rp_low <- c(cluster_mean_rp_low, mean(filtered_cluster_low$percent.rp))
-      cluster_mean_doublet_low <- c(cluster_mean_doublet_low, mean(filtered_cluster_low$scDblFinder.score))
+      #cluster_mean_doublet_low <- c(cluster_mean_doublet_low, mean(filtered_cluster_low$scDblFinder.score))
     } else {
       cluster_mean_mito_low <- c(cluster_mean_mito_low, NA)
       cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, NA)
       cluster_mean_nCount_low <- c(cluster_mean_nCount_low, NA)
       cluster_mean_rp_low <- c(cluster_mean_rp_low, NA)
-      cluster_mean_doublet_low <- c(cluster_mean_doublet_low, NA)
+      #cluster_mean_doublet_low <- c(cluster_mean_doublet_low, NA)
     }
     idx <- idx + 1
   }
@@ -360,13 +480,13 @@ capture_cluster_info <- function(sc_obj) {
   cluster_QC_stats_sorted_by_rp <- cluster_QC_stats_sorted_by_rp[order(cluster_QC_stats_sorted_by_rp$mean_rp, decreasing = TRUE),]
   
   
-  cluster_QC_stats_sorted_by_doublet <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,
-                                              "mean_doublet" = cluster_mean_doublet, "mean_doublet_high_viral" = cluster_mean_doublet_high,
-                                              "mean_doublet_low_viral" = cluster_mean_doublet_low, "mean_doublet_diff" = abs(cluster_mean_doublet_high - cluster_mean_doublet_low))
-  rownames(cluster_QC_stats_sorted_by_doublet) <- cluster_QC_stats_sorted_by_doublet$cluster
-  cluster_QC_stats_sorted_by_doublet <- cluster_QC_stats_sorted_by_doublet[ , !(names(cluster_QC_stats_sorted_by_doublet) %in% c("cluster"))]
-  cluster_QC_stats_sorted_by_doublet <- cluster_QC_stats_sorted_by_doublet[order(cluster_QC_stats_sorted_by_doublet$mean_doublet, decreasing = TRUE),]
-  return(list(cluster_distributions, cluster_predictions, cell_cycle_df, cluster_QC_stats_sorted_by_mt, cluster_QC_stats_sorted_by_nFeature, cluster_QC_stats_sorted_by_nCount, cluster_QC_stats_sorted_by_rp, cluster_QC_stats_sorted_by_doublet))
+  #cluster_QC_stats_sorted_by_doublet <- data.frame("cluster" = cluster_ids, "num_cells" = num_cells, "num_cells_high_viral" = num_cells_high, "num_cells_low_viral" = num_cells_low,
+  #                                            "mean_doublet" = cluster_mean_doublet, "mean_doublet_high_viral" = cluster_mean_doublet_high,
+  #                                            "mean_doublet_low_viral" = cluster_mean_doublet_low, "mean_doublet_diff" = abs(cluster_mean_doublet_high - cluster_mean_doublet_low))
+  #rownames(cluster_QC_stats_sorted_by_doublet) <- cluster_QC_stats_sorted_by_doublet$cluster
+  #cluster_QC_stats_sorted_by_doublet <- cluster_QC_stats_sorted_by_doublet[ , !(names(cluster_QC_stats_sorted_by_doublet) %in% c("cluster"))]
+  #cluster_QC_stats_sorted_by_doublet <- cluster_QC_stats_sorted_by_doublet[order(cluster_QC_stats_sorted_by_doublet$mean_doublet, decreasing = TRUE),]
+  return(list(cluster_distributions, cluster_predictions, cell_cycle_df, cluster_QC_stats_sorted_by_mt, cluster_QC_stats_sorted_by_nFeature, cluster_QC_stats_sorted_by_nCount, cluster_QC_stats_sorted_by_rp))
 }
 
 
@@ -767,7 +887,7 @@ IntegrateByBatch <- function(sc_obj) {
                                       normalization.method = "SCT",
                                       anchor.features = features,
                                       reduction = "rpca",
-                                      k.anchor = 5)
+                                      k.anchor = 10)
 #    }
 
   message("Begin integration...")

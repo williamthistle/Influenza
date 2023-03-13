@@ -156,7 +156,6 @@ sc_obj <- MajorityVote(sc_obj, best_res)
 # To decide which clusters we need to remove, we will use two tactics:
 # 1. Capture information about cell type distributions in each cluster (and cluster mean S score, G2M score, and CC diff for cell cycle info)
 #    High S score and high G2M score seem to indicate Proliferating cluster
-# 1
 raw_cluster_info <- capture_cluster_info(sc_obj)
 
 # Remove messy clusters
