@@ -18,7 +18,6 @@ library(SoupX)
 ################## SETUP ##################
 date <- Sys.Date()
 home_dir <- "~/"
-
 # Load SPEEDI (for RNA-seq analyses)
 SPEEDI_dir <- paste0(home_dir, "SPEEDI")
 source(paste0(SPEEDI_dir, "/prototype_API.R"))
@@ -164,7 +163,9 @@ if(analysis_type == "RNA_seq") {
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "viral_load", plot_dir, paste0("post.clusters_by_viral_load_", date, ".png"))
+    # Combine cell types for MAGICAL and other analyses that require snATAC-seq (granularity isn't as good for ATAC-seq)
     sc_obj <- combine_cell_types_magical(sc_obj, 1.5)
+    # Run differential expression for each cell type within each group of interest
     run_differential_expression(sc_obj, analysis_dir, "viral_load")
     run_differential_expression(sc_obj, analysis_dir, "day")
     run_differential_expression(sc_obj, analysis_dir, "sex")
