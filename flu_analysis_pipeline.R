@@ -144,7 +144,7 @@ if(analysis_type == "RNA_seq") {
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # Load sc_obj
-    load(file = paste0(analysis_dir, "7_sc_obj.rds"))
+    load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # We can use clustree to help us figure out the best resolution
     print_clustree_plot(sc_obj, plot_dir, date)
     # Re-run majority vote with best resolution
@@ -152,6 +152,14 @@ if(analysis_type == "RNA_seq") {
     sc_obj <- MajorityVote(sc_obj, best_res)
     # To decide which clusters we need to remove, we will capture information about clusters and remove messy clusters
     raw_cluster_info <- capture_cluster_info(sc_obj)
+    cluster_ids <- unique(sc_obj$seurat_clusters)
+    for(cluster_id in cluster_ids) {
+      print(cluster_id)
+      cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id, assay = "SCT")
+      write.table(cluster.markers, paste0(analysis_dir, "7_markers_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
+    }
+    
+    
     # Remove messy clusters and print plots
     messy_clusters <- c(0,18,25,28,35,36,38,39,41,42,44,45,46,49,50,52,53,59)
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)
