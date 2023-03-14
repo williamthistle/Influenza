@@ -158,7 +158,7 @@ if(analysis_type == "RNA_seq") {
     raw_cluster_info <- capture_cluster_info(sc_obj)
     run_differential_expression_cluster(sc_obj, marker_dir)
     # Remove messy clusters and print plots
-    messy_clusters <- c(0,18,25,28,35,36,38,39,41,42,44,45,46,49,50,52,53,59)
+    messy_clusters <- c(0,18,22,25,28,35,36,38,39,41,42,44,45,46,49,50,52,53,59)
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)
     cellsPass <- names(sc_obj$orig.ident[-idxPass])
     sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)

@@ -206,6 +206,8 @@ print_celltype_counts <- function(sc_obj) {
     sample_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     print(length(cellsPass))
     print(table(sample_subset$viral_load))
+    print(table(sample_subset$day))
+    print(table(sample_subset$sex))
   }
 }
 
