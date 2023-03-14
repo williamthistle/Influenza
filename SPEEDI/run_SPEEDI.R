@@ -480,4 +480,17 @@ for(cluster_id in unique(sc_obj$seurat_clusters)) {
   print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_without_cluster_", cluster_id, "_", date, ".png"))
 }
 
+# 2. Look at what each cluster looks like individually
+for(cluster_id in unique(sc_obj$seurat_clusters)) {
+  print(cluster_id)
+  # Remove current cluster
+  idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
+  cellsPass <- names(sc_obj$orig.ident[idxPass])
+  sc_obj.minus.current.cluster <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  # Print cell type plot without cluster
+  print_UMAP(sc_obj.minus.current.cluster, sample_count, "predicted_celltype_majority_vote", output_dir, naming_token, paste0("_clusters_by_cell_type_cluster_", cluster_id, "_", date, ".png"))
+}
+
+
+
 
