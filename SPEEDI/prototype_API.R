@@ -243,6 +243,7 @@ combine_cell_types_magical <- function(sc_obj, resolution = 1.5) {
 }
 
 run_differential_expression_cluster <- function(sc_obj, analysis_dir) {
+  print(paste0("Performing differential expression for each cluster"))
   cluster_ids <- unique(sc_obj$seurat_clusters)
   for(cluster_id in cluster_ids) {
     print(cluster_id)
@@ -251,7 +252,7 @@ run_differential_expression_cluster <- function(sc_obj, analysis_dir) {
   }
 }
 
-run_differential_expression_cell_type <- function(sc_obj, analysis_dir, group) {
+run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
   print(paste0("Performing differential expression for group ", group, " for each cell type"))
   all_cell_types <- union(unique(sc_obj$predicted_celltype_majority_vote), unique(sc_obj$magical_cell_types))
   for (cell_type in all_cell_types) {

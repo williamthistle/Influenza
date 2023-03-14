@@ -144,7 +144,7 @@ if(analysis_type == "RNA_seq") {
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # Load sc_obj
-    load(file = paste0(analysis_dir, "7_sc_obj.rds"))
+    load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # We can use clustree to help us figure out the best resolution
     print_clustree_plot(sc_obj, plot_dir, date)
     # Re-run majority vote with best resolution
