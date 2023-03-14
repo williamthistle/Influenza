@@ -150,8 +150,10 @@ if(analysis_type == "RNA_seq") {
     # Re-run majority vote with best resolution
     best_res <- 3
     sc_obj <- MajorityVote(sc_obj, best_res)
-    # To decide which clusters we need to remove, we will capture information about clusters and remove messy clusters
+    # To decide which clusters we need to remove, we will capture information about clusters
+    # We will also run DE for each cluster to find cell type markers
     raw_cluster_info <- capture_cluster_info(sc_obj)
+    run_differential_expression_cluster(sc_obj, analysis_dir)
     # Remove messy clusters and print plots
     messy_clusters <- c(0,18,25,28,35,36,38,39,41,42,44,45,46,49,50,52,53,59)
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)
@@ -166,9 +168,9 @@ if(analysis_type == "RNA_seq") {
     # Combine cell types for MAGICAL and other analyses that require snATAC-seq (granularity isn't as good for ATAC-seq)
     sc_obj <- combine_cell_types_magical(sc_obj, 1.5)
     # Run differential expression for each cell type within each group of interest
-    run_differential_expression(sc_obj, analysis_dir, "viral_load")
-    run_differential_expression(sc_obj, analysis_dir, "day")
-    run_differential_expression(sc_obj, analysis_dir, "sex")
+    run_differential_expression_cell_type(sc_obj, analysis_dir, "viral_load")
+    run_differential_expression_cell_type(sc_obj, analysis_dir, "day")
+    run_differential_expression_cell_type(sc_obj, analysis_dir, "sex")
 
   }
 } else if(analysis_type == "ATAC_seq") {
