@@ -60,6 +60,9 @@ if (!dir.exists(analysis_dir)) {dir.create(analysis_dir)}
 # Directory for analysis plots
 plot_dir <- paste0(analysis_dir, "plots/")
 if (!dir.exists(plot_dir)) {dir.create(plot_dir)}
+# Directory for markers
+marker_dir <- paste0(analysis_dir, "markers/")
+if (!dir.exists(marker_dir)) {dir.create(marker_dir)}
 
 # Identify high / low viral load samples, D28 / D-1 samples, and M / F samples
 # Subset metadata to only contain our sample_ids
@@ -153,7 +156,7 @@ if(analysis_type == "RNA_seq") {
     # To decide which clusters we need to remove, we will capture information about clusters
     # We will also run DE for each cluster to find cell type markers
     raw_cluster_info <- capture_cluster_info(sc_obj)
-    run_differential_expression_cluster(sc_obj, analysis_dir)
+    run_differential_expression_cluster(sc_obj, marker_dir)
     # Remove messy clusters and print plots
     messy_clusters <- c(0,18,25,28,35,36,38,39,41,42,44,45,46,49,50,52,53,59)
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)

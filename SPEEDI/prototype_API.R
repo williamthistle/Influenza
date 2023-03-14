@@ -242,13 +242,13 @@ combine_cell_types_magical <- function(sc_obj, resolution = 1.5) {
   return(sc_obj)
 }
 
-run_differential_expression_cluster <- function(sc_obj, analysis_dir) {
+run_differential_expression_cluster <- function(sc_obj, marker_dir) {
   print(paste0("Performing differential expression for each cluster"))
   cluster_ids <- unique(sc_obj$seurat_clusters)
   for(cluster_id in cluster_ids) {
     print(cluster_id)
     cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id, assay = "SCT")
-    write.table(cluster.markers, paste0(analysis_dir, "7_", naming_token, "_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
+    write.table(cluster.markers, paste0(marker_dir, "7_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
   }
 }
 
