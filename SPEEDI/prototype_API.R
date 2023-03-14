@@ -424,7 +424,7 @@ capture_cluster_info <- function(sc_obj) {
     cluster_mean_G2M_score <- append(cluster_mean_G2M_score, mean(filtered_cluster$G2M.Score))
     cluster_mean_CC_difference <- append(cluster_mean_CC_difference, mean(filtered_cluster$CC.Difference))
     # High
-    idxPass <- which(filtered_cluster$viral_load %in% "HIGH")
+    idxPass <- which(filtered_cluster$viral_load %in% "HVL")
     cellsPass <- names(filtered_cluster$orig.ident[idxPass])
     num_cells_high <- c(num_cells_high, length(cellsPass))
     if(length(cellsPass) > 0) {
@@ -442,7 +442,7 @@ capture_cluster_info <- function(sc_obj) {
       #cluster_mean_doublet_high <- c(cluster_mean_doublet_high, NA)
     }
     # Low
-    idxPass <- which(filtered_cluster$viral_load %in% "LOW")
+    idxPass <- which(filtered_cluster$viral_load %in% "LVL")
     cellsPass <- names(filtered_cluster$orig.ident[idxPass])
     num_cells_low <- c(num_cells_low, length(cellsPass))
     if(length(cellsPass) > 0) {
