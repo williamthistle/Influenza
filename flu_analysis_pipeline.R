@@ -14,6 +14,7 @@ library(BiocParallel)
 library(stringr)
 library(writexl)
 library(SoupX)
+library(SingleR)
 
 ################## SETUP ##################
 date <- Sys.Date()
@@ -88,9 +89,9 @@ save_progress <- FALSE
 # record_doublets: If you want to run scDblFinder and record which cells are doublets
 # run_qc: If you want to plot QC metrics (and not run the rest of the pipeline)
 # run_soup: If you want to remove ambient RNA using SoupX
-record_doublets = FALSE
-run_qc = FALSE
-run_soup = FALSE
+record_doublets <- FALSE
+run_qc <- FALSE
+run_soup <- FALSE
 # Parameters for processing ATAC-seq data
 # TODO
 ################## ANALYSIS ##################
@@ -148,6 +149,7 @@ if(analysis_type == "RNA_seq") {
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # Load sc_obj
     load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
+    load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     print_clustree_plot(sc_obj, plot_dir, date)
     # Re-run majority vote with best resolution
@@ -164,6 +166,7 @@ if(analysis_type == "RNA_seq") {
     sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
+    cluster_info_minus_messy_clusters <- capture_cluster_info(sc_obj.minus.messy.clusters)
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))
