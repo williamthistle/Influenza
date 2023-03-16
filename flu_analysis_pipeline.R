@@ -178,7 +178,8 @@ if(analysis_type == "RNA_seq") {
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "day", plot_dir, paste0("post.clusters_by_day_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "sex", plot_dir, paste0("post.clusters_by_sex_", date, ".png"))
     # Combine cell types for MAGICAL and other analyses that require snATAC-seq (granularity isn't as good for ATAC-seq)
-    sc_obj <- combine_cell_types_magical(sc_obj.minus.messy.clusters, best_res)
+    sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters, best_res)
+    sc_obj.minus.messy.clusters$magical_cell_types <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote
     # Run differential expression for each cell type within each group of interest
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "viral_load")
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "day")
