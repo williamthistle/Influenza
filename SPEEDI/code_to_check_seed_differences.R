@@ -275,7 +275,7 @@ for(cluster_id in unique(marker_file_content$cluster)) {
 }
 
 # Code to parse DEG markers into positive and negative fold change and change Bonferroni to FDR
-marker_dir <- "C:/Users/wat2/Desktop/02-28/DEGs/"
+marker_dir <- "C:/Users/wat2/Desktop/multiome junk/03-16/"
 output_dir <- paste0(marker_dir, "PROCESSED/")
 dir.create(file.path(output_dir), showWarnings = FALSE)
 marker_files <- list.files(marker_dir, pattern = "*.csv$", full.names = TRUE)

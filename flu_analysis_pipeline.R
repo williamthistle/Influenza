@@ -28,7 +28,7 @@ sample_metadata <- read.table(paste0(SPEEDI_dir, "/sample_metadata.tsv"), sep = 
 
 # Declare data and analysis type
 data_type <- "multiome" # Can be multiome or single_cell
-analysis_type <- "RNA-seq" # Can be RNA-seq or ATAC-seq
+analysis_type <- "ATAC-seq" # Can be RNA-seq or ATAC-seq
 
 # Directory where all data are for data_type specified above
 data_path <- paste0(home_dir, data_type, "/data/")
@@ -184,10 +184,108 @@ if(analysis_type == "RNA_seq") {
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "viral_load")
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "day")
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "sex")
-
   }
 } else if(analysis_type == "ATAC_seq") {
-  
+  # Label input files
+  inputFiles <- paste0(data_path, sample_id_list, "/outs/atac_fragments.tsv.gz")
+  names(inputFiles) <- names(metadata) <- all_viral_load_samples
+  metadata <- c(rep("HVL", length(high_viral_load_samples)), rep("LVL", length(low_viral_load_samples)))
+  names(metadata) <- all_viral_load_samples
+  # Add relevant genome for ArchR
+  addArchRGenome("hg38")
+  # Create arrow files from raw input fragment files
+  ArrowFiles <- createArrowFiles(
+    inputFiles = inputFiles,
+    sampleNames = names(inputFiles),
+    minTSS = 4, #Don't set this too high because you can always increase later
+    minFrags = 3000,
+    maxFrags = 30000,
+    addTileMat = TRUE,
+    addGeneScoreMat = TRUE
+  )
+  # Add doublet scores for each sample (will take a while)
+  doubScores <- addDoubletScores(
+    input = ArrowFiles,
+    k = 10, #Refers to how many cells near a "pseudo-doublet" to count.
+    knnMethod = "UMAP", #Refers to the embedding to use for nearest neighbor search.
+    LSIMethod = 1
+  )
+  # Create and save ArchR project based on arrow files
+  proj <- ArchRProject(
+    ArrowFiles = ArrowFiles, 
+    outputDirectory = paste0(analysis_dir, "ArchR/"),
+    copyArrows = FALSE #This is recommended so that you maintain an unaltered copy for later usage.
+  )
+  saveArchRProject(ArchRProj = proj, load = FALSE)
+  # Load ArchR project 
+  proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
+  aa<-proj$Sample
+  idxSample <- which(proj$Sample %in% high_viral_load_samples)
+  aa[idxSample]<-'HVL'
+  idxSample <- which(proj$Sample %in% low_viral_load_samples)
+  aa[idxSample]<-'LVL'
+  proj <- addCellColData(ArchRProj = proj, data = aa, cells = proj$cellNames,name = "Conditions", force = TRUE)
+  # Plot what dataset looks like before any processing
+  addArchRThreads(threads = 8)
+  proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
+                          clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
+                          varFeatures = 15000, dims = 2:30)
+  proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
+  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+  plotPDF(p1, name = "Dataset_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
+  # Plot out TSS Enrichment / Doublet Enrichment / Nucleosome Ratio for each sample
+  p1 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "TSSEnrichment", plotAs = "ridges")
+  p2 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "DoubletEnrichment", plotAs = "ridges")
+  p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "NucleosomeRatio", plotAs = "ridges")
+  plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
+  # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
+  idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 3) 
+  cellsPass <- proj$cellNames[idxPass]
+  proj<-proj[cellsPass, ]
+  # List number of D1 and D28 cells and list number of cells remaining for each sample
+  table(proj$Conditions)
+  table(proj$Sample)
+  # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 
+  # and add cluster information (addClusters)
+  addArchRThreads(threads = 8)
+  proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
+                          clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
+                          varFeatures = 15000, dims = 2:30)
+  proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
+  proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 4, knnAssign = 30, maxClusters = NULL, force = TRUE)
+  # UMAP plots colored by condition, sample, cluster ID, and TSS enrichment
+  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Conditions", embedding = "UMAP", force = TRUE)
+  p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+  p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
+  p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
+  plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_snRNA_doublets_removed.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  reference_dir <- "~/reference/"
+  if (!dir.exists(reference_dir)) {dir.create(reference_dir)}
+  scRNA <- LoadH5Seurat(paste0(reference_dir, "multi.h5seurat"))
+  # Remove certain cell types we're not interested in
+  idx <- which(scRNA$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+  scRNA <- scRNA[,-idx]
+  idx <- which(scRNA$celltype.l3 == "Treg Naive")
+  scRNA <- scRNA[,-idx]
+  # Rename CD4 Proliferating and CD8 Proliferating to T Proliferating
+  idx <- which(scRNA$celltype.l2 %in% c("CD4 Proliferating", "CD8 Proliferating"))
+  scRNA$celltype.l2[idx] <- "T Proliferating"
+  addArchRThreads(threads = 8)
+  proj <- addGeneIntegrationMatrix(
+    ArchRProj = proj, 
+    useMatrix = "GeneScoreMatrix",
+    matrixName = "GeneIntegrationMatrix",
+    reducedDims = "IterativeLSI",#Harmony
+    seRNA = scRNA,
+    addToArrow = FALSE,
+    groupRNA = "celltype.l2",
+    nameCell = "predictedCell",
+    nameGroup = "predictedGroup",
+    nameScore = "predictedScore",
+    normalization.method = "SCT",
+    force = TRUE
+  )
+  rm(scRNA)
   
 } else {
   stop("Invalid analysis type")

@@ -111,7 +111,7 @@ p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", 
 plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 
 # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
+idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < ) 
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
 
@@ -167,7 +167,7 @@ scRNA$celltype.l2[idx] <- "T Proliferating"
 save.image(paste0(image_dir, "atac_before_gene_integration_matrix.RData"))
 
 # Integrate scRNA-seq reference data into scATAC-seq data
-addArchRThreads(threads = 6)
+addArchRThreads(threads = 8)
 proj <- addGeneIntegrationMatrix(
   ArchRProj = proj, 
   useMatrix = "GeneScoreMatrix",
