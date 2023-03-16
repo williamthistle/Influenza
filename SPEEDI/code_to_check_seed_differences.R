@@ -250,8 +250,8 @@ ggsave(paste0(output_dir, naming_token, "_doublet_score_ridge_plot_", date, ".pn
 
 
 # Code to parse marker tables
-marker_dir <- "C:/Users/wat2/Desktop/multiome junk/03-14/markers/"
-output_dir <- "C:/Users/wat2/Desktop/multiome junk/03-14/markers/UPDATED/"
+marker_dir <- "C:/Users/willi/Desktop/multiome junk/03-15/markers/"
+output_dir <- "C:/Users/willi/Desktop/multiome junk/03-15/markers/UPDATED/"
 marker_files <- list.files(marker_dir, pattern = "*.txt$", full.names = TRUE)
 for(marker_file in marker_files) {
   marker_file_content <- read.table(marker_file)

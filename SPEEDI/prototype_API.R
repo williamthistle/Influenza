@@ -244,6 +244,20 @@ combine_cell_types_magical <- function(sc_obj, resolution = 1.5) {
   return(sc_obj)
 }
 
+override_cluster_label <- function(sc_obj, cluster_nums, new_cluster_label) {
+  for(cluster_id in cluster_nums) {
+    print(cluster_id)
+    if(!(new_cluster_label %in% levels(sc_obj$predicted_celltype_majority_vote))) {
+      levels(sc_obj$predicted_celltype_majority_vote) <- c(levels(sc_obj$predicted_celltype_majority_vote), new_cluster_label)
+    }
+    majority_vote <- sc_obj$predicted_celltype_majority_vote
+    idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
+    majority_vote[idxPass] <- new_cluster_label
+    sc_obj$predicted_celltype_majority_vote <- majority_vote
+  }
+  return(sc_obj)
+}
+
 run_differential_expression_cluster <- function(sc_obj, marker_dir) {
   print(paste0("Performing differential expression for each cluster"))
   cluster_ids <- unique(sc_obj$seurat_clusters)
@@ -277,7 +291,7 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
       second_group <- "LOW"
     } else if(group == "day") {
       first_group <- "D28"
-      second_group <- "D_minus_1"
+      second_group <- "D_MINUS_1"
     } else if(group == "sex") {
       first_group <- "MALE"
       second_group <- "FEMALE"
