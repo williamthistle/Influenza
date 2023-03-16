@@ -206,6 +206,8 @@ print_celltype_counts <- function(sc_obj) {
     sample_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     print(length(cellsPass))
     print(table(sample_subset$viral_load))
+    print(table(sample_subset$day))
+    print(table(sample_subset$sex))
   }
 }
 
@@ -242,6 +244,20 @@ combine_cell_types_magical <- function(sc_obj, resolution = 1.5) {
   return(sc_obj)
 }
 
+override_cluster_label <- function(sc_obj, cluster_nums, new_cluster_label) {
+  for(cluster_id in cluster_nums) {
+    print(cluster_id)
+    if(!(new_cluster_label %in% levels(sc_obj$predicted_celltype_majority_vote))) {
+      levels(sc_obj$predicted_celltype_majority_vote) <- c(levels(sc_obj$predicted_celltype_majority_vote), new_cluster_label)
+    }
+    majority_vote <- sc_obj$predicted_celltype_majority_vote
+    idxPass <- which(Idents(sc_obj) %in% c(cluster_id))
+    majority_vote[idxPass] <- new_cluster_label
+    sc_obj$predicted_celltype_majority_vote <- majority_vote
+  }
+  return(sc_obj)
+}
+
 run_differential_expression_cluster <- function(sc_obj, marker_dir) {
   print(paste0("Performing differential expression for each cluster"))
   cluster_ids <- unique(sc_obj$seurat_clusters)
@@ -254,8 +270,28 @@ run_differential_expression_cluster <- function(sc_obj, marker_dir) {
 
 run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
   print(paste0("Performing differential expression for group ", group, " for each cell type"))
+  
+  # Make reading data parallel
+  if (Sys.getenv("SLURM_NTASKS_PER_NODE") == "") {
+    n.cores <- as.numeric(detectCores())
+  } else {
+    n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
+  }
+  
+  n.cores <- 8
+  
+  message(paste0("Number of cores: ", n.cores))
+  
+  registerDoMC(n.cores)
+  message("Begin parallelizing...")
+  
   all_cell_types <- union(unique(sc_obj$predicted_celltype_majority_vote), unique(sc_obj$magical_cell_types))
-  for (cell_type in all_cell_types) {
+  
+  compiled_output <- foreach(
+    i = 1:length(all_cell_types),
+    .packages = c("Seurat", "base")
+  ) %dopar% {
+    cell_type <- all_cell_types[[i]]
     print(cell_type)
     if(cell_type %in% unique(sc_obj$predicted_celltype_majority_vote)) {
       idxPass <- which(sc_obj$predicted_celltype_majority_vote %in% cell_type)
@@ -267,7 +303,7 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
     cellsPass <- names(sc_obj$orig.ident[idxPass])
     cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     # TODO: Make this print table for relevant group
-    print(table(cells_subset$viral_load))
+    #print(table(cells_subset$viral_load))
     DefaultAssay(cells_subset) <- "SCT"
     Idents(cells_subset) <- group
     if(group == "viral_load") {
@@ -275,7 +311,7 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
       second_group <- "LOW"
     } else if(group == "day") {
       first_group <- "D28"
-      second_group <- "D_minus_1"
+      second_group <- "D_MINUS_1"
     } else if(group == "sex") {
       first_group <- "MALE"
       second_group <- "FEMALE"
@@ -283,7 +319,9 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
     diff_markers <- FindMarkers(cells_subset, ident.1 = first_group, ident.2 = second_group, assay = "SCT", recorrect_umi = FALSE, logfc.threshold = 0, min.pct = 0)
     cell_type <- sub(" ", "_", cell_type)
     write.csv(diff_markers, paste0(analysis_dir, "HIGH-vs-LOW-degs-", cell_type, ".csv"), quote = FALSE)
+    return(i)
   }
+  print(paste0("Done performing differential expression for group ", group, " for each cell type"))
 }
 
 create_magical_cell_type_proportion_file <- function(sc_obj, group) {

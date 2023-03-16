@@ -14,6 +14,7 @@ library(BiocParallel)
 library(stringr)
 library(writexl)
 library(SoupX)
+library(SingleR)
 
 ################## SETUP ##################
 date <- Sys.Date()
@@ -88,9 +89,9 @@ save_progress <- FALSE
 # record_doublets: If you want to run scDblFinder and record which cells are doublets
 # run_qc: If you want to plot QC metrics (and not run the rest of the pipeline)
 # run_soup: If you want to remove ambient RNA using SoupX
-record_doublets = FALSE
-run_qc = FALSE
-run_soup = FALSE
+record_doublets <- FALSE
+run_qc <- FALSE
+run_soup <- FALSE
 # Parameters for processing ATAC-seq data
 # TODO
 ################## ANALYSIS ##################
@@ -138,7 +139,7 @@ if(analysis_type == "RNA_seq") {
     sc_obj <- MapCellTypes(sc_obj, reference, data_type = "snRNA")
     rm(reference)
     # Combine cell types and re-do majority vote
-    sc_obj <- combine_cell_types_initial(sc_obj, resolution = 1.5)
+    sc_obj <- combine_cell_types_initial(sc_obj, resolution = 3)
     # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
     print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("pre.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj, sample_count, "seurat_clusters", plot_dir, paste0("pre.clusters_by_cluster_num_", date, ".png"))
@@ -148,6 +149,7 @@ if(analysis_type == "RNA_seq") {
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # Load sc_obj
     load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
+    load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     print_clustree_plot(sc_obj, plot_dir, date)
     # Re-run majority vote with best resolution
@@ -158,22 +160,30 @@ if(analysis_type == "RNA_seq") {
     raw_cluster_info <- capture_cluster_info(sc_obj)
     run_differential_expression_cluster(sc_obj, marker_dir)
     # Remove messy clusters and print plots
-    messy_clusters <- c(0,18,25,28,35,36,38,39,41,42,44,45,46,49,50,52,53,59)
+    messy_clusters <- c(0,18,20,22,25,28,33,35,36,38,39,40,41,42,44,45,46,49,50,52,53,59)
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)
     cellsPass <- names(sc_obj$orig.ident[-idxPass])
     sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+    # Override labels manually where necessary
+    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
+    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
+    #cluster_info_minus_messy_clusters <- capture_cluster_info(sc_obj.minus.messy.clusters)
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "viral_load", plot_dir, paste0("post.clusters_by_viral_load_", date, ".png"))
+    print_UMAP(sc_obj.minus.messy.clusters, sample_count, "sample", plot_dir, paste0("post.clusters_by_sample_", date, ".png"))
+    print_UMAP(sc_obj.minus.messy.clusters, sample_count, "day", plot_dir, paste0("post.clusters_by_day_", date, ".png"))
+    print_UMAP(sc_obj.minus.messy.clusters, sample_count, "sex", plot_dir, paste0("post.clusters_by_sex_", date, ".png"))
     # Combine cell types for MAGICAL and other analyses that require snATAC-seq (granularity isn't as good for ATAC-seq)
-    sc_obj <- combine_cell_types_magical(sc_obj, 1.5)
+    sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters, best_res)
+    sc_obj.minus.messy.clusters$magical_cell_types <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote
     # Run differential expression for each cell type within each group of interest
-    run_differential_expression_cell_type(sc_obj, analysis_dir, "viral_load")
-    run_differential_expression_cell_type(sc_obj, analysis_dir, "day")
-    run_differential_expression_cell_type(sc_obj, analysis_dir, "sex")
+    run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "viral_load")
+    run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "day")
+    run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "sex")
 
   }
 } else if(analysis_type == "ATAC_seq") {

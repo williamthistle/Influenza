@@ -88,7 +88,7 @@ proj <- ArchRProject(
 # Filter out doublets (fake cells)
 proj <- filterDoublets(ArchRProj = proj)
 
-save.image(paste0(image_dir, "atac_after_filtering_doublets.RData"))
+load(paste0(image_dir, "atac_after_filtering_doublets.RData"))
 
 # List information about available matrices in project
 getAvailableMatrices(proj)
@@ -360,6 +360,8 @@ for (cell_type in unique(proj_minus_clusters$Cell_type_voting)) {
   print(table(filtered_cluster$Conditions))
 }
 
+saveArchRProject(ArchRProj = proj, outputDirectory = "final-HVL-vs-LVL-multiome-female_unfiltered", load = FALSE)
+
 
 # Print final integrated data with cell type predictions
 p1 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
@@ -370,7 +372,7 @@ p4 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", na
 
 
 
-plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1_With_snRNA_minus_clusters_combined_T_5_CD16Mono_Override_FINAL.pdf", ArchRProj = proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1_With_snRNA_minus_clusters_combined_T_5_CD16Mono_Override_FINAL_test.pdf", ArchRProj = proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
 plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE) + 
   labs(title = "snATAC-seq Data Integration \n (7 Samples, 42K Cells)") + 
   theme(plot.title = element_text(hjust = 0.5)) + theme(legend.text=element_text(size=12)) +

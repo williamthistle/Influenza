@@ -380,8 +380,10 @@ singler.fine <- SingleR(test = gene_expression,
                         BPPARAM=MulticoreParam(7))
 labels <- singler.fine$pruned.labels
 names(labels) <- row.names(singler.fine)
+table(labels)
 sc_obj$SingleR_labels <- labels
-save(sc_obj, file = paste0(output_dir, "7_", naming_token, "_sc_obj_with_singleR.rds"))
+table(sc_obj$SingleR_labels)
+load(paste0(analysis_dir, "singler_labels.rds"))
 
 # Look at platelets
 idxPass <- which(sc_obj$predicted.id.with.platelets %in% "Platelet")
