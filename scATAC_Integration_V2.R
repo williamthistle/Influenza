@@ -111,7 +111,7 @@ p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", 
 plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 
 # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < ) 
+idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 3) 
 cellsPass <- proj$cellNames[idxPass]
 proj<-proj[cellsPass, ]
 
