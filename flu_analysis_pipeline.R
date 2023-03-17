@@ -81,6 +81,9 @@ all_sex_samples <- c(male_samples, female_samples)
 
 # Organize sample list by high viral load followed by low viral load
 sample_id_list <- sample_id_list[order(match(sample_id_list, all_viral_load_samples))]
+# Sort other types of samples according to viral load order
+#all_day_samples <- all_day_samples[order(match(all_day_samples, all_viral_load_samples))]
+#all_sex_samples <- all_sex_samples[order(match(all_sex_samples, all_viral_load_samples))]
 
 # Parameters for processing both RNA-seq and ATAC data
 # save_progress: If you want to save your progress
@@ -188,9 +191,14 @@ if(analysis_type == "RNA_seq") {
 } else if(analysis_type == "ATAC_seq") {
   # Label input files
   inputFiles <- paste0(data_path, sample_id_list, "/outs/atac_fragments.tsv.gz")
-  names(inputFiles) <- names(metadata) <- all_viral_load_samples
-  metadata <- c(rep("HVL", length(high_viral_load_samples)), rep("LVL", length(low_viral_load_samples)))
-  names(metadata) <- all_viral_load_samples
+  names(inputFiles) <- all_viral_load_samples
+  viral_load_metadata <- c(rep("HVL", length(high_viral_load_samples)), rep("LVL", length(low_viral_load_samples)))
+  names(viral_load_metadata) <- all_viral_load_samples
+  day_metadata <- c(rep("D28", length(d28_samples)), rep("D_MINUS_1", length(d_minus_1_samples)))
+  names(viral_load_metadata) <- all_day_samples
+  
+  
+  
   # Add relevant genome for ArchR
   addArchRGenome("hg38")
   # Create arrow files from raw input fragment files
