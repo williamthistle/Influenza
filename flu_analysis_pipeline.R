@@ -96,12 +96,14 @@ record_doublets <- FALSE
 run_qc <- FALSE
 run_soup <- FALSE
 # Parameters for processing ATAC-seq data
+# use_rna_labels: Uses labels from the RNA data on the ATAC-data (we assume these labels are more accurate than what the GeneIntegrationMatrix finds)
+use_rna_labels <- TRUE
 # TODO
 ################## ANALYSIS ##################
 if(analysis_type == "RNA_seq") {
   # Step 1 - grab matrices
   if(run_soup) {
-    # TODO: Can I make this parallel?
+    # TODO: Make this parallel
     all_sc_exp_matrices <- process_matrices_through_soup(data_path, sample_id_list)
   } else {
     all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
@@ -162,7 +164,7 @@ if(analysis_type == "RNA_seq") {
     # We will also run DE for each cluster to find cell type markers
     raw_cluster_info <- capture_cluster_info(sc_obj)
     run_differential_expression_cluster(sc_obj, marker_dir)
-    # Remove messy clusters and print plots
+    # Remove messy clusters
     messy_clusters <- c(0,18,20,22,25,28,33,35,36,38,39,40,41,42,44,45,46,49,50,52,53,59)
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)
     cellsPass <- names(sc_obj$orig.ident[-idxPass])
@@ -170,9 +172,10 @@ if(analysis_type == "RNA_seq") {
     # Override labels manually where necessary
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
+    # Print info about sample representation and breakdown of categories per cell type
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
-    #cluster_info_minus_messy_clusters <- capture_cluster_info(sc_obj.minus.messy.clusters)
+    # Print plots
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))
@@ -180,9 +183,12 @@ if(analysis_type == "RNA_seq") {
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "sample", plot_dir, paste0("post.clusters_by_sample_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "day", plot_dir, paste0("post.clusters_by_day_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "sex", plot_dir, paste0("post.clusters_by_sex_", date, ".png"))
+    # write cells and associated cell type majority predictions to file (for ATAC-seq labeling)
+    cells_for_ATAC <- data.frame("cells" = sc_obj.minus.messy.clusters$cell_name, voted_type = sc_obj.minus.messy.clusters$predicted_celltype_majority_vote)
+    write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, ".csv"), quote = FALSE, row.names = FALSE)
     # Combine cell types for MAGICAL and other analyses that require snATAC-seq (granularity isn't as good for ATAC-seq)
     sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters, best_res)
-    sc_obj.minus.messy.clusters$magical_cell_types <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote
+    #sc_obj.minus.messy.clusters$magical_cell_types <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote # This is if MAGICAL cell types == RNA-seq cell types
     # Run differential expression for each cell type within each group of interest
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "viral_load")
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "day")
@@ -194,11 +200,6 @@ if(analysis_type == "RNA_seq") {
   names(inputFiles) <- all_viral_load_samples
   viral_load_metadata <- c(rep("HVL", length(high_viral_load_samples)), rep("LVL", length(low_viral_load_samples)))
   names(viral_load_metadata) <- all_viral_load_samples
-  day_metadata <- c(rep("D28", length(d28_samples)), rep("D_MINUS_1", length(d_minus_1_samples)))
-  names(viral_load_metadata) <- all_day_samples
-  
-  
-  
   # Add relevant genome for ArchR
   addArchRGenome("hg38")
   # Create arrow files from raw input fragment files
@@ -227,12 +228,27 @@ if(analysis_type == "RNA_seq") {
   saveArchRProject(ArchRProj = proj, load = FALSE)
   # Load ArchR project 
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
-  aa<-proj$Sample
+  # Add viral load metadata to ArchR object
+  viral_load_vector <- proj$Sample
   idxSample <- which(proj$Sample %in% high_viral_load_samples)
-  aa[idxSample]<-'HVL'
+  viral_load_vector[idxSample]<-'HVL'
   idxSample <- which(proj$Sample %in% low_viral_load_samples)
-  aa[idxSample]<-'LVL'
-  proj <- addCellColData(ArchRProj = proj, data = aa, cells = proj$cellNames,name = "Conditions", force = TRUE)
+  viral_load_vector[idxSample]<-'LVL'
+  proj <- addCellColData(ArchRProj = proj, data = viral_load_vector, cells = proj$cellNames,name = "viral_load", force = TRUE)
+  # Add day metadata to ArchR object
+  day_vector <- proj$Sample
+  idxSample <- which(proj$Sample %in% d28_samples)
+  day_vector[idxSample]<-'D28'
+  idxSample <- which(proj$Sample %in% d_minus_1_samples)
+  day_vector[idxSample]<-'D_MINUS_1'
+  proj <- addCellColData(ArchRProj = proj, data = day_vector, cells = proj$cellNames,name = "day", force = TRUE)
+  # Add sex metadata to ArchR object
+  sex_vector <- proj$Sample
+  idxSample <- which(proj$Sample %in% male_samples)
+  sex_vector[idxSample]<-'MALE'
+  idxSample <- which(proj$Sample %in% female_samples)
+  sex_vector[idxSample]<-'FEMALE'
+  proj <- addCellColData(ArchRProj = proj, data = sex_vector, cells = proj$cellNames,name = "sex", force = TRUE)
   # Plot what dataset looks like before any processing
   addArchRThreads(threads = 8)
   proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
@@ -247,11 +263,13 @@ if(analysis_type == "RNA_seq") {
   p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "NucleosomeRatio", plotAs = "ridges")
   plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
   # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-  idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
+  idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 3) 
   cellsPass <- proj$cellNames[idxPass]
   proj<-proj[cellsPass, ]
-  # List number of D1 and D28 cells and list number of cells remaining for each sample
-  table(proj$Conditions)
+  # List number of cells remaining for each condition and each sample
+  table(proj$viral_load)
+  table(proj$day)
+  table(proj$sex)
   table(proj$Sample)
   # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 
   # and add cluster information (addClusters)
@@ -298,6 +316,19 @@ if(analysis_type == "RNA_seq") {
   pal <- paletteDiscrete(values = proj$predictedGroup)
   p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
   plotPDF(p1, name = "Integrated_annotated_gene_integration_matrix.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  # Add labels from RNA-seq data
+  if(use_rna_labels) {
+    curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, "rna_seq_labeled_cells_", date, ".csv"), comment.char = "")
+    predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
+    for(current_row in 1:nrow(predicted_snATAC_cells)) {
+      current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
+      if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
+        current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
+        predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
+      }
+    }
+    proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
+  }
   # Combine cell types
   Cell_type_combined = proj$predictedGroup
   idx <- grep("CD4 T", Cell_type_combined)
@@ -314,6 +345,11 @@ if(analysis_type == "RNA_seq") {
   pal <- paletteDiscrete(values = proj$predictedGroup)
   p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
   plotPDF(p1, name = "Integrated_annotated_combined_gene_integration_matrix.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  # Combine other cell types
+  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD4 Naive", "T Naive")
+  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD8 Naive", "T Naive")
+  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "NK_CD56bright", "NK")
+  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "Treg", "T Naive")
   # First voting scheme
   cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
   pre_cluster <- rownames(cM)
@@ -328,7 +364,7 @@ if(analysis_type == "RNA_seq") {
   p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
   p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
   p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
-  plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Voting_1_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 } else {
   stop("Invalid analysis type")
 }
