@@ -269,7 +269,7 @@ p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type
 p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
 
 
-plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1_With_snRNA_5_Combined_T.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 
 
 # Alternative voting scheme

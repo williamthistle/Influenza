@@ -239,7 +239,7 @@ if(analysis_type == "RNA_seq") {
   p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "NucleosomeRatio", plotAs = "ridges")
   plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
   # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-  idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 3) 
+  idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 5) 
   cellsPass <- proj$cellNames[idxPass]
   proj<-proj[cellsPass, ]
   # List number of D1 and D28 cells and list number of cells remaining for each sample
@@ -286,7 +286,41 @@ if(analysis_type == "RNA_seq") {
     force = TRUE
   )
   rm(scRNA)
-  
+  saveArchRProject(ArchRProj = proj, load = FALSE)
+  pal <- paletteDiscrete(values = proj$predictedGroup)
+  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
+  plotPDF(p1, name = "Integrated_annotated_gene_integration_matrix.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  # Combine cell types
+  Cell_type_combined = proj$predictedGroup
+  idx <- grep("CD4 T", Cell_type_combined)
+  Cell_type_combined[idx] <- "CD4 Memory"
+  idx <- grep("CD8 T", Cell_type_combined)
+  Cell_type_combined[idx] <- "CD8 Memory"
+  idx <- grep("cDC", Cell_type_combined)
+  Cell_type_combined[idx] <- "cDC"
+  idx <- grep("Proliferating", Cell_type_combined)
+  Cell_type_combined[idx] <- "Proliferating"
+  idx <- grep("B", Cell_type_combined)
+  Cell_type_combined[idx] <- "B"
+  proj <- addCellColData(ArchRProj = proj, data = Cell_type_combined, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
+  pal <- paletteDiscrete(values = proj$predictedGroup)
+  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
+  plotPDF(p1, name = "Integrated_annotated_combined_gene_integration_matrix.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  # First voting scheme
+  cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
+  pre_cluster <- rownames(cM)
+  max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
+  Cell_type_voting <- proj$Clusters
+  for (m in c(1:length(pre_cluster))){
+    idxSample <- which(proj$Clusters == pre_cluster[m])
+    Cell_type_voting[idxSample] <- max_celltype[m]
+  }
+  proj <- addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
+  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
+  p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+  p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
+  p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
+  plotPDF(p1,p2,p3,p4, name = "Integrated_Clustering_Gene_Integration_Voting_1", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 } else {
   stop("Invalid analysis type")
 }
