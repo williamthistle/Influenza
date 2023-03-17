@@ -330,7 +330,7 @@ for (cluster in unique_cluster_ids) {
   cluster_cell_type_predictions <- append(cluster_cell_type_predictions, table(filtered_cluster$Cell_type_voting))
   cluster_cell_type_distributions[[idx]] <- table(filtered_cluster$predictedGroup)
   cluster_sample_distributions[[idx]] <- table(filtered_cluster$Sample)
-  cluster_conditions_distributions[[idx]] <- table(filtered_cluster$Conditions)
+  #cluster_conditions_distributions[[idx]] <- table(filtered_cluster$Conditions)
   idx <- idx + 1
 }
 names(cluster_cell_type_predictions) <- paste(unique_cluster_ids, "-", names(cluster_cell_type_predictions))

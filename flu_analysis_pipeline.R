@@ -98,6 +98,8 @@ run_soup <- FALSE
 # Parameters for processing ATAC-seq data
 # use_rna_labels: Uses labels from the RNA data on the ATAC-data (we assume these labels are more accurate than what the GeneIntegrationMatrix finds)
 use_rna_labels <- TRUE
+# subset_to_rna: Subset to only those cells we kept from RNA
+subset_to_rna <- TRUE
 # TODO
 ################## ANALYSIS ##################
 if(analysis_type == "RNA_seq") {
@@ -319,15 +321,25 @@ if(analysis_type == "RNA_seq") {
   # Add labels from RNA-seq data
   if(use_rna_labels) {
     curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, "rna_seq_labeled_cells_", date, ".csv"), comment.char = "")
-    predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
-    for(current_row in 1:nrow(predicted_snATAC_cells)) {
-      current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
-      if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
-        current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
-        predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
+    if(subset_to_rna) {
+      idxPass <- which(proj$cellNames %in% curated_snRNA_seq_cells$cells) 
+      cellsPass <- proj$cellNames[idxPass]
+      proj <- proj[cellsPass, ]
+      curated_snRNA_seq_cells <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells %in% proj$cellNames,]
+      curated_snRNA_seq_cells <- curated_snRNA_seq_cells[order(match(curated_snRNA_seq_cells$cells,proj$cellNames)),]
+      snRNA_seq_cell_votes <- curated_snRNA_seq_cells$voted_type
+      proj <- addCellColData(ArchRProj = proj, data = snRNA_seq_cell_votes, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
+    } else {
+      predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
+      for(current_row in 1:nrow(predicted_snATAC_cells)) {
+        current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
+        if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
+          current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
+          predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
+        }
       }
+      proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
     }
-    proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
   }
   # Combine cell types
   Cell_type_combined = proj$predictedGroup
@@ -364,7 +376,7 @@ if(analysis_type == "RNA_seq") {
   p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
   p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
   p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
-  plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Voting_1_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Voting_1_subset", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 } else {
   stop("Invalid analysis type")
 }
