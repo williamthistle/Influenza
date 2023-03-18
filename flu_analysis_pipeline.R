@@ -230,6 +230,8 @@ if(analysis_type == "RNA_seq") {
   saveArchRProject(ArchRProj = proj, load = FALSE)
   # Load ArchR project 
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
+  # Filter out doublets (fake cells)
+  proj <- filterDoublets(ArchRProj = proj)
   # Add viral load metadata to ArchR object
   viral_load_vector <- proj$Sample
   idxSample <- which(proj$Sample %in% high_viral_load_samples)
