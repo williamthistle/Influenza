@@ -357,7 +357,9 @@ for (cell_type in unique(proj_minus_clusters$Cell_type_voting)) {
   cellsPass <- proj_minus_clusters$cellNames[idxPass]
   filtered_cluster <-proj[cellsPass,]
   print(length(cellsPass))
-  print(table(filtered_cluster$Conditions))
+  print(table(filtered_cluster$viral_load))
+  print(table(filtered_cluster$day))
+  print(table(filtered_cluster$sex))
 }
 
 saveArchRProject(ArchRProj = proj, outputDirectory = "final-HVL-vs-LVL-multiome-female_unfiltered", load = FALSE)

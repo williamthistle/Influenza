@@ -227,7 +227,7 @@ combine_cell_types_initial <- function(sc_obj, resolution = 1.5) {
   return(sc_obj)
 }
 
-combine_cell_types_magical <- function(sc_obj, resolution = 1.5) {
+combine_cell_types_magical <- function(sc_obj) {
   Cell_type_combined <- sc_obj$predicted_celltype_majority_vote
   levels(Cell_type_combined) <- c(levels(Cell_type_combined), "T Naive", "B")
   idx <- grep("CD4 Naive", Cell_type_combined)
@@ -318,7 +318,7 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
     }
     diff_markers <- FindMarkers(cells_subset, ident.1 = first_group, ident.2 = second_group, assay = "SCT", recorrect_umi = FALSE, logfc.threshold = 0, min.pct = 0)
     cell_type <- sub(" ", "_", cell_type)
-    write.csv(diff_markers, paste0(analysis_dir, "HIGH-vs-LOW-degs-", cell_type, ".csv"), quote = FALSE)
+    write.csv(diff_markers, paste0(analysis_dir, "HIGH-vs-LOW-degs-", cell_type, "-", group, ".csv"), quote = FALSE)
     return(i)
   }
   print(paste0("Done performing differential expression for group ", group, " for each cell type"))
