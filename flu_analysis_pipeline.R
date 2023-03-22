@@ -211,39 +211,18 @@ if(analysis_type == "RNA_seq") {
   # Label input files
   inputFiles <- paste0(data_path, sample_id_list, "/outs/atac_fragments.tsv.gz")
   names(inputFiles) <- all_viral_load_samples
-  # Label viral load metadata
-  viral_load_metadata <- c(rep("HVL", length(high_viral_load_samples)), rep("LVL", length(low_viral_load_samples)))
-  names(viral_load_metadata) <- all_viral_load_samples
-  # Label day metadata (will be slightly different than viral load)
-  day_metadata_names <- unique(proj$Sample)
-  day_metadata <- c()
-  for(name in day_metadata_names) {
-    if(name %in% d28_samples) {
-      day_metadata <- c(day_metadata, "D28")
-    } else {
-      day_metadata <- c(day_metadata, "D_MINUS_1")
-    }
-  }
-  names(day_metadata) <- day_metadata_names
-  # Label sex metadata
-  sex_metadata_names <- unique(proj$Sample)
-  sex_metadata <- c()
-  for(name in sex_metadata_names) {
-    if(name %in% male_samples) {
-      sex_metadata <- c(sex_metadata, "MALE")
-    } else {
-      sex_metadata <- c(sex_metadata, "FEMALE")
-    }
-  }
-  names(sex_metadata) <- sex_metadata_names
   # Add relevant genome for ArchR
   addArchRGenome("hg38")
+  # Create ArchR project from input files
   proj <- load_archR_from_input_files(inputFiles)
-  # Load ArchR project 
+  # Re-load ArchR project
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
   # Add sample metadata
   proj <- add_sample_metadata_atac(proj, high_viral_load_samples, low_viral_load_samples,
                                    d28_samples, d_minus_1_samples, male_samples, female_samples)
+  viral_load_metadata <- parse_metadata_for_samples("viral_load")
+  day_metadata <- parse_metadata_for_samples("day")
+  sex_metadata <- parse_metadata_for_samples("sex")
   # Plot what dataset looks like before any processing
   plot_qc_atac(proj)
   # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
@@ -545,7 +524,7 @@ if(analysis_type == "RNA_seq") {
     # Create text file for each cell type containing pseudobulk counts for peaks
     Cell_types <- unique(final_proj$Cell_type_voting)
     sample.names <- unique(final_proj$Sample)
-    peak_count <- getMatrixFromfinal_project(ArchRProj = final_proj.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromfinal_project"))
+    peak_count <- getMatrixFromProject(ArchRProj = final_proj.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
     pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk/")
     if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}
     for (i in c(1:length(Cell_types))){

@@ -56,6 +56,36 @@ add_sample_metadata_atac <- function(proj, high_viral_load_samples, low_viral_lo
   return(proj)
 }
 
+# Create object with sample names and associated metadata value
+parse_metadata_for_samples <- function(proj, group, high_viral_load_samples, low_viral_load_samples,
+                                       d28_samples, d_minus_1_samples, male_samples, female_samples) {
+  current_metadata <- c()
+  metadata_names <- unique(proj$Sample)
+  for(name in metadata_names) {
+    if(group == "viral_load") {
+      if(name %in% high_viral_load_samples) {
+        current_metadata <- c(current_metadata, "HVL")
+      } else {
+        current_metadata <- c(current_metadata, "LVL")
+      }
+    } else if(group == "day") {
+      if(name %in% d28_samples) {
+        current_metadata <- c(current_metadata, "D28")
+      } else {
+        current_metadata <- c(current_metadata, "D_MINUS_1")
+      }
+    } else if(group == "sex") {
+      if(name %in% male_samples) {
+        current_metadata <- c(current_metadata, "MALE")
+      } else {
+        current_metadata <- c(current_metadata, "FEMALE")
+      }
+    }
+  }
+  names(current_metadata) <- metadata_names
+  return(current_metadata)
+}
+
 # Plot QC stuff for ATAC
 plot_qc_atac <- function(proj) {
   addArchRThreads(threads = 8)
