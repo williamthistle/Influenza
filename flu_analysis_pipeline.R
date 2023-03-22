@@ -21,11 +21,11 @@ date <- Sys.Date()
 home_dir <- "~/"
 # Load SPEEDI (for RNA-seq analyses)
 SPEEDI_dir <- paste0(home_dir, "SPEEDI")
-source(paste0(SPEEDI_dir, "/prototype_API.R"))
-source(paste0(SPEEDI_dir, "/preprocessing_and_qc.R"))
-source(paste0(SPEEDI_dir, "/get_stats.R"))
-source(paste0(SPEEDI_dir, "/manipulate_data.R"))
-source(paste0(SPEEDI_dir, "/differential_expression.R"))
+source(paste0(SPEEDI_dir, "/rna/prototype_API.R"))
+source(paste0(SPEEDI_dir, "/rna/preprocessing_and_qc.R"))
+source(paste0(SPEEDI_dir, "/rna/get_stats.R"))
+source(paste0(SPEEDI_dir, "/rna/manipulate_data.R"))
+source(paste0(SPEEDI_dir, "/rna/differential_expression.R"))
 
 # Load information about samples
 sample_metadata <- read.table(paste0(SPEEDI_dir, "/sample_metadata.tsv"), sep = "\t", header = TRUE)
