@@ -247,7 +247,7 @@ create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_l
     print(length(idxPass))
     cellsPass <- names(sc_obj$orig.ident[idxPass])
     cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-    for (sample_id in all_viral_load) {
+    for (sample_id in sample_names) {
       # Subset further based on cells associated with sample ID
       idxPass <- which(cells_subset$sample %in% sample_id)
       cellsPass <- names(cells_subset$orig.ident[idxPass])
@@ -267,7 +267,7 @@ create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_l
 }
 
 # Create MAGICAL pseudobulk file
-create_magical_cell_type_proportion_file <- function(sc_obj) {
+create_magical_cell_type_pseudobulk_file <- function(sc_obj) {
   print("Computing pseudobulk counts for each cell type")
   for (cell_type in unique(sc_obj$magical_cell_types)) {
     print(cell_type)
