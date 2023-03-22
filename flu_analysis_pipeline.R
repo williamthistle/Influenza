@@ -22,6 +22,10 @@ home_dir <- "~/"
 # Load SPEEDI (for RNA-seq analyses)
 SPEEDI_dir <- paste0(home_dir, "SPEEDI")
 source(paste0(SPEEDI_dir, "/prototype_API.R"))
+source(paste0(SPEEDI_dir, "/preprocessing_and_qc.R"))
+source(paste0(SPEEDI_dir, "/get_stats.R"))
+source(paste0(SPEEDI_dir, "/manipulate_data.R"))
+source(paste0(SPEEDI_dir, "/differential_expression.R"))
 
 # Load information about samples
 sample_metadata <- read.table(paste0(SPEEDI_dir, "/sample_metadata.tsv"), sep = "\t", header = TRUE)
@@ -105,7 +109,6 @@ subset_to_rna <- TRUE
 if(analysis_type == "RNA_seq") {
   # Step 1 - grab matrices
   if(run_soup) {
-    # TODO: Make this parallel
     all_sc_exp_matrices <- process_matrices_through_soup(data_path, sample_id_list)
   } else {
     all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
@@ -157,8 +160,11 @@ if(analysis_type == "RNA_seq") {
     # Load sc_obj
     load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     load(paste0(analysis_dir, "singler_labels.rds"))
+    # Remove samples
+    sc_obj <- remove_specific_samples_from_sc_obj(sc_obj, c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8", "3247c65ecdbfe34a", "d360f89cf9585dfe"))
     # We can use clustree to help us figure out the best resolution
-    print_clustree_plot(sc_obj, plot_dir, date)
+    # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
+    #print_clustree_plot(sc_obj, plot_dir, date)
     # Re-run majority vote with best resolution
     best_res <- 3
     sc_obj <- MajorityVote(sc_obj, best_res)
@@ -174,6 +180,8 @@ if(analysis_type == "RNA_seq") {
     # Override labels manually where necessary
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
+    # Remove specific samples that we're not interested in
+    sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8", "3247c65ecdbfe34a", "d360f89cf9585dfe"))
     # Print info about sample representation and breakdown of categories per cell type
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
@@ -189,12 +197,16 @@ if(analysis_type == "RNA_seq") {
     cells_for_ATAC <- data.frame("cells" = sc_obj.minus.messy.clusters$cell_name, voted_type = sc_obj.minus.messy.clusters$predicted_celltype_majority_vote)
     write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, ".csv"), quote = FALSE, row.names = FALSE)
     # Combine cell types for MAGICAL and other analyses that require snATAC-seq (granularity isn't as good for ATAC-seq)
-    sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters, best_res)
-    #sc_obj.minus.messy.clusters$magical_cell_types <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote # This is if MAGICAL cell types == RNA-seq cell types
+    sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters)
     # Run differential expression for each cell type within each group of interest
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "viral_load")
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "day")
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "sex")
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "viral_load", high_viral_load_samples, d28_samples, male_samples)
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples)
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "sex", high_viral_load_samples, d28_samples, male_samples)
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters)
+    
   }
 } else if(analysis_type == "ATAC_seq") {
   # Label input files
@@ -347,7 +359,7 @@ if(analysis_type == "RNA_seq") {
   plotPDF(p1, name = paste0("Integrated_annotated_with_gene_integration_matrix_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
   # Add labels from RNA-seq data
   if(use_rna_labels) {
-    curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, "rna_seq_labeled_cells_2023-03-17.csv"), comment.char = "")
+    curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, "rna_seq_labeled_cells_2023-03-22.csv"), comment.char = "")
     if(subset_to_rna) {
       idxPass <- which(proj$cellNames %in% curated_snRNA_seq_cells$cells) 
       cellsPass <- proj$cellNames[idxPass]
@@ -368,7 +380,7 @@ if(analysis_type == "RNA_seq") {
       proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
     }
   }
-  # If we didn't subset to RNA, then we need to do some kind of majority vote in our clusters.
+  # If we didn't subset to RNA, then we need to do some kind of majority vote in our clusters
   if(!subset_to_rna) {
     # Combine cell types
     Cell_type_combined = proj$predictedGroup
@@ -382,6 +394,7 @@ if(analysis_type == "RNA_seq") {
     Cell_type_combined[idx] <- "Proliferating"
     idx <- grep("B", Cell_type_combined)
     Cell_type_combined[idx] <- "B"
+    
     proj <- addCellColData(ArchRProj = proj, data = Cell_type_combined, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
     pal <- paletteDiscrete(values = proj$predictedGroup)
     p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
@@ -420,7 +433,9 @@ if(analysis_type == "RNA_seq") {
     cluster_cell_type_predictions <- vector()
     cluster_cell_type_distributions <- list()
     cluster_sample_distributions <- list()
-    cluster_conditions_distributions <- list()
+    cluster_viral_load_distributions <- list()
+    cluster_day_distributions <- list()
+    cluster_sex_distributions <- list()
     idx <- 1
     unique_cluster_ids <- unique(proj$Clusters)
     unique_cluster_ids <- unique_cluster_ids[order(nchar(unique_cluster_ids), unique_cluster_ids)]
@@ -431,7 +446,9 @@ if(analysis_type == "RNA_seq") {
       cluster_cell_type_predictions <- append(cluster_cell_type_predictions, table(filtered_cluster$Cell_type_voting))
       cluster_cell_type_distributions[[idx]] <- table(filtered_cluster$predictedGroup)
       cluster_sample_distributions[[idx]] <- table(filtered_cluster$Sample)
-      #cluster_conditions_distributions[[idx]] <- table(filtered_cluster$Conditions)
+      cluster_viral_load_distributions[[idx]] <- table(filtered_cluster$viral_load)
+      cluster_day_distributions[[idx]] <- table(filtered_cluster$day)
+      cluster_sex_distributions[[idx]] <- table(filtered_cluster$sex)
       idx <- idx + 1
     }
     names(cluster_cell_type_predictions) <- paste(unique_cluster_ids, "-", names(cluster_cell_type_predictions))
