@@ -21,7 +21,11 @@ date <- Sys.Date()
 home_dir <- "~/"
 # Load SPEEDI (for RNA-seq analyses)
 SPEEDI_dir <- paste0(home_dir, "SPEEDI")
-source(paste0(SPEEDI_dir, "/prototype_API.R"))
+source(paste0(SPEEDI_dir, "/rna/prototype_API.R"))
+source(paste0(SPEEDI_dir, "/rna/preprocessing_and_qc.R"))
+source(paste0(SPEEDI_dir, "/rna/get_stats.R"))
+source(paste0(SPEEDI_dir, "/rna/manipulate_data.R"))
+source(paste0(SPEEDI_dir, "/rna/differential_expression.R"))
 
 # Load information about samples
 sample_metadata <- read.table(paste0(SPEEDI_dir, "/sample_metadata.tsv"), sep = "\t", header = TRUE)
@@ -99,13 +103,12 @@ run_soup <- FALSE
 # use_rna_labels: Uses labels from the RNA data on the ATAC-data (we assume these labels are more accurate than what the GeneIntegrationMatrix finds)
 use_rna_labels <- TRUE
 # subset_to_rna: Subset to only those cells we kept from RNA
-subset_to_rna <- FALSE
+subset_to_rna <- TRUE
 # TODO
 ################## ANALYSIS ##################
 if(analysis_type == "RNA_seq") {
   # Step 1 - grab matrices
   if(run_soup) {
-    # TODO: Make this parallel
     all_sc_exp_matrices <- process_matrices_through_soup(data_path, sample_id_list)
   } else {
     all_sc_exp_matrices <- Read_h5(data_path, sample_id_list)
@@ -157,8 +160,11 @@ if(analysis_type == "RNA_seq") {
     # Load sc_obj
     load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     load(paste0(analysis_dir, "singler_labels.rds"))
+    # Remove samples
+    sc_obj <- remove_specific_samples_from_sc_obj(sc_obj, c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8", "3247c65ecdbfe34a", "d360f89cf9585dfe"))
     # We can use clustree to help us figure out the best resolution
-    print_clustree_plot(sc_obj, plot_dir, date)
+    # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
+    #print_clustree_plot(sc_obj, plot_dir, date)
     # Re-run majority vote with best resolution
     best_res <- 3
     sc_obj <- MajorityVote(sc_obj, best_res)
@@ -174,6 +180,8 @@ if(analysis_type == "RNA_seq") {
     # Override labels manually where necessary
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
+    # Remove specific samples that we're not interested in
+    sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8", "3247c65ecdbfe34a", "d360f89cf9585dfe"))
     # Print info about sample representation and breakdown of categories per cell type
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
@@ -189,121 +197,49 @@ if(analysis_type == "RNA_seq") {
     cells_for_ATAC <- data.frame("cells" = sc_obj.minus.messy.clusters$cell_name, voted_type = sc_obj.minus.messy.clusters$predicted_celltype_majority_vote)
     write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, ".csv"), quote = FALSE, row.names = FALSE)
     # Combine cell types for MAGICAL and other analyses that require snATAC-seq (granularity isn't as good for ATAC-seq)
-    sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters, best_res)
-    #sc_obj.minus.messy.clusters$magical_cell_types <- sc_obj.minus.messy.clusters$predicted_celltype_majority_vote # This is if MAGICAL cell types == RNA-seq cell types
+    sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters)
     # Run differential expression for each cell type within each group of interest
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "viral_load")
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "day")
     run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "sex")
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "viral_load", high_viral_load_samples, d28_samples, male_samples)
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples)
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "sex", high_viral_load_samples, d28_samples, male_samples)
+    create_magical_cell_type_pseudobulk_file(sc_obj.minus.messy.clusters)
   }
 } else if(analysis_type == "ATAC_seq") {
   # Label input files
   inputFiles <- paste0(data_path, sample_id_list, "/outs/atac_fragments.tsv.gz")
   names(inputFiles) <- all_viral_load_samples
-  # Label viral load metadata
-  viral_load_metadata <- c(rep("HVL", length(high_viral_load_samples)), rep("LVL", length(low_viral_load_samples)))
-  names(viral_load_metadata) <- all_viral_load_samples
-  # Label day metadata (will be slightly different than viral load)
-  day_metadata_names <- unique(proj$Sample)
-  day_metadata <- c()
-  for(name in day_metadata_names) {
-    if(name %in% d28_samples) {
-      day_metadata <- c(day_metadata, "D28")
-    } else {
-      day_metadata <- c(day_metadata, "D_MINUS_1")
-    }
-  }
-  names(day_metadata) <- day_metadata_names
-  # Label sex metadata
-  sex_metadata_names <- unique(proj$Sample)
-  sex_metadata <- c()
-  for(name in sex_metadata_names) {
-    if(name %in% male_samples) {
-      sex_metadata <- c(sex_metadata, "MALE")
-    } else {
-      sex_metadata <- c(sex_metadata, "FEMALE")
-    }
-  }
-  names(sex_metadata) <- sex_metadata_names
   # Add relevant genome for ArchR
   addArchRGenome("hg38")
-  # Create arrow files from raw input fragment files
-  ArrowFiles <- createArrowFiles(
-    inputFiles = inputFiles,
-    sampleNames = names(inputFiles),
-    minTSS = 4, #Don't set this too high because you can always increase later
-    minFrags = 3000,
-    maxFrags = 30000,
-    addTileMat = TRUE,
-    addGeneScoreMat = TRUE
-  )
-  # Add doublet scores for each sample (will take a while)
-  doubScores <- addDoubletScores(
-    input = ArrowFiles,
-    k = 10, #Refers to how many cells near a "pseudo-doublet" to count.
-    knnMethod = "UMAP", #Refers to the embedding to use for nearest neighbor search.
-    LSIMethod = 1
-  )
-  # Create and save ArchR project based on arrow files
-  proj <- ArchRProject(
-    ArrowFiles = ArrowFiles, 
-    outputDirectory = paste0(analysis_dir, "ArchR/"),
-    copyArrows = FALSE #This is recommended so that you maintain an unaltered copy for later usage.
-  )
-  saveArchRProject(ArchRProj = proj, load = FALSE)
-  # Load ArchR project 
+  # Create ArchR project from input files
+  proj <- load_archR_from_input_files(inputFiles)
+  # Re-load ArchR project
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
-  # Filter out doublets (fake cells)
-  proj <- filterDoublets(ArchRProj = proj)
-  # Add viral load metadata to ArchR object
-  viral_load_vector <- proj$Sample
-  idxSample <- which(proj$Sample %in% high_viral_load_samples)
-  viral_load_vector[idxSample]<-'HVL'
-  idxSample <- which(proj$Sample %in% low_viral_load_samples)
-  viral_load_vector[idxSample]<-'LVL'
-  proj <- addCellColData(ArchRProj = proj, data = viral_load_vector, cells = proj$cellNames,name = "viral_load", force = TRUE)
-  # Add day metadata to ArchR object
-  day_vector <- proj$Sample
-  idxSample <- which(proj$Sample %in% d28_samples)
-  day_vector[idxSample]<-'D28'
-  idxSample <- which(proj$Sample %in% d_minus_1_samples)
-  day_vector[idxSample]<-'D_MINUS_1'
-  proj <- addCellColData(ArchRProj = proj, data = day_vector, cells = proj$cellNames,name = "day", force = TRUE)
-  # Add sex metadata to ArchR object
-  sex_vector <- proj$Sample
-  idxSample <- which(proj$Sample %in% male_samples)
-  sex_vector[idxSample]<-'MALE'
-  idxSample <- which(proj$Sample %in% female_samples)
-  sex_vector[idxSample]<-'FEMALE'
-  proj <- addCellColData(ArchRProj = proj, data = sex_vector, cells = proj$cellNames,name = "sex", force = TRUE)
+  # Add sample metadata
+  proj <- add_sample_metadata_atac(proj, high_viral_load_samples, low_viral_load_samples,
+                                   d28_samples, d_minus_1_samples, male_samples, female_samples)
+  viral_load_metadata <- parse_metadata_for_samples("viral_load")
+  day_metadata <- parse_metadata_for_samples("day")
+  sex_metadata <- parse_metadata_for_samples("sex")
   # Plot what dataset looks like before any processing
-  addArchRThreads(threads = 8)
-  proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
-                          clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
-                          varFeatures = 15000, dims = 2:30)
-  proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
-  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-  plotPDF(p1, name = "Dataset_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
-  # Plot out TSS Enrichment / Doublet Enrichment / Nucleosome Ratio for each sample
-  p1 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "TSSEnrichment", plotAs = "ridges")
-  p2 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "DoubletEnrichment", plotAs = "ridges")
-  p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "NucleosomeRatio", plotAs = "ridges")
-  plotPDF(p1,p2,p3, name = paste0("Integrated_Scores_Prefiltering_", date), ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
+  plot_qc_atac(proj)
   # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
   idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 3) 
   cellsPass <- proj$cellNames[idxPass]
   proj<-proj[cellsPass, ]
   # List number of cells remaining for each condition and each sample
-  table(proj_minus_clusters$viral_load)
-  table(proj_minus_clusters$day)
-  table(proj_minus_clusters$sex)
-  table(proj_minus_clusters$Sample)
+  table(proj$viral_load)
+  table(proj$day)
+  table(proj$sex)
+  table(proj$Sample)
   # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 
   # and add cluster information (addClusters)
   addArchRThreads(threads = 8)
   proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
                           clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
-                          varFeatures = 15000, dims = 2:30)
+                          varFeatures = 25000, dimsToUse = 2:30)
   proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
   proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 5, knnAssign = 30, maxClusters = NULL, force = TRUE)
   # UMAP plots colored by condition, sample, cluster ID, and TSS enrichment
@@ -347,7 +283,7 @@ if(analysis_type == "RNA_seq") {
   plotPDF(p1, name = paste0("Integrated_annotated_with_gene_integration_matrix_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
   # Add labels from RNA-seq data
   if(use_rna_labels) {
-    curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, "rna_seq_labeled_cells_2023-03-17.csv"), comment.char = "")
+    curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, "rna_seq_labeled_cells_2023-03-22.csv"), comment.char = "")
     if(subset_to_rna) {
       idxPass <- which(proj$cellNames %in% curated_snRNA_seq_cells$cells) 
       cellsPass <- proj$cellNames[idxPass]
@@ -368,98 +304,110 @@ if(analysis_type == "RNA_seq") {
       proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
     }
   }
-  # Combine cell types
-  Cell_type_combined = proj$predictedGroup
-  idx <- grep("CD4 T", Cell_type_combined)
-  Cell_type_combined[idx] <- "CD4 Memory"
-  idx <- grep("CD8 T", Cell_type_combined)
-  Cell_type_combined[idx] <- "CD8 Memory"
-  idx <- grep("cDC", Cell_type_combined)
-  Cell_type_combined[idx] <- "cDC"
-  idx <- grep("Proliferating", Cell_type_combined)
-  Cell_type_combined[idx] <- "Proliferating"
-  idx <- grep("B", Cell_type_combined)
-  Cell_type_combined[idx] <- "B"
-  proj <- addCellColData(ArchRProj = proj, data = Cell_type_combined, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
-  pal <- paletteDiscrete(values = proj$predictedGroup)
-  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
-  plotPDF(p1, name = "Integrated_annotated_combined_gene_integration_matrix.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
-  # Combine other cell types
-  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD4 Naive", "T Naive")
-  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD8 Naive", "T Naive")
-  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "NK_CD56bright", "NK")
-  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "Treg", "T Naive")
-  # First voting scheme
-  cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
-  pre_cluster <- rownames(cM)
-  max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
-  Cell_type_voting <- proj$Clusters
-  for (m in c(1:length(pre_cluster))){
-    idxSample <- which(proj$Clusters == pre_cluster[m])
-    Cell_type_voting[idxSample] <- max_celltype[m]
-  }
-  proj <- addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
-  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
-  p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-  p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
-  p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
-  plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Voting_1_RNA_labels_subset_res_5_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
-  # Remove any clusters that only have 1 cell
-  unique_cluster_ids <- unique(proj$Clusters)
-  unique_cluster_ids <- unique_cluster_ids[order(nchar(unique_cluster_ids), unique_cluster_ids)]
-  for (cluster in unique_cluster_ids) {
-    idxPass <- which(proj$Clusters %in% cluster)
-    if(length(idxPass) == 1) {
-      cellsPass <- proj$cellNames[-idxPass]
-      proj <- proj[cellsPass, ]
+  # If we didn't subset to RNA, then we need to do some kind of majority vote in our clusters
+  if(!subset_to_rna) {
+    # Combine cell types
+    Cell_type_combined = proj$predictedGroup
+    idx <- grep("CD4 T", Cell_type_combined)
+    Cell_type_combined[idx] <- "CD4 Memory"
+    idx <- grep("CD8 T", Cell_type_combined)
+    Cell_type_combined[idx] <- "CD8 Memory"
+    idx <- grep("cDC", Cell_type_combined)
+    Cell_type_combined[idx] <- "cDC"
+    idx <- grep("Proliferating", Cell_type_combined)
+    Cell_type_combined[idx] <- "Proliferating"
+    idx <- grep("B", Cell_type_combined)
+    Cell_type_combined[idx] <- "B"
+    
+    proj <- addCellColData(ArchRProj = proj, data = Cell_type_combined, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
+    pal <- paletteDiscrete(values = proj$predictedGroup)
+    p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
+    plotPDF(p1, name = "Integrated_annotated_combined_gene_integration_matrix.pdf", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+    # Combine other cell types
+    proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD4 Naive", "T Naive")
+    proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD8 Naive", "T Naive")
+    proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "NK_CD56bright", "NK")
+    proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "Treg", "T Naive")
+    # First voting scheme
+    cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
+    pre_cluster <- rownames(cM)
+    max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
+    Cell_type_voting <- proj$Clusters
+    for (m in c(1:length(pre_cluster))){
+      idxSample <- which(proj$Clusters == pre_cluster[m])
+      Cell_type_voting[idxSample] <- max_celltype[m]
     }
+    proj <- addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
+    p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
+    p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+    p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
+    p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
+    plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Voting_1_RNA_labels_subset_res_5_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+    # Remove any clusters that only have 1 cell
+    unique_cluster_ids <- unique(proj$Clusters)
+    unique_cluster_ids <- unique_cluster_ids[order(nchar(unique_cluster_ids), unique_cluster_ids)]
+    for (cluster in unique_cluster_ids) {
+      idxPass <- which(proj$Clusters %in% cluster)
+      if(length(idxPass) == 1) {
+        cellsPass <- proj$cellNames[-idxPass]
+        proj <- proj[cellsPass, ]
+      }
+    }
+    # See how clusters are distributed
+    cluster_cell_type_predictions <- vector()
+    cluster_cell_type_distributions <- list()
+    cluster_sample_distributions <- list()
+    cluster_viral_load_distributions <- list()
+    cluster_day_distributions <- list()
+    cluster_sex_distributions <- list()
+    idx <- 1
+    unique_cluster_ids <- unique(proj$Clusters)
+    unique_cluster_ids <- unique_cluster_ids[order(nchar(unique_cluster_ids), unique_cluster_ids)]
+    for (cluster in unique_cluster_ids) {
+      idxPass <- which(proj$Clusters %in% cluster)
+      cellsPass <- proj$cellNames[idxPass]
+      filtered_cluster <-proj[cellsPass,]
+      cluster_cell_type_predictions <- append(cluster_cell_type_predictions, table(filtered_cluster$Cell_type_voting))
+      cluster_cell_type_distributions[[idx]] <- table(filtered_cluster$predictedGroup)
+      cluster_sample_distributions[[idx]] <- table(filtered_cluster$Sample)
+      cluster_viral_load_distributions[[idx]] <- table(filtered_cluster$viral_load)
+      cluster_day_distributions[[idx]] <- table(filtered_cluster$day)
+      cluster_sex_distributions[[idx]] <- table(filtered_cluster$sex)
+      idx <- idx + 1
+    }
+    names(cluster_cell_type_predictions) <- paste(unique_cluster_ids, "-", names(cluster_cell_type_predictions))
+    # Override vote for 3 to make it CD16 Mono
+    idxPass <- which(proj$Clusters %in% c("C8"))
+    proj$Cell_type_voting[idxPass] <- "CD16 Mono"
+    #Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
+    idxPass <- which(proj$Clusters %in% c("C1", "C29", "C30", "C31", "C38"))
+    cellsPass <- proj$cellNames[-idxPass]
+    proj_minus_clusters <- proj[cellsPass, ]
+    saveArchRProject(ArchRProj = proj_minus_clusters, outputDirectory = paste0(analysis_dir, "ArchR_minus_clusters_rna"), load = FALSE)
+    proj_minus_clusters <- loadArchRProject(path = paste0(analysis_dir, "/ArchR_minus_clusters_rna/"))
+    final_proj <- proj_minus_clusters
+    p1 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
+    p2 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
+    p3 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE)
+    p4 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
+    p5 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
+    plotPDF(p1,p2,p3,p4,p5, name = paste0("Integrated_Clustering_Gene_Integration_Voting_1_RNA_labels_subset_minus_clusters_", date), ArchRProj = proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
+  } else {
+    final_proj <- proj
+    # Just for convenience in code below
+    final_proj$Cell_type_voting <- final_proj$predictedGroup
   }
-  # See how clusters are distributed
-  cluster_cell_type_predictions <- vector()
-  cluster_cell_type_distributions <- list()
-  cluster_sample_distributions <- list()
-  cluster_conditions_distributions <- list()
-  idx <- 1
-  unique_cluster_ids <- unique(proj$Clusters)
-  unique_cluster_ids <- unique_cluster_ids[order(nchar(unique_cluster_ids), unique_cluster_ids)]
-  for (cluster in unique_cluster_ids) {
-    idxPass <- which(proj$Clusters %in% cluster)
-    cellsPass <- proj$cellNames[idxPass]
-    filtered_cluster <-proj[cellsPass,]
-    cluster_cell_type_predictions <- append(cluster_cell_type_predictions, table(filtered_cluster$Cell_type_voting))
-    cluster_cell_type_distributions[[idx]] <- table(filtered_cluster$predictedGroup)
-    cluster_sample_distributions[[idx]] <- table(filtered_cluster$Sample)
-    #cluster_conditions_distributions[[idx]] <- table(filtered_cluster$Conditions)
-    idx <- idx + 1
-  }
-  names(cluster_cell_type_predictions) <- paste(unique_cluster_ids, "-", names(cluster_cell_type_predictions))
-  # Override vote for 3 to make it CD16 Mono
-  idxPass <- which(proj$Clusters %in% c("C8"))
-  proj$Cell_type_voting[idxPass] <- "CD16 Mono"
-  #Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
-  idxPass <- which(proj$Clusters %in% c("C1", "C29", "C30", "C31", "C38"))
-  cellsPass <- proj$cellNames[-idxPass]
-  proj_minus_clusters <- proj[cellsPass, ]
-  saveArchRProject(ArchRProj = proj_minus_clusters, outputDirectory = paste0(analysis_dir, "ArchR_minus_clusters_rna"), load = FALSE)
-  proj_minus_clusters <- loadArchRProject(path = paste0(analysis_dir, "/ArchR_minus_clusters_rna/"))
-  p1 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
-  p2 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-  p3 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
-  p4 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
-  plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Voting_1_RNA_labels_subset_minus_clusters_", date), ArchRProj = proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
   # See distribution for different metadata categories
-  for (cell_type in unique(proj_minus_clusters$Cell_type_voting)) {
+  for (cell_type in unique(final_proj$Cell_type_voting)) {
     print(cell_type)
-    idxPass <- which(proj_minus_clusters$Cell_type_voting %in% cell_type)
-    cellsPass <- proj_minus_clusters$cellNames[idxPass]
-    filtered_cluster <-proj[cellsPass,]
+    idxPass <- which(final_proj$predictedGroup %in% cell_type)
+    cellsPass <- final_proj$cellNames[idxPass]
+    filtered_cluster <-final_proj[cellsPass,]
     print(length(cellsPass))
     print(table(filtered_cluster$viral_load))
     print(table(filtered_cluster$day))
     print(table(filtered_cluster$sex))
   }
-  # Set up for peak calling and other MAGICAL tasks
-  proj <- proj_minus_clusters
   # Create cell type proportion file for MAGICAL
   #metadata_categories <- c("viral_load", "day", "sex")
   metadata_categories <- c("day")
@@ -472,21 +420,21 @@ if(analysis_type == "RNA_seq") {
     cell_counts <- vector()
     # Find total cell counts for each sample
     for (sample_id in names(metadata)) {
-      idxPass <- which(proj$Sample %in% sample_id)
+      idxPass <- which(final_proj$Sample %in% sample_id)
       print(length(idxPass))
-      cellsPass <- proj$cellNames[idxPass]
-      sample_subset <- subsetCells(proj, cellsPass)
+      cellsPass <- final_proj$cellNames[idxPass]
+      sample_subset <- subsetCells(final_proj, cellsPass)
       cell_counts <- append(cell_counts, nCells(sample_subset))
     }
     total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
-    for (cell_type in unique(proj$Cell_type_voting)) {
+    for (cell_type in unique(final_proj$Cell_type_voting)) {
       cell_type_proportions <- vector()
       print(cell_type)
       # Grab cells associated with cell type
-      idxPass <- which(proj$Cell_type_voting %in% cell_type)
+      idxPass <- which(final_proj$Cell_type_voting %in% cell_type)
       print(length(idxPass))
-      cellsPass <- proj$cellNames[idxPass]
-      cells_subset <- subsetCells(proj, cellsPass)
+      cellsPass <- final_proj$cellNames[idxPass]
+      cells_subset <- subsetCells(final_proj, cellsPass)
       for (sample_id in names(metadata)) {
         # Subset further based on cells associated with sample ID
         idxPass <- which(cells_subset$Sample %in% sample_id)
@@ -506,27 +454,28 @@ if(analysis_type == "RNA_seq") {
     # We need to re-add our hg38 genome
     addArchRGenome("hg38")
     # Peak calling - first, call addGroupCoverages to find pseudo-bulk replicates, then call peaks using MACS2
-    proj <- addGroupCoverages(ArchRProj = proj, groupBy = "Cell_type_voting")
+    final_proj <- addGroupCoverages(ArchRProj = final_proj, groupBy = "Cell_type_voting", force = TRUE)
     pathToMacs2 <- findMacs2()
-    proj <- addReproduciblePeakSet(
-      ArchRProj = proj, 
+    final_proj <- addReproduciblePeakSet(
+      ArchRProj = final_proj, 
       groupBy = "Cell_type_voting", 
-      pathToMacs2 = pathToMacs2
+      pathToMacs2 = pathToMacs2,
+      force = TRUE
     )
     # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
     # calculations
-    proj.2 <- addPeakMatrix(proj)
+    final_proj.2 <- addPeakMatrix(final_proj)
     #save.image(paste0(image_dir, "atac_after_peak_matrix.RData"))
     # Calculate differential accessible peaks for each cell type
     differential_peaks_dir <- paste0(analysis_dir, "diff_peaks/")
     if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir)}
-    for (cell_type in unique(proj.2$Cell_type_voting)) {
+    for (cell_type in unique(final_proj.2$Cell_type_voting)) {
       print(cell_type)
       # Grab cells associated with cell type
-      idxPass <- which(proj.2$Cell_type_voting %in% cell_type)
+      idxPass <- which(final_proj.2$Cell_type_voting %in% cell_type)
       print(length(idxPass))
-      cellsPass <- proj.2$cellNames[idxPass]
-      cells_subset <- subsetCells(proj.2, cellsPass)
+      cellsPass <- final_proj.2$cellNames[idxPass]
+      cells_subset <- subsetCells(final_proj.2, cellsPass)
       # Find DAPs
       marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "day",
                                          testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), maxCells = 15000,
@@ -547,7 +496,7 @@ if(analysis_type == "RNA_seq") {
     }
     
     # Create Peaks.txt file for MAGICAL
-    peaks <- getPeakSet(proj.2)
+    peaks <- getPeakSet(final_proj.2)
     seq_names <- as.data.frame(peaks@seqnames)
     ranges <- as.data.frame(peaks@ranges)
     peak_txt_file <- cbind(seq_names, ranges)
@@ -558,8 +507,8 @@ if(analysis_type == "RNA_seq") {
     write.table(peak_txt_file, file = paste0(analysis_dir, "Peaks.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
     
     # Create peak_motif_matches.txt file for MAGICAL
-    proj.2 <- addMotifAnnotations(ArchRProj = proj.2, motifSet = "cisbp", name = "Motif")
-    peak_motif_matches <- getMatches(proj.2, name = "Motif")
+    final_proj.2 <- addMotifAnnotations(ArchRProj = final_proj.2, motifSet = "cisbp", name = "Motif")
+    peak_motif_matches <- getMatches(final_proj.2, name = "Motif")
     peak_motif_txt_file <- as.data.frame(peak_motif_matches@assays@data$matches)
     # Remove _.* from ends of column names
     for (col in 1:ncol(peak_motif_txt_file)){
@@ -573,9 +522,9 @@ if(analysis_type == "RNA_seq") {
     write.table(peak_motif_txt_file, file = paste0(analysis_dir, "peak_motif_matches.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
     
     # Create text file for each cell type containing pseudobulk counts for peaks
-    Cell_types <- unique(proj$Cell_type_voting)
-    sample.names <- unique(proj$Sample)
-    peak_count <- getMatrixFromProject(ArchRProj = proj.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
+    Cell_types <- unique(final_proj$Cell_type_voting)
+    sample.names <- unique(final_proj$Sample)
+    peak_count <- getMatrixFromProject(ArchRProj = final_proj.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
     pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk/")
     if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}
     for (i in c(1:length(Cell_types))){
