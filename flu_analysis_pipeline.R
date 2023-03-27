@@ -150,18 +150,24 @@ if(analysis_type == "RNA_seq") {
     rm(reference)
     # Combine cell types and re-do majority vote
     sc_obj <- combine_cell_types_initial(sc_obj, resolution = 3)
+    # Tag certain samples to see whether they're very different from other samples
+    tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe")
+    sample_vec <- sc_obj$sample
+    sample_vec[!(sample_vec %in% tagged_samples)] <- "UNTAGGED"
+    sample_vec[sample_vec %in% tagged_samples] <- "TAGGED"
+    sc_obj$tagged <- sample_vec
     # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
     print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("pre.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj, sample_count, "seurat_clusters", plot_dir, paste0("pre.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj, sample_count, "predicted.id", plot_dir, paste0("pre.clusters_by_cell_type_", date, ".png"))
     print_UMAP(sc_obj, sample_count, "viral_load", plot_dir, paste0("pre.clusters_by_viral_load_", date, ".png"))
+    print_UMAP(sc_obj, sample_count, "sample", plot_dir, paste0("pre.clusters_by_sample_", date, ".png"))
+    print_UMAP(sc_obj, sample_count, "tagged", plot_dir, paste0("pre.clusters_by_tag_", date, ".png"))
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # Load sc_obj
     load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
-    load(paste0(analysis_dir, "singler_labels.rds"))
-    # Remove samples
-    sc_obj <- remove_specific_samples_from_sc_obj(sc_obj, c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8", "3247c65ecdbfe34a", "d360f89cf9585dfe"))
+    #load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
     #print_clustree_plot(sc_obj, plot_dir, date)
@@ -181,11 +187,12 @@ if(analysis_type == "RNA_seq") {
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
     # Remove specific samples that we're not interested in
-    sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8", "3247c65ecdbfe34a", "d360f89cf9585dfe"))
+    sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8"))
     # Print info about sample representation and breakdown of categories per cell type
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
-    # Print plots
+    # Print plots for various metadata categories for final UMAP
+    # TODO: Remove random noisy cells?
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))

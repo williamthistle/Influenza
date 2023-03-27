@@ -6,7 +6,7 @@
 #------------------------------------------------
 
 SPEEDI_dir <- "~/SPEEDI"
-source(paste0(SPEEDI_dir, "/prototype_utils.R"))
+source(paste0(SPEEDI_dir, "/rna/prototype_utils.R"))
 
 # Human CC Genes
 s.genes <- cc.genes.updated.2019$s.genes
