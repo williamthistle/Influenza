@@ -151,7 +151,7 @@ if(analysis_type == "RNA_seq") {
     # Combine cell types and re-do majority vote
     sc_obj <- combine_cell_types_initial(sc_obj, resolution = 3)
     # Tag certain samples to see whether they're very different from other samples
-    tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe")
+    tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8")
     sample_vec <- sc_obj$sample
     sample_vec[!(sample_vec %in% tagged_samples)] <- "UNTAGGED"
     sample_vec[sample_vec %in% tagged_samples] <- "TAGGED"
@@ -187,7 +187,8 @@ if(analysis_type == "RNA_seq") {
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
     # Remove specific samples that we're not interested in
-    sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8"))
+    # sc_obj.minus.messy.clusters.removed.samples <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, tagged_samples)
+    # print_UMAP(sc_obj.minus.messy.clusters.removed.samples, sample_count, "tagged", plot_dir, paste0("post.clusters_all_untagged_", date, ".png"))
     # Print info about sample representation and breakdown of categories per cell type
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
