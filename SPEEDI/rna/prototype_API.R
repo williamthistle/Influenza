@@ -70,7 +70,7 @@ Read_h5 <- function(data_path, sample_id_list) {
   return(all_sc_exp_matrices)
 }
 
-FilterRawData <- function(sc_obj, human = TRUE, record_doublets = FALSE, adaptive_QC_thresholds = TRUE, 
+FilterRawData <- function(all_sc_exp_matrices, human = TRUE, record_doublets = FALSE, adaptive_QC_thresholds = TRUE, 
                           min_nFeature = 900, max_nFeature = 4000, max_nCount = 10000, max_percent_mt = 15, 
                           max_percent_hb = 0.4, max_percent_rp = 50) {
   message("Step 2: Filtering out bad samples...")
@@ -500,7 +500,9 @@ LoadReference <- function(tissue, human) {
 }
 
 FindMappingAnchors <- function(sc_obj, reference, data_type = "scRNA") {
-  DefaultAssay(sc_obj) <- "integrated"
+  if(length(unique(sc_obj$sample)) != 1) {
+    Seurat::DefaultAssay(sc_obj) <- "integrated"
+  }
   if(data_type == "scRNA") {
     recompute.residuals.value <- "T"
   } else {
@@ -515,9 +517,14 @@ FindMappingAnchors <- function(sc_obj, reference, data_type = "scRNA") {
 }
 
 MajorityVote <- function(sc_obj, current_resolution = 1.5) {
-  associated_res_attribute <- paste0("integrated_snn_res.", current_resolution)
   message("Begin majority voting...")
-  DefaultAssay(sc_obj) <- "integrated"
+  if(length(unique(sc_obj$sample)) != 1) {
+    Seurat::DefaultAssay(sc_obj) <- "integrated"
+    associated_res_attribute <- paste0("integrated_snn_res.", current_resolution)
+  } else {
+    Seurat::DefaultAssay(sc_obj) <- "SCT"
+    associated_res_attribute <- paste0("SCT_snn_res.", current_resolution)
+  }
   sc_obj <- FindNeighbors(sc_obj, reduction = "pca", dims = 1:30)
   # TODO: Add code to find the best resolution (e.g., by using Clustree?)
   sc_obj <- FindClusters(sc_obj, resolution = current_resolution)
