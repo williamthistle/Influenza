@@ -140,25 +140,23 @@ generate_qc_plots <- function(all_sc_exp_matrices, plot_dir, date, high_viral_lo
 process_samples_individually <- function(data_path, sample_id_list, reference, analysis_dir) {
   n.cores <- 8
   registerDoMC(n.cores)
-  matrices <- list()
-  objects <- list()
   sc_obj <- foreach(
     i = 1:length(sample_id_list),
     .combine = 'cbind',
     .packages = c("Seurat", "base")
   ) %dopar% {
     current_sample <- sample_id_list[[i]]
-    matrices[[i]] <- Read_h5(data_path, current_sample)
-    objects[[i]] <- FilterRawData(matrices[[i]], human = TRUE, record_doublets = FALSE, adaptive_QC_thresholds = FALSE)
-    sample_name <- unique(objects[[i]]$sample)
+    current_matrix <- Read_h5(data_path, current_sample)
+    current_obj <- FilterRawData(current_matrix, human = TRUE, record_doublets = FALSE, adaptive_QC_thresholds = FALSE)
+    sample_name <- unique(current_obj$sample)
     print(sample_name)
-    objects[[i]] <- InitialProcessing(objects[[i]], human = TRUE)
-    objects[[i]] <- MapCellTypes(objects[[i]], reference, data_type = "snRNA")
-    objects[[i]] <- combine_cell_types_initial(objects[[i]])
-    print_UMAP(objects[[i]], 1, "predicted_celltype_majority_vote", plot_dir, paste0("pre_", sample_name, "_majority_vote_", date, ".png"))
-    print_UMAP(objects[[i]], 1, "seurat_clusters", plot_dir, paste0("pre_", sample_name, "_clusters_", date, ".png"))
-    print_UMAP(objects[[i]], 1, "predicted.id", plot_dir, paste0("pre_", sample_name, "_raw_predictions_", date, ".png"))
-    save(objects[[i]], file = paste0(analysis_dir, paste0(sample_name, ".rds")))
+    current_obj <- InitialProcessing(current_obj, human = TRUE)
+    current_obj <- MapCellTypes(current_obj, reference, data_type = "snRNA")
+    current_obj <- combine_cell_types_initial(current_obj)
+    print_UMAP(current_obj, 1, "predicted_celltype_majority_vote", plot_dir, paste0("pre_", sample_name, "_majority_vote_", date, ".png"))
+    print_UMAP(current_obj, 1, "seurat_clusters", plot_dir, paste0("pre_", sample_name, "_clusters_", date, ".png"))
+    print_UMAP(current_obj, 1, "predicted.id", plot_dir, paste0("pre_", sample_name, "_raw_predictions_", date, ".png"))
+    save(current_obj, file = paste0(analysis_dir, paste0(sample_name, ".rds")))
   }
 }
 
