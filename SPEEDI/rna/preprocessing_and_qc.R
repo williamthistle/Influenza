@@ -160,4 +160,4 @@ process_samples_individually <- function(data_path, sample_id_list, reference, a
   }
 }
 
-process_samples_individually(data_path, sample_id_list, reference, analysis_dir)
+#process_samples_individually(data_path, sample_id_list, reference, analysis_dir)
