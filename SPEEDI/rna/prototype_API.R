@@ -603,12 +603,9 @@ MapCellTypes <- function(sc_obj, reference, data_type = "scRNA") {
 }
 
 ### OTHER MISC
-print_UMAP <- function(sc_obj, sample_count, group_by_category, plot_dir, file_name) {
-  cell_count <- length(sc_obj$cell_name)
-  current_title <- paste0("snRNA-seq Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
-  DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, label = TRUE,
-        label.size = 3, repel = TRUE, raster = FALSE) +
-  labs(title = current_title) +
-  theme(plot.title = element_text(hjust = 0.5))
-  ggsave(paste0(plot_dir, file_name), device = "png", dpi = 300)
+# Save our Seurat object based on the save_progress flag
+save_seurat <- function(save_progress = FALSE, sc_obj, file) {
+  if(save_progress) {
+    save(sc_obj, file)
+  }
 }

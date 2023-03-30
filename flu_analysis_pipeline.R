@@ -26,6 +26,9 @@ source(paste0(SPEEDI_dir, "/rna/preprocessing_and_qc.R"))
 source(paste0(SPEEDI_dir, "/rna/get_stats.R"))
 source(paste0(SPEEDI_dir, "/rna/manipulate_data.R"))
 source(paste0(SPEEDI_dir, "/rna/differential_expression.R"))
+source(paste0(SPEEDI_dir, "/rna/visualization.R"))
+source(paste0(SPEEDI_dir, "/atac/preprocessing_and_qc.R"))
+source(paste0(SPEEDI_dir, "/atac/processing.R"))
 
 # Load information about samples
 sample_metadata <- read.table(paste0(SPEEDI_dir, "/sample_metadata.tsv"), sep = "\t", header = TRUE)
@@ -126,21 +129,15 @@ if(analysis_type == "RNA_seq") {
                         d28_samples, d_minus_1_samples, male_samples, female_samples)
     # Step 3 - normalize data
     sc_obj <- InitialProcessing(sc_obj, human = TRUE)
-    if(save_progress) {
-      save(sc_obj, file = paste0(analysis_dir, "3_sc_obj.rds"))
-    }
+    save_seurat(save_progress, sc_obj, file = paste0(analysis_dir, "3_sc_obj.rds"))
     # Step 4 - find batches in data
     sc_obj <- InferBatches(sc_obj)
     # Step 5 - integrate data by batch
     sc_obj <- IntegrateByBatch(sc_obj)
-    if(save_progress) {
-      save(sc_obj, file = paste0(analysis_dir, "5_sc_obj.rds"))
-    }
+    save_seurat(save_progress, sc_obj, file = paste0(analysis_dir, "5_sc_obj.rds"))
     # Step 6 - process integrated assay and potentially prepare to find markers via PrepSCTFindMarkers
     sc_obj <- VisualizeIntegration(sc_obj, prep_sct_find_markers = TRUE)
-    if(save_progress) {
-      save(sc_obj, file = paste0(analysis_dir, "6_sc_obj.rds"))
-    }
+    save_seurat(save_progress, sc_obj, file = paste0(analysis_dir, "6_sc_obj.rds"))
     # Load reference and remove cell types we don't like
     reference <- LoadReference("PBMC", human = TRUE)
     idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
@@ -150,19 +147,10 @@ if(analysis_type == "RNA_seq") {
     rm(reference)
     # Combine cell types and re-do majority vote
     sc_obj <- combine_cell_types_initial(sc_obj, resolution = 3)
-    # Tag certain samples to see whether they're very different from other samples
-    #tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8")
-    #sample_vec <- sc_obj$sample
-    #sample_vec[!(sample_vec %in% tagged_samples)] <- "UNTAGGED"
-    #sample_vec[sample_vec %in% tagged_samples] <- "TAGGED"
-    #sc_obj$tagged <- sample_vec
     # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
-    print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("pre.clusters_by_cell_type_majority_vote_", date, ".png"))
-    print_UMAP(sc_obj, sample_count, "seurat_clusters", plot_dir, paste0("pre.clusters_by_cluster_num_", date, ".png"))
-    print_UMAP(sc_obj, sample_count, "predicted.id", plot_dir, paste0("pre.clusters_by_cell_type_", date, ".png"))
-    print_UMAP(sc_obj, sample_count, "viral_load", plot_dir, paste0("pre.clusters_by_viral_load_", date, ".png"))
-    print_UMAP(sc_obj, sample_count, "sample", plot_dir, paste0("pre.clusters_by_sample_", date, ".png"))
-    #print_UMAP(sc_obj, sample_count, "tagged", plot_dir, paste0("pre.clusters_by_tag_", date, ".png"))
+    print_UMAP_stage_1(sc_obj, sample_count, plot_dir, date)
+    # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8")
+    # print_UMAP_tagged(sc_obj, tagged_samples, sample_count, plot_dir, date)
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # Load sc_obj
@@ -170,7 +158,7 @@ if(analysis_type == "RNA_seq") {
     #load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
-    #print_clustree_plot(sc_obj, plot_dir, date)
+    # print_clustree_plot(sc_obj, plot_dir, date)
     # Re-run majority vote with best resolution
     best_res <- 3
     sc_obj <- MajorityVote(sc_obj, best_res)
@@ -236,7 +224,7 @@ if(analysis_type == "RNA_seq") {
   # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
   idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 3) 
   cellsPass <- proj$cellNames[idxPass]
-  proj<-proj[cellsPass, ]
+  proj <- proj[cellsPass, ]
   # List number of cells remaining for each condition and each sample
   table(proj$viral_load)
   table(proj$day)
@@ -244,12 +232,7 @@ if(analysis_type == "RNA_seq") {
   table(proj$Sample)
   # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 
   # and add cluster information (addClusters)
-  addArchRThreads(threads = 8)
-  proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
-                          clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
-                          varFeatures = 25000, dimsToUse = 2:30)
-  proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
-  proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 5, knnAssign = 30, maxClusters = NULL, force = TRUE)
+  proj <- dimensionality_reduc(proj)
   # UMAP plots colored by condition, sample, cluster ID, and TSS enrichment
   p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Conditions", embedding = "UMAP", force = TRUE)
   p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
