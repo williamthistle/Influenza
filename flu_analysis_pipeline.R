@@ -42,7 +42,7 @@ all_sample_id_list <- strsplit(all_sample_id_list, "/")
 all_sample_id_list <- unlist(lapply(all_sample_id_list, tail, n = 1L))
 
 # data_token is used to choose subset of data that we want to analyze (pre-defined in flu_data_tokens.tsv)
-data_token <- "all_multiome"
+data_token <- "all_multiome_paired_minus_0_sample"
 # Create directory for this particular data in the analysis directory if it doesn't exist
 base_analysis_dir <- paste0(home_dir, data_type, "/analysis/", data_token, "/")
 if (!dir.exists(base_analysis_dir)) {dir.create(base_analysis_dir)}
@@ -137,7 +137,7 @@ if(analysis_type == "RNA_seq") {
       save(sc_obj, file = paste0(analysis_dir, "5_sc_obj.rds"))
     }
     # Step 6 - process integrated assay and potentially prepare to find markers via PrepSCTFindMarkers
-    sc_obj <- VisualizeIntegration(sc_obj, prep_sct_find_markers = FALSE)
+    sc_obj <- VisualizeIntegration(sc_obj, prep_sct_find_markers = TRUE)
     if(save_progress) {
       save(sc_obj, file = paste0(analysis_dir, "6_sc_obj.rds"))
     }
@@ -151,18 +151,18 @@ if(analysis_type == "RNA_seq") {
     # Combine cell types and re-do majority vote
     sc_obj <- combine_cell_types_initial(sc_obj, resolution = 3)
     # Tag certain samples to see whether they're very different from other samples
-    tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8")
-    sample_vec <- sc_obj$sample
-    sample_vec[!(sample_vec %in% tagged_samples)] <- "UNTAGGED"
-    sample_vec[sample_vec %in% tagged_samples] <- "TAGGED"
-    sc_obj$tagged <- sample_vec
+    #tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8")
+    #sample_vec <- sc_obj$sample
+    #sample_vec[!(sample_vec %in% tagged_samples)] <- "UNTAGGED"
+    #sample_vec[sample_vec %in% tagged_samples] <- "TAGGED"
+    #sc_obj$tagged <- sample_vec
     # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
     print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("pre.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj, sample_count, "seurat_clusters", plot_dir, paste0("pre.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj, sample_count, "predicted.id", plot_dir, paste0("pre.clusters_by_cell_type_", date, ".png"))
     print_UMAP(sc_obj, sample_count, "viral_load", plot_dir, paste0("pre.clusters_by_viral_load_", date, ".png"))
     print_UMAP(sc_obj, sample_count, "sample", plot_dir, paste0("pre.clusters_by_sample_", date, ".png"))
-    print_UMAP(sc_obj, sample_count, "tagged", plot_dir, paste0("pre.clusters_by_tag_", date, ".png"))
+    #print_UMAP(sc_obj, sample_count, "tagged", plot_dir, paste0("pre.clusters_by_tag_", date, ".png"))
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     # Load sc_obj
