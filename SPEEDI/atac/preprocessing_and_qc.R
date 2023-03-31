@@ -38,21 +38,21 @@ add_sample_metadata_atac <- function(proj, high_viral_load_samples, low_viral_lo
   viral_load_vector[idxSample]<-'HVL'
   idxSample <- which(proj$Sample %in% low_viral_load_samples)
   viral_load_vector[idxSample]<-'LVL'
-  proj <- addCellColData(ArchRProj = proj, data = viral_load_vector, cells = proj$cellNames,name = "viral_load", force = TRUE)
+  proj <- addCellColData(ArchRProj = proj, data = viral_load_vector, cells = proj$cellNames, name = "viral_load", force = TRUE)
   # Add day metadata to ArchR object
   day_vector <- proj$Sample
   idxSample <- which(proj$Sample %in% d28_samples)
   day_vector[idxSample]<-'D28'
   idxSample <- which(proj$Sample %in% d_minus_1_samples)
   day_vector[idxSample]<-'D_MINUS_1'
-  proj <- addCellColData(ArchRProj = proj, data = day_vector, cells = proj$cellNames,name = "day", force = TRUE)
+  proj <- addCellColData(ArchRProj = proj, data = day_vector, cells = proj$cellNames, name = "day", force = TRUE)
   # Add sex metadata to ArchR object
   sex_vector <- proj$Sample
   idxSample <- which(proj$Sample %in% male_samples)
   sex_vector[idxSample]<-'MALE'
   idxSample <- which(proj$Sample %in% female_samples)
   sex_vector[idxSample]<-'FEMALE'
-  proj <- addCellColData(ArchRProj = proj, data = sex_vector, cells = proj$cellNames,name = "sex", force = TRUE)
+  proj <- addCellColData(ArchRProj = proj, data = sex_vector, cells = proj$cellNames, name = "sex", force = TRUE)
   return(proj)
 }
 
@@ -87,17 +87,17 @@ parse_metadata_for_samples <- function(proj, group, high_viral_load_samples, low
 }
 
 # Plot QC stuff for ATAC
-plot_qc_atac <- function(proj) {
+plot_qc_atac <- function(proj, date) {
   addArchRThreads(threads = 8)
   proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
                           clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
                           varFeatures = 25000, dimsToUse = 2:30)
   proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
   p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-  plotPDF(p1, name = "Dataset_Prefiltering.pdf", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
+  plotPDF(p1, name = paste0("Dataset_Prefiltering", date), ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
   # Plot out TSS Enrichment / Doublet Enrichment / Nucleosome Ratio for each sample
   p1 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "TSSEnrichment", plotAs = "ridges")
   p2 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "DoubletEnrichment", plotAs = "ridges")
   p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "NucleosomeRatio", plotAs = "ridges")
-  plotPDF(p1,p2,p3, name = "Integrated_Scores_Prefiltering", ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
+  plotPDF(p1,p2,p3, name = paste0("Integrated_Scores_Prefiltering_", date), ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
 }
