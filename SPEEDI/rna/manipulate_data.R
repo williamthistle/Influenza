@@ -55,3 +55,14 @@ remove_specific_samples_from_sc_obj <- function(sc_obj, samples) {
   sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
   return(sc_obj)
 }
+
+remove_cells_based_on_umap <- function(sc_obj, first_x, second_x, first_y, second_y) {
+  orig.umap.coords <- as.data.frame(sc_obj[["umap"]]@cell.embeddings)
+  orig.umap.coords$cells <- rownames(orig.umap.coords)
+  deleted.cells.umap.coords <- orig.umap.coords[orig.umap.coords$"UMAP_1" > first_x & orig.umap.coords$"UMAP_1" < second_x,]
+  deleted.cells.umap.coords <- deleted.cells.umap.coords[deleted.cells.umap.coords$"UMAP_2" > first_y & deleted.cells.umap.coords$"UMAP_2" < second_y,]
+  final.umap.coords <- orig.umap.coords[!(orig.umap.coords$cells %in% deleted.cells.umap.coords$cells),]
+  cellsPass <- rownames(final.umap.coords)
+  sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+  return(sc_obj)
+}

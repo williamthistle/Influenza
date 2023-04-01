@@ -105,8 +105,8 @@ capture_cluster_info <- function(sc_obj, find_doublet_info = FALSE) {
     cluster_mean_rp <- c(cluster_mean_rp, mean(filtered_cluster$percent.rp))
     if(find_doublet_info) {
       cluster_mean_doublet <- c(cluster_mean_doublet, mean(filtered_cluster$scDblFinder.score))
-    cluster_prediction <- sort(table(filtered_cluster$predicted_celltype_majority_vote), decreasing = TRUE)[1]
     }
+    cluster_prediction <- sort(table(filtered_cluster$predicted_celltype_majority_vote), decreasing = TRUE)[1]
     cluster_predictions <- append(cluster_predictions, cluster_prediction)
     cluster_distributions[[idx]] <- table(filtered_cluster$predicted.id)
     cluster_mean_S_score <- append(cluster_mean_S_score, mean(filtered_cluster$S.Score))

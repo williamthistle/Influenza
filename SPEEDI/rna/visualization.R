@@ -25,3 +25,25 @@ print_UMAP_tagged <- function(sc_obj, tagged_sample_list, sample_count, plot_dir
   sc_obj$tagged <- sample_vec
   print_UMAP(sc_obj, sample_count, "tagged", plot_dir, paste0("pre.clusters_by_tag_", date, ".png"))
 }
+
+print_pheatmap_predicted_id <- function(sc_obj, plot_dir, date, all_viral_load_samples, high_viral_load_samples, low_viral_load_samples) {
+  # Let's also use Vincy's code to create a nice heatmap of cell type proportions
+  sc_obj$sample <- factor(sc_obj$sample, levels = all_viral_load_samples)
+  voting_cell_type_proportion  <- as.matrix(table(sc_obj$sample, sc_obj$predicted.id))
+  voting_cell_type_proportion <- apply(voting_cell_type_proportion, 1, function(x){x/sum(x)})
+  my_sample_col <- data.frame(sample = rep(c("HIGH", "LOW"), c(length(high_viral_load_samples),length(low_viral_load_samples)))) #The study group by their order
+  row.names(my_sample_col) <- colnames(voting_cell_type_proportion)
+  output.plot <- pheatmap(voting_cell_type_proportion, annotation_col = my_sample_col, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE, number_format = "%.3f")
+  ggsave(paste0(plot_dir, "voting_cell_type_proportions_heatmap_predicted.id_", date, ".png"), plot = output.plot, device = "png", width = 8, height = 8, units = "in")
+}
+
+print_pheatmap_majority_vote <- function(sc_obj, plot_dir, date, all_viral_load_samples, high_viral_load_samples, low_viral_load_samples) {
+  # Let's also use Vincy's code to create a nice heatmap of cell type proportions
+  sc_obj$sample <- factor(sc_obj$sample, levels = all_viral_load_samples)
+  voting_cell_type_proportion  <- as.matrix(table(sc_obj$sample, sc_obj$predicted_celltype_majority_vote))
+  voting_cell_type_proportion <- apply(voting_cell_type_proportion, 1, function(x){x/sum(x)})
+  my_sample_col <- data.frame(sample = rep(c("HIGH", "LOW"), c(length(high_viral_load_samples),length(low_viral_load_samples)))) #The study group by their order
+  row.names(my_sample_col) <- colnames(voting_cell_type_proportion)
+  output.plot <- pheatmap(voting_cell_type_proportion, annotation_col = my_sample_col, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE, number_format = "%.3f")
+  ggsave(paste0(plot_dir, "voting_cell_type_proportions_heatmap_majority_vote_", date, ".png"), plot = output.plot, device = "png", width = 8, height = 8, units = "in")
+}

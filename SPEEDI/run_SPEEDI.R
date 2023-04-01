@@ -331,7 +331,7 @@ test <- DimPlot(sc_obj.minus.messy.clusters, reduction = "umap", group.by = "pre
                 label.size = 3, repel = TRUE, raster = FALSE)
 test <- test + scale_x_continuous(breaks = scales::pretty_breaks(n = 20)) +
   scale_y_continuous(breaks = scales::pretty_breaks(n = 20))
-ggsave(paste0(output_dir, "test.png"), device = "png", dpi = 300)
+ggsave(paste0(analysis_dir, "test.png"), device = "png", dpi = 300)
 
 # To confirm the cell type associated with a given cluster, we can also find the cluster markers (example below)
 cluster15.markers <- FindMarkers(sc_obj, ident.1 = 15, min.pct = 0.25)

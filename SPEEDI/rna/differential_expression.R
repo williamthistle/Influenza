@@ -1,11 +1,30 @@
 run_differential_expression_cluster <- function(sc_obj, marker_dir) {
   print(paste0("Performing differential expression for each cluster"))
-  cluster_ids <- unique(sc_obj$seurat_clusters)
-  for(cluster_id in cluster_ids) {
-    print(cluster_id)
-    cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id, assay = "SCT")
-    write.table(cluster.markers, paste0(marker_dir, "7_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
+  # Make reading data parallel
+  if (Sys.getenv("SLURM_NTASKS_PER_NODE") == "") {
+    n.cores <- as.numeric(detectCores())
+  } else {
+    n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
   }
+  
+  n.cores <- 8
+  
+  message(paste0("Number of cores: ", n.cores))
+  
+  registerDoMC(n.cores)
+  message("Begin parallelizing...")
+  cluster_ids <- unique(sc_obj$seurat_clusters)
+  
+  compiled_output <- foreach(
+    i = 1:length(cluster_ids),
+    .packages = c("Seurat", "base")
+  ) %dopar% {
+    cluster_id <- cluster_ids[[i]]
+    cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id, assay = "SCT", recorrect_umi = FALSE)
+    write.table(cluster.markers, paste0(marker_dir, "7_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
+    return(i)
+  }
+  message("All done!")
 }
 
 run_differential_expression_group <- function(sc_obj, analysis_dir, group) {

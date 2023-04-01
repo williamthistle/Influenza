@@ -152,28 +152,28 @@ if(analysis_type == "RNA_seq") {
     # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8")
     # print_UMAP_tagged(sc_obj, tagged_samples, sample_count, plot_dir, date)
     # We always want to save our sc_obj after processing data through SPEEDI
-    save(sc_obj, file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
+    save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
     # Load sc_obj
-    load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
+    load(file = paste0(analysis_dir, "7_sc_obj.rds"))
     #load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
     # print_clustree_plot(sc_obj, plot_dir, date)
     # Re-run majority vote with best resolution
-    best_res <- 3
+    best_res <- 1
     sc_obj <- MajorityVote(sc_obj, best_res)
     # To decide which clusters we need to remove, we will capture information about clusters
     # We will also run DE for each cluster to find cell type markers
     raw_cluster_info <- capture_cluster_info(sc_obj)
     run_differential_expression_cluster(sc_obj, marker_dir)
     # Remove messy clusters
-    messy_clusters <- c(0,18,20,22,25,28,33,35,36,38,39,40,41,42,44,45,46,49,50,52,53,59)
+    messy_clusters <- c(6,7,13,14,15,19,28)
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)
     cellsPass <- names(sc_obj$orig.ident[-idxPass])
     sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     # Override labels manually where necessary
-    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
-    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
+    #sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
+    #sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
     # Remove specific samples that we're not interested in
     # sc_obj.minus.messy.clusters.removed.samples <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, tagged_samples)
     # print_UMAP(sc_obj.minus.messy.clusters.removed.samples, sample_count, "tagged", plot_dir, paste0("post.clusters_all_untagged_", date, ".png"))
@@ -181,7 +181,8 @@ if(analysis_type == "RNA_seq") {
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
     # Print plots for various metadata categories for final UMAP
-    # TODO: Remove random noisy cells?
+    # Remove noisy cells
+    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -2, 0, 1, 2.5)
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))
