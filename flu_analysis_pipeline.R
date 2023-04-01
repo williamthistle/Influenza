@@ -211,15 +211,18 @@ if(analysis_type == "RNA_seq") {
   # Add relevant genome for ArchR
   addArchRGenome("hg38")
   # Create ArchR project from input files
-  proj <- load_archR_from_input_files(inputFiles)
+  proj <- load_archR_from_input_files(inputFiles, analysis_dir)
   # Re-load ArchR project
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
   # Add sample metadata
   proj <- add_sample_metadata_atac(proj, high_viral_load_samples, low_viral_load_samples,
                                    d28_samples, d_minus_1_samples, male_samples, female_samples)
-  viral_load_metadata <- parse_metadata_for_samples("viral_load")
-  day_metadata <- parse_metadata_for_samples("day")
-  sex_metadata <- parse_metadata_for_samples("sex")
+  viral_load_metadata <- parse_metadata_for_samples(proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
+                                                    d28_samples, d_minus_1_samples, male_samples, female_samples)
+  day_metadata <- parse_metadata_for_samples(proj, "day", high_viral_load_samples, low_viral_load_samples,
+                                             d28_samples, d_minus_1_samples, male_samples, female_samples)
+  sex_metadata <- parse_metadata_for_samples(proj, "sex", high_viral_load_samples, low_viral_load_samples,
+                                             d28_samples, d_minus_1_samples, male_samples, female_samples)
   # Plot what dataset looks like before any processing
   plot_qc_atac(proj, date)
   # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
@@ -234,7 +237,7 @@ if(analysis_type == "RNA_seq") {
   # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 
   # and add cluster information (addClusters)
   proj <- dimensionality_reduc(proj)
-  proj <- plot_atac_after_filtering(proj, date)
+  plot_atac_after_filtering(proj, date)
   # Map from scRNA reference to ATAC data
   scRNA_reference <- load_rna_reference_for_atac("~/reference/")
   proj <- map_reference_to_atac(proj)
@@ -243,7 +246,7 @@ if(analysis_type == "RNA_seq") {
   saveArchRProject(ArchRProj = proj, load = FALSE)
   # Load ArchR project 
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
-  proj <- add_rna_labels_for_atac_data(proj, source_rna_file = "rna_seq_labeled_cells_2023-03-22.csv", use_rna_labels, subset_to_rna)
+  proj <- add_rna_labels_for_atac_data(proj, source_rna_file = "rna_seq_labeled_cells_2023-03-31.csv", use_rna_labels, subset_to_rna)
   proj <- combine_cell_types_atac(proj)
   # If we subset to RNA, we don't need to do any majority voting in clusters, etc.
   # Otherwise, we do!
@@ -251,6 +254,9 @@ if(analysis_type == "RNA_seq") {
     final_proj <- proj
     # Just for convenience in code below
     final_proj$Cell_type_voting <- final_proj$predictedGroup
+    final_proj <- remove_cell_types(final_proj, c("HSPC", "Plasmablast", "Proliferating"))
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2)
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5)
     plot_atac_after_majority_vote_or_subset(final_proj, date)
   } else {
     proj <- perform_majority_vote(proj)
@@ -260,6 +266,8 @@ if(analysis_type == "RNA_seq") {
     proj <- override_cluster_label(proj, c("C8"), "CD16 Mono")
     
   }
+
+  
   
   
   # If we didn't subset to RNA, then we need to do some kind of majority vote in our clusters

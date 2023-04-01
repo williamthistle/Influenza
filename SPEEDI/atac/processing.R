@@ -5,30 +5,34 @@ dimensionality_reduc <- function(proj) {
                           varFeatures = 25000, dimsToUse = 2:30)
   proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
   proj <- addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 5, knnAssign = 30, maxClusters = NULL, force = TRUE)
+  saveArchRProject(ArchRProj = proj, load = FALSE)
   return(proj)
 }
 
 plot_atac_after_filtering <- function(proj, date) {
-  # UMAP plots colored by condition, sample, cluster ID, and TSS enrichment
-  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Conditions", embedding = "UMAP", force = TRUE)
-  p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-  p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
-  p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
-  plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_snRNA_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  # UMAP plots colored by sample, cluster ID, and TSS enrichment
+  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "viral_load", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p5 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "day", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p6 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "sex", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  plotPDF(p1,p2,p3,p4,p5,p6, name = paste0("Integrated_Clustering_snRNA_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 }
 
 plot_atac_after_integration <- function(proj, date) {
   pal <- paletteDiscrete(values = proj$predictedGroup)
-  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE)
+  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
   plotPDF(p1, name = paste0("Integrated_annotated_with_gene_integration_matrix_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 }
 
 plot_atac_after_majority_vote_or_subset <- function(proj, date) {
-  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
-  p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-  p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
-  p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
-  plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Majority_Vote_or_Subset", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  pal <- paletteDiscrete(values = proj$Cell_type_voting)
+  p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p2 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Majority_Vote_or_Subset_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 }
 
 load_rna_reference_for_atac <- function(reference_dir) {
@@ -168,5 +172,23 @@ get_cluster_info <- function(proj) {
 override_cluster_label <- function(proj, cluster_identities, cluster_label) {
   idxPass <- which(proj$Clusters %in% cluster_identities)
   proj$Cell_type_voting[idxPass] <- cluster_label
+  return(proj)
+}
+
+remove_cell_types <- function(proj, cell_types) {
+  idxPass <- which(proj$Cell_type_voting %in% cell_types)
+  cellsPass <- proj$cellNames[-idxPass]
+  proj <- proj[cellsPass, ]
+  return(proj)
+}
+
+remove_cells_based_on_umap_atac <- function(proj, first_x, second_x, first_y, second_y) {
+  orig.umap.coords <- getEmbedding(proj)
+  orig.umap.coords$cells <- rownames(orig.umap.coords)
+  deleted.cells.umap.coords <- orig.umap.coords[orig.umap.coords[,1] > first_x & orig.umap.coords[,1] < second_x,]
+  deleted.cells.umap.coords <- deleted.cells.umap.coords[deleted.cells.umap.coords[,2] > first_y & deleted.cells.umap.coords[,2] < second_y,]
+  final.umap.coords <- orig.umap.coords[!(orig.umap.coords$cells %in% deleted.cells.umap.coords$cells),]
+  cellsPass <- rownames(final.umap.coords)
+  proj <- proj[cellsPass, ]
   return(proj)
 }

@@ -1,5 +1,5 @@
 # Create Seurat object with important info for QC
-load_archR_from_input_files <- function(inputFiles) {
+load_archR_from_input_files <- function(inputFiles, analysis_dir) {
   # Create arrow files from raw input fragment files
   ArrowFiles <- createArrowFiles(
     inputFiles = inputFiles,
@@ -17,14 +17,14 @@ load_archR_from_input_files <- function(inputFiles) {
     knnMethod = "UMAP", #Refers to the embedding to use for nearest neighbor search.
     LSIMethod = 1
   )
-  # Filter out doublets
-  proj <- filterDoublets(ArchRProj = proj)
   # Create and save ArchR project based on arrow files
   proj <- ArchRProject(
     ArrowFiles = ArrowFiles, 
     outputDirectory = paste0(analysis_dir, "ArchR/"),
     copyArrows = FALSE #This is recommended so that you maintain an unaltered copy for later usage.
   )
+  # Filter out doublets
+  proj <- filterDoublets(ArchRProj = proj)
   saveArchRProject(ArchRProj = proj, load = FALSE)
   return(proj)
 }
