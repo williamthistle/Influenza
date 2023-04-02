@@ -257,6 +257,7 @@ if(analysis_type == "RNA_seq") {
     final_proj <- remove_cell_types(final_proj, c("HSPC", "Plasmablast", "Proliferating"))
     final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2)
     final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5)
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, -2.5, -2, -2.5, 0.5)
     plot_atac_after_majority_vote_or_subset(final_proj, date)
   } else {
     proj <- perform_majority_vote(proj)
@@ -264,177 +265,30 @@ if(analysis_type == "RNA_seq") {
     proj <- remove_single_cell_clusters(proj)
     cluster_info <- get_cluster_info(proj)
     proj <- override_cluster_label(proj, c("C8"), "CD16 Mono")
-    
-  }
-
-  
-  
-  
-  # If we didn't subset to RNA, then we need to do some kind of majority vote in our clusters
-  if(!subset_to_rna) {
     #Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
     idxPass <- which(proj$Clusters %in% c("C1", "C29", "C30", "C31", "C38"))
     cellsPass <- proj$cellNames[-idxPass]
-    proj_minus_clusters <- proj[cellsPass, ]
-    saveArchRProject(ArchRProj = proj_minus_clusters, outputDirectory = paste0(analysis_dir, "ArchR_minus_clusters_rna"), load = FALSE)
-    proj_minus_clusters <- loadArchRProject(path = paste0(analysis_dir, "/ArchR_minus_clusters_rna/"))
-    final_proj <- proj_minus_clusters
-    p1 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE)
-    p2 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
-    p3 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE)
-    p4 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE)
-    p5 <- plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE)
-    plotPDF(p1,p2,p3,p4,p5, name = paste0("Integrated_Clustering_Gene_Integration_Voting_1_RNA_labels_subset_minus_clusters_", date), ArchRProj = proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
-  } else {
-    final_proj <- proj
-    # Just for convenience in code below
-    final_proj$Cell_type_voting <- final_proj$predictedGroup
+    final_proj <- proj[cellsPass, ]
+    plot_atac_after_majority_vote_or_subset(final_proj, date)
   }
-  # See distribution for different metadata categories
-  for (cell_type in unique(final_proj$Cell_type_voting)) {
-    print(cell_type)
-    idxPass <- which(final_proj$predictedGroup %in% cell_type)
-    cellsPass <- final_proj$cellNames[idxPass]
-    filtered_cluster <-final_proj[cellsPass,]
-    print(length(cellsPass))
-    print(table(filtered_cluster$viral_load))
-    print(table(filtered_cluster$day))
-    print(table(filtered_cluster$sex))
-  }
-  # Create cell type proportion file for MAGICAL
-  #metadata_categories <- c("viral_load", "day", "sex")
-  metadata_categories <- c("day")
-  for(metadata_category in metadata_categories) {
-    if(metadata_category == "day") {
-      metadata <- day_metadata
-    }
-    cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = names(metadata))
-    total_cell_counts_df <- data.frame("Sample_name" = names(metadata))
-    cell_counts <- vector()
-    # Find total cell counts for each sample
-    for (sample_id in names(metadata)) {
-      idxPass <- which(final_proj$Sample %in% sample_id)
-      print(length(idxPass))
-      cellsPass <- final_proj$cellNames[idxPass]
-      sample_subset <- subsetCells(final_proj, cellsPass)
-      cell_counts <- append(cell_counts, nCells(sample_subset))
-    }
-    total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
-    for (cell_type in unique(final_proj$Cell_type_voting)) {
-      cell_type_proportions <- vector()
-      print(cell_type)
-      # Grab cells associated with cell type
-      idxPass <- which(final_proj$Cell_type_voting %in% cell_type)
-      print(length(idxPass))
-      cellsPass <- final_proj$cellNames[idxPass]
-      cells_subset <- subsetCells(final_proj, cellsPass)
-      for (sample_id in names(metadata)) {
-        # Subset further based on cells associated with sample ID
-        idxPass <- which(cells_subset$Sample %in% sample_id)
-        print(length(idxPass))
-        cellsPass <- cells_subset$cellNames[idxPass]
-        sample_subset <- subsetCells(cells_subset, cellsPass)
-        cell_counts <- nCells(sample_subset)
-        cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
-      }
-      temp_df <- data.frame(cell_type_proportions)
-      names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
-      cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
-    }
-    write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "ATAC_cell_type_proportion_", metadata_category, ".csv"), quote = FALSE, row.names = FALSE)
-    
-    # Apparently info about ArchR Genome is not stored in the .RData file, so if we load an .RData file above,
-    # We need to re-add our hg38 genome
-    addArchRGenome("hg38")
-    # Peak calling - first, call addGroupCoverages to find pseudo-bulk replicates, then call peaks using MACS2
-    final_proj <- addGroupCoverages(ArchRProj = final_proj, groupBy = "Cell_type_voting", force = TRUE)
-    pathToMacs2 <- findMacs2()
-    final_proj <- addReproduciblePeakSet(
-      ArchRProj = final_proj, 
-      groupBy = "Cell_type_voting", 
-      pathToMacs2 = pathToMacs2,
-      force = TRUE
-    )
-    # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
-    # calculations
-    final_proj.2 <- addPeakMatrix(final_proj)
-    #save.image(paste0(image_dir, "atac_after_peak_matrix.RData"))
-    # Calculate differential accessible peaks for each cell type
-    differential_peaks_dir <- paste0(analysis_dir, "diff_peaks/")
-    if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir)}
-    for (cell_type in unique(final_proj.2$Cell_type_voting)) {
-      print(cell_type)
-      # Grab cells associated with cell type
-      idxPass <- which(final_proj.2$Cell_type_voting %in% cell_type)
-      print(length(idxPass))
-      cellsPass <- final_proj.2$cellNames[idxPass]
-      cells_subset <- subsetCells(final_proj.2, cellsPass)
-      # Find DAPs
-      marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "day",
-                                         testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), maxCells = 15000,
-                                         useGroups = "D28", bgdGroups = "D_MINUS_1")
-      # Grab relevant stats
-      marker_log_2_fc <- assays(marker_D28_D1)$Log2FC
-      marker_mean <- assays(marker_D28_D1)$Mean
-      marker_fdr <- assays(marker_D28_D1)$FDR
-      marker_pval <- assays(marker_D28_D1)$Pval
-      marker_mean_diff <- assays(marker_D28_D1)$MeanDiff
-      marker_auc <- assays(marker_D28_D1)$AUC
-      marker_mean_bgd <- assays(marker_D28_D1)$MeanBGD
-      # Print stats to Excel spreadsheet (used by MAGICAL)
-      cell_type <- sub(" ", "_", cell_type)
-      list_of_datasets <- list("Log2FC" = marker_log_2_fc, "Mean" = marker_mean, "FDR" = marker_fdr, "Pval" = marker_pval, 
-                               "MeanDiff" = marker_mean_diff, "AUC" = marker_auc, "MeanBGD" = marker_mean_bgd)
-      write.xlsx(list_of_datasets, file = paste0(differential_peaks_dir, cell_type, "_", "HVL_LVL_diff.xlsx"), colNames = FALSE)
-    }
-    
-    # Create Peaks.txt file for MAGICAL
-    peaks <- getPeakSet(final_proj.2)
-    seq_names <- as.data.frame(peaks@seqnames)
-    ranges <- as.data.frame(peaks@ranges)
-    peak_txt_file <- cbind(seq_names, ranges)
-    colnames(peak_txt_file)[1] <- "chr"
-    peak_txt_file <- peak_txt_file[, !(names(peak_txt_file) %in% c("width", "names"))]
-    peak_txt_file[,1] <- sub("chr", "", peak_txt_file[,1])
-    peak_txt_file[,1] <- sub("X", "23", peak_txt_file[,1])
-    write.table(peak_txt_file, file = paste0(analysis_dir, "Peaks.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
-    
-    # Create peak_motif_matches.txt file for MAGICAL
-    final_proj.2 <- addMotifAnnotations(ArchRProj = final_proj.2, motifSet = "cisbp", name = "Motif")
-    peak_motif_matches <- getMatches(final_proj.2, name = "Motif")
-    peak_motif_txt_file <- as.data.frame(peak_motif_matches@assays@data$matches)
-    # Remove _.* from ends of column names
-    for (col in 1:ncol(peak_motif_txt_file)){
-      colnames(peak_motif_txt_file)[col] <-  sub("_.*", "", colnames(peak_motif_txt_file)[col])
-    }
-    peak_motif_txt_file <- cbind(peak_txt_file, peak_motif_txt_file)
-    colnames(peak_motif_txt_file)[2] <- "point1"
-    colnames(peak_motif_txt_file)[3] <- "point2"
-    cols <- sapply(peak_motif_txt_file, is.logical)
-    peak_motif_txt_file[,cols] <- lapply(peak_motif_txt_file[,cols], as.numeric)
-    write.table(peak_motif_txt_file, file = paste0(analysis_dir, "peak_motif_matches.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
-    
-    # Create text file for each cell type containing pseudobulk counts for peaks
-    Cell_types <- unique(final_proj$Cell_type_voting)
-    sample.names <- unique(final_proj$Sample)
-    peak_count <- getMatrixFromProject(ArchRProj = final_proj.2, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
-    pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk/")
-    if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}
-    for (i in c(1:length(Cell_types))){
-      pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
-      colnames(pseudo_bulk)<-sample.names
-      rownames(pseudo_bulk)<-peaks@elementMetadata$idx
-      
-      for (s in c(1:length(sample.names))){
-        idxMatch <- which(str_detect(peak_count$Cell_type_voting,Cell_types[i]) & str_detect(as.character(peak_count$Sample),sample.names[s]))
-        if (length(idxMatch)>1){
-          pseudo_bulk[,s] = Matrix::rowSums(peak_count@assays@data$PeakMatrix[,idxMatch])
-        }
-      }
-      
-      write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t", col.names = NA)
-    }
-  }
+  print_cell_type_distributions(final_proj)
+  create_cell_type_proportion_MAGICAL_atac(final_proj, analysis_dir, c("day"), day_metadata)
+  addArchRGenome("hg38")
+  final_proj <- pseudo_bulk_replicates_and_call_peaks(final_proj)
+  # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
+  # calculations
+  final_proj.2 <- addPeakMatrix(final_proj)
+  differential_peaks_dir <- paste0(analysis_dir, "diff_peaks/")
+  if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir)}
+  calculate_daps_for_each_cell_type(final_proj.2, differential_peaks_dir)
+  # Create Peaks.txt file for MAGICAL
+  create_peaks_file(final_proj.2, analysis_dir)
+  # Create peak_motif_matches.txt file for MAGICAL
+  create_peak_motif_matches_file(final_proj.2)
+  # Create pseudobulk counts for peaks for each cell type
+  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk/")
+  if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}
+  create_pseudobulk_atac(final_proj.2, pseudo_bulk_dir)
 } else {
   stop("Invalid analysis type")
 }

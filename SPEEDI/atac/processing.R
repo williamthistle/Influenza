@@ -192,3 +192,149 @@ remove_cells_based_on_umap_atac <- function(proj, first_x, second_x, first_y, se
   proj <- proj[cellsPass, ]
   return(proj)
 }
+
+print_cell_type_distributions <- function(proj) {
+  # See distribution for different metadata categories
+  for (cell_type in unique(final_proj$Cell_type_voting)) {
+    print(cell_type)
+    idxPass <- which(final_proj$predictedGroup %in% cell_type)
+    cellsPass <- final_proj$cellNames[idxPass]
+    filtered_cluster <-final_proj[cellsPass,]
+    print(length(cellsPass))
+    print(table(filtered_cluster$viral_load))
+    print(table(filtered_cluster$day))
+    print(table(filtered_cluster$sex))
+  }
+}
+
+create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadata_categories, day_metadata) {
+  for(metadata_category in metadata_categories) {
+    if(metadata_category == "day") {
+      metadata <- day_metadata
+    }
+    cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = names(metadata))
+    total_cell_counts_df <- data.frame("Sample_name" = names(metadata))
+    cell_counts <- vector()
+    # Find total cell counts for each sample
+    for (sample_id in names(metadata)) {
+      idxPass <- which(final_proj$Sample %in% sample_id)
+      print(length(idxPass))
+      cellsPass <- final_proj$cellNames[idxPass]
+      sample_subset <- subsetCells(final_proj, cellsPass)
+      cell_counts <- append(cell_counts, nCells(sample_subset))
+    }
+    total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
+    for (cell_type in unique(final_proj$Cell_type_voting)) {
+      cell_type_proportions <- vector()
+      print(cell_type)
+      # Grab cells associated with cell type
+      idxPass <- which(final_proj$Cell_type_voting %in% cell_type)
+      print(length(idxPass))
+      cellsPass <- final_proj$cellNames[idxPass]
+      cells_subset <- subsetCells(final_proj, cellsPass)
+      for (sample_id in names(metadata)) {
+        # Subset further based on cells associated with sample ID
+        idxPass <- which(cells_subset$Sample %in% sample_id)
+        print(length(idxPass))
+        cellsPass <- cells_subset$cellNames[idxPass]
+        sample_subset <- subsetCells(cells_subset, cellsPass)
+        cell_counts <- nCells(sample_subset)
+        cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+      }
+      temp_df <- data.frame(cell_type_proportions)
+      names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
+      cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
+    }
+    write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "ATAC_cell_type_proportion_", metadata_category, ".csv"), quote = FALSE, row.names = FALSE)
+  }
+}
+
+pseudo_bulk_replicates_and_call_peaks <- function(proj) {
+  # Peak calling - first, call addGroupCoverages to find pseudo-bulk replicates, then call peaks using MACS2
+  final_proj <- addGroupCoverages(ArchRProj = proj, groupBy = "Cell_type_voting", force = TRUE)
+  pathToMacs2 <- findMacs2()
+  proj <- addReproduciblePeakSet(
+    ArchRProj = proj, 
+    groupBy = "Cell_type_voting", 
+    pathToMacs2 = pathToMacs2,
+    force = TRUE
+  )
+  return(proj)
+}
+
+calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
+  # Calculate differential accessible peaks for each cell type
+  for (cell_type in unique(proj$Cell_type_voting)) {
+    print(cell_type)
+    # Grab cells associated with cell type
+    idxPass <- which(proj$Cell_type_voting %in% cell_type)
+    print(length(idxPass))
+    cellsPass <- proj$cellNames[idxPass]
+    cells_subset <- proj[cellsPass,]
+    print(cells_subset)
+    # Find DAPs
+    marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "day",
+                                       testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), maxCells = 15000,
+                                       useGroups = "D28", bgdGroups = "D_MINUS_1")
+    # Grab relevant stats
+    marker_log_2_fc <- assays(marker_D28_D1)$Log2FC
+    marker_mean <- assays(marker_D28_D1)$Mean
+    marker_fdr <- assays(marker_D28_D1)$FDR
+    marker_pval <- assays(marker_D28_D1)$Pval
+    marker_mean_diff <- assays(marker_D28_D1)$MeanDiff
+    marker_auc <- assays(marker_D28_D1)$AUC
+    marker_mean_bgd <- assays(marker_D28_D1)$MeanBGD
+    # Print stats to Excel spreadsheet (used by MAGICAL)
+    cell_type <- sub(" ", "_", cell_type)
+    list_of_datasets <- list("Log2FC" = marker_log_2_fc, "Mean" = marker_mean, "FDR" = marker_fdr, "Pval" = marker_pval, 
+                             "MeanDiff" = marker_mean_diff, "AUC" = marker_auc, "MeanBGD" = marker_mean_bgd)
+    write.xlsx(list_of_datasets, file = paste0(differential_peaks_dir, cell_type, "_", "HVL_LVL_diff.xlsx"), colNames = FALSE)
+  }
+}
+
+create_peaks_file <- function(proj, analysis_dir) {
+  peaks <- getPeakSet(proj)
+  seq_names <- as.data.frame(peaks@seqnames)
+  ranges <- as.data.frame(peaks@ranges)
+  peak_txt_file <- cbind(seq_names, ranges)
+  colnames(peak_txt_file)[1] <- "chr"
+  peak_txt_file <- peak_txt_file[, !(names(peak_txt_file) %in% c("width", "names"))]
+  peak_txt_file[,1] <- sub("chr", "", peak_txt_file[,1])
+  peak_txt_file[,1] <- sub("X", "23", peak_txt_file[,1])
+  write.table(peak_txt_file, file = paste0(analysis_dir, "Peaks.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
+}
+
+create_peak_motif_matches_file <- function(proj, analysis_dir) {
+  proj <- addMotifAnnotations(ArchRProj = proj, motifSet = "cisbp", name = "Motif")
+  peak_motif_matches <- getMatches(proj, name = "Motif")
+  peak_motif_txt_file <- as.data.frame(peak_motif_matches@assays@data$matches)
+  # Remove _.* from ends of column names
+  for (col in 1:ncol(peak_motif_txt_file)){
+    colnames(peak_motif_txt_file)[col] <-  sub("_.*", "", colnames(peak_motif_txt_file)[col])
+  }
+  peak_motif_txt_file <- cbind(peak_txt_file, peak_motif_txt_file)
+  colnames(peak_motif_txt_file)[2] <- "point1"
+  colnames(peak_motif_txt_file)[3] <- "point2"
+  cols <- sapply(peak_motif_txt_file, is.logical)
+  peak_motif_txt_file[,cols] <- lapply(peak_motif_txt_file[,cols], as.numeric)
+  write.table(peak_motif_txt_file, file = paste0(analysis_dir, "peak_motif_matches.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
+}
+
+create_pseudobulk_atac <- function(proj, pseudobulk_dir) {
+  # Create text file for each cell type containing pseudobulk counts for peaks
+  Cell_types <- unique(final_proj$Cell_type_voting)
+  sample.names <- unique(final_proj$Sample)
+  peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
+  for (i in c(1:length(Cell_types))){
+    pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
+    colnames(pseudo_bulk)<-sample.names
+    rownames(pseudo_bulk)<-peaks@elementMetadata$idx
+    for (s in c(1:length(sample.names))){
+      idxMatch <- which(str_detect(peak_count$Cell_type_voting,Cell_types[i]) & str_detect(as.character(peak_count$Sample),sample.names[s]))
+      if (length(idxMatch)>1){
+        pseudo_bulk[,s] = Matrix::rowSums(peak_count@assays@data$PeakMatrix[,idxMatch])
+      }
+    }
+    write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t", col.names = NA)
+  }
+}
