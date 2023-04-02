@@ -284,7 +284,7 @@ if(analysis_type == "RNA_seq") {
   # Create Peaks.txt file for MAGICAL
   create_peaks_file(final_proj.2, analysis_dir)
   # Create peak_motif_matches.txt file for MAGICAL
-  create_peak_motif_matches_file(final_proj.2)
+  create_peak_motif_matches_file(final_proj.2, analysis_dir)
   # Create pseudobulk counts for peaks for each cell type
   pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk/")
   if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}

@@ -251,7 +251,7 @@ create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadat
 
 pseudo_bulk_replicates_and_call_peaks <- function(proj) {
   # Peak calling - first, call addGroupCoverages to find pseudo-bulk replicates, then call peaks using MACS2
-  final_proj <- addGroupCoverages(ArchRProj = proj, groupBy = "Cell_type_voting", force = TRUE)
+  proj <- addGroupCoverages(ArchRProj = proj, groupBy = "Cell_type_voting", force = TRUE)
   pathToMacs2 <- findMacs2()
   proj <- addReproduciblePeakSet(
     ArchRProj = proj, 
