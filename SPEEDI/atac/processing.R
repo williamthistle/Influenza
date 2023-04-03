@@ -302,9 +302,10 @@ create_peaks_file <- function(proj, analysis_dir) {
   peak_txt_file[,1] <- sub("chr", "", peak_txt_file[,1])
   peak_txt_file[,1] <- sub("X", "23", peak_txt_file[,1])
   write.table(peak_txt_file, file = paste0(analysis_dir, "Peaks.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
+  return(peak_txt_file)
 }
 
-create_peak_motif_matches_file <- function(proj, analysis_dir) {
+create_peak_motif_matches_file <- function(proj, analysis_dir, peak_txt_file) {
   proj <- addMotifAnnotations(ArchRProj = proj, motifSet = "cisbp", name = "Motif")
   peak_motif_matches <- getMatches(proj, name = "Motif")
   peak_motif_txt_file <- as.data.frame(peak_motif_matches@assays@data$matches)
@@ -324,6 +325,7 @@ create_pseudobulk_atac <- function(proj, pseudobulk_dir) {
   # Create text file for each cell type containing pseudobulk counts for peaks
   Cell_types <- unique(final_proj$Cell_type_voting)
   sample.names <- unique(final_proj$Sample)
+  peaks <- getPeakSet(proj)
   peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
   for (i in c(1:length(Cell_types))){
     pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
