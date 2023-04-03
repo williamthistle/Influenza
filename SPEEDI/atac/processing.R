@@ -288,7 +288,7 @@ calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
     cell_type <- sub(" ", "_", cell_type)
     list_of_datasets <- list("Log2FC" = marker_log_2_fc, "Mean" = marker_mean, "FDR" = marker_fdr, "Pval" = marker_pval, 
                              "MeanDiff" = marker_mean_diff, "AUC" = marker_auc, "MeanBGD" = marker_mean_bgd)
-    write.xlsx(list_of_datasets, file = paste0(differential_peaks_dir, cell_type, "_", "HVL_LVL_diff.xlsx"), colNames = FALSE)
+    write.xlsx(list_of_datasets, file = paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff.xlsx"), colNames = FALSE)
   }
 }
 
@@ -301,7 +301,7 @@ create_peaks_file <- function(proj, analysis_dir) {
   peak_txt_file <- peak_txt_file[, !(names(peak_txt_file) %in% c("width", "names"))]
   peak_txt_file[,1] <- sub("chr", "", peak_txt_file[,1])
   peak_txt_file[,1] <- sub("X", "23", peak_txt_file[,1])
-  write.table(peak_txt_file, file = paste0(analysis_dir, "Peaks.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
+  write.table(peak_txt_file, file = paste0(analysis_dir, "Peaks.txt"), col.names = FALSE, quote = FALSE, sep = "\t", row.names = FALSE)
   return(peak_txt_file)
 }
 
