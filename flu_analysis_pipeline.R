@@ -200,7 +200,7 @@ if(analysis_type == "RNA_seq") {
     # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
     sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters)
     # Run differential expression for each cell type within each group of interest
-    differential_genes_dir <- paste0(analysis_dir, "diff_genes/")
+    differential_genes_dir <- paste0(analysis_dir, "diff_genes/", date, "/")
     if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir)}
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "viral_load")
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "day")
@@ -208,7 +208,7 @@ if(analysis_type == "RNA_seq") {
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "viral_load", high_viral_load_samples, d28_samples, male_samples)
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples)
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "sex", high_viral_load_samples, d28_samples, male_samples)
-    pseudobulk_rna_dir <- paste0(analysis_dir, "pseudobulk_rna/")
+    pseudobulk_rna_dir <- paste0(analysis_dir, "pseudobulk_rna/", date, "/")
     if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir)}
     create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir)
   }
@@ -288,7 +288,7 @@ if(analysis_type == "RNA_seq") {
   # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
   # calculations
   final_proj.2 <- addPeakMatrix(final_proj)
-  differential_peaks_dir <- paste0(analysis_dir, "diff_peaks/")
+  differential_peaks_dir <- paste0(analysis_dir, "diff_peaks/", date, "/")
   if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir)}
   calculate_daps_for_each_cell_type(final_proj.2, differential_peaks_dir)
   # Create Peaks.txt file for MAGICAL
@@ -296,7 +296,7 @@ if(analysis_type == "RNA_seq") {
   # Create peak_motif_matches.txt file for MAGICAL
   create_peak_motif_matches_file(final_proj.2, analysis_dir, peak_txt_file)
   # Create pseudobulk counts for peaks for each cell type
-  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk_atac/")
+  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk_atac/", date, "/")
   if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}
   create_pseudobulk_atac(final_proj.2, pseudo_bulk_dir)
 } else {
