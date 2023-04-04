@@ -181,13 +181,12 @@ if(analysis_type == "RNA_seq") {
     # Print info about sample representation and breakdown of categories per cell type
     print(table(sc_obj.minus.messy.clusters$sample))
     print_celltype_counts(sc_obj.minus.messy.clusters)
-    # Print plots for various metadata categories for final UMAP
     # Remove noisy cells
     # sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -2, 0, 1, 2.5) # 14 sample multiome
     sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -4, -2, 1, 6) # 19 sample multiome
     sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 1, 3, -2, 0) # 19 sample multiome
     sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 3, 4, -3, -1.5) # 19 sample multiome
-    
+    # Print plots for various metadata categories for final UMAP
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))
@@ -201,13 +200,17 @@ if(analysis_type == "RNA_seq") {
     # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
     sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters)
     # Run differential expression for each cell type within each group of interest
-    run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "viral_load")
-    run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "day")
-    run_differential_expression_group(sc_obj.minus.messy.clusters, analysis_dir, "sex")
+    differential_genes_dir <- paste0(analysis_dir, "diff_genes/")
+    if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir)}
+    run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "viral_load")
+    run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "day")
+    run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "sex")
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "viral_load", high_viral_load_samples, d28_samples, male_samples)
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples)
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "sex", high_viral_load_samples, d28_samples, male_samples)
-    create_magical_cell_type_pseudobulk_file(sc_obj.minus.messy.clusters)
+    pseudobulk_rna_dir <- paste0(analysis_dir, "pseudobulk_rna/")
+    if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir)}
+    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir)
   }
 } else if(analysis_type == "ATAC_seq") {
   # Label input files
@@ -251,7 +254,7 @@ if(analysis_type == "RNA_seq") {
   saveArchRProject(ArchRProj = proj, load = FALSE)
   # Load ArchR project 
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
-  proj <- add_rna_labels_for_atac_data(proj, source_rna_file = "rna_seq_labeled_cells_2023-03-31.csv", use_rna_labels, subset_to_rna)
+  proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_2023-04-03.csv", use_rna_labels, subset_to_rna)
   proj <- combine_cell_types_atac(proj)
   # If we subset to RNA, we don't need to do any majority voting in clusters, etc.
   # Otherwise, we do!
@@ -259,10 +262,12 @@ if(analysis_type == "RNA_seq") {
     final_proj <- proj
     # Just for convenience in code below
     final_proj$Cell_type_voting <- final_proj$predictedGroup
-    final_proj <- remove_cell_types(final_proj, c("HSPC", "Plasmablast", "Proliferating"))
-    final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2)
-    final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5)
-    final_proj <- remove_cells_based_on_umap_atac(final_proj, -2.5, -2, -2.5, 0.5)
+    final_proj <- remove_cell_types(final_proj, c("HSPC", "Plasmablast", "Proliferating", "Platelet", "MAIT"))
+    #final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2) # Multiome 14 
+    #final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5) # Multiome 14  
+    #final_proj <- remove_cells_based_on_umap_atac(final_proj, -2.5, -2, -2.5, 0.5) # Multiome 14
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, -3.5, 1, 0, 3.5) # Multiome 19
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 5, 2.75, 5) # Multiome 19
     plot_atac_after_majority_vote_or_subset(final_proj, date)
   } else {
     proj <- perform_majority_vote(proj)
@@ -291,7 +296,7 @@ if(analysis_type == "RNA_seq") {
   # Create peak_motif_matches.txt file for MAGICAL
   create_peak_motif_matches_file(final_proj.2, analysis_dir, peak_txt_file)
   # Create pseudobulk counts for peaks for each cell type
-  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk/")
+  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk_atac/")
   if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}
   create_pseudobulk_atac(final_proj.2, pseudo_bulk_dir)
 } else {

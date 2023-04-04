@@ -267,7 +267,7 @@ create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_l
 }
 
 # Create MAGICAL pseudobulk file
-create_magical_cell_type_pseudobulk_file <- function(sc_obj) {
+create_magical_cell_type_pseudobulk_files <- function(sc_obj, analysis_dir) {
   print("Computing pseudobulk counts for each cell type")
   for (cell_type in unique(sc_obj$magical_cell_types)) {
     print(cell_type)

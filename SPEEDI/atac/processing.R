@@ -33,6 +33,9 @@ plot_atac_after_majority_vote_or_subset <- function(proj, date) {
   p3 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
   p4 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
   plotPDF(p1,p2,p3,p4, name = paste0("Integrated_Clustering_Gene_Integration_Majority_Vote_or_Subset_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  p3 <- p3 + scale_x_continuous(breaks = scales::pretty_breaks(n = 20)) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 20))
+  ggsave(paste0(analysis_dir, "Integrated_Clustering_Gene_Integration_Majority_Vote_or_Subset_", date, "_more_UMAP_ticks.png"), device = "png", dpi = 300)
 }
 
 load_rna_reference_for_atac <- function(reference_dir) {
@@ -67,7 +70,7 @@ map_reference_to_atac <- function(proj) {
   return(proj)
 }
 
-add_rna_labels_for_atac_data <- function(proj, source_rna_file, use_rna_labels, subset_to_rna) {
+add_rna_labels_for_atac_data <- function(proj, analysis_dir, source_rna_file, use_rna_labels, subset_to_rna) {
   if(use_rna_labels) {
     curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, source_rna_file), comment.char = "")
     if(subset_to_rna) {
