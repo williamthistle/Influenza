@@ -254,12 +254,14 @@ create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadat
 
 pseudo_bulk_replicates_and_call_peaks <- function(proj) {
   # Peak calling - first, call addGroupCoverages to find pseudo-bulk replicates, then call peaks using MACS2
-  proj <- addGroupCoverages(ArchRProj = proj, groupBy = "Cell_type_voting", force = TRUE)
+  proj <- addGroupCoverages(ArchRProj = proj, groupBy = "Cell_type_voting", force = TRUE, minCells = 50, maxCells = 500,
+                            minReplicates = 3, maxReplicates = 32)
   pathToMacs2 <- findMacs2()
   proj <- addReproduciblePeakSet(
     ArchRProj = proj, 
     groupBy = "Cell_type_voting", 
     pathToMacs2 = pathToMacs2,
+    cutOff= 0.05,
     force = TRUE
   )
   return(proj)
@@ -277,7 +279,7 @@ calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
     print(cells_subset)
     # Find DAPs
     marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "day",
-                                       testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), maxCells = 15000,
+                                       testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), normBy = "ReadsInPeaks", maxCells = 15000,
                                        useGroups = "D28", bgdGroups = "D_MINUS_1")
     # Grab relevant stats
     marker_log_2_fc <- assays(marker_D28_D1)$Log2FC
