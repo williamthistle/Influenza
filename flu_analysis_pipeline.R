@@ -287,18 +287,18 @@ if(analysis_type == "RNA_seq") {
   final_proj <- pseudo_bulk_replicates_and_call_peaks(final_proj)
   # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
   # calculations
-  final_proj.2 <- addPeakMatrix(final_proj)
+  final_proj <- addPeakMatrix(final_proj)
   differential_peaks_dir <- paste0(analysis_dir, "diff_peaks/", date, "/")
-  if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir)}
-  calculate_daps_for_each_cell_type(final_proj.2, differential_peaks_dir)
+  if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
+  calculate_daps_for_each_cell_type(final_proj, differential_peaks_dir)
   # Create Peaks.txt file for MAGICAL
-  peak_txt_file <- create_peaks_file(final_proj.2, analysis_dir)
+  peak_txt_file <- create_peaks_file(final_proj, analysis_dir)
   # Create peak_motif_matches.txt file for MAGICAL
-  create_peak_motif_matches_file(final_proj.2, analysis_dir, peak_txt_file)
+  create_peak_motif_matches_file(final_proj, analysis_dir, peak_txt_file)
   # Create pseudobulk counts for peaks for each cell type
   pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk_atac/", date, "/")
-  if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir)}
-  create_pseudobulk_atac(final_proj.2, pseudo_bulk_dir)
+  if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
+  create_pseudobulk_atac(final_proj, pseudo_bulk_dir)
 } else {
   stop("Invalid analysis type")
 }
