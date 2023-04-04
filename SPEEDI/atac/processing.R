@@ -169,7 +169,7 @@ get_cluster_info <- function(proj) {
   return(list(cluster_cell_type_predictions, cluster_cell_type_distributions, cluster_sample_distributions, cluster_viral_load_distributions, cluster_day_distributions, cluster_sex_distributions))
 }
 
-override_cluster_label <- function(proj, cluster_identities, cluster_label) {
+override_cluster_label_atac <- function(proj, cluster_identities, cluster_label) {
   idxPass <- which(proj$Clusters %in% cluster_identities)
   proj$Cell_type_voting[idxPass] <- cluster_label
   return(proj)
@@ -301,7 +301,7 @@ create_peaks_file <- function(proj, analysis_dir) {
   peak_txt_file <- peak_txt_file[, !(names(peak_txt_file) %in% c("width", "names"))]
   peak_txt_file[,1] <- sub("chr", "", peak_txt_file[,1])
   peak_txt_file[,1] <- sub("X", "23", peak_txt_file[,1])
-  write.table(peak_txt_file, file = paste0(analysis_dir, "Peaks.txt"), col.names = FALSE, quote = FALSE, sep = "\t", row.names = FALSE)
+  write.table(peak_txt_file, file = paste0(analysis_dir, "Peaks.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
   return(peak_txt_file)
 }
 

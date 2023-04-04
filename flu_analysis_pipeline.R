@@ -45,7 +45,7 @@ all_sample_id_list <- strsplit(all_sample_id_list, "/")
 all_sample_id_list <- unlist(lapply(all_sample_id_list, tail, n = 1L))
 
 # data_token is used to choose subset of data that we want to analyze (pre-defined in flu_data_tokens.tsv)
-data_token <- "all_multiome_paired_minus_0_sample"
+data_token <- "all_multiome"
 # Create directory for this particular data in the analysis directory if it doesn't exist
 base_analysis_dir <- paste0(home_dir, data_type, "/analysis/", data_token, "/")
 if (!dir.exists(base_analysis_dir)) {dir.create(base_analysis_dir)}
@@ -154,7 +154,7 @@ if(analysis_type == "RNA_seq") {
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
     # Load sc_obj
-    load(file = paste0(analysis_dir, "7_sc_obj.rds"))
+    load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     #load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
@@ -167,13 +167,14 @@ if(analysis_type == "RNA_seq") {
     raw_cluster_info <- capture_cluster_info(sc_obj)
     run_differential_expression_cluster(sc_obj, marker_dir)
     # Remove messy clusters
-    messy_clusters <- c(6,7,13,14,15,19,28)
+    #messy_clusters <- c(6,7,13,14,15,19,28) # 14 sample multiome
+    messy_clusters <- c(2,13,16,18,19,20,21,24,28,32) # 19 sample multiome
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)
     cellsPass <- names(sc_obj$orig.ident[-idxPass])
     sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     # Override labels manually where necessary
     #sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
-    #sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(34), "pDC")
+    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(25), "pDC") #19 sample multiome
     # Remove specific samples that we're not interested in
     # sc_obj.minus.messy.clusters.removed.samples <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, tagged_samples)
     # print_UMAP(sc_obj.minus.messy.clusters.removed.samples, sample_count, "tagged", plot_dir, paste0("post.clusters_all_untagged_", date, ".png"))
@@ -182,7 +183,11 @@ if(analysis_type == "RNA_seq") {
     print_celltype_counts(sc_obj.minus.messy.clusters)
     # Print plots for various metadata categories for final UMAP
     # Remove noisy cells
-    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -2, 0, 1, 2.5)
+    # sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -2, 0, 1, 2.5) # 14 sample multiome
+    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -4, -2, 1, 6) # 19 sample multiome
+    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 1, 3, -2, 0) # 19 sample multiome
+    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 3, 4, -3, -1.5) # 19 sample multiome
+    
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted.id", plot_dir, paste0("post.clusters_by_cell_type_", date, ".png"))
@@ -264,7 +269,7 @@ if(analysis_type == "RNA_seq") {
     plot_atac_after_majority_vote_or_subset(proj, date)
     proj <- remove_single_cell_clusters(proj)
     cluster_info <- get_cluster_info(proj)
-    proj <- override_cluster_label(proj, c("C8"), "CD16 Mono")
+    proj <- override_cluster_label_atac(proj, c("C8"), "CD16 Mono")
     #Remove the messy clusters (determined through visual inspection and seeing distribution of cells in each cluster)
     idxPass <- which(proj$Clusters %in% c("C1", "C29", "C30", "C31", "C38"))
     cellsPass <- proj$cellNames[-idxPass]
