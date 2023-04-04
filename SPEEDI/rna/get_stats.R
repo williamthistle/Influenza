@@ -228,8 +228,8 @@ create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_l
       }
     }
   }
-  cell_type_proportions_df <- data.frame("Condition" = condition_label, "Sample_name" = sample_names)
-  total_cell_counts_df <- data.frame("Sample_name" = sample_names)
+  cell_type_proportions_df <- data.frame("Condition" = condition_label, "Sample_name" = paste0("Sample_", sample_names))
+  total_cell_counts_df <- data.frame("Sample_name" = paste0("Sample_", sample_names))
   cell_counts <- vector()
   # Find total cell counts for each sample
   for (sample_id in sample_names) {
@@ -296,6 +296,7 @@ create_magical_cell_type_pseudobulk_files <- function(sc_obj, analysis_dir) {
     }
     final_cells_pseudobulk_df <- as.data.frame(final_cells_pseudobulk_df)
     rownames(final_cells_pseudobulk_df) <- names(cells_pseudobulk[[1]])
+    colnames(final_cells_pseudobulk_df) <- paste0("Sample", unique(sc_obj$sample))
     cell_type <- sub(" ", "_", cell_type)
     write.csv(final_cells_pseudobulk_df, paste0(analysis_dir, "pseudo_bulk_RNA_count_", cell_type, ".csv"))
   }

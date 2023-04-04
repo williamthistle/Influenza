@@ -215,8 +215,8 @@ create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadat
     if(metadata_category == "day") {
       metadata <- day_metadata
     }
-    cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = names(metadata))
-    total_cell_counts_df <- data.frame("Sample_name" = names(metadata))
+    cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = paste0("Sample_", names(metadata)))
+    total_cell_counts_df <- data.frame("Sample_name" = paste0("Sample_", names(metadata)))
     cell_counts <- vector()
     # Find total cell counts for each sample
     for (sample_id in names(metadata)) {
@@ -332,7 +332,8 @@ create_pseudobulk_atac <- function(proj, pseudobulk_dir) {
   peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
   for (i in c(1:length(Cell_types))){
     pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
-    colnames(pseudo_bulk)<-sample.names
+    # We add Sample_ to the beginning of each column name to avoid MATLAB (MAGICAL) complaining
+    colnames(pseudo_bulk)<-paste0("Sample_", sample.names)
     rownames(pseudo_bulk)<-peaks@elementMetadata$idx
     for (s in c(1:length(sample.names))){
       idxMatch <- which(str_detect(peak_count$Cell_type_voting,Cell_types[i]) & str_detect(as.character(peak_count$Sample),sample.names[s]))
@@ -340,6 +341,7 @@ create_pseudobulk_atac <- function(proj, pseudobulk_dir) {
         pseudo_bulk[,s] = Matrix::rowSums(peak_count@assays@data$PeakMatrix[,idxMatch])
       }
     }
-    write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", Cell_types[i], ".txt"), quote = FALSE, sep = "\t", col.names = NA)
+    cell_type <- sub(" ", "_", Cell_types[i])
+    write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), quote = FALSE, sep = "\t", col.names = NA)
   }
 }
