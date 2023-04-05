@@ -177,7 +177,7 @@ if(analysis_type == "RNA_seq") {
     #sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
     sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(25), "pDC") #19 sample multiome
     # Remove specific samples that we're not interested in
-    # sc_obj.minus.messy.clusters.removed.samples <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, tagged_samples)
+    # sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, tagged_samples)
     # print_UMAP(sc_obj.minus.messy.clusters.removed.samples, sample_count, "tagged", plot_dir, paste0("post.clusters_all_untagged_", date, ".png"))
     # Print info about sample representation and breakdown of categories per cell type
     print(table(sc_obj.minus.messy.clusters$sample))
