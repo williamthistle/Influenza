@@ -149,7 +149,8 @@ if(analysis_type == "RNA_seq") {
     sc_obj <- combine_cell_types_initial(sc_obj, resolution = 3)
     # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
     print_UMAP_stage_1(sc_obj, sample_count, plot_dir, date)
-    # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8")
+    # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8") # All questionable samples
+    tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe")
     # print_UMAP_tagged(sc_obj, tagged_samples, sample_count, plot_dir, date)
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
@@ -201,7 +202,7 @@ if(analysis_type == "RNA_seq") {
     sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters)
     # Run differential expression for each cell type within each group of interest
     differential_genes_dir <- paste0(analysis_dir, "diff_genes/", date, "/")
-    if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir)}
+    if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "viral_load")
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "day")
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "sex")
