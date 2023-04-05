@@ -8,6 +8,9 @@ for f in $(find /GlobusCollab/Troyanskaya/MRSA-MSSA/scATAC/ECHO/MSSM_Data_Transf
     echo "$f" >> filelist2.txt;
 done
 
+# COPY FILES FROM REMOTE HOST TO LOCAL - THIS SEEMS LIKE THE BEST APPROACH (BETTER THAN ABOVE)
+rsync -chavzP --stats wat2@lumos:~/single_cell/SPEEDI_test/* .
+
 # MOVE FILES FROM SERVER TO SERVER
 rsync -av --relative --files-from=filelist.txt / wat2@lumos:multiome/
 
