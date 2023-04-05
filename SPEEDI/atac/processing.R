@@ -1,3 +1,4 @@
+# Perform dimensionality reduction, create UMAP, and find clusters in data
 dimensionality_reduc <- function(proj) {
   addArchRThreads(threads = 8)
   proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
@@ -9,6 +10,7 @@ dimensionality_reduc <- function(proj) {
   return(proj)
 }
 
+# Create various ATAC plots after filtering is performed
 plot_atac_after_filtering <- function(proj, date) {
   # UMAP plots colored by sample, cluster ID, and TSS enrichment
   p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
@@ -20,12 +22,14 @@ plot_atac_after_filtering <- function(proj, date) {
   plotPDF(p1,p2,p3,p4,p5,p6, name = paste0("Integrated_Clustering_snRNA_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 }
 
+# Create ATAC plot after gene integration matrix is used to predict cell types
 plot_atac_after_integration <- function(proj, date) {
   pal <- paletteDiscrete(values = proj$predictedGroup)
   p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
   plotPDF(p1, name = paste0("Integrated_annotated_with_gene_integration_matrix_", date), ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
 }
 
+# Create various ATAC plots after majority voting (or subsetting based on snRNA-seq cells) is performed
 plot_atac_after_majority_vote_or_subset <- function(proj, date) {
   pal <- paletteDiscrete(values = proj$Cell_type_voting)
   p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
@@ -38,6 +42,7 @@ plot_atac_after_majority_vote_or_subset <- function(proj, date) {
   ggsave(paste0(analysis_dir, "Integrated_Clustering_Gene_Integration_Majority_Vote_or_Subset_", date, "_more_UMAP_ticks.png"), device = "png", dpi = 300)
 }
 
+# Load our scRNA-seq reference for ATAC reference mapping
 load_rna_reference_for_atac <- function(reference_dir) {
   scRNA_reference <- LoadH5Seurat(paste0(reference_dir, "multi.h5seurat"))
   # Remove certain cell types we're not interested in
@@ -51,6 +56,7 @@ load_rna_reference_for_atac <- function(reference_dir) {
   return(scRNA_reference)
 }
 
+# Map from our reference scRNA-seq data to our ATAC data
 map_reference_to_atac <- function(proj) {
   addArchRThreads(threads = 8)
   proj <- addGeneIntegrationMatrix(
@@ -70,32 +76,35 @@ map_reference_to_atac <- function(proj) {
   return(proj)
 }
 
-add_rna_labels_for_atac_data <- function(proj, analysis_dir, source_rna_file, use_rna_labels, subset_to_rna) {
-  if(use_rna_labels) {
-    curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, source_rna_file), comment.char = "")
-    if(subset_to_rna) {
-      idxPass <- which(proj$cellNames %in% curated_snRNA_seq_cells$cells) 
-      cellsPass <- proj$cellNames[idxPass]
-      proj <- proj[cellsPass, ]
-      curated_snRNA_seq_cells <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells %in% proj$cellNames,]
-      curated_snRNA_seq_cells <- curated_snRNA_seq_cells[order(match(curated_snRNA_seq_cells$cells,proj$cellNames)),]
-      snRNA_seq_cell_votes <- curated_snRNA_seq_cells$voted_type
-      proj <- addCellColData(ArchRProj = proj, data = snRNA_seq_cell_votes, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
-    } else {
-      predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
-      for(current_row in 1:nrow(predicted_snATAC_cells)) {
-        current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
-        if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
-          current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
-          predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
-        }
+# Add labels from our RNA-seq data to our ATAC data (only useful in true multiome situation)
+# If subset_to_rna is true, then we subset to the cells found in our snRNA-seq data
+# Otherwise, if we want to keep all of our snATAC-seq data, we use the cell types found in our snRNA-seq
+# data where possible and otherwise use the cell types found from the reference mapping
+add_rna_labels_for_atac_data <- function(proj, analysis_dir, source_rna_file, subset_to_rna) {
+  curated_snRNA_seq_cells <- read.csv(paste0(analysis_dir, source_rna_file), comment.char = "")
+  if(subset_to_rna) {
+    idxPass <- which(proj$cellNames %in% curated_snRNA_seq_cells$cells) 
+    cellsPass <- proj$cellNames[idxPass]
+    proj <- proj[cellsPass, ]
+    curated_snRNA_seq_cells <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells %in% proj$cellNames,]
+    curated_snRNA_seq_cells <- curated_snRNA_seq_cells[order(match(curated_snRNA_seq_cells$cells,proj$cellNames)),]
+    snRNA_seq_cell_votes <- curated_snRNA_seq_cells$voted_type
+    proj <- addCellColData(ArchRProj = proj, data = snRNA_seq_cell_votes, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
+  } else {
+    predicted_snATAC_cells <- data.frame(cell_name = proj$cellNames, voted_type = proj$predictedGroup)
+    for(current_row in 1:nrow(predicted_snATAC_cells)) {
+      current_snATAC_cell <- predicted_snATAC_cells[current_row,]$cell_name
+      if(current_snATAC_cell %in% curated_snRNA_seq_cells$cells) {
+        current_voted_type <- curated_snRNA_seq_cells[curated_snRNA_seq_cells$cells == current_snATAC_cell,]$voted_type
+        predicted_snATAC_cells[current_row,]$voted_type <- current_voted_type
       }
-      proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
     }
+    proj <- addCellColData(ArchRProj = proj, data = predicted_snATAC_cells$voted_type, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
   }
   return(proj)
 }
 
+# ATAC data have limited granularity, so we combine some cell types (because we can't easily distinguish between them)
 combine_cell_types_atac <- function(proj) {
   # Combine cell types
   Cell_type_combined = proj$predictedGroup
@@ -117,6 +126,7 @@ combine_cell_types_atac <- function(proj) {
   return(proj)
 }
 
+# Perform majority vote within each cluster for cell type
 perform_majority_vote <- function(proj) {
   # First voting scheme
   cM <- as.matrix(confusionMatrix(proj$Clusters, proj$predictedGroup))
@@ -131,6 +141,7 @@ perform_majority_vote <- function(proj) {
   return(proj)
 }
 
+# Remove any clusters that are only one cell (this comes up sometimes and ArchR doesn't handle them well)
 remove_single_cell_clusters <- function(proj) {
   # Remove any clusters that only have 1 cell
   unique_cluster_ids <- unique(proj$Clusters)
@@ -145,8 +156,8 @@ remove_single_cell_clusters <- function(proj) {
   return(proj)
 }
 
+# Get info about distributions within each cluster (cell types, viral load, day, sex)
 get_cluster_info <- function(proj) {
-  # See how clusters are distributed
   cluster_cell_type_predictions <- vector()
   cluster_cell_type_distributions <- list()
   cluster_sample_distributions <- list()
@@ -172,12 +183,14 @@ get_cluster_info <- function(proj) {
   return(list(cluster_cell_type_predictions, cluster_cell_type_distributions, cluster_sample_distributions, cluster_viral_load_distributions, cluster_day_distributions, cluster_sex_distributions))
 }
 
+# Sometimes, we want to manually override the cell type for a given cluster (if we feel like majority vote got it wrong)
 override_cluster_label_atac <- function(proj, cluster_identities, cluster_label) {
   idxPass <- which(proj$Clusters %in% cluster_identities)
   proj$Cell_type_voting[idxPass] <- cluster_label
   return(proj)
 }
 
+# We may want to remove certain cell types from our data if they aren't well defined
 remove_cell_types <- function(proj, cell_types) {
   idxPass <- which(proj$Cell_type_voting %in% cell_types)
   cellsPass <- proj$cellNames[-idxPass]
@@ -185,6 +198,7 @@ remove_cell_types <- function(proj, cell_types) {
   return(proj)
 }
 
+# Method to remove cells from our dataset based on the UMAP (messy cells)
 remove_cells_based_on_umap_atac <- function(proj, first_x, second_x, first_y, second_y) {
   orig.umap.coords <- getEmbedding(proj)
   orig.umap.coords$cells <- rownames(orig.umap.coords)
@@ -196,6 +210,7 @@ remove_cells_based_on_umap_atac <- function(proj, first_x, second_x, first_y, se
   return(proj)
 }
 
+# Method to print viral load / day / sex distributions within each cell type
 print_cell_type_distributions <- function(proj) {
   # See distribution for different metadata categories
   for (cell_type in unique(final_proj$Cell_type_voting)) {
@@ -210,6 +225,7 @@ print_cell_type_distributions <- function(proj) {
   }
 }
 
+# Method to create the cell type proportion file for MAGICAL
 create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadata_categories, day_metadata) {
   for(metadata_category in metadata_categories) {
     if(metadata_category == "day") {
@@ -252,6 +268,7 @@ create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadat
   }
 }
 
+# Method to create pseudo bulk replicates and call peaks
 pseudo_bulk_replicates_and_call_peaks <- function(proj) {
   # Peak calling - first, call addGroupCoverages to find pseudo-bulk replicates, then call peaks using MACS2
   proj <- addGroupCoverages(ArchRProj = proj, groupBy = "Cell_type_voting", force = TRUE, minCells = 50, maxCells = 500,
@@ -267,6 +284,7 @@ pseudo_bulk_replicates_and_call_peaks <- function(proj) {
   return(proj)
 }
 
+# Calculate differentially accessible peaks for each cell type
 calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
   # Calculate differential accessible peaks for each cell type
   for (cell_type in unique(proj$Cell_type_voting)) {
@@ -297,6 +315,7 @@ calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
   }
 }
 
+# Create Peaks.txt file (list of peaks) used by MAGICAL
 create_peaks_file <- function(proj, analysis_dir) {
   peaks <- getPeakSet(proj)
   seq_names <- as.data.frame(peaks@seqnames)
@@ -310,6 +329,7 @@ create_peaks_file <- function(proj, analysis_dir) {
   return(peak_txt_file)
 }
 
+# Create peak_motif_matches.txt file for MAGICAL
 create_peak_motif_matches_file <- function(proj, analysis_dir, peak_txt_file) {
   proj <- addMotifAnnotations(ArchRProj = proj, motifSet = "cisbp", name = "Motif")
   peak_motif_matches <- getMatches(proj, name = "Motif")
@@ -326,6 +346,7 @@ create_peak_motif_matches_file <- function(proj, analysis_dir, peak_txt_file) {
   write.table(peak_motif_txt_file, file = paste0(analysis_dir, "peak_motif_matches.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
 }
 
+# Create pseudobulk count files for each cell type
 create_pseudobulk_atac <- function(proj, pseudobulk_dir) {
   # Create text file for each cell type containing pseudobulk counts for peaks
   Cell_types <- unique(final_proj$Cell_type_voting)

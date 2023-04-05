@@ -255,7 +255,9 @@ if(analysis_type == "RNA_seq") {
   saveArchRProject(ArchRProj = proj, load = FALSE)
   # Load ArchR project 
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
-  proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_2023-04-03.csv", use_rna_labels, subset_to_rna)
+  if(use_rna_labels) {
+    proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_2023-04-03.csv", subset_to_rna)
+  }
   proj <- combine_cell_types_atac(proj)
   # If we subset to RNA, we don't need to do any majority voting in clusters, etc.
   # Otherwise, we do!

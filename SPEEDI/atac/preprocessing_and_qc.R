@@ -25,6 +25,7 @@ load_archR_from_input_files <- function(inputFiles, analysis_dir) {
   )
   # Filter out doublets
   proj <- filterDoublets(ArchRProj = proj)
+  # Save our project
   saveArchRProject(ArchRProj = proj, load = FALSE)
   return(proj)
 }
@@ -57,6 +58,7 @@ add_sample_metadata_atac <- function(proj, high_viral_load_samples, low_viral_lo
 }
 
 # Create object with sample names and associated metadata value
+# This is probably not an important function for anyone else
 parse_metadata_for_samples <- function(proj, group, high_viral_load_samples, low_viral_load_samples,
                                        d28_samples, d_minus_1_samples, male_samples, female_samples) {
   current_metadata <- c()
@@ -86,8 +88,9 @@ parse_metadata_for_samples <- function(proj, group, high_viral_load_samples, low
   return(current_metadata)
 }
 
-# Plot QC stuff for ATAC
+# Plot QC metrics for ATAC
 plot_qc_atac <- function(proj, date) {
+  # Run dimensionality reduction and plot UMAP of data before any filtering is done
   addArchRThreads(threads = 8)
   proj <- addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
                           clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
@@ -95,7 +98,7 @@ plot_qc_atac <- function(proj, date) {
   proj <- addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
   p1 <- plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE)
   plotPDF(p1, name = paste0("Dataset_Prefiltering", date), ArchRProj = proj, addDOC = FALSE, width = 7, height = 5)
-  # Plot out TSS Enrichment / Doublet Enrichment / Nucleosome Ratio for each sample
+  # Plot out TSS Enrichment / Doublet Enrichment / Nucleosome Ratio for each sample to help us decide filtering thresholds
   p1 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "TSSEnrichment", plotAs = "ridges")
   p2 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "DoubletEnrichment", plotAs = "ridges")
   p3 <- plotGroups(ArchRProj = proj, groupBy = "Sample", colorBy = "cellColData", name = "NucleosomeRatio", plotAs = "ridges")
