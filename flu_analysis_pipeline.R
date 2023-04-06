@@ -149,9 +149,10 @@ if(analysis_type == "RNA_seq") {
     sc_obj <- combine_cell_types_initial(sc_obj, resolution = 3)
     # Print UMAP by cell type (majority vote) and by cluster number - it will currently be messy
     print_UMAP_stage_1(sc_obj, sample_count, plot_dir, date)
-    # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8") # All questionable samples
-    tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe")
-    # print_UMAP_tagged(sc_obj, tagged_samples, sample_count, plot_dir, date)
+    # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8") # 14 multiome
+    # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe") # 17 multiome
+    tagged_samples <- c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8") # 16 multiome
+    # print_UMAP_tagged(sc_obj, tagged_samples, sample_count, plot_dir, date) 
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
     # Load sc_obj
@@ -197,7 +198,7 @@ if(analysis_type == "RNA_seq") {
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "sex", plot_dir, paste0("post.clusters_by_sex_", date, ".png"))
     # write cells and associated cell type majority predictions to file (for ATAC-seq labeling)
     cells_for_ATAC <- data.frame("cells" = sc_obj.minus.messy.clusters$cell_name, voted_type = sc_obj.minus.messy.clusters$predicted_celltype_majority_vote)
-    write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, ".csv"), quote = FALSE, row.names = FALSE)
+    write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, "-16.csv"), quote = FALSE, row.names = FALSE)
     # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
     sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters)
     # Run differential expression for each cell type within each group of interest

@@ -300,7 +300,7 @@ create_magical_cell_type_pseudobulk_files <- function(sc_obj, analysis_dir, toke
     }
     final_cells_pseudobulk_df <- as.data.frame(final_cells_pseudobulk_df)
     rownames(final_cells_pseudobulk_df) <- names(cells_pseudobulk[[1]])
-    colnames(final_cells_pseudobulk_df) <- paste0("Sample", unique(sc_obj$sample))
+    colnames(final_cells_pseudobulk_df) <- paste0("Sample_", unique(sc_obj$sample))
     cell_type <- sub(" ", "_", cell_type)
     if(is.null(token)) {
       write.csv(final_cells_pseudobulk_df, paste0(analysis_dir, "pseudo_bulk_RNA_count_", cell_type, ".csv"))
