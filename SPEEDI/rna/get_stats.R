@@ -202,7 +202,7 @@ capture_cluster_info <- function(sc_obj, find_doublet_info = FALSE) {
 }
 
 # Create MAGICAL cell type proportion file
-create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_load_samples, d28_samples, male_samples) {
+create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_load_samples, d28_samples, male_samples, token = NULL) {
   sample_names <- unique(sc_obj$sample)
   condition_label <- c()
   if(group == "day") {
@@ -256,18 +256,22 @@ create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_l
       } else {
         sample_subset <- subset(x = cells_subset, subset = cell_name %in% cellsPass)
         cell_counts <- ncol(sample_subset)
-        cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+        cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == paste0("Sample_", sample_id),]$cell_counts)
       }
     }
     temp_df <- data.frame(cell_type_proportions)
     names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
     cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
   }
-  write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "RNA_cell_type_proportion.csv"), quote = FALSE, row.names = FALSE)
+  if(is.null(token)) {
+    write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "RNA_cell_type_proportion_", group, ".csv"), quote = FALSE, row.names = FALSE)  
+  } else {
+    write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "RNA_cell_type_proportion_", group, "_", token, ".csv"), quote = FALSE, row.names = FALSE)   
+  }
 }
 
 # Create MAGICAL pseudobulk file
-create_magical_cell_type_pseudobulk_files <- function(sc_obj, analysis_dir) {
+create_magical_cell_type_pseudobulk_files <- function(sc_obj, analysis_dir, token = NULL) {
   print("Computing pseudobulk counts for each cell type")
   for (cell_type in unique(sc_obj$magical_cell_types)) {
     print(cell_type)
@@ -298,6 +302,11 @@ create_magical_cell_type_pseudobulk_files <- function(sc_obj, analysis_dir) {
     rownames(final_cells_pseudobulk_df) <- names(cells_pseudobulk[[1]])
     colnames(final_cells_pseudobulk_df) <- paste0("Sample", unique(sc_obj$sample))
     cell_type <- sub(" ", "_", cell_type)
-    write.csv(final_cells_pseudobulk_df, paste0(analysis_dir, "pseudo_bulk_RNA_count_", cell_type, ".csv"))
+    if(is.null(token)) {
+      write.csv(final_cells_pseudobulk_df, paste0(analysis_dir, "pseudo_bulk_RNA_count_", cell_type, ".csv"))
+    } else { 
+      if (!dir.exists(paste0(analysis_dir, token))) {dir.create(paste0(analysis_dir, token), recursive = TRUE)}
+      write.csv(final_cells_pseudobulk_df, paste0(analysis_dir, token, "/pseudo_bulk_RNA_count_", cell_type, ".csv"))
+    }
   }
 }

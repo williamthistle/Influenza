@@ -207,11 +207,11 @@ if(analysis_type == "RNA_seq") {
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "day")
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "sex")
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "viral_load", high_viral_load_samples, d28_samples, male_samples)
-    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples)
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples, token = "17")
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "sex", high_viral_load_samples, d28_samples, male_samples)
     pseudobulk_rna_dir <- paste0(analysis_dir, "pseudobulk_rna/", date, "/")
-    if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir)}
-    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir)
+    if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
+    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir, token = "17")
   }
 } else if(analysis_type == "ATAC_seq") {
   # Label input files
@@ -256,7 +256,7 @@ if(analysis_type == "RNA_seq") {
   # Load ArchR project 
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
   if(use_rna_labels) {
-    proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_2023-04-03.csv", subset_to_rna)
+    proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_multiome_17_subset_2023-04-05.csv", subset_to_rna)
   }
   proj <- combine_cell_types_atac(proj)
   # If we subset to RNA, we don't need to do any majority voting in clusters, etc.

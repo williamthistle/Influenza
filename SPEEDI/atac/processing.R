@@ -258,7 +258,7 @@ create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadat
         cellsPass <- cells_subset$cellNames[idxPass]
         sample_subset <- subsetCells(cells_subset, cellsPass)
         cell_counts <- nCells(sample_subset)
-        cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+        cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == paste0("Sample_", sample_id),]$cell_counts)
       }
       temp_df <- data.frame(cell_type_proportions)
       names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
