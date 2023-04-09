@@ -45,7 +45,7 @@ all_sample_id_list <- strsplit(all_sample_id_list, "/")
 all_sample_id_list <- unlist(lapply(all_sample_id_list, tail, n = 1L))
 
 # data_token is used to choose subset of data that we want to analyze (pre-defined in flu_data_tokens.tsv)
-data_token <- "all_multiome"
+data_token <- "all_multiome_paired_minus_0_sample"
 # Create directory for this particular data in the analysis directory if it doesn't exist
 base_analysis_dir <- paste0(home_dir, data_type, "/analysis/", data_token, "/")
 if (!dir.exists(base_analysis_dir)) {dir.create(base_analysis_dir)}
@@ -151,12 +151,13 @@ if(analysis_type == "RNA_seq") {
     print_UMAP_stage_1(sc_obj, sample_count, plot_dir, date)
     # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe", "48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8") # 14 multiome
     # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe") # 17 multiome
+    # sc_obj <- subset(x = sc_obj, subset = viral_load %in% "HVL") # HVL (10 multiome if starting with 14 multiome)
     tagged_samples <- c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8") # 16 multiome
     # print_UMAP_tagged(sc_obj, tagged_samples, sample_count, plot_dir, date) 
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
     # Load sc_obj
-    load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
+    load(file = paste0(analysis_dir, "7_sc_obj.rds"))
     #load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
@@ -176,7 +177,7 @@ if(analysis_type == "RNA_seq") {
     sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     # Override labels manually where necessary
     #sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
-    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(25), "pDC") #19 sample multiome
+    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(25), "pDC") # 19 sample multiome
     # Remove specific samples that we're not interested in
     # sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, tagged_samples)
     # print_UMAP(sc_obj.minus.messy.clusters.removed.samples, sample_count, "tagged", plot_dir, paste0("post.clusters_all_untagged_", date, ".png"))
@@ -198,7 +199,7 @@ if(analysis_type == "RNA_seq") {
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "sex", plot_dir, paste0("post.clusters_by_sex_", date, ".png"))
     # write cells and associated cell type majority predictions to file (for ATAC-seq labeling)
     cells_for_ATAC <- data.frame("cells" = sc_obj.minus.messy.clusters$cell_name, voted_type = sc_obj.minus.messy.clusters$predicted_celltype_majority_vote)
-    write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, "-16.csv"), quote = FALSE, row.names = FALSE)
+    write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, "-10.csv"), quote = FALSE, row.names = FALSE)
     # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
     sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters)
     # Run differential expression for each cell type within each group of interest
@@ -208,11 +209,11 @@ if(analysis_type == "RNA_seq") {
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "day")
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "sex")
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "viral_load", high_viral_load_samples, d28_samples, male_samples)
-    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples, token = "16")
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples, token = "10")
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "sex", high_viral_load_samples, d28_samples, male_samples)
     pseudobulk_rna_dir <- paste0(analysis_dir, "pseudobulk_rna/", date, "/")
     if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
-    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir, token = "16")
+    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir, token = "10")
   }
 } else if(analysis_type == "ATAC_seq") {
   # Label input files
@@ -257,7 +258,7 @@ if(analysis_type == "RNA_seq") {
   # Load ArchR project 
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
   if(use_rna_labels) {
-    proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_multiome_16_subset_2023-04-06-16.csv", subset_to_rna)
+    proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_2023-04-08-10.csv", subset_to_rna)
   }
   proj <- combine_cell_types_atac(proj)
   # If we subset to RNA, we don't need to do any majority voting in clusters, etc.
@@ -292,7 +293,7 @@ if(analysis_type == "RNA_seq") {
   # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
   # calculations
   final_proj <- addPeakMatrix(final_proj)
-  differential_peaks_dir <- paste0(analysis_dir, "diff_peaks-16/", date, "/")
+  differential_peaks_dir <- paste0(analysis_dir, "diff_peaks-10/", date, "/")
   if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
   calculate_daps_for_each_cell_type(final_proj, differential_peaks_dir)
   # Create Peaks.txt file for MAGICAL
@@ -300,7 +301,7 @@ if(analysis_type == "RNA_seq") {
   # Create peak_motif_matches.txt file for MAGICAL
   create_peak_motif_matches_file(final_proj, analysis_dir, peak_txt_file)
   # Create pseudobulk counts for peaks for each cell type
-  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk_atac-16/", date, "/")
+  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk_atac-10/", date, "/")
   if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
   create_pseudobulk_atac(final_proj, pseudo_bulk_dir)
 } else {
