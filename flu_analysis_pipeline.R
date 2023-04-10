@@ -45,7 +45,7 @@ all_sample_id_list <- strsplit(all_sample_id_list, "/")
 all_sample_id_list <- unlist(lapply(all_sample_id_list, tail, n = 1L))
 
 # data_token is used to choose subset of data that we want to analyze (pre-defined in flu_data_tokens.tsv)
-data_token <- "all_multiome_paired_minus_0_sample"
+data_token <- "all_multiome"
 # Create directory for this particular data in the analysis directory if it doesn't exist
 base_analysis_dir <- paste0(home_dir, data_type, "/analysis/", data_token, "/")
 if (!dir.exists(base_analysis_dir)) {dir.create(base_analysis_dir)}
@@ -157,7 +157,7 @@ if(analysis_type == "RNA_seq") {
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
     # Load sc_obj
-    load(file = paste0(analysis_dir, "7_sc_obj.rds"))
+    load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
     #load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
