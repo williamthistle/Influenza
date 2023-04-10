@@ -287,11 +287,11 @@ create_magical_cell_type_pseudobulk_files <- function(sc_obj, analysis_dir, toke
       idxMatch <- which(str_detect(as.character(cells_subset$magical_cell_types),as.character(cell_type)) & str_detect(as.character(cells_subset$sample), sample_name))
       if (length(idxMatch)>1) {
         samples_subset <- subset(x = cells_subset, subset = sample %in% sample_name)
-        samples_data <- samples_subset@assays$SCT@counts
+        samples_data <- samples_subset@assays$RNA@counts
         samples_data <- rowSums(as.matrix(samples_data))
         cells_pseudobulk[[sample_name]] <- samples_data
       } else {
-        cells_pseudobulk[[sample_name]] <- numeric(nrow(sc_obj@assays$SCT))
+        cells_pseudobulk[[sample_name]] <- numeric(nrow(sc_obj@assays$RNA))
       }
     }
     final_cells_pseudobulk_df <- bind_cols(cells_pseudobulk[1])
