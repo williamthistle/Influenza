@@ -213,7 +213,7 @@ if(analysis_type == "RNA_seq") {
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "sex", high_viral_load_samples, d28_samples, male_samples)
     pseudobulk_rna_dir <- paste0(analysis_dir, "pseudobulk_rna/", date, "/")
     if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
-    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir, token = "10")
+    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir, token = "RNA")
   }
 } else if(analysis_type == "ATAC_seq") {
   # Label input files
