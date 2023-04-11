@@ -45,7 +45,7 @@ all_sample_id_list <- strsplit(all_sample_id_list, "/")
 all_sample_id_list <- unlist(lapply(all_sample_id_list, tail, n = 1L))
 
 # data_token is used to choose subset of data that we want to analyze (pre-defined in flu_data_tokens.tsv)
-data_token <- "all_multiome"
+data_token <- "all_multiome_paired_minus_0_sample"
 # Create directory for this particular data in the analysis directory if it doesn't exist
 base_analysis_dir <- paste0(home_dir, data_type, "/analysis/", data_token, "/")
 if (!dir.exists(base_analysis_dir)) {dir.create(base_analysis_dir)}
@@ -157,7 +157,7 @@ if(analysis_type == "RNA_seq") {
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
     # Load sc_obj
-    load(file = paste0(analysis_dir, "7_sc_obj_sct_markers.rds"))
+    load(file = paste0(analysis_dir, "7_sc_obj.rds"))
     #load(paste0(analysis_dir, "singler_labels.rds"))
     # We can use clustree to help us figure out the best resolution
     # NOTE: clustree may not be that useful in the integrated setting because it'll over-cluster according to sample
@@ -170,25 +170,28 @@ if(analysis_type == "RNA_seq") {
     raw_cluster_info <- capture_cluster_info(sc_obj)
     run_differential_expression_cluster(sc_obj, marker_dir)
     # Remove messy clusters
-    #messy_clusters <- c(6,7,13,14,15,19,28) # 14 sample multiome
-    messy_clusters <- c(2,13,16,18,19,20,21,24,28,32) # 19 sample multiome
+    messy_clusters <- c(6,7,13,14,15,19,28) # 14 sample multiome
+    #messy_clusters <- c(2,13,16,18,19,20,21,24,28,32) # 19 sample multiome
     idxPass <- which(Idents(sc_obj) %in% messy_clusters)
     cellsPass <- names(sc_obj$orig.ident[-idxPass])
     sc_obj.minus.messy.clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     # Override labels manually where necessary
     #sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
-    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(25), "pDC") # 19 sample multiome
+    # sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(25), "pDC") # 19 sample multiome
+    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(20), "CD4 Memory")
     # Remove specific samples that we're not interested in
     # sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, tagged_samples)
     # print_UMAP(sc_obj.minus.messy.clusters.removed.samples, sample_count, "tagged", plot_dir, paste0("post.clusters_all_untagged_", date, ".png"))
     # Print info about sample representation and breakdown of categories per cell type
-    print(table(sc_obj.minus.messy.clusters$sample))
-    print_celltype_counts(sc_obj.minus.messy.clusters)
+    #print(table(sc_obj.minus.messy.clusters$sample))
+    #print_celltype_counts(sc_obj.minus.messy.clusters)
     # Remove noisy cells
-    # sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -2, 0, 1, 2.5) # 14 sample multiome
-    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -4, -2, 1, 6) # 19 sample multiome
-    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 1, 3, -2, 0) # 19 sample multiome
-    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 3, 4, -3, -1.5) # 19 sample multiome
+    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -2.25, 0, 1, 2.5) # 14 sample multiome
+    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 1.5, 2.5, -3, -1.5) # 14 sample multiome
+    sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 2.2, 3.5, -6, -4) # 14 sample multiome
+    #sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, -4, -2, 1, 6) # 19 sample multiome
+    #sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 1, 3, -2, 0) # 19 sample multiome
+    #sc_obj.minus.messy.clusters <- remove_cells_based_on_umap(sc_obj.minus.messy.clusters, 3, 4, -3, -1.5) # 19 sample multiome
     # Print plots for various metadata categories for final UMAP
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("post.clusters_by_cell_type_majority_vote_", date, ".png"))
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "seurat_clusters", plot_dir, paste0("post.clusters_by_cluster_num_", date, ".png"))
@@ -199,11 +202,11 @@ if(analysis_type == "RNA_seq") {
     print_UMAP(sc_obj.minus.messy.clusters, sample_count, "sex", plot_dir, paste0("post.clusters_by_sex_", date, ".png"))
     # write cells and associated cell type majority predictions to file (for ATAC-seq labeling)
     cells_for_ATAC <- data.frame("cells" = sc_obj.minus.messy.clusters$cell_name, voted_type = sc_obj.minus.messy.clusters$predicted_celltype_majority_vote)
-    write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, "-10.csv"), quote = FALSE, row.names = FALSE)
+    write.csv(cells_for_ATAC, file = paste0(analysis_dir, "rna_seq_labeled_cells_", date, "-14_final.csv"), quote = FALSE, row.names = FALSE)
     # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
     sc_obj.minus.messy.clusters <- combine_cell_types_magical(sc_obj.minus.messy.clusters)
     # Run differential expression for each cell type within each group of interest
-    differential_genes_dir <- paste0(analysis_dir, "diff_genes/", date, "/")
+    differential_genes_dir <- paste0(analysis_dir, "diff_genes/", date, "/final/")
     if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "viral_load")
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "day")

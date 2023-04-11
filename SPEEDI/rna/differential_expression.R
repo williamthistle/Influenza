@@ -63,7 +63,7 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
     cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
     # TODO: Make this print table for relevant group
     #print(table(cells_subset$viral_load))
-    DefaultAssay(cells_subset) <- "SCT"
+    DefaultAssay(cells_subset) <- "RNA"
     Idents(cells_subset) <- group
     if(group == "viral_load") {
       first_group <- "HIGH"
@@ -75,7 +75,7 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
       first_group <- "MALE"
       second_group <- "FEMALE"
     }
-    diff_markers <- FindMarkers(cells_subset, ident.1 = first_group, ident.2 = second_group, assay = "SCT", recorrect_umi = FALSE, logfc.threshold = 0, min.pct = 0)
+    diff_markers <- FindMarkers(cells_subset, ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0)
     cell_type <- sub(" ", "_", cell_type)
     write.csv(diff_markers, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type, "-", group, ".csv"), quote = FALSE)
     return(i)
