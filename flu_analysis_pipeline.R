@@ -212,11 +212,11 @@ if(analysis_type == "RNA_seq") {
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "day")
     run_differential_expression_group(sc_obj.minus.messy.clusters, differential_genes_dir, "sex")
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "viral_load", high_viral_load_samples, d28_samples, male_samples)
-    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples, token = "10")
+    create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "day", high_viral_load_samples, d28_samples, male_samples, token = "14_final")
     create_magical_cell_type_proportion_file(sc_obj.minus.messy.clusters, "sex", high_viral_load_samples, d28_samples, male_samples)
     pseudobulk_rna_dir <- paste0(analysis_dir, "pseudobulk_rna/", date, "/")
     if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
-    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir, token = "RNA")
+    create_magical_cell_type_pseudobulk_files(sc_obj.minus.messy.clusters, pseudobulk_rna_dir, token = "14_final")
   }
 } else if(analysis_type == "ATAC_seq") {
   # Label input files
@@ -261,7 +261,7 @@ if(analysis_type == "RNA_seq") {
   # Load ArchR project 
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
   if(use_rna_labels) {
-    proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_2023-04-08-10.csv", subset_to_rna)
+    proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_2023-04-10-14_final.csv", subset_to_rna)
   }
   proj <- combine_cell_types_atac(proj)
   # If we subset to RNA, we don't need to do any majority voting in clusters, etc.
@@ -271,11 +271,11 @@ if(analysis_type == "RNA_seq") {
     # Just for convenience in code below
     final_proj$Cell_type_voting <- final_proj$predictedGroup
     final_proj <- remove_cell_types(final_proj, c("HSPC", "Plasmablast", "Proliferating", "Platelet", "MAIT"))
-    #final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2) # Multiome 14 
-    #final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5) # Multiome 14  
-    #final_proj <- remove_cells_based_on_umap_atac(final_proj, -2.5, -2, -2.5, 0.5) # Multiome 14
-    final_proj <- remove_cells_based_on_umap_atac(final_proj, -3.5, 1, 0, 3.5) # Multiome 19
-    final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 5, 2.75, 5) # Multiome 19
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2) # Multiome 14 
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5) # Multiome 14  
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, -2.5, -2, -2.5, 0.5) # Multiome 14
+    #final_proj <- remove_cells_based_on_umap_atac(final_proj, -3.5, 1, 0, 3.5) # Multiome 19
+    #final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 5, 2.75, 5) # Multiome 19
     plot_atac_after_majority_vote_or_subset(final_proj, date)
   } else {
     proj <- perform_majority_vote(proj)
@@ -296,7 +296,7 @@ if(analysis_type == "RNA_seq") {
   # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
   # calculations
   final_proj <- addPeakMatrix(final_proj)
-  differential_peaks_dir <- paste0(analysis_dir, "diff_peaks-10/", date, "/")
+  differential_peaks_dir <- paste0(analysis_dir, "diff_peaks-14_final/", date, "/")
   if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
   calculate_daps_for_each_cell_type(final_proj, differential_peaks_dir)
   # Create Peaks.txt file for MAGICAL
@@ -304,7 +304,7 @@ if(analysis_type == "RNA_seq") {
   # Create peak_motif_matches.txt file for MAGICAL
   create_peak_motif_matches_file(final_proj, analysis_dir, peak_txt_file)
   # Create pseudobulk counts for peaks for each cell type
-  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk_atac-10/", date, "/")
+  pseudo_bulk_dir <- paste0(analysis_dir, "pseudo_bulk_atac-14_final/", date, "/")
   if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
   create_pseudobulk_atac(final_proj, pseudo_bulk_dir)
 } else {
