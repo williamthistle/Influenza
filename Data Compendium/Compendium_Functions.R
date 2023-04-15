@@ -37,6 +37,20 @@ findPathogen <- function(MIobj, pathogen){
   }
 }
 
+# Create MetaIntegrator friendly object for processing
+formatContrast <- function(MIobj, target_class) {
+  keep_ix <- !is.na(MIobj$pheno$Class)
+  if(sum(keep_ix) == 0){print(paste0(MIobj$formattedName, ' has no valid samples')); return(NULL)}
+  MIobj <- filterMIobj(MIobj, keep_ix)
+  keep_ix <- MIobj$pheno$Class %in% c("Healthy", "Convalescent", target_class)
+  if(sum(keep_ix) == 0){print(paste0(MIobj$formattedName, ' has no valid samples')); return(NULL)}
+  MIobj <- filterMIobj(MIobj, keep_ix)
+  contrast_vector <- as.numeric(!MIobj$pheno$Class %in% c('Healthy', 'Convalescent'))
+  names(contrast_vector) <- rownames(MIobj$pheno)
+  MIobj$class <- contrast_vector
+  return(MIobj)
+}
+
 # for an input MIobj and pathogen (character),
 # this function returns the subset of subjects infected by the pathogen
 # as well as healthy controls, with a modified $class vector for use with
@@ -64,15 +78,18 @@ filterSampleSizes <- function(MIobj, N = 4){
   return(length(unique(MIobj$class)) == 2 & min(table(MIobj$pheno$Class)) >= N)
 }
 
-# return size of each dataset
+# return number of samples in a dataset
 countSampleSizes <- function(MIobj){
   if(is.null(MIobj)){return(F)}
   keep_ix <- !is.na(MIobj$pheno$Class) & !is.na(MIobj$class)
   print(nrow(MIobj$pheno))
 }
 
+
+
+
 # for an input MIobj, pathogen (character), and target_class (character)
-# this function returns the subset of subjects with infecetions of type target_class that are NOT infected by the pathogen
+# this function returns the subset of subjects with infections of type target_class that are NOT infected by the pathogen
 # as well as healthy controls, with a modified $class vector for use with
 # MetaIntegrator functions
 removePathogen <- function(MIobj, pathogen, target_class){
@@ -80,8 +97,9 @@ removePathogen <- function(MIobj, pathogen, target_class){
   keep_ix <- !is.na(MIobj$pheno$Class)
   if(sum(keep_ix) == 0){print(paste0(MIobj$formattedName, ' has no valid samples')); return(NULL)}
   MIobj <- filterMIobj(MIobj, keep_ix)
-  
+  print(sum(keep_ix))
   keep_ix <- MIobj$pheno$Pathogen != pathogen & MIobj$pheno$Class %in% c("Healthy", "Convalescent", target_class)
+  print(sum(keep_ix))
   if(sum(keep_ix) == 0){print(paste0(MIobj$formattedName, ' has no valid samples')); return(NULL)}
   MIobj <- filterMIobj(MIobj, keep_ix)
   contrast_vector <- as.numeric(!MIobj$pheno$Class %in% c('Healthy', 'Convalescent'))
