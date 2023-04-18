@@ -1,3 +1,5 @@
+library(org.Hs.eg.db)
+
 # This function takes a MetaIntegrator object and logical index vector indicating
 # which samples to keep/remove, and returns a MetaIntegrator object containing 
 # the indicated subset 
@@ -60,7 +62,6 @@ formatPathogenContrast <- function(MIobj, pathogen){
   keep_ix <- !is.na(MIobj$pheno$Pathogen) & !is.na(MIobj$pheno$Class)
   if(sum(keep_ix) == 0){print(paste0(MIobj$formattedName, ' has no valid samples')); return(NULL)}
   MIobj <- filterMIobj(MIobj, keep_ix)
-  
   keep_ix <- MIobj$pheno$Pathogen == pathogen | MIobj$pheno$Class %in% c("Healthy", "Convalescent")
   if(sum(keep_ix) == 0){print(paste0(MIobj$formattedName, ' has no valid samples')); return(NULL)}
   MIobj <- filterMIobj(MIobj, keep_ix)
@@ -97,9 +98,7 @@ removePathogen <- function(MIobj, pathogen, target_class){
   keep_ix <- !is.na(MIobj$pheno$Class)
   if(sum(keep_ix) == 0){print(paste0(MIobj$formattedName, ' has no valid samples')); return(NULL)}
   MIobj <- filterMIobj(MIobj, keep_ix)
-  print(sum(keep_ix))
   keep_ix <- MIobj$pheno$Pathogen != pathogen & MIobj$pheno$Class %in% c("Healthy", "Convalescent", target_class)
-  print(sum(keep_ix))
   if(sum(keep_ix) == 0){print(paste0(MIobj$formattedName, ' has no valid samples')); return(NULL)}
   MIobj <- filterMIobj(MIobj, keep_ix)
   contrast_vector <- as.numeric(!MIobj$pheno$Class %in% c('Healthy', 'Convalescent'))
@@ -200,7 +199,7 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
   
   # filter expr to sig genes
   gene_expr = datasetObject$expr[genes_idx,] 
-  
+
   #in case only one gene is present, take the vector itself
   if (is.null(nrow(gene_expr))){
     sample_scores = gene_expr
@@ -215,4 +214,40 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
     }, method = method)}
   
   return(sample_scores)
+}
+
+test_individual_genes_on_datasets <- function(gene_list, data_list, source) {
+  gene_aucs <- c()
+  for(gene in gene_list) {
+    sig <- list()
+    # Convert gene name to ENTREZ ID
+    gene_name <- mapIds(org.Hs.eg.db, c(gene), "ENTREZID", "SYMBOL")[1]
+    print(gene_name)
+    sig$posGeneNames <- gene_name
+    sig$negGeneNames <- ''
+    sig$filterDescription <- 'test'
+    sig$FDRThresh <- 0
+    sig$effectSizeThresh <- 0
+    sig$numberStudiesThresh <- 1
+    sig$isLeaveOneOut <- F
+    sig$heterogeneityPvalThresh <- 0
+    sig$timestamp <- Sys.time()
+    # Test gene set signature on influenza samples and print median AUROC
+    flu_aucs <- sapply(X = data_list, FUN = calculateAUROC, signature = sig)
+    gene_aucs <- c(gene_aucs, median(flu_aucs, na.rm = TRUE))
+  }
+  final_df <- data.frame("gene_name" = gene_list, "gene_auc" = gene_aucs, "source" = rep(source, length(gene_list)))
+  return(final_df)
+}
+
+balance_datasets <- function(data_list, study_metadata) {
+  all_datasets <- c()
+  for(dataset in data_list) {
+    all_datasets <- c(all_datasets, dataset$formattedName)
+  }
+  study_subset_metadata <- study_metadata[study_metadata$Study %in% all_datasets,]
+}
+
+geom_mean <- function(x) {
+  return(exp(mean(log(x))))
 }

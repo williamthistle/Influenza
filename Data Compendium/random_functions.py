@@ -8,7 +8,6 @@ def find_subsets(numbers, target_sum, subset_size):
     return solutions
 
 
-#numbers = [159, 31, 101, 197, 92, 402, 24, 22, 97, 144, 39, 359, 42, 81, 19, 465, 190, 880, 258, 304, 229, 230, 44]
 numbers = [159, 31, 50, 60, 52, 320, 24, 53, 39, 196, 42, 37, 19, 447, 75, 559, 258, 304, 229, 230, 44]
 
 subset_size = 7
