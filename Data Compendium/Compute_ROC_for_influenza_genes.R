@@ -79,48 +79,24 @@ for(current_flu_dataset in flu_list) {
 }
 flu_discovery_metadata <- study_metadata[study_metadata$Study %in% flu_discovery_dataset_names,]
 
-# Find non-influenza virus Daniel datasets
-non_flu_virus_Daniel_list <- list()
-non_flu_virus_Daniel_dataset_names <- c()
+# Find influenza validation datasets
+flu_validation_list <- list()
+flu_validation_dataset_names <- c()
 current_index <- 1
-daniel_paper_cross_reactivity_datasets <- daniel_paper_datasets[daniel_paper_datasets$Usage == "Validation (cross-reactivity)",]
-for(current_non_flu_virus_dataset in non_flu_virus_list) {
-  current_accession <- current_non_flu_virus_dataset$formattedName
-  for(daniel_accession_index in 1:nrow(daniel_paper_cross_reactivity_datasets)) {
-    if(grepl(daniel_paper_cross_reactivity_datasets[daniel_accession_index,]$Accession, current_accession) & !(current_accession %in% non_flu_virus_Daniel_dataset_names)) {
-      non_flu_virus_Daniel_dataset_names <- c(non_flu_virus_Daniel_dataset_names, current_accession)
-      non_flu_virus_Daniel_list[[current_index]] <- current_non_flu_virus_dataset
+daniel_paper_validation_datasets <- daniel_paper_datasets[daniel_paper_datasets$Usage == "Validation (robustness)",]
+for(current_flu_dataset in flu_list) {
+  current_accession <- current_flu_dataset$formattedName
+  for(daniel_accession_index in 1:nrow(daniel_paper_validation_datasets)) {
+    if(grepl(daniel_paper_validation_datasets[daniel_accession_index,]$Accession, current_accession)) {
+      flu_validation_dataset_names <- c(flu_validation_dataset_names, current_accession)
+      flu_validation_list[[current_index]] <- current_flu_dataset
       current_index <- current_index + 1
     }
   }
 }
-non_flu_virus_Daniel_metadata <- study_metadata[study_metadata$Study %in% non_flu_virus_Daniel_dataset_names,]
+flu_validation_metadata <- study_metadata[study_metadata$Study %in% flu_validation_dataset_names,]
 
-# NON INFLUENZA VIRUS
-# Need to filter time series data so it only contains most acute time point and maybe one healthy time point (convalescent / healthy)
-# Dataset 10 (does it matter that this is also in flu_discovery? Maybe make sure it's in discovery set for non-influenza virus?)
-non_flu_virus_Daniel_list[[10]]$pheno <- non_flu_virus_Daniel_list[[10]]$pheno[non_flu_virus_Daniel_list[[10]]$pheno$`Time.Point` == "Less than 72 hour after symptoms",]
-kept_accessions_10 <- rownames(non_flu_virus_Daniel_list[[10]]$pheno)
-non_flu_virus_Daniel_list[[10]]$expr <- non_flu_virus_Daniel_list[[10]]$expr[,colnames(non_flu_virus_Daniel_list[[10]]$expr) %in% kept_accessions_10]
-non_flu_virus_Daniel_list[[10]]$class <- non_flu_virus_Daniel_list[[10]]$class[names(non_flu_virus_Daniel_list[[10]]$class) %in% kept_accessions_10]
-# Dataset 11 (does it matter that this is also in flu_discovery? Maybe make sure it's in discovery set for non-influenza virus?)
-non_flu_virus_Daniel_list[[11]]$pheno <- non_flu_virus_Daniel_list[[11]]$pheno[non_flu_virus_Daniel_list[[11]]$pheno$`Time.Point` == "Baseline" | non_flu_virus_Daniel_list[[11]]$pheno$`Time.Point` == "Day0",]
-non_flu_virus_Daniel_list[[11]]$pheno <- non_flu_virus_Daniel_list[[11]]$pheno[!(grepl("Influenza virus", non_flu_virus_Daniel_list[[11]]$pheno$`Pathogen`)),]
-kept_accessions_11 <- rownames(non_flu_virus_Daniel_list[[11]]$pheno)
-non_flu_virus_Daniel_list[[11]]$expr <- non_flu_virus_Daniel_list[[11]]$expr[,colnames(non_flu_virus_Daniel_list[[11]]$expr) %in% kept_accessions_11]
-non_flu_virus_Daniel_list[[11]]$class <- non_flu_virus_Daniel_list[[11]]$class[names(non_flu_virus_Daniel_list[[11]]$class) %in% kept_accessions_11]
-
-non_flu_virus_Daniel_final_sample_sizes <- c()
-for(dataset_id in non_flu_virus_Daniel_metadata$Study) {
-  for(non_flu_virus_Daniel_dataset in non_flu_virus_Daniel_list) {
-    if(non_flu_virus_Daniel_dataset$formattedName == dataset_id) {
-      non_flu_virus_Daniel_final_sample_sizes <- c(non_flu_virus_Daniel_final_sample_sizes, nrow(non_flu_virus_Daniel_dataset$pheno))
-    }
-  }
-}
-non_flu_virus_Daniel_metadata$final_sample_size <- non_flu_virus_Daniel_final_sample_sizes
-
-# INFLUENZA VIRUS
+# FIXING TIME SERIES FOR INFLUENZA DISCOVERY
 # Need to filter time series data so it only contains most acute time point and maybe one healthy time point (convalescent / healthy)
 # Dataset 5
 kept_indices_5 <- c(1, 5, 10, 11, 12, 13, 16, 19, 22, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38, 39, 40)
@@ -167,7 +143,90 @@ for(flu_dataset_id in flu_discovery_metadata$Study) {
 }
 flu_discovery_metadata$final_sample_size <- flu_discovery_final_sample_sizes
 
-# Need to create non_influenza_discovery_list, bacteria_discovery_list, and non_infectious_discovery_list
+# FIXING TIME SERIES FOR INFLUENZA VALIDATION
+# Need to filter time series data so it only contains most acute time point and maybe one healthy time point (convalescent / healthy)
+# Dataset 3
+flu_validation_list[[3]]$pheno <- flu_validation_list[[3]]$pheno[flu_validation_list[[3]]$pheno$`Time.Point` != "T2" & flu_validation_list[[3]]$pheno$`Time.Point` != "T3",]
+kept_accessions_3 <- rownames(flu_validation_list[[3]]$pheno)
+flu_validation_list[[3]]$expr <- flu_validation_list[[3]]$expr[,colnames(flu_validation_list[[3]]$expr) %in% kept_accessions_3]
+flu_validation_list[[3]]$class <- flu_validation_list[[3]]$class[names(flu_validation_list[[3]]$class) %in% kept_accessions_3]
+# Dataset 4
+flu_validation_list[[4]]$pheno <- flu_validation_list[[4]]$pheno[flu_validation_list[[4]]$pheno$`Time.Point` == 1,]
+kept_accessions_4 <- rownames(flu_validation_list[[4]]$pheno)
+flu_validation_list[[4]]$expr <- flu_validation_list[[4]]$expr[,colnames(flu_validation_list[[4]]$expr) %in% kept_accessions_4]
+flu_validation_list[[4]]$class <- flu_validation_list[[4]]$class[names(flu_validation_list[[4]]$class) %in% kept_accessions_4]
+
+flu_validation_final_sample_sizes <- c()
+for(flu_dataset_id in flu_validation_metadata$Study) {
+  for(flu_dataset in flu_validation_list) {
+    if(flu_dataset$formattedName == flu_dataset_id) {
+      flu_validation_final_sample_sizes <- c(flu_validation_final_sample_sizes, nrow(flu_dataset$pheno))
+    }
+  }
+}
+flu_validation_metadata$final_sample_size <- flu_validation_final_sample_sizes
+
+# Find non-influenza virus Daniel datasets
+non_flu_virus_Daniel_list <- list()
+non_flu_virus_Daniel_dataset_names <- c()
+current_index <- 1
+daniel_paper_cross_reactivity_datasets <- daniel_paper_datasets[daniel_paper_datasets$Usage == "Validation (cross-reactivity)",]
+for(current_non_flu_virus_dataset in non_flu_virus_list) {
+  current_accession <- current_non_flu_virus_dataset$formattedName
+  for(daniel_accession_index in 1:nrow(daniel_paper_cross_reactivity_datasets)) {
+    if(grepl(daniel_paper_cross_reactivity_datasets[daniel_accession_index,]$Accession, current_accession) & !(current_accession %in% non_flu_virus_Daniel_dataset_names)) {
+      non_flu_virus_Daniel_dataset_names <- c(non_flu_virus_Daniel_dataset_names, current_accession)
+      non_flu_virus_Daniel_list[[current_index]] <- current_non_flu_virus_dataset
+      current_index <- current_index + 1
+    }
+  }
+}
+non_flu_virus_Daniel_metadata <- study_metadata[study_metadata$Study %in% non_flu_virus_Daniel_dataset_names,]
+
+# # FIXING TIME SERIES FOR NON INFLUENZA VIRUS
+# Need to filter time series data so it only contains most acute time point and maybe one healthy time point (convalescent / healthy)
+# Dataset 10 (does it matter that this is also in flu_discovery? Maybe make sure it's in discovery set for non-influenza virus?)
+non_flu_virus_Daniel_list[[10]]$pheno <- non_flu_virus_Daniel_list[[10]]$pheno[non_flu_virus_Daniel_list[[10]]$pheno$`Time.Point` == "Less than 72 hour after symptoms",]
+kept_accessions_10 <- rownames(non_flu_virus_Daniel_list[[10]]$pheno)
+non_flu_virus_Daniel_list[[10]]$expr <- non_flu_virus_Daniel_list[[10]]$expr[,colnames(non_flu_virus_Daniel_list[[10]]$expr) %in% kept_accessions_10]
+non_flu_virus_Daniel_list[[10]]$class <- non_flu_virus_Daniel_list[[10]]$class[names(non_flu_virus_Daniel_list[[10]]$class) %in% kept_accessions_10]
+# Dataset 11 (does it matter that this is also in flu_discovery? Maybe make sure it's in discovery set for non-influenza virus?)
+non_flu_virus_Daniel_list[[11]]$pheno <- non_flu_virus_Daniel_list[[11]]$pheno[non_flu_virus_Daniel_list[[11]]$pheno$`Time.Point` == "Baseline" | non_flu_virus_Daniel_list[[11]]$pheno$`Time.Point` == "Day0",]
+non_flu_virus_Daniel_list[[11]]$pheno <- non_flu_virus_Daniel_list[[11]]$pheno[!(grepl("Influenza virus", non_flu_virus_Daniel_list[[11]]$pheno$`Pathogen`)),]
+kept_accessions_11 <- rownames(non_flu_virus_Daniel_list[[11]]$pheno)
+non_flu_virus_Daniel_list[[11]]$expr <- non_flu_virus_Daniel_list[[11]]$expr[,colnames(non_flu_virus_Daniel_list[[11]]$expr) %in% kept_accessions_11]
+non_flu_virus_Daniel_list[[11]]$class <- non_flu_virus_Daniel_list[[11]]$class[names(non_flu_virus_Daniel_list[[11]]$class) %in% kept_accessions_11]
+
+# Add sample sizes and figure out which datasets overlap with influenza discovery / validation
+non_flu_virus_Daniel_final_sample_sizes <- c()
+non_flu_virus_Daniel_final_overlapping_with_flu <- c()
+for(dataset_id in non_flu_virus_Daniel_metadata$Study) {
+  for(non_flu_virus_Daniel_dataset in non_flu_virus_Daniel_list) {
+    if(non_flu_virus_Daniel_dataset$formattedName == dataset_id) {
+      non_flu_virus_Daniel_final_sample_sizes <- c(non_flu_virus_Daniel_final_sample_sizes, nrow(non_flu_virus_Daniel_dataset$pheno))
+    }
+  } 
+  if(dataset_id %in% flu_discovery_metadata$Study) {
+    non_flu_virus_Daniel_final_overlapping_with_flu <- c(non_flu_virus_Daniel_final_overlapping_with_flu, TRUE)
+  } else {
+    non_flu_virus_Daniel_final_overlapping_with_flu <- c(non_flu_virus_Daniel_final_overlapping_with_flu, FALSE)
+  }
+}
+non_flu_virus_Daniel_metadata$final_sample_size <- non_flu_virus_Daniel_final_sample_sizes
+non_flu_virus_Daniel_metadata$overlap_with_flu_discovery <- non_flu_virus_Daniel_final_overlapping_with_flu
+
+# create discovery and validation datasets for non-influenza virus
+non_flu_discovery_indices <- c(3, 4, 5, 6, 10, 11, 12)
+non_flu_validation_indices <- c(1, 2, 7, 8, 9)
+non_flu_virus_discovery_list <- non_flu_virus_Daniel_list[non_flu_discovery_indices]
+non_flu_virus_validation_list <- non_flu_virus_Daniel_list[non_flu_validation_indices]
+
+# BACTERIA
+
+
+# Need to create bacteria (discovery and validation), and non_infectious (discovery and validation)
+
+
 
 
 
