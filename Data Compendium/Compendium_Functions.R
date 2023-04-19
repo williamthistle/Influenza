@@ -216,7 +216,7 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
   return(sample_scores)
 }
 
-test_individual_genes_on_datasets <- function(gene_list, data_list, source) {
+test_individual_genes_on_datasets <- function(gene_list, data_list, source, disease_tag) {
   gene_aucs <- c()
   for(gene in gene_list) {
     sig <- list()
@@ -236,16 +236,10 @@ test_individual_genes_on_datasets <- function(gene_list, data_list, source) {
     flu_aucs <- sapply(X = data_list, FUN = calculateAUROC, signature = sig)
     gene_aucs <- c(gene_aucs, median(flu_aucs, na.rm = TRUE))
   }
-  final_df <- data.frame("gene_name" = gene_list, "gene_auc" = gene_aucs, "source" = rep(source, length(gene_list)))
+  gene_auc_name <- paste0(disease_tag, "_gene_auc")
+  final_df <- data.frame("gene_name" = gene_list, temp_name = gene_aucs, "source" = rep(source, length(gene_list)))
+  names(final_df)[names(final_df) == "temp_name"] <- gene_auc_name
   return(final_df)
-}
-
-balance_datasets <- function(data_list, study_metadata) {
-  all_datasets <- c()
-  for(dataset in data_list) {
-    all_datasets <- c(all_datasets, dataset$formattedName)
-  }
-  study_subset_metadata <- study_metadata[study_metadata$Study %in% all_datasets,]
 }
 
 geom_mean <- function(x) {

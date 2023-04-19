@@ -1,6 +1,7 @@
 library(MetaIntegrator)
 library(dplyr)
 library(openxlsx)
+library(ggplot2)
 
 # Set working directory to wherever this script is
 # (because Compendium_Functions.R will be in the same place)
@@ -222,53 +223,55 @@ non_flu_virus_discovery_list <- non_flu_virus_Daniel_list[non_flu_discovery_indi
 non_flu_virus_validation_list <- non_flu_virus_Daniel_list[non_flu_validation_indices]
 
 # BACTERIA
+load("bacteria_discovery_metadata.rda")
+load("bacteria_validation_metadata.rda")
 
+bacteria_discovery_list <- bacteria_list[sort(match(bacteria_discovery_metadata$Study, bacteria_metadata$Study))]
+bacteria_validation_list <- bacteria_list[sort(match(bacteria_validation_metadata$Study, bacteria_metadata$Study))]
 
-# Need to create bacteria (discovery and validation), and non_infectious (discovery and validation)
+# NON INFECTIOUS
+load("noninfectious_discovery_metadata.rda")
+load("noninfectious_validation_metadata.rda")
 
+noninfectious_discovery_list <- noninfectious_list[sort(match(noninfectious_discovery_metadata$Study, noninfectious_metadata$Study))]
+noninfectious_validation_list <- noninfectious_list[sort(match(noninfectious_validation_metadata$Study, noninfectious_metadata$Study))]
 
+# Calculate flu (discovery) AUCs for individual genes
+sc_discovery_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, flu_discovery_list, "Single_Cell_Paired", "flu_discovery")
+multiome_discovery_paired_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, flu_discovery_list, "Multiome_Paired", "flu_discovery")
+multiome_discovery_all_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, flu_discovery_list, "Multiome_All", "flu_discovery")
 
+# Calculate non-influenza virus (discovery) AUCs for individual genes
+sc_discovery_non_flu_virus_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, non_flu_virus_discovery_list, "Single_Cell_Paired", "non_flu_virus_discovery")
+multiome_discovery_paired_non_flu_virus_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, non_flu_virus_discovery_list, "Multiome_Paired", "non_flu_virus_discovery")
+multiome_discovery_all_non_flu_virus_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, non_flu_virus_discovery_list, "Multiome_All", "non_flu_virus_discovery")
 
+# Calculate bacteria (discovery) AUCs for individual genes
+sc_discovery_bacteria_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, bacteria_discovery_list, "Single_Cell_Paired", "bacteria_discovery")
+multiome_discovery_paired_bacteria_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, bacteria_discovery_list, "Multiome_Paired", "bacteria_discovery")
+multiome_discovery_all_bacteria_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, bacteria_discovery_list, "Multiome_All", "bacteria_discovery")
 
+# Calculate non-infectious (discovery) AUCs for individual genes
+sc_discovery_noninfectious_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, noninfectious_discovery_list, "Single_Cell_Paired", "noninfectious_discovery")
+multiome_discovery_paired_noninfectious_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, noninfectious_discovery_list, "Multiome_Paired", "noninfectious_discovery")
+multiome_discovery_all_noninfectious_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, noninfectious_discovery_list, "Multiome_All", "noninfectious_discovery")
 
-sc_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, flu_discovery_list, "Single_Cell_Paired")
-multiome_paired_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, flu_discovery_list, "Multiome_Paired")
-all_flu_aucs <- rbind(sc_flu_aucs, multiome_paired_flu_aucs)
+# Combine results from the different gene lists into comprehensive discovery dataframes
+all_discovery_flu_aucs <- rbind(sc_discovery_flu_aucs, multiome_discovery_paired_flu_aucs, multiome_discovery_all_flu_aucs)
+all_discovery_non_flu_virus_aucs <- rbind(sc_discovery_non_flu_virus_aucs, multiome_discovery_paired_non_flu_virus_aucs, multiome_discovery_all_non_flu_virus_aucs)
+all_discovery_bacteria_aucs <- rbind(sc_discovery_bacteria_aucs, multiome_discovery_paired_bacteria_aucs, multiome_discovery_all_bacteria_aucs)
+all_discovery_noninfectious_aucs <- rbind(sc_discovery_noninfectious_aucs, multiome_discovery_paired_noninfectious_aucs, multiome_discovery_all_noninfectious_aucs)
 
-# Create gene set signature (using MetaIntegrator format)
-sig <- list()
-sig$posGeneNames <- '7124'
-sig$negGeneNames <- ''
-sig$filterDescription <- 'test'
-sig$FDRThresh <- 0
-sig$effectSizeThresh <- 0
-sig$numberStudiesThresh <- 1
-sig$isLeaveOneOut <- F
-sig$heterogeneityPvalThresh <- 0
-sig$timestamp <- Sys.time()
+# Create final, overall discovery dataframe
+all_discovery_aucs <- all_discovery_flu_aucs
+all_discovery_aucs$non_flu_virus_discovery_gene_auc <- all_discovery_non_flu_virus_aucs$non_flu_virus_discovery_gene_auc
+all_discovery_aucs$bacteria_discovery_gene_auc <- all_discovery_bacteria_aucs$bacteria_discovery_gene_auc
+all_discovery_aucs$noninfectious_discovery_gene_auc <- all_discovery_noninfectious_aucs$noninfectious_discovery_gene_auc
+all_discovery_aucs <- all_discovery_aucs[,c(1,2,4,5,6,3)]
 
-# Test gene set signature on influenza samples and print median AUROC
-flu_aucs <- sapply(X = flu_discovery_list, FUN = calculateAUROC, signature = sig)
-print(median(flu_aucs, na.rm = TRUE))
-
-non_flu_virus_aucs <- sapply(X = non_flu_virus_list, FUN = calculateAUROC, signature = sig)
-print(median(non_flu_virus_aucs, na.rm = TRUE))
-
-bacteria_aucs <- sapply(X = bacteria_list, FUN = calculateAUROC, signature = sig)
-print(median(bacteria_aucs, na.rm = TRUE))
-
-noninfectious_aucs <- sapply(X = noninfectious_list, FUN = calculateAUROC, signature = sig)
-print(median(noninfectious_aucs, na.rm = TRUE))
-
-
-
-
-
-
-
-sapply(flu_list, countSampleSizes)
-
-chosen_flu_dataset_sizes <- c(159, 101, 197, 39, 42, 19, 97)
-chosen_flu_indices <- c(1,3,4,9,11,13,15)
-
-discovery_influenza_list <- flu_list[chosen_flu_indices]
+# Plot non-influenza virus AUC vs influenza AUC
+# NOTE - check for overlap between different data types (e.g., noninfectious vs flu)
+# NOTE - one row is removed because we got an NA value - this is probably fine
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_vline(xintercept=0.3) + geom_vline(xintercept=0.7)
+  

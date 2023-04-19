@@ -67,7 +67,7 @@ potential_validation_metadata <- filtered_bacteria_metadata[!(filtered_bacteria_
 print(sum(potential_validation_metadata$final_sample_size))
 bacteria_discovery_metadata <- potential_discovery_metadata
 bacteria_validation_metadata <- potential_validation_metadata
-saveRDS(bacteria_discovery_metadata, "bacteria_discovery_metadata.RDS")
-saveRDS(bacteria_validation_metadata, "bacteria_validation_metadata.RDS")
+save(bacteria_discovery_metadata, file = "bacteria_discovery_metadata.rda")
+save(bacteria_validation_metadata, file = "bacteria_validation_metadata.rda")
 
 
