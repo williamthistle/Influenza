@@ -272,6 +272,107 @@ all_discovery_aucs <- all_discovery_aucs[,c(1,2,4,5,6,3)]
 # Plot non-influenza virus AUC vs influenza AUC
 # NOTE - check for overlap between different data types (e.g., noninfectious vs flu)
 # NOTE - one row is removed because we got an NA value - this is probably fine
+# No labels
 ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source)) + geom_point(aes(col = source)) + 
-  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_vline(xintercept=0.3) + geom_vline(xintercept=0.7)
-  
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_vline(xintercept=0.3, linetype=2) + geom_vline(xintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2)
+
+# AUC > 0.7 genes
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source, label = gene_name)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_vline(xintercept=0.3, linetype=2) + geom_vline(xintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + geom_text(aes(label=ifelse(flu_discovery_gene_auc>0.7,as.character(gene_name),'')))
+current_df <- all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc > 0.7,]
+for(current_row_index in 1:nrow(current_df)) {
+  current_row <- current_df[current_row_index,]
+  line_coord <- current_row$flu_discovery_gene_auc - 0.075
+  if(current_row$non_flu_virus_discovery_gene_auc < line_coord) {
+    print(current_row$gene_name)
+  }
+}
+
+# AUC < 0.3 genes
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source, label = gene_name)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_vline(xintercept=0.3, linetype=2) + geom_vline(xintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + geom_text(aes(label=ifelse(flu_discovery_gene_auc<0.3,as.character(gene_name),'')))
+all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc < 0.3,]
+current_df <- all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc < 0.3,]
+for(current_row_index in 1:nrow(current_df)) {
+  current_row <- current_df[current_row_index,]
+  line_coord <- current_row$flu_discovery_gene_auc + 0.075
+  if(current_row$non_flu_virus_discovery_gene_auc > line_coord) {
+    print(current_row$gene_name)
+  }
+}
+
+# Plot non-influenza virus AUC vs influenza AUC for viral specificity
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2)
+
+# AUC > 0.7 genes
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source, label = gene_name)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + geom_text(aes(label=ifelse(non_flu_virus_discovery_gene_auc>0.7,as.character(gene_name),'')))
+all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc > 0.7,]
+current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc > 0.7,])
+for(current_row_index in 1:nrow(current_df)) {
+  current_row <- current_df[current_row_index,]
+  line_coord <- current_row$flu_discovery_gene_auc + 0.075
+  if(current_row$non_flu_virus_discovery_gene_auc > line_coord) {
+    print(current_row$gene_name)
+  }
+}
+
+
+
+# AUC < 0.3 genes
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source, label = gene_name)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + geom_text(aes(label=ifelse(non_flu_virus_discovery_gene_auc<0.3,as.character(gene_name),'')))
+all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc < 0.3,]
+current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc < 0.3,])
+for(current_row_index in 1:nrow(current_df)) {
+  current_row <- current_df[current_row_index,]
+  line_coord <- current_row$flu_discovery_gene_auc - 0.075
+  if(current_row$non_flu_virus_discovery_gene_auc < line_coord) {
+    print(current_row$gene_name)
+  }
+}
+
+# Plot bacteria AUC vs influenza AUC for bacterial specificity
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=bacteria_discovery_gene_auc , group = source)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.125, linetype=2) + geom_abline(slope = 1, intercept = -0.125, linetype=2)
+
+# AUC > 0.7 genes
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=bacteria_discovery_gene_auc, group = source, label = gene_name)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.125, linetype=2) + geom_abline(slope = 1, intercept = -0.125, linetype=2) + geom_text(aes(label=ifelse(bacteria_discovery_gene_auc>0.7,as.character(gene_name),'')))
+all_discovery_aucs[all_discovery_aucs$bacteria_discovery_gene_auc > 0.7,]
+current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$bacteria_discovery_gene_auc > 0.7,])
+for(current_row_index in 1:nrow(current_df)) {
+  current_row <- current_df[current_row_index,]
+  line_coord <- current_row$flu_discovery_gene_auc + 0.125
+  if(current_row$bacteria_discovery_gene_auc > line_coord) {
+    print(paste0(current_row$gene_name, " - ", current_row$source))
+  }
+}
+
+# AUC < 0.3 genes
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=bacteria_discovery_gene_auc, group = source, label = gene_name)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.125, linetype=2) + geom_abline(slope = 1, intercept = -0.125, linetype=2) + geom_text(aes(label=ifelse(bacteria_discovery_gene_auc<0.3,as.character(gene_name),'')))
+all_discovery_aucs[all_discovery_aucs$bacteria_discovery_gene_auc < 0.3,]
+current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$bacteria_discovery_gene_auc < 0.3,])
+for(current_row_index in 1:nrow(current_df)) {
+  current_row <- current_df[current_row_index,]
+  line_coord <- current_row$flu_discovery_gene_auc - 0.125
+  if(current_row$bacteria_discovery_gene_auc < line_coord) {
+    print(paste0(current_row$gene_name, " - ", current_row$source))
+  }
+}
+
+# Plot noninfectious AUC vs influenza AUC for non-infectious specificity
+ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=noninfectious_discovery_gene_auc, group = source)) + geom_point(aes(col = source)) + 
+  coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+  geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2)
