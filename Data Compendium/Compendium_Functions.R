@@ -242,6 +242,54 @@ test_individual_genes_on_datasets <- function(gene_list, data_list, source, dise
   return(final_df)
 }
 
+test_pooled_genes_on_validation_data <- function(pos_gene_list, neg_gene_list, data_list) {
+  sig <- list()
+  # Convert gene names to ENTREZ ID
+  entrez_pos_gene_list <- mapIds(org.Hs.eg.db, pos_gene_list, "ENTREZID", "SYMBOL")
+  entrez_neg_gene_list <- mapIds(org.Hs.eg.db, neg_gene_list, "ENTREZID", "SYMBOL")
+  sig$posGeneNames <- entrez_pos_gene_list
+  sig$negGeneNames <- entrez_neg_gene_list
+  sig$filterDescription <- 'my_gene_list'
+  sig$FDRThresh <- 0
+  sig$effectSizeThresh <- 0
+  sig$numberStudiesThresh <- 1
+  sig$isLeaveOneOut <- F
+  sig$heterogeneityPvalThresh <- 0
+  sig$timestamp <- Sys.time()
+  # Test gene set signature on influenza samples and print median AUROC
+  test_aucs <- sapply(X = data_list, FUN = calculateAUROC, signature = sig)
+  print(test_aucs)
+  final_test_auc <- median(test_aucs, na.rm = TRUE)
+  print(final_test_auc)
+  return(final_test_auc)
+}
+
+plot_pooled_auc <- function(pos_gene_list, neg_gene_list, data_list, title) {
+  meta_obj <- list()
+  meta_obj$originalData <- data_list
+  
+  sig <- list()
+  # Convert gene names to ENTREZ ID
+  entrez_pos_gene_list <- mapIds(org.Hs.eg.db, pos_gene_list, "ENTREZID", "SYMBOL")
+  if(length(neg_gene_list) > 0) {
+    entrez_neg_gene_list <- mapIds(org.Hs.eg.db, neg_gene_list, "ENTREZID", "SYMBOL")
+  }
+  sig$posGeneNames <- entrez_pos_gene_list
+  sig$negGeneNames <- entrez_neg_gene_list
+  sig$filterDescription <- 'my_gene_list'
+  sig$FDRThresh <- 0
+  sig$effectSizeThresh <- 0
+  sig$numberStudiesThresh <- 1
+  sig$isLeaveOneOut <- F
+  sig$heterogeneityPvalThresh <- 0
+  sig$timestamp <- Sys.time()
+  
+  final_plot <- pooledROCPlot(metaObject = meta_obj, filterObject = sig, title = title)
+  ggsave(filename = paste0(title, ".png"), plot = final_plot, device = "png", dpi = 300)
+}
+
+
+
 geom_mean <- function(x) {
   return(exp(mean(log(x))))
 }
