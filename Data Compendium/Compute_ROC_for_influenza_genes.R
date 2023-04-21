@@ -8,7 +8,7 @@ library(ggplot2)
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 source("Compendium_Functions.R")
 # Now set working directory to where compendium data files are
-setwd("C:/Users/willi/Desktop/Influenza Work (April 2023)/Data Compendium")
+setwd("C:/Users/wat2/Desktop/Influenza Analysis/Data Compendium")
 
 # Grab study metadata (will be used to confirm that discovery / validation splits are balanced)
 study_metadata <- read.xlsx('metadata_tables/darpa_compendium_metadata_v1.xlsx', sheet = 1)
@@ -34,12 +34,16 @@ noninfectious_list <- readRDS('Processed, Manuscript Files/noninfectious_data_li
 
 # Single-cell RNA-seq MAGICAL genes (paired)
 MAGICAL_single_cell_genes <- read.table("../Single Cell RNA-Seq/MAGICAL_flu_genes.csv")$V1
+MAGICAL_daniel_signature_genes <- read.table("../Single Cell RNA-Seq/MAGICAL_flu_genes_final.csv")$V1
 
 # True multiome RNA-seq MAGICAL genes (paired)
 MAGICAL_multiome_14_genes <- read.table("../True Multiome/MAGICAL_flu_genes_14.csv")$V1
 
 # True multiome RNA-seq MAGICAL genes (all)
 MAGICAL_multiome_19_genes <- read.table("../True Multiome/MAGICAL_flu_genes_19.csv")$V1
+
+# Mintchip genes (all)
+mintchip_genes <- read.table("../True Multiome/mintchip_gene_list.csv")$V1
 
 # Find all influenza datasets
 flu_samples <- sapply(data_list, findPathogen, pathogen = 'Influenza virus')
