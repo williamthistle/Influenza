@@ -8,7 +8,7 @@ library(ggplot2)
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 source("Compendium_Functions.R")
 # Now set working directory to where compendium data files are
-setwd("C:/Users/wat2/Desktop/Influenza Analysis/Data Compendium")
+setwd("C:/Users/willi/Desktop/Influenza Work (April 2023)/Data Compendium")
 
 # Grab study metadata (will be used to confirm that discovery / validation splits are balanced)
 study_metadata <- read.xlsx('metadata_tables/darpa_compendium_metadata_v1.xlsx', sheet = 1)
