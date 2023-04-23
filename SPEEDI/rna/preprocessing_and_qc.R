@@ -29,7 +29,7 @@ create_seurat_object_with_info <- function(all_sc_exp_matrices) {
 
 # Add metadata for each sample to Seurat obj
 add_sample_metadata <- function(sc_obj, high_viral_load_samples, low_viral_load_samples,
-                                d28_samples, d_minus_1_samples, male_samples, female_samples) {
+                                d28_samples, d_minus_1_samples, male_samples, female_samples, sample_metadata) {
   # Add viral load metadata
   viral_load_metadata <- vector(length = length(sc_obj$sample))
   idxPass <- which(sc_obj$sample %in% high_viral_load_samples)
@@ -51,6 +51,15 @@ add_sample_metadata <- function(sc_obj, high_viral_load_samples, low_viral_load_
   idxPass <- which(sc_obj$sample %in% female_samples)
   sex_metadata[idxPass] <- "FEMALE"
   sc_obj$sex <- sex_metadata
+  # Add subject metadata
+  subject_metadata <- vector(length = length(sc_obj$sample))
+  for(current_row in 1:nrow(sample_metadata)) {
+    current_sample <- sample_metadata[current_row,]$aliquot
+    current_subject <- sample_metadata[current_row,]$subject_id
+    idxPass <- which(sc_obj$sample %in% current_sample)
+    subject_metadata[idxPass] <- current_subject
+  }
+  sc_obj$subject <- subject_metadata
   # By default, we'll group samples by viral load (high then low)
   sc_obj$sample <- factor(sc_obj$sample, levels = c(high_viral_load_samples, low_viral_load_samples))
   return(sc_obj)

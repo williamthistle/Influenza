@@ -82,7 +82,6 @@ subject_ids <- c()
 for(sample_metadata_row_index in 1:nrow(sample_metadata)) {
   current_row <- sample_metadata[sample_metadata_row_index,]
   subject_id <- all_metadata[all_metadata$aliquot_id %in% current_row$aliquot,]$subject_id
-  print(subject_id)
   subject_ids <- c(subject_ids, subject_id)
 }
 sample_metadata$subject_id <- subject_ids
@@ -97,8 +96,11 @@ male_samples <- sort(sample_metadata[sample_metadata$sex == "M",]$aliquot)
 female_samples <- sort(sample_metadata[sample_metadata$sex == "F",]$aliquot)
 all_sex_samples <- c(male_samples, female_samples)
 
+
 # Organize sample list by high viral load followed by low viral load
 sample_id_list <- sample_id_list[order(match(sample_id_list, all_viral_load_samples))]
+sample_metadata <- sample_metadata[order(match(sample_metadata$aliquot,all_viral_load_samples)),]
+
 # Sort other types of samples according to viral load order
 #all_day_samples <- all_day_samples[order(match(all_day_samples, all_viral_load_samples))]
 #all_sex_samples <- all_sex_samples[order(match(all_sex_samples, all_viral_load_samples))]
