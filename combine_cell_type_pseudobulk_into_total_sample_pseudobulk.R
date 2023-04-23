@@ -1,7 +1,7 @@
 library(DESeq2)
 library(org.Hs.eg.db)
 
-setwd("C:/Users/wat2/Desktop/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/scRNA/pseudo_bulk")
+setwd("C:/Users/willi/Desktop/Influenza Work (April 2023)/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/scRNA/pseudo_bulk")
 cell_types <- c("CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
 
 # We start with B and add the rest
@@ -51,6 +51,7 @@ metaintegrator_obj$expr <- total_pseudobulk_df_log_entrez
 metaintegrator_obj$keys <- metaintegrator_keys
 metaintegrator_obj$formattedName <- "FLU_SC"
 metaintegrator_obj$class <- sample_class
+names(metaintegrator_obj$class) <- colnames(metaintegrator_obj$expr)
 metaintegrator_obj$pheno <- pheno_df
 
 internal_data_list <- list()
@@ -60,6 +61,8 @@ sc_pseudobulk_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_gene
 nrow(sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7,])
 sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7,]
 nrow(sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,])
+sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,]
+
 sc_pseudobulk_aucs_daniel_sig <- sc_pseudobulk_aucs[sc_pseudobulk_aucs$gene_name %in% MAGICAL_daniel_signature_genes,]
 nrow(sc_pseudobulk_aucs_daniel_sig[sc_pseudobulk_aucs_daniel_sig$sc_pseudobulk_gene_auc > 0.7,])
 nrow(sc_pseudobulk_aucs_daniel_sig[sc_pseudobulk_aucs_daniel_sig$sc_pseudobulk_gene_auc < 0.3,])
@@ -67,3 +70,8 @@ nrow(sc_pseudobulk_aucs_daniel_sig[sc_pseudobulk_aucs_daniel_sig$sc_pseudobulk_g
 final_sc_magical_genes <- sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7 | sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,]$gene_name
 
 sum(final_sc_magical_genes %in% mintchip_genes)
+
+
+comparison_aucs <- sc_pseudobulk_aucs
+comparison_aucs$discovery_aucs <- sc_discovery_flu_aucs$flu_discovery_gene_auc
+comparison_aucs <- comparison_aucs[,c(1,2,4,3)]

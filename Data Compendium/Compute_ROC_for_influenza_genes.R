@@ -34,7 +34,7 @@ noninfectious_list <- readRDS('Processed, Manuscript Files/noninfectious_data_li
 
 # Single-cell RNA-seq MAGICAL genes (paired)
 MAGICAL_single_cell_genes <- read.table("../Single Cell RNA-Seq/MAGICAL_flu_genes.csv")$V1
-MAGICAL_daniel_signature_genes <- read.table("../Single Cell RNA-Seq/MAGICAL_flu_genes_final.csv")$V1
+#MAGICAL_daniel_signature_genes <- read.table("../Single Cell RNA-Seq/MAGICAL_flu_genes_final.csv")$V1
 
 # True multiome RNA-seq MAGICAL genes (paired)
 MAGICAL_multiome_14_genes <- read.table("../True Multiome/MAGICAL_flu_genes_14.csv")$V1
@@ -43,7 +43,7 @@ MAGICAL_multiome_14_genes <- read.table("../True Multiome/MAGICAL_flu_genes_14.c
 MAGICAL_multiome_19_genes <- read.table("../True Multiome/MAGICAL_flu_genes_19.csv")$V1
 
 # Mintchip genes (all)
-mintchip_genes <- read.table("../True Multiome/mintchip_gene_list.csv")$V1
+#mintchip_genes <- read.table("../True Multiome/mintchip_gene_list.csv")$V1
 
 # Find all influenza datasets
 flu_samples <- sapply(data_list, findPathogen, pathogen = 'Influenza virus')
@@ -230,6 +230,13 @@ non_flu_virus_validation_list <- non_flu_virus_Daniel_list[non_flu_validation_in
 load("bacteria_discovery_metadata.rda")
 load("bacteria_validation_metadata.rda")
 
+bacteria_dataset_names <- c()
+for(current_bacteria_dataset in bacteria_list) {
+  current_accession <- current_bacteria_dataset$formattedName
+  bacteria_dataset_names <- c(bacteria_dataset_names, current_accession)
+}
+
+bacteria_metadata <- study_metadata[study_metadata$Study %in% bacteria_dataset_names,]
 bacteria_discovery_list <- bacteria_list[sort(match(bacteria_discovery_metadata$Study, bacteria_metadata$Study))]
 bacteria_validation_list <- bacteria_list[sort(match(bacteria_validation_metadata$Study, bacteria_metadata$Study))]
 
@@ -237,8 +244,15 @@ bacteria_validation_list <- bacteria_list[sort(match(bacteria_validation_metadat
 load("noninfectious_discovery_metadata.rda")
 load("noninfectious_validation_metadata.rda")
 
-noninfectious_discovery_list <- noninfectious_list[sort(match(noninfectious_discovery_metadata$Study, noninfectious_metadata$Study))]
-noninfectious_validation_list <- noninfectious_list[sort(match(noninfectious_validation_metadata$Study, noninfectious_metadata$Study))]
+noninfectious_dataset_names <- c()
+for(current_noninfectious_dataset in noninfectious_list) {
+  current_accession <- current_noninfectious_dataset$formattedName
+  noninfectious_dataset_names <- c(noninfectious_dataset_names, current_accession)
+}
+
+# OVERLAP BETWEEN NONINFECTIOUS AND OTHER STUFF
+noninfectious_discovery_list <- noninfectious_list[sort(match(noninfectious_discovery_metadata$Study, noninfectious_dataset_names))]
+noninfectious_validation_list <- noninfectious_list[sort(match(noninfectious_validation_metadata$Study, noninfectious_dataset_names))]
 
 # Calculate flu (discovery) AUCs for individual genes
 sc_discovery_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, flu_discovery_list, "Single_Cell_Paired", "flu_discovery")
@@ -297,6 +311,7 @@ ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discove
   coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_vline(xintercept=0.3, linetype=2) + geom_vline(xintercept=0.7, linetype=2) + 
   geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + geom_text(aes(label=ifelse(flu_discovery_gene_auc>0.7,as.character(gene_name),'')))
 current_df <- all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc > 0.7,]
+diff_between_influenza_and_non_flu_virus_auc <- c()
 for(current_row_index in 1:nrow(current_df)) {
   current_row <- current_df[current_row_index,]
   line_coord <- current_row$flu_discovery_gene_auc - 0.075
@@ -304,7 +319,11 @@ for(current_row_index in 1:nrow(current_df)) {
     flu_pos_genes <- c(flu_pos_genes, current_row$gene_name)
     print(paste0(current_row$gene_name, " - ", current_row$source))
   }
+  diff_between_influenza_and_non_flu_virus_auc <- c(diff_between_influenza_and_non_flu_virus_auc, current_row$flu_discovery_gene_auc - current_row$non_flu_virus_discovery_gene_auc)
 }
+current_df$diff <- diff_between_influenza_and_non_flu_virus_auc
+current_df <- current_df[order(current_df$diff),]
+print(current_df)
 
 # AUC < 0.3 genes
 ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source, label = gene_name)) + geom_point(aes(col = source)) + 
@@ -312,6 +331,7 @@ ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discove
   geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + geom_text(aes(label=ifelse(flu_discovery_gene_auc<0.3,as.character(gene_name),'')))
 all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc < 0.3,]
 current_df <- all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc < 0.3,]
+diff_between_influenza_and_non_flu_virus_auc <- c()
 for(current_row_index in 1:nrow(current_df)) {
   current_row <- current_df[current_row_index,]
   line_coord <- current_row$flu_discovery_gene_auc + 0.075
@@ -319,7 +339,11 @@ for(current_row_index in 1:nrow(current_df)) {
     flu_neg_genes <- c(flu_neg_genes, current_row$gene_name)
     print(paste0(current_row$gene_name, " - ", current_row$source))
   }
+  diff_between_influenza_and_non_flu_virus_auc <- c(diff_between_influenza_and_non_flu_virus_auc, current_row$flu_discovery_gene_auc - current_row$non_flu_virus_discovery_gene_auc)
 }
+current_df$diff <- diff_between_influenza_and_non_flu_virus_auc
+current_df <- current_df[order(current_df$diff),]
+print(current_df)
 
 # Plot non-influenza virus AUC vs influenza AUC for viral specificity
 ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source)) + geom_point(aes(col = source)) + 
@@ -333,6 +357,7 @@ ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discove
   geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + geom_text(aes(label=ifelse(non_flu_virus_discovery_gene_auc>0.7,as.character(gene_name),'')))
 all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc > 0.7,]
 current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc > 0.7,])
+diff_between_influenza_and_non_flu_virus_auc <- c()
 for(current_row_index in 1:nrow(current_df)) {
   current_row <- current_df[current_row_index,]
   line_coord <- current_row$flu_discovery_gene_auc + 0.075
@@ -340,7 +365,11 @@ for(current_row_index in 1:nrow(current_df)) {
     vir_pos_genes <- c(vir_pos_genes, current_row$gene_name)
     print(paste0(current_row$gene_name, " - ", current_row$source))
   }
+  diff_between_influenza_and_non_flu_virus_auc <- c(diff_between_influenza_and_non_flu_virus_auc, current_row$non_flu_virus_discovery_gene_auc - current_row$flu_discovery_gene_auc)
 }
+current_df$diff <- diff_between_influenza_and_non_flu_virus_auc
+current_df <- current_df[order(current_df$diff),]
+print(current_df)
 
 
 
@@ -350,6 +379,7 @@ ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discove
   geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + geom_text(aes(label=ifelse(non_flu_virus_discovery_gene_auc<0.3,as.character(gene_name),'')))
 all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc < 0.3,]
 current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc < 0.3,])
+diff_between_influenza_and_non_flu_virus_auc <- c()
 for(current_row_index in 1:nrow(current_df)) {
   current_row <- current_df[current_row_index,]
   line_coord <- current_row$flu_discovery_gene_auc - 0.075
@@ -357,7 +387,11 @@ for(current_row_index in 1:nrow(current_df)) {
     vir_neg_genes <- c(vir_neg_genes, current_row$gene_name)
     print(paste0(current_row$gene_name, " - ", current_row$source))
   }
+  diff_between_influenza_and_non_flu_virus_auc <- c(diff_between_influenza_and_non_flu_virus_auc, current_row$non_flu_virus_discovery_gene_auc - current_row$flu_discovery_gene_auc)
 }
+current_df$diff <- diff_between_influenza_and_non_flu_virus_auc
+current_df <- current_df[order(current_df$diff),]
+print(current_df)
 
 # Plot bacteria AUC vs influenza AUC for bacterial specificity
 ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=bacteria_discovery_gene_auc , group = source)) + geom_point(aes(col = source)) + 
@@ -382,7 +416,7 @@ for(current_row_index in 1:nrow(current_df)) {
     print(paste0(current_row$gene_name, " - ", current_row$source))
   }
 }
-current_df
+print(current_df)
 
 # AUC < 0.3 genes
 ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=bacteria_discovery_gene_auc, group = source, label = gene_name)) + geom_point(aes(col = source)) + 
@@ -400,7 +434,7 @@ for(current_row_index in 1:nrow(current_df)) {
     print(paste0(current_row$gene_name, " - ", current_row$source))
   }
 }
-current_df
+print(current_df)
 
 # Plot noninfectious AUC vs influenza AUC for non-infectious specificity
 # No genes pass criteria
@@ -412,6 +446,10 @@ ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=noninfectious_discove
 # Create final gene signature
 
 # Using difference in AUC to create a smaller sig
+flu_pos_genes <- c("ELF1", "CAPN2", "RAB8B", "ARIH1", "MEF2A")
+flu_neg_genes <- c("AUTS2", "USP36", "LPCAT1", "SECISBP2", "UQCR11", "ETS1", "HLA-DRA", "PRKCA", "HNRNPDL", "RASSF1", "CD247", "ZNF831", "BRD1")
+vir_pos_genes <- c("IRAK3")
+vir_neg_genes <- c("SLC38A1")
 bac_pos_genes <- c("ADGRE5", "TUBA1A", "LRRK2", "SIRPA", "HCAR3")
 bac_neg_genes <- c("CD69", "EZR", "CEBPZ", "SERBP1", "SLC38A1", "PPP3CC", "PRMT1", "NCL")
 
@@ -429,6 +467,9 @@ old_bac_neg_genes <- c("CD69", "CEBPZ", "SERBP1")
 old_nif_pos_genes <- c()
 old_nif_neg_genes <- c("CHURC1")
 
+old_sig_pos_genes <- c(old_flu_pos_genes, old_vir_neg_genes, old_bac_neg_genes, old_nif_neg_genes)
+old_sig_neg_genes <- c(old_flu_neg_genes, old_vir_pos_genes, old_bac_pos_genes, old_nif_pos_genes)
+
 # Signature 1 (28619954)
 other_sig_1_pos_genes <- c("IFI27")
 other_sig_1_neg_genes <- c()
@@ -438,8 +479,6 @@ other_sig_2_pos_genes <- c("CD38", "HERC5", "HERC6", "IFI6", "IFIH1", "LGALS3BP"
 other_sig_2_neg_genes <- c()
 
 
-old_sig_pos_genes <- c(old_flu_pos_genes, old_vir_neg_genes, old_bac_neg_genes, old_nif_neg_genes)
-old_sig_neg_genes <- c(old_flu_neg_genes, old_vir_pos_genes, old_bac_pos_genes, old_nif_pos_genes)
 
 my_sig_flu_test_auc <- test_pooled_genes_on_validation_data(sig_pos_genes, sig_neg_genes, flu_validation_list)
 old_sig_flu_test_auc <- test_pooled_genes_on_validation_data(old_sig_pos_genes, old_sig_neg_genes, flu_validation_list)

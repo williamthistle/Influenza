@@ -32,6 +32,7 @@ source(paste0(SPEEDI_dir, "/atac/processing.R"))
 
 # Load information about samples
 sample_metadata <- read.table(paste0(SPEEDI_dir, "/sample_metadata.tsv"), sep = "\t", header = TRUE)
+all_metadata <- read.table(paste0(SPEEDI_dir, "/all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
 
 # Declare data and analysis type
 data_type <- "multiome" # Can be multiome or single_cell
@@ -76,6 +77,16 @@ if (!dir.exists(marker_dir)) {dir.create(marker_dir)}
 # Subset metadata to only contain our sample_ids
 # We will add these metadata to our Seurat object later
 sample_metadata <- sample_metadata[sample_metadata$aliquot %in% sample_id_list,]
+all_metadata <- all_metadata[all_metadata$aliquot_id %in% sample_id_list,]
+subject_ids <- c()
+for(sample_metadata_row_index in 1:nrow(sample_metadata)) {
+  current_row <- sample_metadata[sample_metadata_row_index,]
+  subject_id <- all_metadata[all_metadata$aliquot_id %in% current_row$aliquot,]$subject_id
+  print(subject_id)
+  subject_ids <- c(subject_ids, subject_id)
+}
+sample_metadata$subject_id <- subject_ids
+
 high_viral_load_samples <- sort(sample_metadata[sample_metadata$viral_load == "high",]$aliquot)
 low_viral_load_samples <- sort(sample_metadata[sample_metadata$viral_load == "low",]$aliquot)
 all_viral_load_samples <- c(high_viral_load_samples, low_viral_load_samples)
@@ -167,8 +178,8 @@ if(analysis_type == "RNA_seq") {
     sc_obj <- MajorityVote(sc_obj, best_res)
     # To decide which clusters we need to remove, we will capture information about clusters
     # We will also run DE for each cluster to find cell type markers
-    raw_cluster_info <- capture_cluster_info(sc_obj)
-    run_differential_expression_cluster(sc_obj, marker_dir)
+    #raw_cluster_info <- capture_cluster_info(sc_obj)
+    #run_differential_expression_cluster(sc_obj, marker_dir)
     # Remove messy clusters
     messy_clusters <- c(6,7,13,14,15,19,28) # 14 sample multiome
     #messy_clusters <- c(2,13,16,18,19,20,21,24,28,32) # 19 sample multiome

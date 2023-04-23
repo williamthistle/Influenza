@@ -5,7 +5,7 @@ library(pheatmap)
 set.seed(1234)
 
 ##### SETUP #####
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
+base_dir <- "C:/Users/willi/Documents/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
 setup_bulk_analysis()
 
