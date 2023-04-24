@@ -151,6 +151,8 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
     
     if(length(pos_genes) == 0 & length(neg_genes) == 0){
       if (!suppressMessages){
+        print(filterObject$posGeneNames)
+        print(filterObject$negGeneNames)
         print('no common genes between data and signature')
       }
       return(NA)
