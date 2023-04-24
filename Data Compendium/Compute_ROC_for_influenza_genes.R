@@ -8,7 +8,8 @@ library(ggplot2)
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 source("Compendium_Functions.R")
 # Now set working directory to where compendium data files are
-setwd("C:/Users/willi/Desktop/Influenza Work (April 2023)/Data Compendium")
+setwd("~/")
+setwd("../OneDrive - Princeton University/Influenza Analysis/Data Compendium")
 
 # Grab study metadata (will be used to confirm that discovery / validation splits are balanced)
 study_metadata <- read.xlsx('metadata_tables/darpa_compendium_metadata_v1.xlsx', sheet = 1)
@@ -38,6 +39,9 @@ MAGICAL_single_cell_genes <- read.table("../Single Cell RNA-Seq/MAGICAL_flu_gene
 
 # True multiome RNA-seq MAGICAL genes (paired)
 MAGICAL_multiome_14_genes <- read.table("../True Multiome/MAGICAL_flu_genes_14.csv")$V1
+
+# True multiome RNA-seq MAGICAL genes (paired with latent variable)
+MAGICAL_multiome_14_genes_LR <- read.table("../True Multiome/MAGICAL_flu_genes_14_LR.csv")$V1
 
 # True multiome RNA-seq MAGICAL genes (all)
 MAGICAL_multiome_19_genes <- read.table("../True Multiome/MAGICAL_flu_genes_19.csv")$V1
@@ -257,6 +261,7 @@ noninfectious_validation_list <- noninfectious_list[sort(match(noninfectious_val
 # Calculate flu (discovery) AUCs for individual genes
 sc_discovery_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, flu_discovery_list, "Single_Cell_Paired", "flu_discovery")
 multiome_discovery_paired_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, flu_discovery_list, "Multiome_Paired", "flu_discovery")
+multiome_discovery_paired_LR_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes_LR, flu_discovery_list, "Multiome_Paired_LR", "flu_discovery")
 multiome_discovery_all_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, flu_discovery_list, "Multiome_All", "flu_discovery")
 
 # Calculate non-influenza virus (discovery) AUCs for individual genes

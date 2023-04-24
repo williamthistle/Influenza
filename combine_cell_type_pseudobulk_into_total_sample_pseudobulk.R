@@ -1,7 +1,8 @@
 library(DESeq2)
 library(org.Hs.eg.db)
 
-setwd("C:/Users/willi/Desktop/Influenza Work (April 2023)/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/scRNA/pseudo_bulk")
+setwd("~/")
+setwd("../OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/scRNA/pseudo_bulk")
 cell_types <- c("CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
 
 # We start with B and add the rest
@@ -60,8 +61,10 @@ internal_data_list[[1]] <- metaintegrator_obj
 sc_pseudobulk_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, internal_data_list, "Single_Cell_Paired", "sc_pseudobulk")
 nrow(sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7,])
 sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7,]
+sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
 nrow(sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,])
 sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,]
+sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,]$gene_name
 
 sc_pseudobulk_aucs_daniel_sig <- sc_pseudobulk_aucs[sc_pseudobulk_aucs$gene_name %in% MAGICAL_daniel_signature_genes,]
 nrow(sc_pseudobulk_aucs_daniel_sig[sc_pseudobulk_aucs_daniel_sig$sc_pseudobulk_gene_auc > 0.7,])
