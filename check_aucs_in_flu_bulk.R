@@ -88,7 +88,7 @@ rownames(pheno_df) <- sample_names
 bulk_low_metaintegrator_obj <- list()
 bulk_low_metaintegrator_obj$expr <- low_counts_subset_entrez
 bulk_low_metaintegrator_obj$keys <- metaintegrator_keys
-bulk_low_metaintegrator_obj$formattedName <- "FLU_BULK_HIGH"
+bulk_low_metaintegrator_obj$formattedName <- "FLU_BULK_LOW"
 bulk_low_metaintegrator_obj$class <- sample_class
 names(bulk_low_metaintegrator_obj$class) <- colnames(bulk_low_metaintegrator_obj$expr)
 bulk_low_metaintegrator_obj$pheno <- pheno_df
