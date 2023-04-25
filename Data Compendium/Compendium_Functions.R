@@ -655,7 +655,11 @@ test_gene_signatures <- function(sig_pos_genes, sig_neg_genes, old_sig_pos_genes
   # Bacteria
   plot_pooled_auc(sig_pos_genes, sig_neg_genes, bacteria_validation_list, "Bacteria Pooled AUC (New)")
   plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, bacteria_validation_list, "Bacteria Pooled AUC (Old)")
+  plot_pooled_auc(other_sig_1_pos_genes, other_sig_1_neg_genes, bacteria_validation_list, "Bacteria Pooled AUC (Other Sig 1)")
+  plot_pooled_auc(other_sig_2_pos_genes, other_sig_2_neg_genes, bacteria_validation_list, "Bacteria Pooled AUC (Other Sig 2)")
   # Noninfectious
   plot_pooled_auc(sig_pos_genes, sig_neg_genes, noninfectious_validation_list, "Noninfectious Pooled AUC (New)")
   plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, noninfectious_validation_list, "Noninfectious Pooled AUC (Old)")
+  plot_pooled_auc(other_sig_1_pos_genes, other_sig_1_neg_genes, noninfectious_validation_list, "Noninfectious Pooled AUC (Other Sig 1)")
+  plot_pooled_auc(other_sig_2_pos_genes, other_sig_2_neg_genes, noninfectious_validation_list, "Noninfectious Pooled AUC (Other Sig 2)")
 }
