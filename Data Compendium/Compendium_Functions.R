@@ -273,3 +273,331 @@ plot_pooled_auc <- function(pos_gene_list, neg_gene_list, data_list, title) {
 geom_mean <- function(x) {
   return(exp(mean(log(x))))
 }
+
+# We will fix any datasets that need fixing
+fix_data_list <- function(data_list) {
+  current_dataset <- data_list[[127]]
+  current_dataset$pheno[grepl("acute", current_dataset$pheno$title),]$Study <- "GSE97741_GPL10558"
+  current_dataset$pheno[grepl("acute", current_dataset$pheno$title),]$Class <- "Virus"
+  current_dataset$pheno[grepl("acute", current_dataset$pheno$title),]$Pathogen <- "Respiratory syncytial virus;Rhinovirus"
+  current_dataset$pheno[grepl("discharge", current_dataset$pheno$title),]$Study <- "GSE97741_GPL10558"
+  current_dataset$pheno[grepl("discharge", current_dataset$pheno$title),]$Class <- "Convalescent"
+  current_dataset$pheno[grepl("discharge", current_dataset$pheno$title),]$Pathogen <- "Healthy"
+  data_list[[127]] <- current_dataset
+  return(data_list)
+}
+
+split_flu_data <- function(flu_list, study_metadata, daniel_paper_datasets, usage_token) {
+  current_flu_list <- list()
+  current_flu_dataset_names <- c()
+  current_index <- 1
+  daniel_paper_discovery_datasets <- daniel_paper_datasets[daniel_paper_datasets$Usage == usage_token,]
+  for(current_flu_dataset in flu_list) {
+    current_accession <- current_flu_dataset$formattedName
+    for(daniel_accession_index in 1:nrow(daniel_paper_discovery_datasets)) {
+      if(grepl(daniel_paper_discovery_datasets[daniel_accession_index,]$Accession, current_accession) & !(current_accession %in% current_flu_dataset_names)) {
+        current_flu_dataset_names <- c(current_flu_dataset_names, current_accession)
+        current_flu_list[[current_index]] <- current_flu_dataset
+        current_index <- current_index + 1
+      }
+    }
+  }
+  current_flu_metadata <- study_metadata[study_metadata$Study %in% current_flu_dataset_names,]
+  return(list(current_flu_list, current_flu_metadata))
+}
+
+# Need to filter time series data so it only contains most acute time point and maybe one healthy time point (convalescent / healthy)
+fix_time_series_for_flu_discovery <- function(flu_discovery_list) {
+  # Dataset 5
+  kept_indices_5 <- c(1, 5, 10, 11, 12, 13, 16, 19, 22, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38, 39, 40)
+  kept_accessions_5 <- flu_discovery_list[[5]]$pheno$geo_accession[kept_indices_5]
+  flu_discovery_list[[5]]$pheno <- flu_discovery_list[[5]]$pheno[flu_discovery_list[[5]]$pheno$geo_accession %in% kept_accessions_5,]
+  flu_discovery_list[[5]]$expr <- flu_discovery_list[[5]]$expr[,colnames(flu_discovery_list[[5]]$expr) %in% kept_accessions_5]
+  flu_discovery_list[[5]]$class <- flu_discovery_list[[5]]$class[names(flu_discovery_list[[5]]$class) %in% kept_accessions_5]
+  # Dataset 6
+  kept_indices_6 <- c(1, 5, 10, 15, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37)
+  kept_accessions_6 <- flu_discovery_list[[6]]$pheno$geo_accession[kept_indices_6]
+  flu_discovery_list[[6]]$pheno <- flu_discovery_list[[6]]$pheno[flu_discovery_list[[6]]$pheno$geo_accession %in% kept_accessions_6,]
+  kept_accessions_6_alternate <- rownames(flu_discovery_list[[6]]$pheno)
+  flu_discovery_list[[6]]$expr <- flu_discovery_list[[6]]$expr[,colnames(flu_discovery_list[[6]]$expr) %in% kept_accessions_6_alternate]
+  flu_discovery_list[[6]]$class <- flu_discovery_list[[6]]$class[names(flu_discovery_list[[6]]$class) %in% kept_accessions_6_alternate]
+  # Dataset 7
+  flu_discovery_list[[7]]$pheno <- flu_discovery_list[[7]]$pheno[flu_discovery_list[[7]]$pheno$`Time.Point` != "late period",]
+  kept_accessions_7 <- rownames(flu_discovery_list[[7]]$pheno)
+  flu_discovery_list[[7]]$expr <- flu_discovery_list[[7]]$expr[,colnames(flu_discovery_list[[7]]$expr) %in% kept_accessions_7]
+  flu_discovery_list[[7]]$class <- flu_discovery_list[[7]]$class[names(flu_discovery_list[[7]]$class) %in% kept_accessions_7]
+  # Dataset 8
+  flu_discovery_list[[8]]$pheno <- flu_discovery_list[[8]]$pheno[flu_discovery_list[[8]]$pheno$`Time.Point` == "Less than 72 hour after symptoms",]
+  flu_discovery_list[[8]]$pheno <- flu_discovery_list[[8]]$pheno[flu_discovery_list[[8]]$pheno$Pathogen == "Influenza virus" | flu_discovery_list[[8]]$pheno$Pathogen == "Healthy",]
+  kept_accessions_8 <- rownames(flu_discovery_list[[8]]$pheno)
+  flu_discovery_list[[8]]$expr <- flu_discovery_list[[8]]$expr[,colnames(flu_discovery_list[[8]]$expr) %in% kept_accessions_8]
+  flu_discovery_list[[8]]$class <- flu_discovery_list[[8]]$class[names(flu_discovery_list[[8]]$class) %in% kept_accessions_8]
+  # Dataset 9
+  flu_discovery_list[[9]]$pheno <- flu_discovery_list[[9]]$pheno[flu_discovery_list[[9]]$pheno$`Time.Point` == "Baseline" | flu_discovery_list[[9]]$pheno$`Time.Point` == "Day0",]
+  kept_accessions_9 <- rownames(flu_discovery_list[[9]]$pheno)
+  flu_discovery_list[[9]]$expr <- flu_discovery_list[[9]]$expr[,colnames(flu_discovery_list[[9]]$expr) %in% kept_accessions_9]
+  flu_discovery_list[[9]]$class <- flu_discovery_list[[9]]$class[names(flu_discovery_list[[9]]$class) %in% kept_accessions_9]
+  # Dataset 10
+  flu_discovery_list[[10]]$pheno <- flu_discovery_list[[10]]$pheno[flu_discovery_list[[10]]$pheno$`Time.Point` == "Pre-Exposure" | flu_discovery_list[[10]]$pheno$`Time.Point` == "48 hours",]
+  kept_accessions_10 <- rownames(flu_discovery_list[[10]]$pheno)
+  flu_discovery_list[[10]]$expr <- flu_discovery_list[[10]]$expr[,colnames(flu_discovery_list[[10]]$expr) %in% kept_accessions_10]
+  flu_discovery_list[[10]]$class <- flu_discovery_list[[10]]$class[names(flu_discovery_list[[10]]$class) %in% kept_accessions_10]
+  return(flu_discovery_list)
+}
+
+# Need to filter time series data so it only contains most acute time point and maybe one healthy time point (convalescent / healthy)
+fix_time_series_for_flu_validation <- function(flu_validation_list) {
+  # Dataset 3
+  flu_validation_list[[3]]$pheno <- flu_validation_list[[3]]$pheno[flu_validation_list[[3]]$pheno$`Time.Point` != "T2" & flu_validation_list[[3]]$pheno$`Time.Point` != "T3",]
+  kept_accessions_3 <- rownames(flu_validation_list[[3]]$pheno)
+  flu_validation_list[[3]]$expr <- flu_validation_list[[3]]$expr[,colnames(flu_validation_list[[3]]$expr) %in% kept_accessions_3]
+  flu_validation_list[[3]]$class <- flu_validation_list[[3]]$class[names(flu_validation_list[[3]]$class) %in% kept_accessions_3]
+  # Dataset 4
+  flu_validation_list[[4]]$pheno <- flu_validation_list[[4]]$pheno[flu_validation_list[[4]]$pheno$`Time.Point` == 1,]
+  kept_accessions_4 <- rownames(flu_validation_list[[4]]$pheno)
+  flu_validation_list[[4]]$expr <- flu_validation_list[[4]]$expr[,colnames(flu_validation_list[[4]]$expr) %in% kept_accessions_4]
+  flu_validation_list[[4]]$class <- flu_validation_list[[4]]$class[names(flu_validation_list[[4]]$class) %in% kept_accessions_4]
+  return(flu_validation_list)
+}
+
+fix_time_series_for_non_flu_virus <- function(non_flu_virus_list) {
+  # Dataset 10 (does it matter that this is also in flu_discovery? Maybe make sure it's in discovery set for non-influenza virus?)
+  non_flu_virus_list[[10]]$pheno <- non_flu_virus_list[[10]]$pheno[non_flu_virus_list[[10]]$pheno$`Time.Point` == "Less than 72 hour after symptoms",]
+  kept_accessions_10 <- rownames(non_flu_virus_list[[10]]$pheno)
+  non_flu_virus_list[[10]]$expr <- non_flu_virus_list[[10]]$expr[,colnames(non_flu_virus_list[[10]]$expr) %in% kept_accessions_10]
+  non_flu_virus_list[[10]]$class <- non_flu_virus_list[[10]]$class[names(non_flu_virus_list[[10]]$class) %in% kept_accessions_10]
+  # Dataset 11 (does it matter that this is also in flu_discovery? Maybe make sure it's in discovery set for non-influenza virus?)
+  non_flu_virus_list[[11]]$pheno <- non_flu_virus_list[[11]]$pheno[non_flu_virus_list[[11]]$pheno$`Time.Point` == "Baseline" | non_flu_virus_list[[11]]$pheno$`Time.Point` == "Day0",]
+  non_flu_virus_list[[11]]$pheno <- non_flu_virus_list[[11]]$pheno[!(grepl("Influenza virus", non_flu_virus_list[[11]]$pheno$`Pathogen`)),]
+  kept_accessions_11 <- rownames(non_flu_virus_list[[11]]$pheno)
+  non_flu_virus_list[[11]]$expr <- non_flu_virus_list[[11]]$expr[,colnames(non_flu_virus_list[[11]]$expr) %in% kept_accessions_11]
+  non_flu_virus_list[[11]]$class <- non_flu_virus_list[[11]]$class[names(non_flu_virus_list[[11]]$class) %in% kept_accessions_11]
+  return(non_flu_virus_list)
+}
+
+# Append final sample size as column to metadata (since dataset sizes can change due to removing time series points, etc.)
+append_final_sample_size <- function(current_metadata, current_list) {
+  final_sample_sizes <- c()
+  for(dataset_id in current_metadata$Study) {
+    for(dataset in current_list) {
+      if(dataset$formattedName == dataset_id) {
+        final_sample_sizes <- c(final_sample_sizes, nrow(dataset$pheno))
+      }
+    }
+  }
+  current_metadata$final_sample_size <- final_sample_sizes
+  return(current_metadata)
+}
+
+# Find overlap with a given set of metadata
+append_overlap_with_other_metadata <- function(base_metadata, other_metadata) {
+  overlapping <- c()
+  for(dataset_id in base_metadata$Study) {
+    if(dataset_id %in% other_metadata$Study) {
+      overlapping <- c(overlapping, TRUE)
+    } else {
+      overlapping <- c(overlapping, FALSE)
+    }
+  }
+  base_metadata$overlap <- overlapping
+  return(base_metadata)
+}
+
+# Find discovery AUCs
+get_discovery_aucs <- function(MAGICAL_single_cell_genes, MAGICAL_multiome_14_genes, MAGICAL_multiome_19_genes, flu_discovery_list, non_flu_virus_discovery_list, 
+                               bacteria_discovery_list, noninfectious_discovery_list) {
+  # Calculate flu (discovery) AUCs for individual genes
+  sc_discovery_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, flu_discovery_list, "Single_Cell_Paired", "flu_discovery")
+  multiome_discovery_paired_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, flu_discovery_list, "Multiome_Paired", "flu_discovery")
+  multiome_discovery_all_flu_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, flu_discovery_list, "Multiome_All", "flu_discovery")
+  # Calculate non-influenza virus (discovery) AUCs for individual genes
+  sc_discovery_non_flu_virus_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, non_flu_virus_discovery_list, "Single_Cell_Paired", "non_flu_virus_discovery")
+  multiome_discovery_paired_non_flu_virus_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, non_flu_virus_discovery_list, "Multiome_Paired", "non_flu_virus_discovery")
+  multiome_discovery_all_non_flu_virus_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, non_flu_virus_discovery_list, "Multiome_All", "non_flu_virus_discovery")
+  # Calculate bacteria (discovery) AUCs for individual genes
+  sc_discovery_bacteria_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, bacteria_discovery_list, "Single_Cell_Paired", "bacteria_discovery")
+  multiome_discovery_paired_bacteria_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, bacteria_discovery_list, "Multiome_Paired", "bacteria_discovery")
+  multiome_discovery_all_bacteria_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, bacteria_discovery_list, "Multiome_All", "bacteria_discovery")
+  # Calculate non-infectious (discovery) AUCs for individual genes
+  sc_discovery_noninfectious_aucs <- test_individual_genes_on_datasets(MAGICAL_single_cell_genes, noninfectious_discovery_list, "Single_Cell_Paired", "noninfectious_discovery")
+  multiome_discovery_paired_noninfectious_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_14_genes, noninfectious_discovery_list, "Multiome_Paired", "noninfectious_discovery")
+  multiome_discovery_all_noninfectious_aucs <- test_individual_genes_on_datasets(MAGICAL_multiome_19_genes, noninfectious_discovery_list, "Multiome_All", "noninfectious_discovery")
+  
+  # Combine results from the different gene lists into comprehensive discovery dataframes
+  all_discovery_flu_aucs <- rbind(sc_discovery_flu_aucs, multiome_discovery_paired_flu_aucs, multiome_discovery_all_flu_aucs)
+  all_discovery_non_flu_virus_aucs <- rbind(sc_discovery_non_flu_virus_aucs, multiome_discovery_paired_non_flu_virus_aucs, multiome_discovery_all_non_flu_virus_aucs)
+  all_discovery_bacteria_aucs <- rbind(sc_discovery_bacteria_aucs, multiome_discovery_paired_bacteria_aucs, multiome_discovery_all_bacteria_aucs)
+  all_discovery_noninfectious_aucs <- rbind(sc_discovery_noninfectious_aucs, multiome_discovery_paired_noninfectious_aucs, multiome_discovery_all_noninfectious_aucs)
+  
+  # Create final, overall discovery dataframe
+  all_discovery_aucs <- all_discovery_flu_aucs
+  all_discovery_aucs$non_flu_virus_discovery_gene_auc <- all_discovery_non_flu_virus_aucs$non_flu_virus_discovery_gene_auc
+  all_discovery_aucs$bacteria_discovery_gene_auc <- all_discovery_bacteria_aucs$bacteria_discovery_gene_auc
+  all_discovery_aucs$noninfectious_discovery_gene_auc <- all_discovery_noninfectious_aucs$noninfectious_discovery_gene_auc
+  all_discovery_aucs <- all_discovery_aucs[,c(1,2,4,5,6,3)]
+  return(all_discovery_aucs)
+}
+
+capture_flu_pos_and_neg <- function(all_discovery_aucs) {
+  all_discovery_aucs$diff <- all_discovery_aucs$flu_discovery_gene_auc - all_discovery_aucs$non_flu_virus_discovery_gene_auc
+  flu_pos_genes <- c()
+  flu_neg_genes <- c()
+  # Plot non-influenza virus AUC vs influenza AUC
+  # NOTE - check for overlap between different data types (e.g., noninfectious vs flu)
+  # NOTE - one row is removed because we got an NA value - this is probably fine
+  # No labels
+  auc_plot <- ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source)) + geom_point(aes(col = source)) + 
+    coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_vline(xintercept=0.3, linetype=2) + geom_vline(xintercept=0.7, linetype=2) + 
+    geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + xlab("Influenza Median AUROC") + ylab("Non-influenza Virus Median AUROC") +
+    ggtitle("Influenza Detection") + theme(plot.title = element_text(hjust = 0.5))
+  ggsave("plots/non_flu_virus_vs_flu_for_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
+  # AUC > 0.7 genes
+  current_df <- all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc > 0.7,]
+  for(current_row_index in 1:nrow(current_df)) {
+    current_row <- current_df[current_row_index,]
+    line_coord <- current_row$flu_discovery_gene_auc - 0.075
+    if(current_row$non_flu_virus_discovery_gene_auc < line_coord) {
+      flu_pos_genes <- c(flu_pos_genes, current_row$gene_name)
+      print(paste0(current_row$gene_name, " - ", current_row$source))
+    }
+  }
+  flu_pos_df <- current_df[order(current_df$diff),]
+  print(flu_pos_df)
+  
+  # AUC < 0.3 genes
+  all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc < 0.3,]
+  current_df <- all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc < 0.3,]
+  for(current_row_index in 1:nrow(current_df)) {
+    current_row <- current_df[current_row_index,]
+    line_coord <- current_row$flu_discovery_gene_auc + 0.075
+    if(current_row$non_flu_virus_discovery_gene_auc > line_coord) {
+      flu_neg_genes <- c(flu_neg_genes, current_row$gene_name)
+      print(paste0(current_row$gene_name, " - ", current_row$source))
+    }
+  }
+  flu_neg_df <- current_df[order(current_df$diff),]
+  print(flu_neg_df)
+  return(list(flu_pos_df, flu_neg_df, flu_pos_genes, flu_neg_genes))
+}
+
+capture_vir_pos_and_neg <- function(all_discovery_aucs) {
+  all_discovery_aucs$diff <- all_discovery_aucs$non_flu_virus_discovery_gene_auc - all_discovery_aucs$flu_discovery_gene_auc
+  vir_pos_genes <- c()
+  vir_neg_genes <- c()
+  # Plot non-influenza virus AUC vs influenza AUC for viral specificity
+  auc_plot <- ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=non_flu_virus_discovery_gene_auc, group = source)) + geom_point(aes(col = source)) + 
+    coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+    geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + xlab("Influenza Median AUROC") + ylab("Non-influenza Virus Median AUROC") +
+    ggtitle("Viral Specificity") + theme(plot.title = element_text(hjust = 0.5))
+  ggsave("plots/non_flu_virus_vs_flu_for_non_flu_virus_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
+  current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc > 0.7,])
+  for(current_row_index in 1:nrow(current_df)) {
+    current_row <- current_df[current_row_index,]
+    line_coord <- current_row$flu_discovery_gene_auc + 0.075
+    if(current_row$non_flu_virus_discovery_gene_auc > line_coord) {
+      vir_pos_genes <- c(vir_pos_genes, current_row$gene_name)
+      print(paste0(current_row$gene_name, " - ", current_row$source))
+    }
+  }
+  vir_pos_df <- current_df[order(current_df$diff),]
+  print(vir_pos_df)
+  
+  # AUC < 0.3 genes
+  current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc < 0.3,])
+  for(current_row_index in 1:nrow(current_df)) {
+    current_row <- current_df[current_row_index,]
+    line_coord <- current_row$flu_discovery_gene_auc - 0.075
+    if(current_row$non_flu_virus_discovery_gene_auc < line_coord) {
+      vir_neg_genes <- c(vir_neg_genes, current_row$gene_name)
+      print(paste0(current_row$gene_name, " - ", current_row$source))
+    }
+  }
+  vir_neg_df <- current_df[order(current_df$diff),]
+  print(vir_neg_df)
+  return(list(vir_pos_df, vir_neg_df, vir_pos_genes, vir_neg_genes))
+}
+
+capture_bac_pos_and_neg <- function(all_discovery_aucs) {
+  all_discovery_aucs$diff <- all_discovery_aucs$bacteria_discovery_gene_auc - all_discovery_aucs$flu_discovery_gene_auc
+  bac_pos_genes <- c()
+  bac_neg_genes <- c()
+  auc_plot <- ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=bacteria_discovery_gene_auc , group = source)) + geom_point(aes(col = source)) + 
+    coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+    geom_abline(slope = 1, intercept = 0.125, linetype=2) + geom_abline(slope = 1, intercept = -0.125, linetype=2) + xlab("Influenza Median AUROC") + ylab("Bacteria Median AUROC") +
+    ggtitle("Bacterial Specificity") + theme(plot.title = element_text(hjust = 0.5))
+  ggsave("plots/bacteria_vs_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
+  
+  # AUC > 0.7 genes
+  current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$bacteria_discovery_gene_auc > 0.7,])
+  for(current_row_index in 1:nrow(current_df)) {
+    current_row <- current_df[current_row_index,]
+    line_coord <- current_row$flu_discovery_gene_auc + 0.125
+    if(current_row$bacteria_discovery_gene_auc > line_coord) {
+      bac_pos_genes <- c(bac_pos_genes, current_row$gene_name)
+      print(paste0(current_row$gene_name, " - ", current_row$source))
+    }
+  }
+  bac_pos_df <- current_df[order(current_df$diff),]
+  print(bac_pos_df)
+
+  # AUC < 0.3 genes
+  current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$bacteria_discovery_gene_auc < 0.3,])
+  for(current_row_index in 1:nrow(current_df)) {
+    current_row <- current_df[current_row_index,]
+    line_coord <- current_row$flu_discovery_gene_auc - 0.125
+    if(current_row$bacteria_discovery_gene_auc < line_coord) {
+      bac_neg_genes <- c(bac_neg_genes, current_row$gene_name)
+      print(paste0(current_row$gene_name, " - ", current_row$source))
+    }
+  }
+  bac_neg_df <- current_df[order(current_df$diff),]
+  print(bac_neg_df)
+  return(list(bac_pos_df, bac_neg_df, bac_pos_genes, bac_neg_genes))
+}
+
+capture_nif_pos_and_neg <- function(all_discovery_aucs) {
+  all_discovery_aucs$diff <- all_discovery_aucs$noninfectious_discovery_gene_auc - all_discovery_aucs$flu_discovery_gene_auc
+  nif_pos_genes <- c()
+  nif_neg_genes <- c()
+  auc_plot <- ggplot(all_discovery_aucs, aes(x=flu_discovery_gene_auc, y=noninfectious_discovery_gene_auc, group = source)) + geom_point(aes(col = source)) + 
+    coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
+    geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + xlab("Influenza Median AUROC") + ylab("Non-infectious Median AUROC") +
+    ggtitle("Non-infectious Specificity") + theme(plot.title = element_text(hjust = 0.5))
+  ggsave("plots/noninfectious_vs_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
+  
+  # AUC > 0.7 genes
+  current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$noninfectious_discovery_gene_auc > 0.7,])
+  if(nrow(current_df) > 0) {
+    for(current_row_index in 1:nrow(current_df)) {
+      current_row <- current_df[current_row_index,]
+      line_coord <- current_row$flu_discovery_gene_auc + 0.075
+      if(current_row$noninfectious_discovery_gene_auc > line_coord) {
+        nif_pos_genes <- c(nif_pos_genes, current_row$gene_name)
+        print(paste0(current_row$gene_name, " - ", current_row$source))
+      }
+    }
+    nif_pos_df <- current_df[order(current_df$diff),]
+    print(nif_pos_df)
+  } else {
+    nif_pos_df <- NA
+  }
+
+  # AUC < 0.3 genes
+  current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$noninfectious_discovery_gene_auc < 0.3,])
+  if(nrow(current_df) > 0) {
+    for(current_row_index in 1:nrow(current_df)) {
+      current_row <- current_df[current_row_index,]
+      line_coord <- current_row$flu_discovery_gene_auc - 0.075
+      if(current_row$noninfectious_discovery_gene_auc < line_coord) {
+        nif_neg_genes <- c(nif_neg_genes, current_row$gene_name)
+        print(paste0(current_row$gene_name, " - ", current_row$source))
+      }
+    }
+    nif_neg_df <- current_df[order(current_df$diff),]
+    print(nif_neg_df)
+  } else {
+    nif_neg_df <- NA
+  }
+  return(list(nif_pos_df, nif_neg_df, nif_pos_genes, nif_neg_genes))
+}
+
