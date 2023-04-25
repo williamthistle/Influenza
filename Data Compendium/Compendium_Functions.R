@@ -253,11 +253,13 @@ plot_pooled_auc <- function(pos_gene_list, neg_gene_list, data_list, title) {
   sig <- list()
   # Convert gene names to ENTREZ ID
   entrez_pos_gene_list <- mapIds(org.Hs.eg.db, pos_gene_list, "ENTREZID", "SYMBOL")
+  sig$posGeneNames <- entrez_pos_gene_list
   if(length(neg_gene_list) > 0) {
     entrez_neg_gene_list <- mapIds(org.Hs.eg.db, neg_gene_list, "ENTREZID", "SYMBOL")
+    sig$negGeneNames <- entrez_neg_gene_list
+  } else {
+    sig$negGeneNames <- ''
   }
-  sig$posGeneNames <- entrez_pos_gene_list
-  sig$negGeneNames <- entrez_neg_gene_list
   sig$filterDescription <- 'my_gene_list'
   sig$FDRThresh <- 0
   sig$effectSizeThresh <- 0
@@ -267,7 +269,7 @@ plot_pooled_auc <- function(pos_gene_list, neg_gene_list, data_list, title) {
   sig$timestamp <- Sys.time()
   
   final_plot <- pooledROCPlot(metaObject = meta_obj, filterObject = sig, title = title)
-  ggsave(filename = paste0(title, ".png"), plot = final_plot, device = "png", dpi = 300)
+  ggsave(filename = paste0("plots/pooled_auc/", title, ".png"), plot = final_plot, device = "png", dpi = 300)
 }
 
 geom_mean <- function(x) {
@@ -450,7 +452,7 @@ capture_flu_pos_and_neg <- function(all_discovery_aucs) {
     coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_vline(xintercept=0.3, linetype=2) + geom_vline(xintercept=0.7, linetype=2) + 
     geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + xlab("Influenza Median AUROC") + ylab("Non-influenza Virus Median AUROC") +
     ggtitle("Influenza Detection") + theme(plot.title = element_text(hjust = 0.5))
-  ggsave("plots/non_flu_virus_vs_flu_for_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
+  ggsave("plots/individual_auc/non_flu_virus_vs_flu_for_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
   # AUC > 0.7 genes
   current_df <- all_discovery_aucs[all_discovery_aucs$flu_discovery_gene_auc > 0.7,]
   for(current_row_index in 1:nrow(current_df)) {
@@ -489,7 +491,7 @@ capture_vir_pos_and_neg <- function(all_discovery_aucs) {
     coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
     geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + xlab("Influenza Median AUROC") + ylab("Non-influenza Virus Median AUROC") +
     ggtitle("Viral Specificity") + theme(plot.title = element_text(hjust = 0.5))
-  ggsave("plots/non_flu_virus_vs_flu_for_non_flu_virus_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
+  ggsave("plots/individual_auc/non_flu_virus_vs_flu_for_non_flu_virus_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
   current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$non_flu_virus_discovery_gene_auc > 0.7,])
   for(current_row_index in 1:nrow(current_df)) {
     current_row <- current_df[current_row_index,]
@@ -525,7 +527,7 @@ capture_bac_pos_and_neg <- function(all_discovery_aucs) {
     coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
     geom_abline(slope = 1, intercept = 0.125, linetype=2) + geom_abline(slope = 1, intercept = -0.125, linetype=2) + xlab("Influenza Median AUROC") + ylab("Bacteria Median AUROC") +
     ggtitle("Bacterial Specificity") + theme(plot.title = element_text(hjust = 0.5))
-  ggsave("plots/bacteria_vs_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
+  ggsave("plots/individual_auc/bacteria_vs_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
   
   # AUC > 0.7 genes
   current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$bacteria_discovery_gene_auc > 0.7,])
@@ -563,7 +565,7 @@ capture_nif_pos_and_neg <- function(all_discovery_aucs) {
     coord_fixed(xlim = c(0,1), ylim = c(0,1)) + geom_hline(yintercept=0.3, linetype=2) + geom_hline(yintercept=0.7, linetype=2) + 
     geom_abline(slope = 1, intercept = 0.075, linetype=2) + geom_abline(slope = 1, intercept = -0.075, linetype=2) + xlab("Influenza Median AUROC") + ylab("Non-infectious Median AUROC") +
     ggtitle("Non-infectious Specificity") + theme(plot.title = element_text(hjust = 0.5))
-  ggsave("plots/noninfectious_vs_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
+  ggsave("plots/individual_auc/noninfectious_vs_flu_auc.png", plot = auc_plot, device = "png", width = 10, height = 10, units = "in")
   
   # AUC > 0.7 genes
   current_df <- na.omit(all_discovery_aucs[all_discovery_aucs$noninfectious_discovery_gene_auc > 0.7,])
@@ -601,3 +603,59 @@ capture_nif_pos_and_neg <- function(all_discovery_aucs) {
   return(list(nif_pos_df, nif_neg_df, nif_pos_genes, nif_neg_genes))
 }
 
+create_final_gene_signatures <- function(flu_pos_genes, flu_neg_genes, vir_pos_genes, vir_neg_genes, bac_pos_genes, bac_neg_genes, nif_pos_genes, nif_neg_genes) {
+  # Using difference in AUC to create a smaller sig
+  #flu_pos_genes <- c("ELF1", "CAPN2", "RAB8B", "ARIH1", "MEF2A")
+  #flu_neg_genes <- c("AUTS2", "USP36", "LPCAT1", "SECISBP2", "UQCR11", "ETS1", "HLA-DRA", "PRKCA", "HNRNPDL", "RASSF1", "CD247", "ZNF831", "BRD1")
+  #vir_pos_genes <- c("IRAK3")
+  #vir_neg_genes <- c("SLC38A1")
+  bac_pos_genes <- c("ADGRE5", "TUBA1A", "LRRK2", "SIRPA", "HCAR3")
+  bac_neg_genes <- c("CD69", "EZR", "CEBPZ", "SERBP1", "SLC38A1", "PPP3CC", "PRMT1", "NCL")
+  
+  # My signature
+  sig_pos_genes <- c(flu_pos_genes, vir_neg_genes, bac_neg_genes, nif_neg_genes)
+  sig_neg_genes <- c(flu_neg_genes, vir_pos_genes, bac_pos_genes, nif_pos_genes)
+  
+  # Daniel's signature
+  old_flu_pos_genes <- c("CAPN2", "CITED2", "DUSP1", "ELF1", "IER2", "KLF6", "MAP3K8", "MOB1A", "RAB8B", "SAMHD1", "USP3", "USP8")
+  old_flu_neg_genes <- c("HNRNPDL", "KRT10", "OAZ2", "OST4", "PRMT1", "TOMM6", "UQCR11")
+  old_vir_pos_genes <- c("S100A4", "UBE2J1")
+  old_vir_neg_genes <- c("JUN")
+  old_bac_pos_genes <- c("APLP2", "HCAR3", "IL1RAP", "IQSEC1", "LRRK2", "VCAN")
+  old_bac_neg_genes <- c("CD69", "CEBPZ", "SERBP1")
+  old_nif_pos_genes <- c()
+  old_nif_neg_genes <- c("CHURC1")
+  
+  old_sig_pos_genes <- c(old_flu_pos_genes, old_vir_neg_genes, old_bac_neg_genes, old_nif_neg_genes)
+  old_sig_neg_genes <- c(old_flu_neg_genes, old_vir_pos_genes, old_bac_pos_genes, old_nif_pos_genes)
+  
+  # Signature 1 (28619954)
+  other_sig_1_pos_genes <- c("IFI27")
+  other_sig_1_neg_genes <- c()
+  
+  # Signature 2 (26682989)
+  other_sig_2_pos_genes <- c("CD38", "HERC5", "HERC6", "IFI6", "IFIH1", "LGALS3BP", "LY6E", "MX1", "PARP12", "RTP4", "ZBP1")
+  other_sig_2_neg_genes <- c()
+  return(list(sig_pos_genes, sig_neg_genes, old_sig_pos_genes, old_sig_neg_genes, other_sig_1_pos_genes, other_sig_1_neg_genes,
+              other_sig_2_pos_genes, other_sig_2_neg_genes))
+}
+
+test_gene_signatures <- function(sig_pos_genes, sig_neg_genes, old_sig_pos_genes, old_sig_neg_genes, other_sig_1_pos_genes, other_sig_1_neg_genes, 
+                                 other_sig_2_pos_genes, other_sig_2_neg_genes) {
+  # Flu
+  plot_pooled_auc(sig_pos_genes, sig_neg_genes, flu_validation_list, "Influenza Pooled AUC (New)")
+  plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, flu_validation_list, "Influenza Pooled AUC (Old)")
+  plot_pooled_auc(other_sig_1_pos_genes, other_sig_1_neg_genes, flu_validation_list, "Influenza Pooled AUC (Other Sig 1)")
+  plot_pooled_auc(other_sig_2_pos_genes, other_sig_2_neg_genes, flu_validation_list, "Influenza Pooled AUC (Other Sig 2)")
+  # Non-influenza virus
+  plot_pooled_auc(sig_pos_genes, sig_neg_genes, non_flu_virus_validation_list, "Non-Influenza Virus Pooled AUC (New)")
+  plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, non_flu_virus_validation_list, "Non-Influenza Virus Pooled AUC (Old)")
+  plot_pooled_auc(other_sig_1_pos_genes, other_sig_1_neg_genes, non_flu_virus_validation_list, "Non-Influenza Virus Pooled AUC (Other Sig 1)")
+  plot_pooled_auc(other_sig_2_pos_genes, other_sig_2_neg_genes, non_flu_virus_validation_list, "Non-Influenza Virus Pooled AUC (Other Sig 2)")
+  # Bacteria
+  plot_pooled_auc(sig_pos_genes, sig_neg_genes, bacteria_validation_list, "Bacteria Pooled AUC (New)")
+  plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, bacteria_validation_list, "Bacteria Pooled AUC (Old)")
+  # Noninfectious
+  plot_pooled_auc(sig_pos_genes, sig_neg_genes, noninfectious_validation_list, "Noninfectious Pooled AUC (New)")
+  plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, noninfectious_validation_list, "Noninfectious Pooled AUC (Old)")
+}

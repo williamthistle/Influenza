@@ -171,65 +171,17 @@ nif_neg_df <- nif_pos_and_neg_info[[2]]
 nif_pos_genes <- nif_pos_and_neg_info[[3]]
 nif_neg_genes <- nif_pos_and_neg_info[[4]]
 
-
-
-
 # Create final gene signature
+gene_sigs <- create_final_gene_signatures(flu_pos_genes, flu_neg_genes, vir_pos_genes, vir_neg_genes, bac_pos_genes, bac_neg_genes, nif_pos_genes, nif_neg_genes)
+sig_pos_genes <- gene_sigs[[1]]
+sig_neg_genes <- gene_sigs[[2]]
+old_sig_pos_genes <- gene_sigs[[3]]
+old_sig_neg_genes <- gene_sigs[[4]]
+other_sig_1_pos_genes <- gene_sigs[[5]]
+other_sig_1_neg_genes <- gene_sigs[[6]]
+other_sig_2_pos_genes <- gene_sigs[[7]]
+other_sig_2_neg_genes <- gene_sigs[[8]]
 
-# Using difference in AUC to create a smaller sig
-flu_pos_genes <- c("ELF1", "CAPN2", "RAB8B", "ARIH1", "MEF2A")
-flu_neg_genes <- c("AUTS2", "USP36", "LPCAT1", "SECISBP2", "UQCR11", "ETS1", "HLA-DRA", "PRKCA", "HNRNPDL", "RASSF1", "CD247", "ZNF831", "BRD1")
-vir_pos_genes <- c("IRAK3")
-vir_neg_genes <- c("SLC38A1")
-bac_pos_genes <- c("ADGRE5", "TUBA1A", "LRRK2", "SIRPA", "HCAR3")
-bac_neg_genes <- c("CD69", "EZR", "CEBPZ", "SERBP1", "SLC38A1", "PPP3CC", "PRMT1", "NCL")
-
-# My signature
-sig_pos_genes <- c(flu_pos_genes, vir_neg_genes, bac_neg_genes, nif_neg_genes)
-sig_neg_genes <- c(flu_neg_genes, vir_pos_genes, bac_pos_genes, nif_pos_genes)
-
-# Daniel's signature
-old_flu_pos_genes <- c("CAPN2", "CITED2", "DUSP1", "ELF1", "IER2", "KLF6", "MAP3K8", "MOB1A", "RAB8B", "SAMHD1", "USP3", "USP8")
-old_flu_neg_genes <- c("HNRNPDL", "KRT10", "OAZ2", "OST4", "PRMT1", "TOMM6", "UQCR11")
-old_vir_pos_genes <- c("S100A4", "UBE2J1")
-old_vir_neg_genes <- c("JUN")
-old_bac_pos_genes <- c("APLP2", "HCAR3", "IL1RAP", "IQSEC1", "LRRK2", "VCAN")
-old_bac_neg_genes <- c("CD69", "CEBPZ", "SERBP1")
-old_nif_pos_genes <- c()
-old_nif_neg_genes <- c("CHURC1")
-
-old_sig_pos_genes <- c(old_flu_pos_genes, old_vir_neg_genes, old_bac_neg_genes, old_nif_neg_genes)
-old_sig_neg_genes <- c(old_flu_neg_genes, old_vir_pos_genes, old_bac_pos_genes, old_nif_pos_genes)
-
-# Signature 1 (28619954)
-other_sig_1_pos_genes <- c("IFI27")
-other_sig_1_neg_genes <- c()
-
-# Signature 2 (26682989)
-other_sig_2_pos_genes <- c("CD38", "HERC5", "HERC6", "IFI6", "IFIH1", "LGALS3BP", "LY6E", "MX1", "PARP12", "RTP4", "ZBP1")
-other_sig_2_neg_genes <- c()
-
-
-plot_pooled_auc(sig_pos_genes, sig_neg_genes, flu_validation_list, "Influenza Pooled AUC (New)")
-plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, flu_validation_list, "Influenza Pooled AUC (Old)")
-plot_pooled_auc(other_sig_1_pos_genes, other_sig_1_neg_genes, flu_validation_list, "Influenza Pooled AUC (Other Sig 1)")
-plot_pooled_auc(other_sig_2_pos_genes, other_sig_2_neg_genes, flu_validation_list, "Influenza Pooled AUC (Other Sig 2)")
-
-plot_pooled_auc(sig_pos_genes, sig_neg_genes, non_flu_virus_validation_list, "Non-Influenza Virus Pooled AUC (New)")
-plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, non_flu_virus_validation_list, "Non-Influenza Virus Pooled AUC (Old)")
-plot_pooled_auc(other_sig_1_pos_genes, other_sig_1_neg_genes, non_flu_virus_validation_list, "Non-Influenza Virus Pooled AUC (Other Sig 1)")
-plot_pooled_auc(other_sig_2_pos_genes, other_sig_2_neg_genes, non_flu_virus_validation_list, "Non-Influenza Virus Pooled AUC (Other Sig 2)")
-
-plot_pooled_auc(sig_pos_genes, sig_neg_genes, bacteria_validation_list, "Bacteria Pooled AUC (New)")
-plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, bacteria_validation_list, "Bacteria Pooled AUC (Old)")
-
-plot_pooled_auc(sig_pos_genes, sig_neg_genes, noninfectious_validation_list, "Noninfectious Pooled AUC (New)")
-plot_pooled_auc(old_sig_pos_genes, old_sig_neg_genes, noninfectious_validation_list, "Noninfectious Pooled AUC (Old)")
-
-
-
-
-
-
-
-
+# Test signatures on validation data (pooled AUC) - what is with the one instance of a signature that is a total fail? What dataset is that?
+test_gene_signatures(sig_pos_genes, sig_neg_genes, old_sig_pos_genes, old_sig_neg_genes, other_sig_1_pos_genes, other_sig_1_neg_genes, 
+                     other_sig_2_pos_genes, other_sig_2_neg_genes)
