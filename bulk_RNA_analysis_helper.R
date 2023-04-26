@@ -1,8 +1,8 @@
 # Method to set up bulk analysis
 setup_bulk_analysis=function() {
   # Read in count and metadata files
-  base_dir <<- "C:/Users/wat2/Documents/GitHub/Influenza/"
-  data_dir <<- "C:/Users/wat2/Documents/local_data_files/"
+  base_dir <<- "~/GitHub/Influenza/"
+  data_dir <<- "~/local_data_files/"
   gene_counts <<- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
   all_metadata_file <<- paste0(base_dir, "all_metadata_sheet.tsv")
   all_metadata <<- read.table(all_metadata_file, header = TRUE, sep = "\t")
