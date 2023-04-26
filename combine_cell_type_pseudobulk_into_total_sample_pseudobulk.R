@@ -8,12 +8,13 @@ setup_bulk_analysis()
 sample_metadata <- read.table(paste0(base_dir, "sample_metadata.tsv"), sep = "\t", header = TRUE)
 
 pseudobulk_dirs <- c("../OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/scRNA/pseudo_bulk",
-                     "../OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/scRNA_pseudobulk")
+                     "../OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/scRNA_pseudobulk",
+                     "../OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/19 Placebo Sample/scRNA_pseudobulk")
 
 for(pseudobulk_dir in pseudobulk_dirs) {
   setwd("~/")
   setwd(pseudobulk_dir)
-  cell_types <- c("CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
+  cell_types <- c("CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
   
   if(grepl("Single Cell", pseudobulk_dir)) {
     # We start with B and add the rest - create sample-level pseudobulk counts
