@@ -166,7 +166,7 @@ if(analysis_type == "RNA_seq") {
     # tagged_samples <- c("3247c65ecdbfe34a", "d360f89cf9585dfe") # 17 multiome
     # sc_obj <- subset(x = sc_obj, subset = viral_load %in% "HVL") # HVL (10 multiome if starting with 14 multiome)
     tagged_samples <- c("48ebe8475317ba95", "3c4540710e55f7b1", "fba8595c48236db8") # 16 multiome
-    # print_UMAP_tagged(sc_obj, tagged_samples, sample_count, plot_dir, date) 
+    # print_UMAP_tagged(sc_obj, tagged_samples, sample_count, plot_dir, date)
     # We always want to save our sc_obj after processing data through SPEEDI
     save(sc_obj, file = paste0(analysis_dir, "7_sc_obj.rds"))
     # Load sc_obj
@@ -253,7 +253,7 @@ if(analysis_type == "RNA_seq") {
   # Plot what dataset looks like before any processing
   plot_qc_atac(proj, date)
   # Filter out cells that don't meet TSS enrichment / doublet enrichment / nucleosome ratio criteria
-  idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 3) 
+  idxPass <- which(proj$TSSEnrichment >= 8 & proj$NucleosomeRatio < 2 & proj$DoubletEnrichment < 3)
   cellsPass <- proj$cellNames[idxPass]
   proj <- proj[cellsPass, ]
   # List number of cells remaining for each condition and each sample
@@ -261,7 +261,7 @@ if(analysis_type == "RNA_seq") {
   table(proj$day)
   table(proj$sex)
   table(proj$Sample)
-  # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP), 
+  # Perform dimensionality reduction on cells (addIterativeLSI), create UMAP embedding (addUMAP),
   # and add cluster information (addClusters)
   proj <- dimensionality_reduc(proj)
   plot_atac_after_filtering(proj, date)
@@ -271,7 +271,7 @@ if(analysis_type == "RNA_seq") {
   rm(scRNA_reference)
   plot_atac_after_integration(proj, date)
   saveArchRProject(ArchRProj = proj, load = FALSE)
-  # Load ArchR project 
+  # Load ArchR project
   proj <- loadArchRProject(path = paste0(analysis_dir, "/ArchR/"))
   if(use_rna_labels) {
     proj <- add_rna_labels_for_atac_data(proj, analysis_dir, source_rna_file = "rna_seq_labeled_cells_2023-04-10-14_final.csv", subset_to_rna)
@@ -284,8 +284,8 @@ if(analysis_type == "RNA_seq") {
     # Just for convenience in code below
     final_proj$Cell_type_voting <- final_proj$predictedGroup
     final_proj <- remove_cell_types(final_proj, c("HSPC", "Plasmablast", "Proliferating", "Platelet", "MAIT"))
-    final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2) # Multiome 14 
-    final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5) # Multiome 14  
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2) # Multiome 14
+    final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5) # Multiome 14
     final_proj <- remove_cells_based_on_umap_atac(final_proj, -2.5, -2, -2.5, 0.5) # Multiome 14
     #final_proj <- remove_cells_based_on_umap_atac(final_proj, -3.5, 1, 0, 3.5) # Multiome 19
     #final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 5, 2.75, 5) # Multiome 19
