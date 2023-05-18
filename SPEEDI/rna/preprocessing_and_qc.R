@@ -8,13 +8,13 @@ create_seurat_object_with_info <- function(all_sc_exp_matrices) {
   sc_obj$sample <- as.vector(sapply(strsplit(colnames(sc_obj), "#"), "[", 1))
   sc_obj <- PercentageFeatureSet(object = sc_obj,
                                  pattern = "^MT-",
-                                 col.name = "percent.mt") 
+                                 col.name = "percent.mt")
   sc_obj <- PercentageFeatureSet(object = sc_obj,
                                  pattern = "^RPS",
-                                 col.name = "percent.rps") 
+                                 col.name = "percent.rps")
   sc_obj <- PercentageFeatureSet(object = sc_obj,
                                  pattern = "^RPL",
-                                 col.name = "percent.rpl") 
+                                 col.name = "percent.rpl")
   sc_obj <- PercentageFeatureSet(object = sc_obj,
                                  pattern = "^HB[A|B]",
                                  col.name = "percent.hb")
@@ -111,7 +111,6 @@ generate_qc_plots <- function(all_sc_exp_matrices, plot_dir, date, high_viral_lo
   for(index in 1:length(group.by.categories)) {
     current_category <- group.by.categories[index]
     current_plotting_colors <- plotting.colors[[index]]
-    # VIRAL LOAD QC PLOTS
     p <- VlnPlot(sc_obj, features = c("nFeature_RNA"), split.by = "sample", group.by = current_category, raster = FALSE) + scale_fill_manual(values = current_plotting_colors) +
       xlab(current_category)
     ggsave(paste0(plot_dir, "nFeature_violin_plots_", date, "_category_", current_category, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
@@ -128,7 +127,7 @@ generate_qc_plots <- function(all_sc_exp_matrices, plot_dir, date, high_viral_lo
       xlab(current_category)
     ggsave(paste0(plot_dir, "percentRP_violin_plots_", date, "_category_", current_category, ".png"), plot = p, device = "png", width = 10, height = 10, units = "in")
   }
-  
+
   # Create nCount vs nFeature scatter plot for each sample
   individual_samples <- SplitObject(sc_obj, split.by = "sample")
   # Visualize nCount vs nFeature via scatter plot for each sample
