@@ -29,7 +29,7 @@ print_UMAP_tagged <- function(sc_obj, tagged_sample_list, sample_count, plot_dir
 print_pheatmap_predicted_id <- function(sc_obj, plot_dir, date, all_viral_load_samples, high_viral_load_samples, low_viral_load_samples) {
   # Let's also use Vincy's code to create a nice heatmap of cell type proportions
   sc_obj$sample <- factor(sc_obj$sample, levels = all_viral_load_samples)
-  voting_cell_type_proportion  <- as.matrix(table(sc_obj$sample, sc_obj$predicted.id))
+  voting_cell_type_proportion <- as.matrix(table(sc_obj$sample, sc_obj$predicted.id))
   voting_cell_type_proportion <- apply(voting_cell_type_proportion, 1, function(x){x/sum(x)})
   my_sample_col <- data.frame(sample = rep(c("HIGH", "LOW"), c(length(high_viral_load_samples),length(low_viral_load_samples)))) #The study group by their order
   row.names(my_sample_col) <- colnames(voting_cell_type_proportion)
@@ -40,7 +40,7 @@ print_pheatmap_predicted_id <- function(sc_obj, plot_dir, date, all_viral_load_s
 print_pheatmap_majority_vote <- function(sc_obj, plot_dir, date, all_viral_load_samples, high_viral_load_samples, low_viral_load_samples) {
   # Let's also use Vincy's code to create a nice heatmap of cell type proportions
   sc_obj$sample <- factor(sc_obj$sample, levels = all_viral_load_samples)
-  voting_cell_type_proportion  <- as.matrix(table(sc_obj$sample, sc_obj$predicted_celltype_majority_vote))
+  voting_cell_type_proportion <- as.matrix(table(sc_obj$sample, sc_obj$predicted_celltype_majority_vote))
   voting_cell_type_proportion <- apply(voting_cell_type_proportion, 1, function(x){x/sum(x)})
   my_sample_col <- data.frame(sample = rep(c("HIGH", "LOW"), c(length(high_viral_load_samples),length(low_viral_load_samples)))) #The study group by their order
   row.names(my_sample_col) <- colnames(voting_cell_type_proportion)
