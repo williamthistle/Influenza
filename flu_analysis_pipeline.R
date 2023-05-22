@@ -15,6 +15,7 @@ library(stringr)
 library(writexl)
 library(SoupX)
 library(SingleR)
+library(Libra)
 
 ################## SETUP ##################
 date <- Sys.Date()
@@ -191,7 +192,7 @@ if(analysis_type == "RNA_seq") {
     # Override labels manually where necessary
     #sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(15), "CD16 Mono")
     # sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(25), "pDC") # 19 sample multiome
-    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(20), "CD4 Memory")
+    sc_obj.minus.messy.clusters <- override_cluster_label(sc_obj.minus.messy.clusters, c(20), "CD4 Memory") # 14 sample multiome?
     # Remove specific samples that we're not interested in
     # sc_obj.minus.messy.clusters <- remove_specific_samples_from_sc_obj(sc_obj.minus.messy.clusters, tagged_samples)
     # print_UMAP(sc_obj.minus.messy.clusters.removed.samples, sample_count, "tagged", plot_dir, paste0("post.clusters_all_untagged_", date, ".png"))
