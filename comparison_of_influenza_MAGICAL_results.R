@@ -1,10 +1,12 @@
+library(data.table)
 library(DESeq2)
-library(org.Hs.eg.db)
-
+library(MetaIntegrator)
 
 base_dir <- "~/GitHub/Influenza/"
 single_cell_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/"
+single_cell_pseudobulk_dir <- paste0(single_cell_magical_dir, "scRNA/pseudo_bulk/")
 multiome_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
+multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
 
 # Tables
 single_cell_pseudobulk_gene_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_12_sample_sc_sc_genes.txt"), sep = "\t", header = TRUE)
@@ -32,134 +34,195 @@ print(paste0("Number of genes that pass pseudobulk (multiome LR): ", length(mult
 multiome_magical_genes_LR <- unique(multiome_magical_gene_LR_table$Gene_symbol)
 print(paste0("Number of genes that pass MAGICAL (multiome LR): ", length(multiome_magical_genes_LR)))
 
-
-
-
-
-
-
+# Set up 
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
+source(paste0(base_dir, "pseudobulk_analysis_helper.R"))
+source(paste0(base_dir, "Data Compendium/Compendium_Functions.R"))
 setup_bulk_analysis()
 sample_metadata <- read.table(paste0(base_dir, "sample_metadata.tsv"), sep = "\t", header = TRUE)
+cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
 
-pseudobulk_dirs <- c("../OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/scRNA/pseudo_bulk",
-                     "../OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/scRNA_pseudobulk",
-                     "../OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/19 Placebo Sample/scRNA_pseudobulk")
+# Create log transformed pseudobulk count tables
+single_cell_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(single_cell_pseudobulk_dir, cell_types)
+multiome_14_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(multiome_pseudobulk_dir, cell_types)
 
-for(pseudobulk_dir in pseudobulk_dirs) {
-  setwd("~/")
-  setwd(pseudobulk_dir)
-  cell_types <- c("CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
-  
-  if(grepl("Single Cell", pseudobulk_dir)) {
-    # We start with B and add the rest - create sample-level pseudobulk counts
-    total_pseudobulk_df <- read.table(paste0("pseudo_bulk_RNA_count_B.txt"), header = TRUE, sep = "\t")
-    
-    for(cell_type in cell_types) {
-      print(cell_type)
-      if(file.exists(paste0("pseudo_bulk_RNA_count_", cell_type, ".txt"))) {
-        cell_type_pseudobulk_df <- read.table(paste0("pseudo_bulk_RNA_count_", cell_type, ".txt"), header = TRUE, sep = "\t")
-        for(current_col_index in 2:ncol(cell_type_pseudobulk_df)) {
-          total_pseudobulk_df[,current_col_index] <- total_pseudobulk_df[,current_col_index] + cell_type_pseudobulk_df[,current_col_index]
-        }
-      }
-    }
-  } else {
-    # We start with B and add the rest - create sample-level pseudobulk counts
-    total_pseudobulk_df <- read.table(paste0("pseudo_bulk_RNA_count_B.csv"), header = TRUE, sep = ",")
-    
-    for(cell_type in cell_types) {
-      print(cell_type)
-      if(file.exists(paste0("pseudo_bulk_RNA_count_", cell_type, ".csv"))) {
-        cell_type_pseudobulk_df <- read.table(paste0("pseudo_bulk_RNA_count_", cell_type, ".csv"), header = TRUE, sep = ",")
-        for(current_col_index in 2:ncol(cell_type_pseudobulk_df)) {
-          total_pseudobulk_df[,current_col_index] <- total_pseudobulk_df[,current_col_index] + cell_type_pseudobulk_df[,current_col_index]
-        }
-      }
-    }
-  }
-  
-  
-  # Grab gene names and set them to row names
-  rownames(total_pseudobulk_df) <- total_pseudobulk_df$X
-  total_pseudobulk_df <- total_pseudobulk_df[,-1]
-  
-  # Use DESeq2 varianceStabilizingTransformation function to log-normalize gene counts (as requested by MetaIntegrator)
-  # I picked varianceStabilizingTransformation instead of rlog because rlog gives negative values (MetaIntegrator doesn't like those)
-  # "Also, negative gene expression values are problematic for geometric mean calculation."
-  total_pseudobulk_df_log <- varianceStabilizingTransformation(as.matrix(total_pseudobulk_df))
-  if(grepl("Single Cell", pseudobulk_dir)) {
-    write.table(total_pseudobulk_df_log, file = "total_pseudobulk.txt", sep = "\t", quote = FALSE)
-  } else {
-    write.table(total_pseudobulk_df_log, file = "total_pseudobulk.csv", sep = ",", quote = FALSE)
-  }
-  
-  # MetaIntegrator (or at least the Data Compendium) expects ENTREZ IDs so we map all our gene names to their respective ENTREZ IDs
-  # Do we actually have to do this?
-  entrez_gene_list <- mapIds(org.Hs.eg.db, rownames(total_pseudobulk_df_log), "ENTREZID", "SYMBOL")
-  entrez_gene_list[is.na(entrez_gene_list)] <- names(entrez_gene_list[is.na(entrez_gene_list)]) # Replace NAs with gene names
-  total_pseudobulk_df_log_entrez <- total_pseudobulk_df_log
-  rownames(total_pseudobulk_df_log_entrez) <- unname(entrez_gene_list)
-  
-  # Create ENTREZ -> ENTREZ keys (including some gene names because they don't have corresponding ENTREZ IDs)
-  metaintegrator_keys <- entrez_gene_list
-  names(metaintegrator_keys) <- metaintegrator_keys
-  
-  if(!grepl("Single Cell", pseudobulk_dir)) {
-    #Remove "Sample_" from each column name
-    for (col in 1:ncol(total_pseudobulk_df_log_entrez)){
-      colnames(total_pseudobulk_df_log_entrez)[col] <-  sub("Sample_", "", colnames(total_pseudobulk_df_log_entrez)[col])
-    }
-    sample_names <- colnames(total_pseudobulk_df_log_entrez)
-    sample_class <- c()
-    for(sample_name in sample_names) {
-      sample_class <- c(sample_class, sample_metadata[sample_metadata$aliquot == sample_name,]$time_point)
-    }
-    sample_class <- as.numeric(grepl("D28", sample_class))
-  } else {
-    # Create class vector (1 is disease, 0 is control)
-    sample_names <- colnames(total_pseudobulk_df_log_entrez)
-    sample_class <- as.numeric(grepl("D28", sample_names))
-  }
-  
-  # Create pheno dataframe
-  pheno_class <- sample_class
-  pheno_class[pheno_class == 0] <- "Healthy"
-  pheno_class[pheno_class == 1] <- "Virus"
-  
-  pathogen_class <- pheno_class
-  pathogen_class[pathogen_class == "Virus"] <- "Influenza virus"
-  
-  pheno_df <- data.frame(Class = pheno_class, Pathogen = pathogen_class)
-  rownames(pheno_df) <- sample_names
-  
-  # Create MetaIntegrator object
-  metaintegrator_obj <- list()
-  metaintegrator_obj$expr <- total_pseudobulk_df_log_entrez
-  metaintegrator_obj$keys <- metaintegrator_keys
-  metaintegrator_obj$formattedName <- "FLU"
-  metaintegrator_obj$class <- sample_class
-  names(metaintegrator_obj$class) <- colnames(metaintegrator_obj$expr)
-  metaintegrator_obj$pheno <- pheno_df
-  
-  # Method expects a list containing datasets, so we'll just stick our obj in a list
-  internal_data_list <- list()
-  internal_data_list[[1]] <- metaintegrator_obj
-  
-  # Calculate individual AUCs for our genes from MAGICAL (single cell)
-  # IDEA - separate into HVL and LVL and see whether it has higher AUC for higher viral load ppl
-  sc_pseudobulk_aucs <- test_individual_genes_on_datasets(pseudobulk_multiome_14_genes, internal_data_list, "Single_Cell_Paired", "sc_pseudobulk")
-  # We're mainly interested in ones that have AUC > 0.7 or AUC < 0.3
-  nrow(sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7,])
-  sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7,]
-  sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
-  nrow(sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,])
-  sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,]
-  sc_pseudobulk_aucs[sc_pseudobulk_aucs$sc_pseudobulk_gene_auc < 0.3,]$gene_name
-}
+# Create MetaIntegrator objects using pseudobulk count tables
+single_cell_pseudobulk_metaintegrator_obj <- create_metaintegrator_obj("single cell", single_cell_pseudobulk_counts_log_transformed)
+multiome_pseudobulk_metaintegrator_obj <- create_metaintegrator_obj("multiome", multiome_14_pseudobulk_counts_log_transformed)
+
+# Calculate individual AUCs for our gene lists on their respective pseudobulk data
+sc_pseudobulk_gene_aucs <- test_individual_genes_on_datasets(single_cell_pseudobulk_genes, single_cell_pseudobulk_metaintegrator_obj, "Single_Cell_Paired", "sc_pseudobulk")
+sc_magical_gene_aucs <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+
+multiome_pseudobulk_gene_aucs <- test_individual_genes_on_datasets(multiome_pseudobulk_genes, multiome_pseudobulk_metaintegrator_obj, "Multiome_Paired", "multiome_pseudobulk")
+multiome_magical_gene_aucs <- multiome_pseudobulk_gene_aucs[multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+
+# Next, let's test our gene lists on the actual bulk RNA-seq data!
+# First, we will use day 5 because it should have the most active infection
+# We could also test on days 2, 8 and day 28 (most similar to our pseudobulk data)
+# Should I include the extra samples for days that have them?
+high_metadata_subset <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D5" | high_placebo_metadata$time_point == "2_D_minus_1",]
+low_metadata_subset <- low_placebo_metadata[low_placebo_metadata$time_point == "2_D5" | low_placebo_metadata$time_point == "2_D_minus_1",]
+
+high_counts_subset <- high_placebo_counts[rownames(high_metadata_subset)]
+low_counts_subset <- low_placebo_counts[rownames(low_metadata_subset)]
+
+high_counts_subset <- varianceStabilizingTransformation(as.matrix(high_counts_subset))
+low_counts_subset <- varianceStabilizingTransformation(as.matrix(low_counts_subset))
+
+high_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_counts_subset, high_metadata_subset)
+low_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_counts_subset, low_metadata_subset)
+
+high_bulk_D5_sc_pseudobulk_gene_aucs <- test_individual_genes_on_datasets(single_cell_pseudobulk_genes, high_bulk_metaintegrator_obj, "Single_Cell_Paired", "high_bulk_D5")
+high_bulk_D5_sc_magical_gene_aucs <- high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+
+low_bulk_D5_sc_pseudobulk_gene_aucs <- test_individual_genes_on_datasets(single_cell_pseudobulk_genes, low_bulk_metaintegrator_obj, "Single_Cell_Paired", "low_bulk_D5")
+low_bulk_D5_sc_magical_gene_aucs <- low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+
+high_bulk_D5_multiome_pseudobulk_gene_aucs <- test_individual_genes_on_datasets(multiome_pseudobulk_genes, high_bulk_metaintegrator_obj, "Multiome_Paired", "high_bulk_D5")
+high_bulk_D5_multiome_magical_gene_aucs <- high_bulk_D5_multiome_pseudobulk_gene_aucs[high_bulk_D5_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+
+low_bulk_D5_multiome_pseudobulk_gene_aucs <- test_individual_genes_on_datasets(multiome_pseudobulk_genes, low_bulk_metaintegrator_obj, "Multiome_Paired", "low_bulk_D5")
+low_bulk_D5_multiome_magical_gene_aucs <- low_bulk_D5_multiome_pseudobulk_gene_aucs[low_bulk_D5_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+
+# What percent of genes have AUC > 0.7 or AUC < 0.3?
+# Because of the way we calculate AUC, in our case an AUC of under 0.3 is equally valuable as AUC of over 0.7
+# Above, we test genes one at a time as positive genes in our gene set signature
+# If we get an AUC of under 0.3, that means that the same gene would score an AUC of over 0.7 as a negative gene
+# in our gene set signature
+auc_df <- data.frame(Filtering_Assay = character(), Filtering_Method = character(), Discovery_Assay = character(), 
+                     Discovery_Dataset = character(), Pos_Genes = integer(), Neg_Genes = integer(), Total_Passing_Genes = integer(), 
+                     Total_Genes = integer(), Percentage_of_Passing_Genes = double(), stringsAsFactors = FALSE)
+auc_names <- c("Filtering_Assay", "Filtering_Method", "Discovery_Assay", "Discovery_Dataset", "Pos_Genes", "Neg_Genes", "Total_Passing_Genes", "Total_Genes", "Percentage_of_Passing_Genes")
+# Filtering: Single cell - cell type pseudobulk
+# Discovery dataset: Single cell - total pseudobulk
+current_row <- data.frame("Single Cell", "Cell Type Pseudobulk", "Single Cell", "Total Pseudobulk", nrow(sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]),
+                          nrow(sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc < 0.3,]), 
+                          nrow(sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]) + nrow(sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc < 0.3,]),
+                          nrow(sc_pseudobulk_gene_aucs), (nrow(sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]) + 
+                                                            nrow(sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc < 0.3,])) / nrow(sc_pseudobulk_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Single Cell - Cell Type Pseudobulk
+# Discovery dataset: Bulk RNA-seq - High Bulk D5
+current_row <- data.frame("Single Cell", "Cell Type Pseudobulk", "Bulk RNA-seq", "High Bulk D5", nrow(high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]),
+                          nrow(high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,]), 
+                          nrow(high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]) + nrow(high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,]),
+                          nrow(high_bulk_D5_sc_pseudobulk_gene_aucs), (nrow(high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]) + 
+                                                                         nrow(high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,])) / nrow(high_bulk_D5_sc_pseudobulk_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Single Cell - Cell Type Pseudobulk
+# Discovery dataset: Bulk RNA-seq - Low Bulk D5
+current_row <- data.frame("Single Cell", "Cell Type Pseudobulk", "Bulk RNA-seq", "Low Bulk D5", nrow(low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$low_bulk_D5_gene_auc > 0.7,]),
+                          nrow(low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$low_bulk_D5_gene_auc < 0.3,]), 
+                          nrow(low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$low_bulk_D5_gene_auc > 0.7,]) + nrow(low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$low_bulk_D5_gene_auc < 0.3,]),
+                          nrow(low_bulk_D5_sc_pseudobulk_gene_aucs), (nrow(low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$low_bulk_D5_gene_auc > 0.7,]) + 
+                                                                        nrow(low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$low_bulk_D5_gene_auc < 0.3,])) / nrow(low_bulk_D5_sc_pseudobulk_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Single cell - MAGICAL
+# Discovery dataset: Single cell - total pseudobulk
+current_row <- data.frame("Single Cell", "MAGICAL", "Single Cell", "Total Pseudobulk", nrow(sc_magical_gene_aucs[sc_magical_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]),
+                          nrow(sc_magical_gene_aucs[sc_magical_gene_aucs$sc_pseudobulk_gene_auc < 0.3,]), 
+                          nrow(sc_magical_gene_aucs[sc_magical_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]) + nrow(sc_magical_gene_aucs[sc_magical_gene_aucs$sc_pseudobulk_gene_auc < 0.3,]),
+                          nrow(sc_magical_gene_aucs), (nrow(sc_magical_gene_aucs[sc_magical_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]) + 
+                                                         nrow(sc_magical_gene_aucs[sc_magical_gene_aucs$sc_pseudobulk_gene_auc < 0.3,])) / nrow(sc_magical_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Single Cell - MAGICAL
+# Discovery dataset: Bulk RNA-seq - High Bulk D5
+current_row <- data.frame("Single Cell", "MAGICAL", "Bulk RNA-seq", "High Bulk D5", nrow(high_bulk_D5_sc_magical_gene_aucs[high_bulk_D5_sc_magical_gene_aucs$high_bulk_D5_gene_auc > 0.7,]),
+                          nrow(high_bulk_D5_sc_magical_gene_aucs[high_bulk_D5_sc_magical_gene_aucs$high_bulk_D5_gene_auc < 0.3,]), 
+                          nrow(high_bulk_D5_sc_magical_gene_aucs[high_bulk_D5_sc_magical_gene_aucs$high_bulk_D5_gene_auc > 0.7,]) + nrow(high_bulk_D5_sc_magical_gene_aucs[high_bulk_D5_sc_magical_gene_aucs$high_bulk_D5_gene_auc < 0.3,]),
+                          nrow(high_bulk_D5_sc_magical_gene_aucs), (nrow(high_bulk_D5_sc_magical_gene_aucs[high_bulk_D5_sc_magical_gene_aucs$high_bulk_D5_gene_auc > 0.7,]) + 
+                                                                      nrow(high_bulk_D5_sc_magical_gene_aucs[high_bulk_D5_sc_magical_gene_aucs$high_bulk_D5_gene_auc < 0.3,])) / nrow(high_bulk_D5_sc_magical_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Single Cell - MAGICAL
+# Discovery dataset: Bulk RNA-seq - Low Bulk D5
+current_row <- data.frame("Single Cell", "MAGICAL", "Bulk RNA-seq", "Low Bulk D5", nrow(low_bulk_D5_sc_magical_gene_aucs[low_bulk_D5_sc_magical_gene_aucs$low_bulk_D5_gene_auc > 0.7,]),
+                          nrow(low_bulk_D5_sc_magical_gene_aucs[low_bulk_D5_sc_magical_gene_aucs$low_bulk_D5_gene_auc < 0.3,]), 
+                          nrow(low_bulk_D5_sc_magical_gene_aucs[low_bulk_D5_sc_magical_gene_aucs$low_bulk_D5_gene_auc > 0.7,]) + nrow(low_bulk_D5_sc_magical_gene_aucs[low_bulk_D5_sc_magical_gene_aucs$low_bulk_D5_gene_auc < 0.3,]),
+                          nrow(low_bulk_D5_sc_magical_gene_aucs), (nrow(low_bulk_D5_sc_magical_gene_aucs[low_bulk_D5_sc_magical_gene_aucs$low_bulk_D5_gene_auc > 0.7,]) + 
+                                                                     nrow(low_bulk_D5_sc_magical_gene_aucs[low_bulk_D5_sc_magical_gene_aucs$low_bulk_D5_gene_auc < 0.3,])) / nrow(low_bulk_D5_sc_magical_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Multiome - cell type pseudobulk
+# Discovery dataset: Multiome - total pseudobulk
+current_row <- data.frame("Multiome", "Cell Type Pseudobulk", "Multiome", "Total Pseudobulk", nrow(multiome_pseudobulk_gene_aucs[multiome_pseudobulk_gene_aucs$multiome_pseudobulk_gene_auc > 0.7,]),
+                          nrow(multiome_pseudobulk_gene_aucs[multiome_pseudobulk_gene_aucs$multiome_pseudobulk_gene_auc < 0.3,]), 
+                          nrow(multiome_pseudobulk_gene_aucs[multiome_pseudobulk_gene_aucs$multiome_pseudobulk_gene_auc > 0.7,]) + nrow(multiome_pseudobulk_gene_aucs[multiome_pseudobulk_gene_aucs$multiome_pseudobulk_gene_auc < 0.3,]),
+                          nrow(multiome_pseudobulk_gene_aucs), (nrow(multiome_pseudobulk_gene_aucs[multiome_pseudobulk_gene_aucs$multiome_pseudobulk_gene_auc > 0.7,]) + 
+                                                                  nrow(multiome_pseudobulk_gene_aucs[multiome_pseudobulk_gene_aucs$multiome_pseudobulk_gene_auc < 0.3,])) / nrow(multiome_pseudobulk_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Multiome - Cell Type Pseudobulk
+# Discovery dataset: Bulk RNA-seq - High Bulk D5
+current_row <- data.frame("Multiome", "Cell Type Pseudobulk", "Bulk RNA-seq", "High Bulk D5", nrow(high_bulk_D5_multiome_pseudobulk_gene_aucs[high_bulk_D5_multiome_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]),
+                          nrow(high_bulk_D5_multiome_pseudobulk_gene_aucs[high_bulk_D5_multiome_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,]), 
+                          nrow(high_bulk_D5_multiome_pseudobulk_gene_aucs[high_bulk_D5_multiome_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]) + nrow(high_bulk_D5_multiome_pseudobulk_gene_aucs[high_bulk_D5_multiome_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,]),
+                          nrow(high_bulk_D5_multiome_pseudobulk_gene_aucs), (nrow(high_bulk_D5_multiome_pseudobulk_gene_aucs[high_bulk_D5_multiome_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]) + 
+                                                                               nrow(high_bulk_D5_multiome_pseudobulk_gene_aucs[high_bulk_D5_multiome_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,])) / nrow(high_bulk_D5_multiome_pseudobulk_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Multiome - Cell Type Pseudobulk
+# Discovery dataset: Bulk RNA-seq - Low Bulk D5
+current_row <- data.frame("Multiome", "Cell Type Pseudobulk", "Bulk RNA-seq", "Low Bulk D5", nrow(low_bulk_D5_multiome_pseudobulk_gene_aucs[low_bulk_D5_multiome_pseudobulk_gene_aucs$low_bulk_D5_gene_auc > 0.7,]),
+                          nrow(low_bulk_D5_multiome_pseudobulk_gene_aucs[low_bulk_D5_multiome_pseudobulk_gene_aucs$low_bulk_D5_gene_auc < 0.3,]), 
+                          nrow(low_bulk_D5_multiome_pseudobulk_gene_aucs[low_bulk_D5_multiome_pseudobulk_gene_aucs$low_bulk_D5_gene_auc > 0.7,]) + nrow(low_bulk_D5_multiome_pseudobulk_gene_aucs[low_bulk_D5_multiome_pseudobulk_gene_aucs$low_bulk_D5_gene_auc < 0.3,]),
+                          nrow(low_bulk_D5_multiome_pseudobulk_gene_aucs), (nrow(low_bulk_D5_multiome_pseudobulk_gene_aucs[low_bulk_D5_multiome_pseudobulk_gene_aucs$low_bulk_D5_gene_auc > 0.7,]) + 
+                                                                              nrow(low_bulk_D5_multiome_pseudobulk_gene_aucs[low_bulk_D5_multiome_pseudobulk_gene_aucs$low_bulk_D5_gene_auc < 0.3,])) / nrow(low_bulk_D5_multiome_pseudobulk_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Multiome - MAGICAL
+# Discovery dataset: Multiome - total pseudobulk
+current_row <- data.frame("Multiome", "MAGICAL", "Multiome", "Total Pseudobulk", nrow(multiome_magical_gene_aucs[multiome_magical_gene_aucs$multiome_pseudobulk_gene_auc > 0.7,]),
+                          nrow(multiome_magical_gene_aucs[multiome_magical_gene_aucs$multiome_pseudobulk_gene_auc < 0.3,]), 
+                          nrow(multiome_magical_gene_aucs[multiome_magical_gene_aucs$multiome_pseudobulk_gene_auc > 0.7,]) + nrow(multiome_magical_gene_aucs[multiome_magical_gene_aucs$multiome_pseudobulk_gene_auc < 0.3,]),
+                          nrow(multiome_magical_gene_aucs), (nrow(multiome_magical_gene_aucs[multiome_magical_gene_aucs$multiome_pseudobulk_gene_auc > 0.7,]) + 
+                                                               nrow(multiome_magical_gene_aucs[multiome_magical_gene_aucs$multiome_pseudobulk_gene_auc < 0.3,])) / nrow(multiome_magical_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Multiome - MAGICAL
+# Discovery dataset: Bulk RNA-seq - High Bulk D5
+current_row <- data.frame("Multiome", "MAGICAL", "Bulk RNA-seq", "High Bulk D5", nrow(high_bulk_D5_multiome_magical_gene_aucs[high_bulk_D5_multiome_magical_gene_aucs$high_bulk_D5_gene_auc > 0.7,]),
+                          nrow(high_bulk_D5_multiome_magical_gene_aucs[high_bulk_D5_multiome_magical_gene_aucs$high_bulk_D5_gene_auc < 0.3,]), 
+                          nrow(high_bulk_D5_multiome_magical_gene_aucs[high_bulk_D5_multiome_magical_gene_aucs$high_bulk_D5_gene_auc > 0.7,]) + nrow(high_bulk_D5_multiome_magical_gene_aucs[high_bulk_D5_multiome_magical_gene_aucs$high_bulk_D5_gene_auc < 0.3,]),
+                          nrow(high_bulk_D5_multiome_magical_gene_aucs), (nrow(high_bulk_D5_multiome_magical_gene_aucs[high_bulk_D5_multiome_magical_gene_aucs$high_bulk_D5_gene_auc > 0.7,]) + 
+                                                                               nrow(high_bulk_D5_multiome_magical_gene_aucs[high_bulk_D5_multiome_magical_gene_aucs$high_bulk_D5_gene_auc < 0.3,])) / nrow(high_bulk_D5_multiome_magical_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+# Filtering: Multiome - MAGICAL
+# Discovery dataset: Bulk RNA-seq - Low Bulk D5
+current_row <- data.frame("Multiome", "MAGICAL", "Bulk RNA-seq", "Low Bulk D5", nrow(low_bulk_D5_multiome_magical_gene_aucs[low_bulk_D5_multiome_magical_gene_aucs$low_bulk_D5_gene_auc > 0.7,]),
+                          nrow(low_bulk_D5_multiome_magical_gene_aucs[low_bulk_D5_multiome_magical_gene_aucs$low_bulk_D5_gene_auc < 0.3,]), 
+                          nrow(low_bulk_D5_multiome_magical_gene_aucs[low_bulk_D5_multiome_magical_gene_aucs$low_bulk_D5_gene_auc > 0.7,]) + nrow(low_bulk_D5_multiome_magical_gene_aucs[low_bulk_D5_multiome_magical_gene_aucs$low_bulk_D5_gene_auc < 0.3,]),
+                          nrow(low_bulk_D5_multiome_magical_gene_aucs), (nrow(low_bulk_D5_multiome_magical_gene_aucs[low_bulk_D5_multiome_magical_gene_aucs$low_bulk_D5_gene_auc > 0.7,]) + 
+                                                                              nrow(low_bulk_D5_multiome_magical_gene_aucs[low_bulk_D5_multiome_magical_gene_aucs$low_bulk_D5_gene_auc < 0.3,])) / nrow(low_bulk_D5_multiome_magical_gene_aucs))
+names(current_row) <- auc_names
+auc_df <- rbind(auc_df, current_row)
+
+
+
+
+
+
+
+
+# Find intersect between bulk and pseudobulk
+# See if those are usually found in MAGICAL
+# Check to see if single cell RNA-seq data are balanced between high and low viral load individuals
+
+
+
+
+
+
 
 
 # Interesting idea - compare AUCs in our gene list(s) to other datasets (e.g., Data Compendium discovery or our own bulk RNA-seq)
+# # IDEA - separate into HVL and LVL and see whether it has higher AUC for higher viral load ppl
 comparison_aucs <- sc_pseudobulk_aucs
 comparison_aucs$discovery_aucs <- sc_discovery_flu_aucs$flu_discovery_gene_auc
 comparison_aucs <- comparison_aucs[,c(1,2,4,3)]

@@ -221,26 +221,34 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
 # Generate AUCS for individual genes on a list of datasets
 test_individual_genes_on_datasets <- function(gene_list, data_list, source, disease_tag) {
   gene_aucs <- c()
+  # Sometimes genes aren't found in our ENTREZ mapping database - for those, we just remove them
+  # (I don't think we really have to, but for consistency's sake with the rest of the compendium I think it makes sense)
+  final_gene_list <- c()
   for(gene in gene_list) {
-    sig <- list()
-    # Convert gene name to ENTREZ ID
-    gene_name <- mapIds(org.Hs.eg.db, c(gene), "ENTREZID", "SYMBOL")[1]
-    print(gene_name)
-    sig$posGeneNames <- gene_name
-    sig$negGeneNames <- ''
-    sig$filterDescription <- 'test'
-    sig$FDRThresh <- 0
-    sig$effectSizeThresh <- 0
-    sig$numberStudiesThresh <- 1
-    sig$isLeaveOneOut <- F
-    sig$heterogeneityPvalThresh <- 0
-    sig$timestamp <- Sys.time()
-    # Test gene set signature on influenza samples and print median AUROC
-    flu_aucs <- sapply(X = data_list, FUN = calculateAUROC, signature = sig)
-    gene_aucs <- c(gene_aucs, median(flu_aucs, na.rm = TRUE))
+    if(gene %in% keys(org.Hs.eg.db, keytype = "SYMBOL")) {
+      final_gene_list <- c(final_gene_list, gene)
+      sig <- list()
+      # Convert gene name to ENTREZ ID
+      gene_name <- mapIds(org.Hs.eg.db, c(gene), "ENTREZID", "SYMBOL")[1]
+      print(gene_name)
+      sig$posGeneNames <- gene_name
+      sig$negGeneNames <- ''
+      sig$filterDescription <- 'test'
+      sig$FDRThresh <- 0
+      sig$effectSizeThresh <- 0
+      sig$numberStudiesThresh <- 1
+      sig$isLeaveOneOut <- F
+      sig$heterogeneityPvalThresh <- 0
+      sig$timestamp <- Sys.time()
+      # Test gene set signature on influenza samples and print median AUROC
+      flu_aucs <- sapply(X = data_list, FUN = calculateAUROC, signature = sig)
+      gene_aucs <- c(gene_aucs, median(flu_aucs, na.rm = TRUE))
+    } else {
+      print(paste0("Gene ", gene, " not found in database"))
+    }
   }
   gene_auc_name <- paste0(disease_tag, "_gene_auc")
-  final_df <- data.frame("gene_name" = gene_list, temp_name = gene_aucs, "source" = rep(source, length(gene_list)))
+  final_df <- data.frame("gene_name" = final_gene_list, temp_name = gene_aucs, "source" = rep(source, length(final_gene_list)))
   names(final_df)[names(final_df) == "temp_name"] <- gene_auc_name
   return(final_df)
 }
