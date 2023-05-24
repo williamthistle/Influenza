@@ -73,7 +73,7 @@ create_metaintegrator_obj <- function(token, total_pseudobulk_df_log, metadata =
     sample_names <- colnames(total_pseudobulk_df_log_entrez)
     sample_class <- as.character(metadata$time_point)
     sample_class[sample_class == "2_D_minus_1"] <- 0
-    sample_class[sample_class == "2_D5"] <- 1
+    sample_class[sample_class != "2_D_minus_1"] <- 1
   }
   
   # Create pheno dataframe
