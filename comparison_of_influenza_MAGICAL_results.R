@@ -212,8 +212,7 @@ auc_df <- rbind(auc_df, current_row)
 
 # Find intersect between bulk and pseudobulk
 # See if those are usually found in MAGICAL
-# Check to see if single cell RNA-seq data are balanced between high and low viral load individuals
-
+# Check to see if single cell RNA-seq data are balanced between high and low viral load individuals (4 HVL and 2 LVL, but how many cells for each?)
 
 
 
