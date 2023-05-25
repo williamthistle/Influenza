@@ -42,13 +42,19 @@ grab_transformed_pseudobulk_counts <- function(pseudobulk_dir, cell_types) {
   return(total_pseudobulk_df_log)
 }
 
-create_metaintegrator_obj <- function(token, total_pseudobulk_df_log, metadata = NULL) {
+create_metaintegrator_obj <- function(token, counts, metadata = NULL, case_time_point = NULL, control_time_point = NULL) {
+  # Take appropriate subset of metadata (based on timepoints) and log-normalize counts for use in MetaIntegrator
+  if(token == "bulk") {
+    metadata <- metadata[metadata$time_point == case_time_point | metadata$time_point == control_time_point,]
+    counts <- counts[rownames(metadata)]
+    counts <- varianceStabilizingTransformation(as.matrix(counts))
+  }
   # MetaIntegrator (or at least the Data Compendium) expects ENTREZ IDs so we map all our gene names to their respective ENTREZ IDs
   # Do we actually have to do this?
-  entrez_gene_list <- mapIds(org.Hs.eg.db, rownames(total_pseudobulk_df_log), "ENTREZID", "SYMBOL")
+  entrez_gene_list <- mapIds(org.Hs.eg.db, rownames(counts), "ENTREZID", "SYMBOL")
   entrez_gene_list[is.na(entrez_gene_list)] <- names(entrez_gene_list[is.na(entrez_gene_list)]) # Replace NAs with gene names
-  total_pseudobulk_df_log_entrez <- total_pseudobulk_df_log
-  rownames(total_pseudobulk_df_log_entrez) <- unname(entrez_gene_list)
+  counts_entrez <- counts
+  rownames(counts_entrez) <- unname(entrez_gene_list)
   
   # Create ENTREZ -> ENTREZ keys (including some gene names because they don't have corresponding ENTREZ IDs)
   metaintegrator_keys <- entrez_gene_list
@@ -56,10 +62,10 @@ create_metaintegrator_obj <- function(token, total_pseudobulk_df_log, metadata =
   
   if(token == "multiome") {
     #Remove "Sample_" from each column name
-    for (col in 1:ncol(total_pseudobulk_df_log_entrez)){
-      colnames(total_pseudobulk_df_log_entrez)[col] <-  sub("Sample_", "", colnames(total_pseudobulk_df_log_entrez)[col])
+    for (col in 1:ncol(counts_entrez)){
+      colnames(counts_entrez)[col] <-  sub("Sample_", "", colnames(counts_entrez)[col])
     }
-    sample_names <- colnames(total_pseudobulk_df_log_entrez)
+    sample_names <- colnames(counts_entrez)
     sample_class <- c()
     for(sample_name in sample_names) {
       sample_class <- c(sample_class, sample_metadata[sample_metadata$aliquot == sample_name,]$time_point)
@@ -67,13 +73,13 @@ create_metaintegrator_obj <- function(token, total_pseudobulk_df_log, metadata =
     sample_class <- as.numeric(grepl("D28", sample_class))
   } else if(token == "single cell") {
     # Create class vector (1 is disease, 0 is control)
-    sample_names <- colnames(total_pseudobulk_df_log_entrez)
+    sample_names <- colnames(counts_entrez)
     sample_class <- as.numeric(grepl("D28", sample_names))
   } else if (token == "bulk") {
-    sample_names <- colnames(total_pseudobulk_df_log_entrez)
+    sample_names <- colnames(counts_entrez)
     sample_class <- as.character(metadata$time_point)
-    sample_class[sample_class == "2_D_minus_1"] <- 0
-    sample_class[sample_class != "2_D_minus_1"] <- 1
+    sample_class[sample_class == control_time_point] <- 0
+    sample_class[sample_class == case_time_point] <- 1
   }
   
   # Create pheno dataframe
@@ -89,7 +95,7 @@ create_metaintegrator_obj <- function(token, total_pseudobulk_df_log, metadata =
   
   # Create MetaIntegrator object
   metaintegrator_obj <- list()
-  metaintegrator_obj$expr <- total_pseudobulk_df_log_entrez
+  metaintegrator_obj$expr <- counts_entrez
   metaintegrator_obj$keys <- metaintegrator_keys
   metaintegrator_obj$formattedName <- "FLU"
   metaintegrator_obj$class <- sample_class
@@ -100,4 +106,15 @@ create_metaintegrator_obj <- function(token, total_pseudobulk_df_log, metadata =
   internal_data_list <- list()
   internal_data_list[[1]] <- metaintegrator_obj
   return(internal_data_list)
+}
+auc_names <- c("Filtering_Assay", "Filtering_Method", "Discovery_Assay", "Discovery_Dataset", "Pos_Genes", "Neg_Genes", "Total_Passing_Genes", "Total_Genes", "Percentage_of_Passing_Genes")
+
+add_auc_row <- function(auc_df, auc_names, filtering_assay, filtering_method, discovery_assay, discovery_dataset, discovery_auc_df, auc_col_name) {
+  current_row <- data.frame(filtering_assay, filtering_method, discovery_assay, discovery_dataset, nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]),
+                            nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,]), 
+                            nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]) + nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,]),
+                            nrow(discovery_auc_df), (nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]) + 
+                                                              nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,])) / nrow(discovery_auc_df))
+  names(current_row) <- auc_names
+  auc_df <- rbind(auc_df, current_row)
 }
