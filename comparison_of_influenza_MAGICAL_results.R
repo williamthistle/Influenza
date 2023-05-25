@@ -65,6 +65,8 @@ multiome_magical_gene_aucs <- multiome_pseudobulk_gene_aucs[multiome_pseudobulk_
 
 
 
+
+
 high_metadata_subset <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D5" | high_placebo_metadata$time_point == "2_D_minus_1",]
 low_metadata_subset <- low_placebo_metadata[low_placebo_metadata$time_point == "2_D5" | low_placebo_metadata$time_point == "2_D_minus_1",]
 
