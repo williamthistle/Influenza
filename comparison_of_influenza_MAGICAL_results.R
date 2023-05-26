@@ -14,6 +14,7 @@ single_cell_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influ
 single_cell_pseudobulk_dir <- paste0(single_cell_magical_dir, "scRNA/pseudo_bulk/")
 multiome_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
 multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
+set.seed(2000)
 
 # Tables containing results for single cell and multiome RNA-seq processing
 # Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
@@ -68,6 +69,12 @@ curated_multiome_magical_genes <- multiome_magical_gene_aucs$gene_name
 # Test on days 2, 5, 8, and 28 for both pseudobulk gene lists and MAGICAL gene lists
 # Should I include the extra samples for days that have them?
 # Create MetaIntegrator objects for all days (high and low)
+# Remove 0 pcr sample
+all_D2_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", placebo_counts, placebo_metadata, "2_D2", "2_D_minus_1")
+all_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", placebo_counts, placebo_metadata, "2_D5", "2_D_minus_1")
+all_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", placebo_counts, placebo_metadata, "2_D8", "2_D_minus_1")
+all_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", placebo_counts, placebo_metadata, "2_D28", "2_D_minus_1")
+
 high_D2_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placebo_counts, high_placebo_metadata, "2_D2", "2_D_minus_1")
 high_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placebo_counts, high_placebo_metadata, "2_D5", "2_D_minus_1")
 high_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placebo_counts, high_placebo_metadata, "2_D8", "2_D_minus_1")
@@ -78,6 +85,11 @@ low_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_
 low_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D8", "2_D_minus_1")
 low_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D28", "2_D_minus_1")
 # Calculate gene AUCs for pseudobulk filtered genes (high and low) - single cell
+all_bulk_D2_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D2_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D2"))
+all_bulk_D5_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D5_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D5"))
+all_bulk_D8_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D8_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D8"))
+all_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D28"))
+
 high_bulk_D2_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, high_D2_bulk_metaintegrator_obj, "Single_Cell_Paired", "high_bulk_D2"))
 high_bulk_D5_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, high_D5_bulk_metaintegrator_obj, "Single_Cell_Paired", "high_bulk_D5"))
 high_bulk_D8_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, high_D8_bulk_metaintegrator_obj, "Single_Cell_Paired", "high_bulk_D8"))
@@ -88,6 +100,11 @@ low_bulk_D5_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets
 low_bulk_D8_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, low_D8_bulk_metaintegrator_obj, "Single_Cell_Paired", "low_bulk_D8"))
 low_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, low_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "low_bulk_D28"))
 # Calculate gene AUCs for MAGICAL filtered genes (high and low) - single cell
+all_bulk_D2_sc_magical_gene_aucs <- all_bulk_D2_sc_pseudobulk_gene_aucs[all_bulk_D2_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+all_bulk_D5_sc_magical_gene_aucs <- all_bulk_D5_sc_pseudobulk_gene_aucs[all_bulk_D5_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+all_bulk_D8_sc_magical_gene_aucs <- all_bulk_D8_sc_pseudobulk_gene_aucs[all_bulk_D8_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+all_bulk_D28_sc_magical_gene_aucs <- all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+
 high_bulk_D2_sc_magical_gene_aucs <- high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
 high_bulk_D5_sc_magical_gene_aucs <- high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
 high_bulk_D8_sc_magical_gene_aucs <- high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
@@ -98,6 +115,11 @@ low_bulk_D5_sc_magical_gene_aucs <- low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk
 low_bulk_D8_sc_magical_gene_aucs <- low_bulk_D8_sc_pseudobulk_gene_aucs[low_bulk_D8_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
 low_bulk_D28_sc_magical_gene_aucs <- low_bulk_D28_sc_pseudobulk_gene_aucs[low_bulk_D28_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
 # Calculate gene AUCs for pseudobulk filtered genes (high and low) - multiome
+all_bulk_D2_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, all_D2_bulk_metaintegrator_obj, "Multiome_Paired", "all_bulk_D2"))
+all_bulk_D5_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, all_D5_bulk_metaintegrator_obj, "Multiome_Paired", "all_bulk_D5"))
+all_bulk_D8_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, all_D8_bulk_metaintegrator_obj, "Multiome_Paired", "all_bulk_D8"))
+all_bulk_D28_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, all_D28_bulk_metaintegrator_obj, "Multiome_Paired", "all_bulk_D28"))
+
 high_bulk_D2_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, high_D2_bulk_metaintegrator_obj, "Multiome_Paired", "high_bulk_D2"))
 high_bulk_D5_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, high_D5_bulk_metaintegrator_obj, "Multiome_Paired", "high_bulk_D5"))
 high_bulk_D8_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, high_D8_bulk_metaintegrator_obj, "Multiome_Paired", "high_bulk_D8"))
@@ -108,6 +130,11 @@ low_bulk_D5_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_da
 low_bulk_D8_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, low_D8_bulk_metaintegrator_obj, "Multiome_Paired", "low_bulk_D8"))
 low_bulk_D28_multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, low_D28_bulk_metaintegrator_obj, "Multiome_Paired", "low_bulk_D28"))
 # Calculate gene AUCs for MAGICAL filtered genes (high and low) - multiome
+all_bulk_D2_multiome_magical_gene_aucs <- all_bulk_D2_multiome_pseudobulk_gene_aucs[all_bulk_D2_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+all_bulk_D5_multiome_magical_gene_aucs <- all_bulk_D5_multiome_pseudobulk_gene_aucs[all_bulk_D5_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+all_bulk_D8_multiome_magical_gene_aucs <- all_bulk_D8_multiome_pseudobulk_gene_aucs[all_bulk_D8_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+all_bulk_D28_multiome_magical_gene_aucs <- all_bulk_D28_multiome_pseudobulk_gene_aucs[all_bulk_D28_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+
 high_bulk_D2_multiome_magical_gene_aucs <- high_bulk_D2_multiome_pseudobulk_gene_aucs[high_bulk_D2_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
 high_bulk_D5_multiome_magical_gene_aucs <- high_bulk_D5_multiome_pseudobulk_gene_aucs[high_bulk_D5_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
 high_bulk_D8_multiome_magical_gene_aucs <- high_bulk_D8_multiome_pseudobulk_gene_aucs[high_bulk_D8_multiome_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
@@ -175,14 +202,17 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", 
 # What about genes that have AUC < 0.3 or AUC > 0.7 for ALL time points? How many of those are there?
 # Are those genes interesting or not interesting?
 # Should we include subsets of times?
+# See prediction in bulk datasets using pos and neg signatures, I guess?
 
-# Genes that passed pseudobulk and all high bulk RNA-seq (AUC > 0.7) was IFI27 - interferon based gene
+
+
+# Genes that passed pseudobulk and all high bulk RNA-seq (AUC > 0.7) was IFI27 - interferon based gene. WHY IS THIS NOT WORKING ANYMORE?
 high_sc_pos_genes <-sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$high_bulk_D8_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc > 0.7,]$gene_name)
-# Genes that passed pseudobulk and all high bulk RNA-seq (AUC < 0.3) were TUBA1A and BAG1
+# Genes that passed pseudobulk and all high bulk RNA-seq (AUC < 0.3) were TUBA1A and BAG1. WHY IS BAG1 NOW POSITIVE GENE?
 high_sc_neg_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc < 0.3,]$gene_name
 high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc < 0.3,]$gene_name)
 high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,]$gene_name)
