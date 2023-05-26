@@ -163,6 +163,7 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", 
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "Low Bulk D8", low_bulk_D8_multiome_magical_gene_aucs, "low_bulk_D8_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "Low Bulk D28", low_bulk_D28_multiome_magical_gene_aucs, "low_bulk_D28_gene_auc")
 
+# Look at how data compendium papers use convalescent data
 
 # Find intersecting genes between bulk and pseudobulk
 # What about genes that have AUC < 0.3 or AUC > 0.7 for ALL time points? How many of those are there?
