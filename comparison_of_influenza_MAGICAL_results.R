@@ -157,6 +157,10 @@ auc_df <- data.frame(Filtering_Assay = character(), Filtering_Method = character
 auc_names <- c("Filtering_Assay", "Filtering_Method", "Discovery_Assay", "Discovery_Dataset", "Pos_Genes", "Neg_Genes", "Total_Passing_Genes", "Total_Genes", "Percentage_of_Passing_Genes")
 # Single cell, cell type pseudobulk filtering
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "Total Pseudobulk", curated_sc_pseudobulk_gene_aucs, "sc_pseudobulk_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "All Bulk D2", all_bulk_D2_sc_pseudobulk_gene_aucs, "all_bulk_D2_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "All Bulk D5", all_bulk_D5_sc_pseudobulk_gene_aucs, "all_bulk_D5_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "All Bulk D8", all_bulk_D8_sc_pseudobulk_gene_aucs, "all_bulk_D8_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "All Bulk D28", all_bulk_D28_sc_pseudobulk_gene_aucs, "all_bulk_D28_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "High Bulk D2", high_bulk_D2_sc_pseudobulk_gene_aucs, "high_bulk_D2_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "High Bulk D5", high_bulk_D5_sc_pseudobulk_gene_aucs, "high_bulk_D5_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "High Bulk D8", high_bulk_D8_sc_pseudobulk_gene_aucs, "high_bulk_D8_gene_auc")
@@ -167,6 +171,10 @@ auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", 
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "Low Bulk D28", low_bulk_D28_sc_pseudobulk_gene_aucs, "low_bulk_D28_gene_auc")
 # Single cell, MAGICAL filtering
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Single Cell", "Total Pseudobulk", curated_sc_magical_gene_aucs, "sc_pseudobulk_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "All Bulk D2", all_bulk_D2_sc_magical_gene_aucs, "all_bulk_D2_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "All Bulk D5", all_bulk_D5_sc_magical_gene_aucs, "all_bulk_D5_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "All Bulk D8", all_bulk_D8_sc_magical_gene_aucs, "all_bulk_D8_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "All Bulk D28", all_bulk_D28_sc_magical_gene_aucs, "all_bulk_D28_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "High Bulk D2", high_bulk_D2_sc_magical_gene_aucs, "high_bulk_D2_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "High Bulk D5", high_bulk_D5_sc_magical_gene_aucs, "high_bulk_D5_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "High Bulk D8", high_bulk_D8_sc_magical_gene_aucs, "high_bulk_D8_gene_auc")
@@ -177,6 +185,10 @@ auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "Low Bulk D28", low_bulk_D28_sc_magical_gene_aucs, "low_bulk_D28_gene_auc")
 # Multiome, cell type pseudobulk filtering
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Multiome", "Total Pseudobulk", curated_multiome_pseudobulk_gene_aucs, "multiome_pseudobulk_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "All Bulk D2", all_bulk_D2_multiome_pseudobulk_gene_aucs, "all_bulk_D2_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "All Bulk D5", all_bulk_D5_multiome_pseudobulk_gene_aucs, "all_bulk_D5_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "All Bulk D8", all_bulk_D8_multiome_pseudobulk_gene_aucs, "all_bulk_D8_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "All Bulk D28", all_bulk_D28_multiome_pseudobulk_gene_aucs, "all_bulk_D28_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "High Bulk D2", high_bulk_D2_multiome_pseudobulk_gene_aucs, "high_bulk_D2_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "High Bulk D5", high_bulk_D5_multiome_pseudobulk_gene_aucs, "high_bulk_D5_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "High Bulk D8", high_bulk_D8_multiome_pseudobulk_gene_aucs, "high_bulk_D8_gene_auc")
@@ -187,6 +199,10 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bu
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "Low Bulk D28", low_bulk_D28_multiome_pseudobulk_gene_aucs, "low_bulk_D28_gene_auc")
 # Multiome, MAGICAL filtering
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Multiome", "Total Pseudobulk", curated_multiome_magical_gene_aucs, "multiome_pseudobulk_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "All Bulk D2", all_bulk_D2_multiome_magical_gene_aucs, "all_bulk_D2_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "All Bulk D5", all_bulk_D5_multiome_magical_gene_aucs, "all_bulk_D5_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "All Bulk D8", all_bulk_D8_multiome_magical_gene_aucs, "all_bulk_D8_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "All Bulk D28", all_bulk_D28_multiome_magical_gene_aucs, "all_bulk_D28_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "High Bulk D2", high_bulk_D2_multiome_magical_gene_aucs, "high_bulk_D2_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "High Bulk D5", high_bulk_D5_multiome_magical_gene_aucs, "high_bulk_D5_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "High Bulk D8", high_bulk_D8_multiome_magical_gene_aucs, "high_bulk_D8_gene_auc")
