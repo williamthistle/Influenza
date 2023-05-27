@@ -248,6 +248,7 @@ low_sc_neg_genes <- intersect(low_sc_neg_genes, low_bulk_D8_sc_pseudobulk_gene_a
 low_sc_neg_genes <- intersect(low_sc_neg_genes, low_bulk_D28_sc_pseudobulk_gene_aucs[low_bulk_D28_sc_pseudobulk_gene_aucs$low_bulk_D28_gene_auc < 0.3,]$gene_name)
 # Genes that passed 
 
+# Test to see if dumb way of doing FC and p-value thresholding results in "better" alignment with what people generally think
 
 
 # See if those are usually found in MAGICAL
