@@ -212,6 +212,61 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", 
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "Low Bulk D8", low_bulk_D8_multiome_magical_gene_aucs, "low_bulk_D8_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "Low Bulk D28", low_bulk_D28_multiome_magical_gene_aucs, "low_bulk_D28_gene_auc")
 
+# Find list of significant genes in bulk data - high (LRT)
+high_placebo_period_2_LRT_metadata <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D28" | high_placebo_metadata$time_point == "2_D8" | 
+                                                              high_placebo_metadata$time_point == "2_D5" | high_placebo_metadata$time_point == "2_D2" |
+                                                              high_placebo_metadata$time_point == "2_D_minus_1",]
+high_placebo_period_2_LRT_metadata <- high_placebo_period_2_LRT_metadata[high_placebo_period_2_LRT_metadata$subject_id 
+                                                                         %in% names(table(high_placebo_period_2_LRT_metadata$subject_id)
+                                                                                    [table(high_placebo_period_2_LRT_metadata$subject_id) == 5]),]
+high_placebo_period_2_LRT_counts <- high_placebo_counts[rownames(high_placebo_period_2_LRT_metadata)]
+high_placebo_period_2_LRT_analysis <- DESeqDataSetFromMatrix(countData = high_placebo_period_2_LRT_counts,
+                                                             colData = high_placebo_period_2_LRT_metadata,
+                                                             design = ~ subject_id + time_point)
+high_placebo_period_2_LRT_analysis <- DESeq(high_placebo_period_2_LRT_analysis, test = "LRT", reduced = ~ subject_id)
+high_placebo_period_2_LRT_analysis_results <- results(high_placebo_period_2_LRT_analysis, alpha = 0.05)
+high_placebo_period_2_LRT_analysis_results <- high_placebo_period_2_LRT_analysis_results[order(high_placebo_period_2_LRT_analysis_results$padj),]
+high_placebo_period_2_LRT_analysis_results <- subset(high_placebo_period_2_LRT_analysis_results, padj < 0.05)
+
+# Grab list of genes that have AUC > 0.7 in single cell pseudobulk
+high_sc_pos_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
+
+# See which of these genes are significant in LRT data
+high_sc_pos_genes_LRT_pass <- c()
+for(gene in high_sc_pos_genes) {
+  if(gene %in% rownames(high_placebo_period_2_LRT_analysis_results)) {
+    high_sc_pos_genes_LRT_pass <- c(high_sc_pos_genes_LRT_pass, gene)
+  }
+}
+
+high_placebo_period_2_LRT_analysis_betas <- coef(high_placebo_period_2_LRT_analysis)
+high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_betas[, -c(1:13)]
+high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_betas[rownames(high_placebo_period_2_LRT_analysis_betas) %in% high_sc_pos_genes_LRT_pass,]
+high_placebo_period_2_LRT_analysis_thr <- 2.5
+colnames(high_placebo_period_2_LRT_analysis_betas) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+pheatmap(high_placebo_period_2_LRT_analysis_betas, breaks=seq(from=-high_placebo_period_2_LRT_analysis_thr, to=high_placebo_period_2_LRT_analysis_thr, length=101),
+         cluster_col=FALSE, fontsize_col=14)
+
+# Grab list of genes that have AUC < 0.3 in single cell pseudobulk
+high_sc_neg_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc < 0.3,]$gene_name
+# See which of these genes are significant in LRT data
+high_sc_neg_genes_LRT_pass <- c()
+for(gene in high_sc_neg_genes) {
+  if(gene %in% rownames(high_placebo_period_2_LRT_analysis_results)) {
+    high_sc_neg_genes_LRT_pass <- c(high_sc_neg_genes_LRT_pass, gene)
+  }
+}
+
+high_placebo_period_2_LRT_analysis_betas_neg <- coef(high_placebo_period_2_LRT_analysis)
+high_placebo_period_2_LRT_analysis_betas_neg <- high_placebo_period_2_LRT_analysis_betas_neg[, -c(1:13)]
+high_placebo_period_2_LRT_analysis_betas_neg <- high_placebo_period_2_LRT_analysis_betas_neg[rownames(high_placebo_period_2_LRT_analysis_betas_neg) %in% high_sc_neg_genes_LRT_pass,]
+colnames(high_placebo_period_2_LRT_analysis_betas_neg) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+pheatmap(high_placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-1, to=1, length=101),
+         cluster_col=FALSE, fontsize_col=14)
+
+
+
+
 # Look at how data compendium papers use convalescent data
 
 # Find intersecting genes between bulk and pseudobulk
