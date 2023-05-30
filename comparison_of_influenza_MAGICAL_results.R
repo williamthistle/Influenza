@@ -231,6 +231,8 @@ high_placebo_period_2_LRT_analysis_results <- subset(high_placebo_period_2_LRT_a
 # Grab list of genes that have AUC > 0.7 in single cell pseudobulk
 high_sc_pos_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
 
+high_magical_pos_genes <- sc_magical_gene_aucs[sc_magical_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
+
 # See which of these genes are significant in LRT data
 high_sc_pos_genes_LRT_pass <- c()
 for(gene in high_sc_pos_genes) {
@@ -274,11 +276,12 @@ pheatmap(high_placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-1, to=1,
 # Are those genes interesting or not interesting?
 # Should we include subsets of times?
 # See prediction in bulk datasets using pos and neg signatures, I guess?
+# See how many other genes have same trend as BAG1 (pos AUC in pseudo and fold change is generally negative or vice versa)
 
 
 
 # Genes that passed pseudobulk and all high bulk RNA-seq (AUC > 0.7) was IFI27 - interferon based gene. WHY IS THIS NOT WORKING ANYMORE?
-high_sc_pos_genes <-sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
+high_sc_pos_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$high_bulk_D8_gene_auc > 0.7,]$gene_name)
