@@ -10,9 +10,9 @@ source(paste0(base_dir, "Data Compendium/Compendium_Functions.R"))
 setup_bulk_analysis()
 sample_metadata <- read.table(paste0(base_dir, "sample_metadata.tsv"), sep = "\t", header = TRUE)
 cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
-single_cell_magical_dir <- "C:/Users/wat2/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/"
+single_cell_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/"
 single_cell_pseudobulk_dir <- paste0(single_cell_magical_dir, "scRNA/pseudo_bulk/")
-multiome_magical_dir <- "C:/Users/wat2/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
+multiome_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
 multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
 set.seed(2000)
 
@@ -68,8 +68,46 @@ curated_multiome_magical_genes <- multiome_magical_gene_aucs$gene_name
 # Next, let's test our gene lists on the actual bulk RNA-seq data!
 # Test on days 2, 5, 8, and 28 for both pseudobulk gene lists and MAGICAL gene lists
 # Should I include the extra samples for days that have them?
+# First, let's remove the 0 pcr sample from low because it's questionable
+removed_low_value_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id == "f18c54d93cef4a4e",])
+placebo_metadata <- placebo_metadata[!(placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
+placebo_counts <- placebo_counts[,!(colnames(placebo_counts) %in% removed_low_value_aliquots)]
+low_placebo_metadata <- low_placebo_metadata[!(low_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
+low_placebo_counts <- low_placebo_counts[,!(colnames(low_placebo_counts) %in% removed_low_value_aliquots)]
+# Find bulk RNA-seq associated with the specific samples that we used for single-cell / multiome
+# Should be interesting to compare performance in pseudobulk vs actual bulk
+single_cell_aliquots <- c("91910a04711aa3dd", "3731a6247ae23831", "2232300b0e3a3d06", "76ea83ff9293871a", "5fdfdbaeb3c8eee8", "981520e7e138d460", "bb3d7b309cb5fc58", "8338411dc3e181e9", "da4fe21a89c8f7f4", "41d248a6ec3b87e2", "e3e01c75894ef461", "4534496c580cb408") # 12 samples - 6 paired
+single_cell_subjects <- as.character(unique(all_metadata[all_metadata$aliquot_id %in% single_cell_aliquots,]$subject_id))
+multiome_aliquots <- c("717579a2ae2fb6c2", "dde63f8ca98af665", "a464019298ae6682", "d554be0e36e4d789", "e43db0f72b9c2e31", "b82bb7c75d47dac1", "6f609a68dca1261f", "9c6ec1b704700c7d", "7b54cfac7e67b0fa", "575d74707585856a", "c1eb160d7bd1f29f", "8832fff8247b18b9", "abf6d19ee03be1e8", "216bb226181591dd") # 14 samples - 7 paired
+multiome_subjects <- as.character(unique(all_metadata[all_metadata$aliquot_id %in% multiome_aliquots,]$subject_id))
+
+single_cell_placebo_metadata <- placebo_metadata[(placebo_metadata$subject_id %in% single_cell_subjects),]
+single_cell_placebo_counts <- placebo_counts[,(colnames(placebo_counts) %in% rownames(single_cell_placebo_metadata))]
+multiome_placebo_metadata <- placebo_metadata[(placebo_metadata$subject_id %in% multiome_subjects),]
+multiome_placebo_counts <- placebo_counts[,(colnames(placebo_counts) %in% rownames(multiome_placebo_metadata))]
+
+high_single_cell_placebo_metadata <- high_placebo_metadata[(high_placebo_metadata$subject_id %in% single_cell_subjects),]
+high_single_cell_placebo_counts <- high_placebo_counts[,(colnames(high_placebo_counts) %in% rownames(high_single_cell_placebo_metadata))]
+high_multiome_placebo_metadata <- high_placebo_metadata[(high_placebo_metadata$subject_id %in% multiome_subjects),]
+high_multiome_placebo_counts <- high_placebo_counts[,(colnames(high_placebo_counts) %in% rownames(high_multiome_placebo_metadata))]
+
+low_single_cell_placebo_metadata <- low_placebo_metadata[(low_placebo_metadata$subject_id %in% single_cell_subjects),]
+low_single_cell_placebo_counts <- low_placebo_counts[,(colnames(low_placebo_counts) %in% rownames(low_single_cell_placebo_metadata))]
+low_multiome_placebo_metadata <- low_placebo_metadata[(low_placebo_metadata$subject_id %in% multiome_subjects),]
+low_multiome_placebo_counts <- low_placebo_counts[,(colnames(low_placebo_counts) %in% rownames(low_multiome_placebo_metadata))]
+
+# Create MetaIntegrator objects for D28 specifically for samples that we processed using scRNA-seq or multiome
+# We can compare to pseudobulk AUCs for same samples
+sc_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", single_cell_placebo_counts, single_cell_placebo_metadata, "2_D28", "2_D_minus_1")
+multiome_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", multiome_placebo_counts, multiome_placebo_metadata, "2_D28", "2_D_minus_1")
+
+high_sc_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_single_cell_placebo_counts, high_single_cell_placebo_metadata, "2_D28", "2_D_minus_1")
+high_multiome_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_multiome_placebo_counts, high_multiome_placebo_metadata, "2_D28", "2_D_minus_1")
+
+low_sc_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_single_cell_placebo_counts, low_single_cell_placebo_metadata, "2_D28", "2_D_minus_1")
+low_multiome_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_multiome_placebo_counts, low_multiome_placebo_metadata, "2_D28", "2_D_minus_1")
+
 # Create MetaIntegrator objects for all days (high and low)
-# Remove 0 pcr sample
 all_D2_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", placebo_counts, placebo_metadata, "2_D2", "2_D_minus_1")
 all_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", placebo_counts, placebo_metadata, "2_D5", "2_D_minus_1")
 all_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", placebo_counts, placebo_metadata, "2_D8", "2_D_minus_1")
@@ -84,6 +122,27 @@ low_D2_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_
 low_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D5", "2_D_minus_1")
 low_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D8", "2_D_minus_1")
 low_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D28", "2_D_minus_1")
+
+# Calculate gene AUCs for pseudobulk filtered genes (high and low) - single cell (D28, samples we processed)
+sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, sc_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "sc_bulk_D28"))
+high_sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, high_sc_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "high_sc_bulk_D28"))
+low_sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, low_sc_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "low_sc_bulk_D28"))
+
+# Calculate gene AUCs for MAGICAL genes (high and low) - single cell (D28, samples we processed)
+sc_bulk_D28_magical_gene_aucs <- sc_bulk_D28_sc_pseudobulk_gene_aucs[sc_bulk_D28_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+high_sc_bulk_D28_magical_gene_aucs <- high_sc_bulk_D28_sc_pseudobulk_gene_aucs[high_sc_bulk_D28_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+low_sc_bulk_D28_magical_gene_aucs <- low_sc_bulk_D28_sc_pseudobulk_gene_aucs[low_sc_bulk_D28_sc_pseudobulk_gene_aucs$gene_name %in% single_cell_magical_genes,]
+
+# Calculate gene AUCs for pseudobulk filtered genes (high and low) - multiome (D28, samples we processed)
+multiome_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, multiome_D28_bulk_metaintegrator_obj, "Multiome_Paired", "multiome_bulk_D28"))
+high_multiome_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, high_multiome_D28_bulk_metaintegrator_obj, "Multiome_Paired", "high_multiome_bulk_D28"))
+low_multiome_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_multiome_pseudobulk_genes, low_multiome_D28_bulk_metaintegrator_obj, "Multiome_Paired", "low_multiome_bulk_D28"))
+
+# Calculate gene AUCs for MAGICAL genes (high and low) - multiome (D28, samples we processed)
+multiome_bulk_D28_magical_gene_aucs <- multiome_bulk_D28_sc_pseudobulk_gene_aucs[multiome_bulk_D28_sc_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+high_multiome_bulk_D28_magical_gene_aucs <- high_multiome_bulk_D28_sc_pseudobulk_gene_aucs[high_multiome_bulk_D28_sc_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+low_multiome_bulk_D28_magical_gene_aucs <- low_multiome_bulk_D28_sc_pseudobulk_gene_aucs[low_multiome_bulk_D28_sc_pseudobulk_gene_aucs$gene_name %in% multiome_magical_genes,]
+
 # Calculate gene AUCs for pseudobulk filtered genes (high and low) - single cell
 all_bulk_D2_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D2_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D2"))
 all_bulk_D5_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D5_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D5"))
@@ -263,7 +322,7 @@ high_placebo_period_2_LRT_analysis_betas_neg <- coef(high_placebo_period_2_LRT_a
 high_placebo_period_2_LRT_analysis_betas_neg <- high_placebo_period_2_LRT_analysis_betas_neg[, -c(1:13)]
 high_placebo_period_2_LRT_analysis_betas_neg <- high_placebo_period_2_LRT_analysis_betas_neg[rownames(high_placebo_period_2_LRT_analysis_betas_neg) %in% high_sc_neg_genes_LRT_pass,]
 colnames(high_placebo_period_2_LRT_analysis_betas_neg) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
-pheatmap(high_placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-1, to=1, length=101),
+pheatmap(high_placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-2, to=2, length=101),
          cluster_col=FALSE, fontsize_col=14)
 
 
@@ -337,3 +396,8 @@ low_sc_neg_genes <- intersect(low_sc_neg_genes, low_bulk_D28_sc_pseudobulk_gene_
 comparison_aucs <- sc_pseudobulk_aucs
 comparison_aucs$discovery_aucs <- sc_discovery_flu_aucs$flu_discovery_gene_auc
 comparison_aucs <- comparison_aucs[,c(1,2,4,3)]
+
+
+
+curated_sc_pseudobulk_gene_aucs
+sc_bulk_D28_sc_pseudobulk_gene_aucs
