@@ -96,6 +96,10 @@ low_single_cell_placebo_counts <- low_placebo_counts[,(colnames(low_placebo_coun
 low_multiome_placebo_metadata <- low_placebo_metadata[(low_placebo_metadata$subject_id %in% multiome_subjects),]
 low_multiome_placebo_counts <- low_placebo_counts[,(colnames(low_placebo_counts) %in% rownames(low_multiome_placebo_metadata))]
 
+# Grab DEGs for 2_D28 vs 2_D_minus_1 for bulk (Wald test)
+placebo_period_2_D28_vs_D_minus_1_bulk_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts,placebo_metadata,
+                                                                                      "2_D28", "2_D_minus_1", "~/")
+
 # Create MetaIntegrator objects for D28 specifically for samples that we processed using scRNA-seq or multiome
 # We can compare to pseudobulk AUCs for same samples
 sc_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", single_cell_placebo_counts, single_cell_placebo_metadata, "2_D28", "2_D_minus_1")
@@ -122,6 +126,16 @@ low_D2_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_
 low_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D5", "2_D_minus_1")
 low_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D8", "2_D_minus_1")
 low_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D28", "2_D_minus_1")
+
+# CURRENT PLAN: Use all_D28 auc of >0.7 as filtering on original pseudobulk list (don't include pseudobulk AUC > 0.7)
+# alternatively, we could do both. But why would pseudobulk auc > 0.7 (with less data) be useful if we have all_D28 auc of >0.7 (includes that data + more)?
+# We also look at MAGICAL gene subset.
+# Then, we can look at each of these genes, see whether it's differentially expressed in our bulk data, and look at the trend - check out HumanBase, etc.
+# Also, we can look at expression in high and low
+# We can also do exactly the same for multiome
+# Our single cell data gives us single cell granularity on the genes being expressed. This also applies to the ATAC-seq data and our peaks! mintchip can help us verify our choices,
+# but the ATAC-seq gives us the cell type!
+# I just need a few good stories. Look at specific genes or families of genes and see why they're interesting!
 
 # Calculate gene AUCs for pseudobulk filtered genes (high and low) - single cell (D28, samples we processed)
 sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, sc_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "sc_bulk_D28"))

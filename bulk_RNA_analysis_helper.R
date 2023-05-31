@@ -140,7 +140,16 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   } else {
     write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
-  return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2, current_analysis_results_4))
+  # Grab results with alpha = 0.05 and no lfcThreshold set
+  current_analysis_results_none <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = 0.05)
+  current_analysis_results_none <- current_analysis_results_none[order(current_analysis_results_none$padj),]
+  current_analysis_results_none <- subset(current_analysis_results_none, padj < 0.05)
+  if(is.na(output_name_prefix)) {
+    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  } else {
+    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  }
+  return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2, current_analysis_results_4, current_analysis_results_none))
 }
 
 run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_time, test_cond, baseline_cond, output_dir, output_name_prefix=NA) {
