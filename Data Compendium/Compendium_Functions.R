@@ -222,7 +222,6 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
 test_individual_genes_on_datasets <- function(gene_list, data_list, source, disease_tag) {
   gene_aucs <- c()
   # Sometimes genes aren't found in our ENTREZ mapping database - for those, we just remove them
-  # (I don't think we really have to, but for consistency's sake with the rest of the compendium I think it makes sense)
   final_gene_list <- c()
   for(gene in gene_list) {
     if(gene %in% keys(org.Hs.eg.db, keytype = "SYMBOL")) {
@@ -240,7 +239,7 @@ test_individual_genes_on_datasets <- function(gene_list, data_list, source, dise
       sig$isLeaveOneOut <- F
       sig$heterogeneityPvalThresh <- 0
       sig$timestamp <- Sys.time()
-      # Test gene set signature on influenza samples and print median AUROC
+      # Test gene set signature on samples and print median AUROC
       flu_aucs <- sapply(X = data_list, FUN = calculateAUROC, signature = sig)
       gene_aucs <- c(gene_aucs, median(flu_aucs, na.rm = TRUE))
     } else {
