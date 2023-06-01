@@ -50,6 +50,10 @@ full_time_placebo_metadata <- placebo_metadata[placebo_metadata$subject_id
                                                %in% names(table(placebo_metadata$subject_id)
                                                           [table(placebo_metadata$subject_id) == 10]),]
 full_time_placebo_counts <- placebo_counts[rownames(full_time_placebo_metadata)]
+# Remove bad subject (0 qPCR)
+removed_low_value_aliquots <- rownames(full_time_placebo_metadata[full_time_placebo_metadata$subject_id == "f18c54d93cef4a4e",])
+full_time_placebo_metadata <- full_time_placebo_metadata[!(full_time_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
+full_time_placebo_counts <- full_time_placebo_counts[,!(colnames(full_time_placebo_counts) %in% removed_low_value_aliquots)]
 # Run PLIER on Period 1 (including pre-vaccination)
 period_1_placebo_metadata <- full_time_placebo_metadata[full_time_placebo_metadata$period == 1,]
 period_1_placebo_counts <- placebo_counts[rownames(period_1_placebo_metadata)]

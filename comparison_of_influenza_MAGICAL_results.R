@@ -136,6 +136,8 @@ low_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo
 # Our single cell data gives us single cell granularity on the genes being expressed. This also applies to the ATAC-seq data and our peaks! mintchip can help us verify our choices,
 # but the ATAC-seq gives us the cell type!
 # I just need a few good stories. Look at specific genes or families of genes and see why they're interesting!
+# What is the behavior of these genes throughout infection and why are they so persistent at D28?
+# List cell types for genes when reporting
 
 # Calculate gene AUCs for pseudobulk filtered genes (high and low) - single cell (D28, samples we processed)
 sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, sc_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "sc_bulk_D28"))
@@ -161,7 +163,8 @@ low_multiome_bulk_D28_magical_gene_aucs <- low_multiome_bulk_D28_sc_pseudobulk_g
 all_bulk_D2_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D2_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D2"))
 all_bulk_D5_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D5_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D5"))
 all_bulk_D8_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D8_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D8"))
-all_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, all_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D28"))
+# NOTE - using list of all pseudobulk pass genes (not curated)
+all_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(single_cell_pseudobulk_genes, all_D28_bulk_metaintegrator_obj, "Single_Cell_Paired", "all_bulk_D28"))
 
 high_bulk_D2_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, high_D2_bulk_metaintegrator_obj, "Single_Cell_Paired", "high_bulk_D2"))
 high_bulk_D5_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_single_cell_pseudobulk_genes, high_D5_bulk_metaintegrator_obj, "Single_Cell_Paired", "high_bulk_D5"))
@@ -285,6 +288,22 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", 
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "Low Bulk D8", low_bulk_D8_multiome_magical_gene_aucs, "low_bulk_D8_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "Low Bulk D28", low_bulk_D28_multiome_magical_gene_aucs, "low_bulk_D28_gene_auc")
 
+# Find list of significant genes in bulk data - all (LRT)
+placebo_period_2_LRT_metadata <- placebo_metadata[placebo_metadata$time_point == "2_D28" | placebo_metadata$time_point == "2_D8" | 
+                                                              placebo_metadata$time_point == "2_D5" | placebo_metadata$time_point == "2_D2" |
+                                                              placebo_metadata$time_point == "2_D_minus_1",]
+placebo_period_2_LRT_metadata <- placebo_period_2_LRT_metadata[placebo_period_2_LRT_metadata$subject_id 
+                                                                         %in% names(table(placebo_period_2_LRT_metadata$subject_id)
+                                                                                    [table(placebo_period_2_LRT_metadata$subject_id) == 5]),]
+placebo_period_2_LRT_counts <- placebo_counts[rownames(placebo_period_2_LRT_metadata)]
+placebo_period_2_LRT_analysis <- DESeqDataSetFromMatrix(countData = placebo_period_2_LRT_counts,
+                                                             colData = placebo_period_2_LRT_metadata,
+                                                             design = ~ subject_id + time_point)
+placebo_period_2_LRT_analysis <- DESeq(placebo_period_2_LRT_analysis, test = "LRT", reduced = ~ subject_id)
+placebo_period_2_LRT_analysis_results <- results(placebo_period_2_LRT_analysis, alpha = 0.05)
+placebo_period_2_LRT_analysis_results <- placebo_period_2_LRT_analysis_results[order(placebo_period_2_LRT_analysis_results$padj),]
+placebo_period_2_LRT_analysis_results <- subset(placebo_period_2_LRT_analysis_results, padj < 0.05)
+
 # Find list of significant genes in bulk data - high (LRT)
 high_placebo_period_2_LRT_metadata <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D28" | high_placebo_metadata$time_point == "2_D8" | 
                                                               high_placebo_metadata$time_point == "2_D5" | high_placebo_metadata$time_point == "2_D2" |
@@ -301,14 +320,62 @@ high_placebo_period_2_LRT_analysis_results <- results(high_placebo_period_2_LRT_
 high_placebo_period_2_LRT_analysis_results <- high_placebo_period_2_LRT_analysis_results[order(high_placebo_period_2_LRT_analysis_results$padj),]
 high_placebo_period_2_LRT_analysis_results <- subset(high_placebo_period_2_LRT_analysis_results, padj < 0.05)
 
-# Grab list of genes that have AUC > 0.7 in single cell pseudobulk
-high_sc_pos_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
+# Find list of significant genes in bulk data - low (LRT)
+low_placebo_period_2_LRT_metadata <- low_placebo_metadata[low_placebo_metadata$time_point == "2_D28" | low_placebo_metadata$time_point == "2_D8" | 
+                                                              low_placebo_metadata$time_point == "2_D5" | low_placebo_metadata$time_point == "2_D2" |
+                                                              low_placebo_metadata$time_point == "2_D_minus_1",]
+low_placebo_period_2_LRT_metadata <- low_placebo_period_2_LRT_metadata[low_placebo_period_2_LRT_metadata$subject_id 
+                                                                         %in% names(table(low_placebo_period_2_LRT_metadata$subject_id)
+                                                                                    [table(low_placebo_period_2_LRT_metadata$subject_id) == 5]),]
+low_placebo_period_2_LRT_counts <- low_placebo_counts[rownames(low_placebo_period_2_LRT_metadata)]
+low_placebo_period_2_LRT_analysis <- DESeqDataSetFromMatrix(countData = low_placebo_period_2_LRT_counts,
+                                                             colData = low_placebo_period_2_LRT_metadata,
+                                                             design = ~ subject_id + time_point)
+low_placebo_period_2_LRT_analysis <- DESeq(low_placebo_period_2_LRT_analysis, test = "LRT", reduced = ~ subject_id)
+low_placebo_period_2_LRT_analysis_results <- results(low_placebo_period_2_LRT_analysis, alpha = 0.05)
+low_placebo_period_2_LRT_analysis_results <- low_placebo_period_2_LRT_analysis_results[order(low_placebo_period_2_LRT_analysis_results$padj),]
+low_placebo_period_2_LRT_analysis_results <- subset(low_placebo_period_2_LRT_analysis_results, padj < 0.05)
 
-high_magical_pos_genes <- sc_magical_gene_aucs[sc_magical_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
+# Grab list of genes that have AUC > 0.7 and AUC < 0.3 in D28 bulk RNA-seq
+sc_pos_genes <- all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$all_bulk_D28_gene_auc > 0.7,]$gene_name
+sc_neg_genes <- all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$all_bulk_D28_gene_auc < 0.3,]$gene_name
 
+### ALL BULK PLACEBO DATA ###
+# See which of these genes are significant in LRT data
+sc_pos_genes_LRT_pass <- c()
+for(gene in sc_pos_genes) {
+  if(gene %in% rownames(placebo_period_2_LRT_analysis_results)) {
+    sc_pos_genes_LRT_pass <- c(sc_pos_genes_LRT_pass, gene)
+  }
+}
+
+placebo_period_2_LRT_analysis_betas <- coef(placebo_period_2_LRT_analysis)
+placebo_period_2_LRT_analysis_betas <- placebo_period_2_LRT_analysis_betas[, -c(1:22)]
+placebo_period_2_LRT_analysis_betas <- placebo_period_2_LRT_analysis_betas[rownames(placebo_period_2_LRT_analysis_betas) %in% sc_pos_genes_LRT_pass,]
+placebo_period_2_LRT_analysis_thr <- 1
+colnames(placebo_period_2_LRT_analysis_betas) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+pheatmap(placebo_period_2_LRT_analysis_betas, breaks=seq(from=-placebo_period_2_LRT_analysis_thr, to=placebo_period_2_LRT_analysis_thr, length=101),
+         cluster_col=FALSE, fontsize_col=14)
+
+# See which of these genes are significant in LRT data - why are only 21/32 found to be significant? Because ALL vs HIGH?
+sc_neg_genes_LRT_pass <- c()
+for(gene in sc_neg_genes) {
+  if(gene %in% rownames(placebo_period_2_LRT_analysis_results)) {
+    sc_neg_genes_LRT_pass <- c(sc_neg_genes_LRT_pass, gene)
+  }
+}
+
+placebo_period_2_LRT_analysis_betas_neg <- coef(placebo_period_2_LRT_analysis)
+placebo_period_2_LRT_analysis_betas_neg <- placebo_period_2_LRT_analysis_betas_neg[, -c(1:22)]
+placebo_period_2_LRT_analysis_betas_neg <- placebo_period_2_LRT_analysis_betas_neg[rownames(placebo_period_2_LRT_analysis_betas_neg) %in% sc_neg_genes_LRT_pass,]
+colnames(placebo_period_2_LRT_analysis_betas_neg) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+pheatmap(placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-1.5, to=1.5, length=101),
+         cluster_col=FALSE, fontsize_col=14)
+
+### HIGH BULK PLACEBO DATA ###
 # See which of these genes are significant in LRT data
 high_sc_pos_genes_LRT_pass <- c()
-for(gene in high_sc_pos_genes) {
+for(gene in sc_pos_genes) {
   if(gene %in% rownames(high_placebo_period_2_LRT_analysis_results)) {
     high_sc_pos_genes_LRT_pass <- c(high_sc_pos_genes_LRT_pass, gene)
   }
@@ -317,16 +384,14 @@ for(gene in high_sc_pos_genes) {
 high_placebo_period_2_LRT_analysis_betas <- coef(high_placebo_period_2_LRT_analysis)
 high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_betas[, -c(1:13)]
 high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_betas[rownames(high_placebo_period_2_LRT_analysis_betas) %in% high_sc_pos_genes_LRT_pass,]
-high_placebo_period_2_LRT_analysis_thr <- 2.5
+high_placebo_period_2_LRT_analysis_thr <- 1.5
 colnames(high_placebo_period_2_LRT_analysis_betas) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
 pheatmap(high_placebo_period_2_LRT_analysis_betas, breaks=seq(from=-high_placebo_period_2_LRT_analysis_thr, to=high_placebo_period_2_LRT_analysis_thr, length=101),
          cluster_col=FALSE, fontsize_col=14)
 
-# Grab list of genes that have AUC < 0.3 in single cell pseudobulk
-high_sc_neg_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc < 0.3,]$gene_name
-# See which of these genes are significant in LRT data
+# See which of these genes are significant in LRT data - why are only 21/32 found to be significant? Because ALL vs HIGH?
 high_sc_neg_genes_LRT_pass <- c()
-for(gene in high_sc_neg_genes) {
+for(gene in sc_neg_genes) {
   if(gene %in% rownames(high_placebo_period_2_LRT_analysis_results)) {
     high_sc_neg_genes_LRT_pass <- c(high_sc_neg_genes_LRT_pass, gene)
   }
@@ -342,6 +407,8 @@ pheatmap(high_placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-2, to=2,
 
 
 
+
+
 # Look at how data compendium papers use convalescent data
 
 # Find intersecting genes between bulk and pseudobulk
@@ -353,14 +420,26 @@ pheatmap(high_placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-2, to=2,
 
 
 
-# Genes that passed pseudobulk and all high bulk RNA-seq (AUC > 0.7) was IL10RA - interferon based gene. WHY IS THIS NOT WORKING ANYMORE?
-high_sc_pos_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]$gene_name
+# Genes that passed D28 bulk and all bulk RNA-seq (AUC > 0.7) was nothing
+all_pass_sc_pos_genes <- all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$all_bulk_D28_gene_auc > 0.7,]$gene_name
+all_pass_sc_pos_genes <- intersect(all_pass_sc_pos_genes, all_bulk_D2_sc_pseudobulk_gene_aucs[all_bulk_D2_sc_pseudobulk_gene_aucs$all_bulk_D2_gene_auc > 0.7,]$gene_name)
+all_pass_sc_pos_genes <- intersect(all_pass_sc_pos_genes, all_bulk_D5_sc_pseudobulk_gene_aucs[all_bulk_D5_sc_pseudobulk_gene_aucs$all_bulk_D5_gene_auc > 0.7,]$gene_name)
+all_pass_sc_pos_genes <- intersect(all_pass_sc_pos_genes, all_bulk_D8_sc_pseudobulk_gene_aucs[all_bulk_D8_sc_pseudobulk_gene_aucs$all_bulk_D8_gene_auc > 0.7,]$gene_name)
+
+# Genes that passed D28 bulk and all bulk RNA-seq (AUC < 0.3) were "OST4"    "C9orf78" "TMA7"    "UQCR11"  "BAG1" 
+all_pass_sc_neg_genes <- all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$all_bulk_D28_gene_auc < 0.3,]$gene_name
+all_pass_sc_neg_genes <- intersect(all_pass_sc_neg_genes, all_bulk_D2_sc_pseudobulk_gene_aucs[all_bulk_D2_sc_pseudobulk_gene_aucs$all_bulk_D2_gene_auc < 0.3,]$gene_name)
+all_pass_sc_neg_genes <- intersect(all_pass_sc_neg_genes, all_bulk_D5_sc_pseudobulk_gene_aucs[all_bulk_D5_sc_pseudobulk_gene_aucs$all_bulk_D5_gene_auc < 0.3,]$gene_name)
+all_pass_sc_neg_genes <- intersect(all_pass_sc_neg_genes, all_bulk_D8_sc_pseudobulk_gene_aucs[all_bulk_D8_sc_pseudobulk_gene_aucs$all_bulk_D8_gene_auc < 0.3,]$gene_name)
+
+# Genes that passed D28 bulk and all high bulk RNA-seq (AUC > 0.7) was IL10RA - interferon based gene. 
+high_sc_pos_genes <- all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$all_bulk_D28_gene_auc > 0.7,]$gene_name
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$high_bulk_D8_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc > 0.7,]$gene_name)
-# Genes that passed pseudobulk and all high bulk RNA-seq (AUC < 0.3) were TUBA1A and BAG1. WHY IS BAG1 NOW POSITIVE GENE?
-high_sc_neg_genes <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc < 0.3,]$gene_name
+# Genes that passed D28 bulk and all high bulk RNA-seq (AUC < 0.3) were TUBA1A and BAG1. WHY IS BAG1 NOW POSITIVE GENE?
+high_sc_neg_genes <-  all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$all_bulk_D28_gene_auc < 0.3,]$gene_name
 high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc < 0.3,]$gene_name)
 high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,]$gene_name)
 high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$high_bulk_D8_gene_auc < 0.3,]$gene_name)
