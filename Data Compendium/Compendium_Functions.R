@@ -219,6 +219,8 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
 }
 
 # Generate AUCS for individual genes on a list of datasets
+# I use source to declare the data source for the genes I'm testing (e.g., single cell, multiome) 
+# and disease_tag to provide a little more detail on what I'm testing on (e.g., bulk_day_2)
 test_individual_genes_on_datasets <- function(gene_list, data_list, source, disease_tag) {
   gene_aucs <- c()
   # Sometimes genes aren't found in our ENTREZ mapping database - for those, we just remove them
