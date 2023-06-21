@@ -1,3 +1,5 @@
+library(data.table)
+
 # Function to find total number of each sex in dataframe
 find_sex_count = function(curr_df) {
   sexes <- c()
@@ -37,8 +39,10 @@ find_age_count = function(curr_df) {
   return(ages)
 }
 
+base_dir <- "~/GitHub/Influenza/"
+source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
+setup_bulk_analysis()
 
-base_dir <- "C:/Users/wat2/Documents/GitHub/Influenza/"
 scRNA_data_list <- paste0(base_dir, "scRNA/scRNA_data_list.txt")
 scATAC_data_list <- paste0(base_dir, "scATAC/scATAC_data_list.txt")
 multiome_data_list <- paste0(base_dir, "multiome/multiome_data_list.txt")
@@ -46,7 +50,6 @@ bulkRNA_data_list <- paste0(base_dir, "bulkRNA/bulkRNA_data_list.txt")
 scRNA_qc_file <- paste0(base_dir, "ECHO_FLU_Vaccitech_PBMC_scrnaseq_coded_qc_report_WT.csv")
 multiome_qc_file <- paste0(base_dir, "Stanford_FLU_combined_qc_metric_coded_09015022_qc_data.csv")
 overall_metadata_file <- paste0(base_dir, "20220609_metadataECHO_Vaccitech_Coded.csv")
-viral_load_file <- paste0(base_dir, "viral_load_info.tsv")
 # Read in tables
 scRNA_data <- read.table(scRNA_data_list)$V1
 scRNA_data <- scRNA_data[1:length(scRNA_data) - 1]
@@ -58,7 +61,6 @@ bulkRNA_data <- read.table(bulkRNA_data_list)$V1
 scRNA_qc <- read.csv(scRNA_qc_file)
 multiome_qc <- read.csv(multiome_qc_file)
 overall_metadata <- read.csv(overall_metadata_file)
-viral_load <- read.table(viral_load_file, header = TRUE, sep = "\t")
 all_metadata_sheet_df <- data.frame(aliquot_id = character(), subject_id = character(), scRNA_seq = character(),
                                       scATAC_seq = character(), multiome = character(), bulkRNA_seq = character(),
                                       has_metadata = character(), specimen_prep = character(), treatment = character(), 
@@ -110,9 +112,10 @@ for(scRNA_entry in scRNA_data) {
   # Append N/A for multiome QC for now
   current_row <- append(current_row, "N/A")
   # Add viral load info
-  if(scRNA_entry %in% viral_load$aliquot) {
-    current_viral_load <- viral_load[viral_load$aliquot == scRNA_entry,]
-    current_row <- append(current_row, current_viral_load$viral_load)
+  if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
+    current_row <- append(current_row, "high")
+  } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
+    current_row <- append(current_row, "low")
   } else {
     current_row <- append(current_row, "neither")
   }
@@ -165,9 +168,10 @@ for(scATAC_entry in scATAC_data) {
     # Append N/A for multiome QC for now
     current_row <- append(current_row, "N/A")
     # Add viral load info
-    if(scATAC_entry %in% viral_load$aliquot) {
-      current_viral_load <- viral_load[viral_load$aliquot == scATAC_entry,]
-      current_row <- append(current_row, current_viral_load$viral_load)
+    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
+      current_row <- append(current_row, "high")
+    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
+      current_row <- append(current_row, "low")
     } else {
       current_row <- append(current_row, "neither")
     }
@@ -227,9 +231,10 @@ for(multiome_entry in multiome_data) {
       current_row <- append(current_row, "N/A")
     }
     # Add viral load info
-    if(multiome_entry %in% viral_load$aliquot) {
-      current_viral_load <- viral_load[viral_load$aliquot == multiome_entry,]
-      current_row <- append(current_row, current_viral_load$viral_load)
+    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
+      current_row <- append(current_row, "high")
+    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
+      current_row <- append(current_row, "low")
     } else {
       current_row <- append(current_row, "neither")
     }
@@ -279,10 +284,15 @@ for(bulkRNA_entry in bulkRNA_data) {
       current_row <- append(current_row, "N/A")
     }
     # Add N/A for scRNA_seq QC and multiome QC
-    # TODO: Change N/A to viral load info for bulk RNA-seq
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
-    current_row <- append(current_row, "N/A")
+    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
+      current_row <- append(current_row, "high")
+    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
+      current_row <- append(current_row, "low")
+    } else {
+      current_row <- append(current_row, "neither")
+    }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
 }
