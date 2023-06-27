@@ -8,3 +8,11 @@ for(subject in single_cell_subjects) {
     print(current_metadata)
   }
 }
+
+# Capture number of bulk RNA-seq for each subject
+placebo_bulk_subjects <- unique(placebo_metadata$subject_id)
+subject_counts <- c()
+for(subject in placebo_bulk_subjects) {
+  current_metadata <- placebo_metadata[placebo_metadata$subject_id == subject,]
+  subject_counts <- c(subject_counts, nrow(current_metadata))
+}
