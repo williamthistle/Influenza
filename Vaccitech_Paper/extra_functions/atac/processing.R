@@ -131,7 +131,7 @@ combine_cell_types_atac <- function(proj) {
     idxSample <- which(proj$Harmony_clusters == pre_cluster[m])
     Cell_type_voting[idxSample] <- max_celltype[m]
   }
-  proj <- ArchR::addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
+  proj <- addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
   return(proj)
 }
 
@@ -174,10 +174,10 @@ get_cluster_info <- function(proj) {
   cluster_day_distributions <- list()
   cluster_sex_distributions <- list()
   idx <- 1
-  unique_cluster_ids <- unique(proj$Clusters)
+  unique_cluster_ids <- unique(proj$Harmony_clusters)
   unique_cluster_ids <- unique_cluster_ids[order(nchar(unique_cluster_ids), unique_cluster_ids)]
   for (cluster in unique_cluster_ids) {
-    idxPass <- which(proj$Clusters %in% cluster)
+    idxPass <- which(proj$Harmony_clusters %in% cluster)
     cellsPass <- proj$cellNames[idxPass]
     filtered_cluster <-proj[cellsPass,]
     cluster_cell_type_predictions <- append(cluster_cell_type_predictions, table(filtered_cluster$Cell_type_voting))

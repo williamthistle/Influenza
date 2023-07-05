@@ -307,11 +307,11 @@ InitialProcessing_ATAC_alt <- function(proj, log_flag = FALSE) {
                                  iterations = 2,
                                  force = TRUE,
                                  clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
-                                 varFeatures = 25000, dimsToUse = 2:30,
+                                 varFeatures = 20000, dimsToUse = 2:30,
                                  saveIterations = TRUE)
   proj <- ArchR::addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
   proj <- ArchR::addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat",
-                             name = "Clusters", resolution = 5, knnAssign = 30,
+                             name = "Clusters", resolution = 2, knnAssign = 30,
                              maxClusters = NULL, force = TRUE)
   p1 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
   p2 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
