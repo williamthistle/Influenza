@@ -1,5 +1,5 @@
 # Initial combination of cell types
-combine_cell_types_initial <- function(sc_obj, resolution = 2) {
+combine_cell_types_initial <- function(sc_obj, resolution = 1.5) {
   sc_obj$old.predicted.id <- sc_obj$predicted.id
   Cell_type_combined <- sc_obj$predicted.id
   idx <- grep("CD4 T", Cell_type_combined)
@@ -66,3 +66,172 @@ remove_cells_based_on_umap <- function(sc_obj, first_x, second_x, first_y, secon
   sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
   return(sc_obj)
 }
+
+
+
+
+#' Infer batches using LISI metric
+#'
+#' @param sc_obj Seurat object containing cells for all samples
+#' @return A Seurat object which contains labeled batches
+#' @examples
+#' \dontrun{sc_obj <- InferBatches(sc_obj)}
+#' @export
+InferBatches_alt <- function(sc_obj, log_flag = FALSE) {
+  # Find clusters in data (prior to batch correction)
+  if ('lsi' %in% Seurat::Reductions(sc_obj)) {
+    sc_obj <- Seurat::FindNeighbors(object = sc_obj, reduction = "lsi", dims = 1:30)
+    sc_obj <- Seurat::FindClusters(object = sc_obj, resolution = 0.2, algorithm = 2)
+  } else {
+    sc_obj <- Seurat::FindNeighbors(object = sc_obj, reduction = "pca", dims = 1:30)
+    sc_obj <- Seurat::FindClusters(object = sc_obj, resolution = 0.1, algorithm = 2)
+  }
+  # Use LISI metric to guess batch labels
+  X <- sc_obj@reductions$umap@cell.embeddings
+  meta_data <- data.frame(sc_obj$sample)
+  colnames(meta_data) <- "batch"
+  meta_data$cluster <- sc_obj$seurat_clusters
+  lisi.res <- data.frame(matrix(ncol = 4, nrow = 0))
+  colnames(lisi.res) <- c("batch", "score", "cluster", "freq")
+  clusters.interest <- names(table(sc_obj$seurat_clusters))[prop.table(table(sc_obj$seurat_clusters)) > 0.01]
+  for (cluster in clusters.interest) { #levels(sc_obj$seurat_clusters)) {
+    cells <- names(sc_obj$seurat_clusters[sc_obj$seurat_clusters == cluster])
+    X.sub <- X[which(rownames(X) %in% cells),]
+    meta_data.sub <- meta_data[which(rownames(meta_data) %in% cells),]
+    res <- lisi::compute_lisi(X.sub, meta_data.sub, label_colnames = "batch")
+    rownames(res) <- cells
+    colnames(res) <- "score"
+    res$batch <- meta_data.sub$batch
+    agg.res <- stats::aggregate(.~batch,data=res,mean)
+    agg.res$cluster <- cluster
+    agg.res$freq <- data.frame(table(res$batch))$Freq[which(data.frame(table(res$batch))$Var1 %in% agg.res$batch)]
+    lisi.res <- rbind(lisi.res, agg.res)
+  }
+  
+  p.values <- list()
+  used.sample.dump <- c()
+  batch.assign <- list()
+  for ( i in clusters.interest) {
+    lisi.res.sub <- lisi.res[lisi.res$cluster == i,]
+    if (max(lisi.res.sub$score) <= 1.1) {
+      samples.of.batch <- lisi.res.sub$batch[1]
+      if (!(samples.of.batch %in% used.sample.dump)) {
+        batch.assign <- lappend(batch.assign, samples.of.batch)
+      }
+      used.sample.dump <- union(used.sample.dump, samples.of.batch)
+    } else {
+      lisi.res.sub$scaled.score <- scale_zero_one(lisi.res.sub$score * (lisi.res.sub$freq / sum(lisi.res.sub$freq)))
+      lisi.res.sub <- lisi.res.sub[order(lisi.res.sub$scaled.score, decreasing = TRUE),]
+      if (dim(lisi.res.sub)[1] > 30) {
+        lisi.res.sub <- lisi.res.sub[1:30,]
+      }
+      lisi.res.sub$diff.scaled.score <- abs(c(diff(lisi.res.sub$scaled.score), 0))
+      
+      if (dim(lisi.res.sub)[1] >= 3) {
+        p.values[[i]] <- outliers::dixon.test(lisi.res.sub$diff.scaled.score)$p.value[[1]]
+      } else {
+        p.values[[i]] <- 1
+      }
+      
+      if (p.values[[i]] < 0.05) {
+        max.index <- which.max(lisi.res.sub$diff.scaled.score)
+        samples.of.batch <- lisi.res.sub$batch[1:max.index]
+        
+        if (any(samples.of.batch %in% used.sample.dump)) {
+          if (!all(samples.of.batch %in% used.sample.dump)) {
+            used.index <- which(samples.of.batch %in% used.sample.dump)
+            samples.of.batch <- samples.of.batch[-used.index]
+            if (length(samples.of.batch) > 0) {
+              batch.assign <- lappend(batch.assign, samples.of.batch)
+            }
+          } else if (!list(samples.of.batch) %in% batch.assign) {
+            if (length(samples.of.batch) == 1) {
+              batch.assign <- lappend(batch.assign, samples.of.batch)
+            } else {
+              used.index <- which(samples.of.batch %in% unlist(batch.assign))
+              samples.of.batch <- samples.of.batch[-used.index]
+              if (length(samples.of.batch) > 0) {
+                batch.assign <- lappend(batch.assign, samples.of.batch)
+              }
+            }
+          }
+        } else {
+          batch.assign <- lappend(batch.assign, samples.of.batch)
+        }
+        used.sample.dump <- union(used.sample.dump, samples.of.batch)
+      }
+    }
+  }
+  
+  batch <- as.factor(sc_obj$sample)
+  if (length(batch.assign) > 0) {
+    levels.batch <- levels(batch)
+    for (i in 1:length(batch.assign)) {
+      levels.batch[which(levels(batch) %in% batch.assign[[i]])] <- i
+    }
+    levels.batch[!levels.batch %in% c(1:length(batch.assign))] <- length(batch.assign)+1
+    levels(batch) <- levels.batch
+    sc_obj$batch <- as.character(batch)
+  } else {
+    sc_obj$batch <- "No Batch"
+  }
+  gc()
+  return(sc_obj)
+}
+
+MajorityVote_RNA_alt <- function(sc_obj, current_resolution = 1, log_flag = FALSE) {
+  if(Seurat::DefaultAssay(sc_obj) == "integrated") {
+    associated_res_attribute <- paste0("integrated_snn_res.", current_resolution)
+  } else {
+    associated_res_attribute <- paste0("SCT_snn_res.", current_resolution)
+  }
+  sc_obj <- Seurat::FindNeighbors(sc_obj, reduction = "pca", dims = 1:30)
+  sc_obj <- Seurat::FindClusters(sc_obj, resolution = current_resolution)
+  sc_obj$predicted.id <- as.character(sc_obj$predicted.id)
+  
+  integrated_snn_res_df <- sc_obj[[associated_res_attribute]]
+  integrated_snn_res_cell_names <- rownames(integrated_snn_res_df)
+  integrated_snn_res_values <- integrated_snn_res_df[,1]
+  
+  cluster.dump <- as.numeric(levels(integrated_snn_res_values))
+  sc_obj$predicted_celltype_majority_vote <- sc_obj$seurat_clusters
+  levels(sc_obj$predicted_celltype_majority_vote) <- as.character(levels(sc_obj$predicted_celltype_majority_vote))
+  for (i in unique(sc_obj$predicted.id)) {
+    print(i)
+    cells <- names(sc_obj$predicted.id[sc_obj$predicted.id == i])
+    freq.table <- as.data.frame(table(integrated_snn_res_df[cells,]))
+    freq.table <- freq.table[order(freq.table$Freq, decreasing = TRUE),]
+    freq.table$diff <- abs(c(diff(freq.table$Freq), 0))
+    if(nrow(freq.table) > 30) {
+      freq.table <- freq.table[1:30,]
+    }
+    p.values <- outliers::dixon.test(freq.table$diff)$p.value[[1]]
+    max.index <- which.max(freq.table$diff)
+    clusters <- as.numeric(as.character(freq.table$Var1[1:max.index]))
+    levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(clusters)] <- i
+    cluster.dump <- cluster.dump[!cluster.dump %in% clusters]
+  }
+  
+  if (length(cluster.dump) > 0) {
+    for (i in cluster.dump) {
+      cells <- rownames(subset(integrated_snn_res_df, integrated_snn_res_df[,1] == i,))
+      freq.table <- as.data.frame(table(sc_obj$predicted.id[cells]))
+      levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(i)] <- as.vector(freq.table$Var1)[which.max(freq.table$Freq)]
+    }
+  }
+  return(sc_obj)
+}
+
+#' Scale a vector to range(0,1)
+#'
+#' @param x Numeric vector
+#' @return A scaled vector ranging from 0 to 1
+scale_zero_one <- function(x) {(x - min(x))/(max(x) - min(x))}
+
+#' Append a list to a list-of-lists
+#'
+#' @param lst List
+#' @param ... Additional lists
+#' @return A list of lists
+lappend <- function (lst, ...){ c(lst, list(...))}
+

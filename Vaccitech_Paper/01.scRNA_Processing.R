@@ -1,5 +1,7 @@
 library(SPEEDI)
+library(Seurat)
 # Load extra RNA functions
+home_dir <- "~/"
 source(paste0(home_dir, "extra_functions/rna/preprocessing_and_qc.R"))
 source(paste0(home_dir, "extra_functions/rna/get_stats.R"))
 source(paste0(home_dir, "extra_functions/rna/manipulate_data.R"))
@@ -8,7 +10,6 @@ source(paste0(home_dir, "extra_functions/rna/visualization.R"))
 
 ################## SETUP ##################
 date <- Sys.Date()
-home_dir <- "~/"
 data_path <- "~/single_cell/data"
 reference_dir <- "~/references/"
 reference_file_name <- "pbmc_multimodal.h5seurat"
@@ -66,7 +67,6 @@ log_file_name <- paste0(gsub(" ", "_", Sys.time()), "_SPEEDI")
 log_file_name <- gsub(":", "-", log_file_name)
 log_file_name <- paste0(output_dir, log_file_name)
 log_file <- logr::log_open(log_file_name, logdir = FALSE)
-print_SPEEDI("Beginning SPEEDI Run!", log_flag = TRUE)
 # Load reference
 reference <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = species, reference_dir = reference_dir,
                                  reference_file_name = reference_file_name, log_flag = TRUE)
@@ -83,14 +83,17 @@ sc_obj <- FilterRawData_RNA(all_sc_exp_matrices = all_sc_exp_matrices, species =
                             log_file_path = log_file_name, log_flag = TRUE)
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing_RNA(sc_obj = sc_obj, species = species, metadata_df = sample_metadata_for_SPEEDI_df, log_flag = TRUE)
-sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE) # STOPPED AFTER THIS STEP - 6 batches with new approach instead of 3? Weird?
+sc_obj <- InferBatches_alt(sc_obj = sc_obj, log_flag = TRUE) # STOPPED AFTER THIS STEP - 6 batches with new approach instead of 3? Weird? 
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA_old.rds"))
 sc_obj <- IntegrateByBatch_RNA(sc_obj = sc_obj, log_flag = TRUE)
 sc_obj <- VisualizeIntegration(sc_obj = sc_obj, log_flag = TRUE)
 sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
                            reference_cell_type_attribute = reference_cell_type_attribute,
                            output_dir = RNA_output_dir, log_flag = TRUE)
-print_SPEEDI("Saving Seurat object (RNA)", log_flag = TRUE)
-save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.rds"))
+# sc_obj <- MajorityVote_RNA_alt(sc_obj)
+save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.old.algorithm.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA.old.algorithm.rds"))
 
 sc_obj$old.predicted.id <- sc_obj$predicted.id
 Cell_type_combined <- sc_obj$predicted.id
@@ -102,8 +105,33 @@ idx <- grep("cDC", Cell_type_combined)
 Cell_type_combined[idx] <- "cDC"
 idx <- grep("Proliferating", Cell_type_combined)
 Cell_type_combined[idx] <- "Proliferating"
+idx <- grep("CD4 Naive", Cell_type_combined)
+Cell_type_combined[idx] <- "T Naive"
+idx <- grep("CD8 Naive", Cell_type_combined)
+Cell_type_combined[idx] <- "T Naive"
+idx <- grep("Treg", Cell_type_combined)
+Cell_type_combined[idx] <- "T Naive"
 sc_obj$predicted.id <- Cell_type_combined
-sc_obj <- MajorityVote_RNA(sc_obj)
+sc_obj <- MajorityVote_RNA_alt(sc_obj)
+
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+               group_by_category = "predicted_celltype_majority_vote", output_dir = output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Cluster.png",
+               group_by_category = "seurat_clusters", output_dir = output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+               group_by_category = "predicted.id", output_dir = output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Sample.png",
+               group_by_category = "sample", output_dir = output_dir,
+               log_flag = log_flag)
+
+
+
+
+
+
 
 combined_cell_type_dir <- paste0(RNA_output_dir, "combined_cell_types/")
 
