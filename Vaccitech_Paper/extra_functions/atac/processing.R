@@ -123,6 +123,15 @@ combine_cell_types_atac <- function(proj) {
   proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD8 Naive", "T Naive")
   proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "NK_CD56bright", "NK")
   proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "Treg", "T Naive")
+  cM <- as.matrix(ArchR::confusionMatrix(proj$Harmony_clusters, proj$predictedGroup))
+  Cell_type_voting <- proj$Harmony_clusters
+  pre_cluster <- rownames(cM)
+  max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
+  for (m in c(1:length(pre_cluster))){
+    idxSample <- which(proj$Harmony_clusters == pre_cluster[m])
+    Cell_type_voting[idxSample] <- max_celltype[m]
+  }
+  proj <- ArchR::addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
   return(proj)
 }
 

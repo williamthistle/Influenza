@@ -301,3 +301,22 @@ IntegrateByBatch_ATAC_alt <- function(proj, log_flag = FALSE) {
   gc()
   return(proj)
 }
+
+InitialProcessing_ATAC_alt <- function(proj, log_flag = FALSE) {
+  proj <- ArchR::addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI",
+                                 iterations = 2,
+                                 force = TRUE,
+                                 clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
+                                 varFeatures = 25000, dimsToUse = 2:30,
+                                 saveIterations = TRUE)
+  proj <- ArchR::addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
+  proj <- ArchR::addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat",
+                             name = "Clusters", resolution = 5, knnAssign = 30,
+                             maxClusters = NULL, force = TRUE)
+  p1 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p2 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p3 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  ArchR::plotPDF(p1,p2,p3, name = "UMAPs_After_Initial_Processing_plots", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  gc()
+  return(proj)
+}

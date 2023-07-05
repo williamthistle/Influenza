@@ -9,6 +9,9 @@ source(paste0(home_dir, "extra_functions/rna/get_stats.R"))
 source(paste0(home_dir, "extra_functions/rna/manipulate_data.R"))
 source(paste0(home_dir, "extra_functions/rna/differential_expression.R"))
 source(paste0(home_dir, "extra_functions/rna/visualization.R"))
+source(paste0(home_dir, "extra_functions/atac/preprocessing_and_qc.R"))
+source(paste0(home_dir, "extra_functions/atac/processing.R"))
+
 
 ################## SETUP ##################
 date <- Sys.Date()
@@ -82,12 +85,26 @@ setwd(ATAC_output_dir)
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(data_path = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
-atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE)
+atac_proj <- InitialProcessing_ATAC_alt(proj = atac_proj, log_flag = TRUE)
 atac_proj <- IntegrateByBatch_ATAC_alt(proj = atac_proj, log_flag = TRUE)
 atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference,
                                reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
 ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
-# load ArchR project: atac_proj <- loadArchRProject(path = ATAC_output_dir)
+# load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
+
+atac_proj <- combine_cell_types_atac(atac_proj)
+
+pal <- paletteDiscrete(values = atac_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
+p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+ArchR::plotPDF(p1,p2,p3,p4, name = "UMAP_after_Final_Cell_Type_Majority_Voting_plots_combined_cell_types", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
+
+
+
+
+
 
 print_cell_type_distributions(atac_proj)
 create_cell_type_proportion_MAGICAL_atac(atac_proj, ATAC_output_dir, c("day"), day_metadata)
