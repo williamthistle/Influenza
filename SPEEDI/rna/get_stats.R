@@ -202,10 +202,10 @@ capture_cluster_info <- function(sc_obj, find_doublet_info = FALSE) {
 }
 
 # Create MAGICAL cell type proportion file
-create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_load_samples, d28_samples, male_samples, token = NULL) {
+create_magical_cell_type_proportion_file <- function(sc_obj, output_dir, group, high_viral_load_samples, d28_samples, male_samples, token = NULL) {
   sample_names <- unique(sc_obj$sample)
   condition_label <- c()
-  if(group == "day") {
+  if(group == "time_point") {
     for(name in sample_names) {
       if(name %in% d28_samples) {
         condition_label <- c(condition_label, "D28")
@@ -264,9 +264,9 @@ create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_l
     cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
   }
   if(is.null(token)) {
-    write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "RNA_cell_type_proportion_", group, ".csv"), quote = FALSE, row.names = FALSE)  
+    write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion_", group, ".csv"), quote = FALSE, row.names = FALSE)  
   } else {
-    write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "RNA_cell_type_proportion_", group, "_", token, ".csv"), quote = FALSE, row.names = FALSE)   
+    write.csv(cell_type_proportions_df, file = paste0(output_dir, "RNA_cell_type_proportion_", group, "_", token, ".csv"), quote = FALSE, row.names = FALSE)   
   }
 }
 
