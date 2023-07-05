@@ -112,7 +112,7 @@ Cell_type_combined[idx] <- "T Naive"
 idx <- grep("Treg", Cell_type_combined)
 Cell_type_combined[idx] <- "T Naive"
 sc_obj$predicted.id <- Cell_type_combined
-sc_obj <- MajorityVote_RNA_alt(sc_obj)
+sc_obj <- MajorityVote_RNA_alt(sc_obj, current_resolution = 2)
 
 print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = output_dir,
@@ -127,10 +127,10 @@ print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Sample.png",
                group_by_category = "sample", output_dir = output_dir,
                log_flag = log_flag)
 
+cluster_info <- capture_cluster_info(sc_obj)
 
-
-
-
+# look at markers for cluster 34 (t-reg?)
+# 
 
 
 combined_cell_type_dir <- paste0(RNA_output_dir, "combined_cell_types/")
