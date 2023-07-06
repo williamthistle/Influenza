@@ -177,9 +177,9 @@ run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
 run_differential_expression_group(sc_obj, differential_genes_dir, "viral_load") # NOT RUN YET
 run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
 
-create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"viral_load", high_viral_load_samples, d28_samples, male_samples)
 create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
-create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"sex", high_viral_load_samples, d28_samples, male_samples)
+create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"viral_load", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
+create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"sex", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
 
 pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/")
 if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}

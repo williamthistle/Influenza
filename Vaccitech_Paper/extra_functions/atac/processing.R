@@ -305,9 +305,9 @@ calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
     cells_subset <- proj[cellsPass,]
     print(cells_subset)
     # Find DAPs
-    marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "day",
+    marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "time_point",
                                        testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), normBy = "ReadsInPeaks", maxCells = 15000,
-                                       useGroups = "D28", bgdGroups = "D_MINUS_1")
+                                       useGroups = "D28", bgdGroups = "D_minus_1")
     # Grab relevant stats
     marker_log_2_fc <- assays(marker_D28_D1)$Log2FC
     marker_mean <- assays(marker_D28_D1)$Mean

@@ -3,6 +3,7 @@ library(Seurat)
 library(parallel)
 library(doMC)
 library(BSgenome.Hsapiens.UCSC.hg38)
+library(openxlsx)
 # Load extra RNA functions
 home_dir <- "~/"
 source(paste0(home_dir, "extra_functions/rna/preprocessing_and_qc.R"))
@@ -102,7 +103,7 @@ atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE)
 atac_proj <- IntegrateByBatch_ATAC_alt(proj = atac_proj, log_flag = TRUE)
 atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference,
                                reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
-ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
+# save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
 
 atac_proj <- combine_cell_types_atac(atac_proj)
@@ -153,6 +154,7 @@ final_proj <- pseudo_bulk_replicates_and_call_peaks(final_proj)
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
 final_proj <- addPeakMatrix(final_proj)
+# TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 calculate_daps_for_each_cell_type(final_proj, differential_peaks_dir)

@@ -210,7 +210,7 @@ create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_l
       if(name %in% d28_samples) {
         condition_label <- c(condition_label, "D28")
       } else {
-        condition_label <- c(condition_label, "D_MINUS_1")
+        condition_label <- c(condition_label, "D_minus_1")
       }
     }
   } else if(group == "sex") {
