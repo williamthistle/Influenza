@@ -36,23 +36,23 @@ add_sample_metadata_atac <- function(proj, high_viral_load_samples, low_viral_lo
   # Add viral load metadata to ArchR object
   viral_load_vector <- proj$Sample
   idxSample <- which(proj$Sample %in% high_viral_load_samples)
-  viral_load_vector[idxSample]<-'HVL'
+  viral_load_vector[idxSample]<-'high'
   idxSample <- which(proj$Sample %in% low_viral_load_samples)
-  viral_load_vector[idxSample]<-'LVL'
+  viral_load_vector[idxSample]<-'low'
   proj <- addCellColData(ArchRProj = proj, data = viral_load_vector, cells = proj$cellNames, name = "viral_load", force = TRUE)
   # Add day metadata to ArchR object
   day_vector <- proj$Sample
   idxSample <- which(proj$Sample %in% d28_samples)
   day_vector[idxSample]<-'D28'
   idxSample <- which(proj$Sample %in% d_minus_1_samples)
-  day_vector[idxSample]<-'D_MINUS_1'
-  proj <- addCellColData(ArchRProj = proj, data = day_vector, cells = proj$cellNames, name = "day", force = TRUE)
+  day_vector[idxSample]<-'D_minus_1'
+  proj <- addCellColData(ArchRProj = proj, data = day_vector, cells = proj$cellNames, name = "time_point", force = TRUE)
   # Add sex metadata to ArchR object
   sex_vector <- proj$Sample
   idxSample <- which(proj$Sample %in% male_samples)
-  sex_vector[idxSample]<-'MALE'
+  sex_vector[idxSample]<-'M'
   idxSample <- which(proj$Sample %in% female_samples)
-  sex_vector[idxSample]<-'FEMALE'
+  sex_vector[idxSample]<-'F'
   proj <- addCellColData(ArchRProj = proj, data = sex_vector, cells = proj$cellNames, name = "sex", force = TRUE)
   return(proj)
 }
@@ -66,21 +66,21 @@ parse_metadata_for_samples <- function(proj, group, high_viral_load_samples, low
   for(name in metadata_names) {
     if(group == "viral_load") {
       if(name %in% high_viral_load_samples) {
-        current_metadata <- c(current_metadata, "HVL")
+        current_metadata <- c(current_metadata, "high")
       } else {
-        current_metadata <- c(current_metadata, "LVL")
+        current_metadata <- c(current_metadata, "low")
       }
-    } else if(group == "day") {
+    } else if(group == "time_point") {
       if(name %in% d28_samples) {
         current_metadata <- c(current_metadata, "D28")
       } else {
-        current_metadata <- c(current_metadata, "D_MINUS_1")
+        current_metadata <- c(current_metadata, "D_minus_1")
       }
     } else if(group == "sex") {
       if(name %in% male_samples) {
-        current_metadata <- c(current_metadata, "MALE")
+        current_metadata <- c(current_metadata, "M")
       } else {
-        current_metadata <- c(current_metadata, "FEMALE")
+        current_metadata <- c(current_metadata, "F")
       }
     }
   }

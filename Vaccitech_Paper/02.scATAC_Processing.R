@@ -2,6 +2,7 @@ library(SPEEDI)
 library(Seurat)
 library(parallel)
 library(doMC)
+library(BSgenome.Hsapiens.UCSC.hg38)
 # Load extra RNA functions
 home_dir <- "~/"
 source(paste0(home_dir, "extra_functions/rna/preprocessing_and_qc.R"))
@@ -43,6 +44,17 @@ sample_metadata_for_SPEEDI_df <- sample_metadata
 rownames(sample_metadata_for_SPEEDI_df) <- sample_metadata_for_SPEEDI_df$aliquot_id
 sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[c("subject_id", "time_point", "sex", "viral_load")]
 sample_metadata_for_SPEEDI_df$time_point[sample_metadata_for_SPEEDI_df$time_point == 'D-1'] <- 'D_minus_1'
+
+# Break down metadata by category
+high_viral_load_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "high",]))
+low_viral_load_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "low",]))
+all_viral_load_samples <- c(high_viral_load_samples, low_viral_load_samples)
+d28_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$time_point == "D28",]))
+d_minus_1_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$time_point == "D_minus_1",]))
+all_day_samples <- c(d28_samples, d_minus_1_samples)
+male_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$sex == "M",]))
+female_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$sex == "F",]))
+all_sex_samples <- c(male_samples, female_samples)
 
 # Normalize paths (in case user provides relative paths)
 data_path <- normalize_dir_path(data_path)
@@ -121,8 +133,21 @@ p3 <- ArchR::plotEmbedding(ArchRProj = final_proj, colorBy = "cellColData", name
 p4 <- ArchR::plotEmbedding(ArchRProj = final_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
 ArchR::plotPDF(p1,p2,p3,p4, name = "UMAP_after_Final_Cell_Type_Majority_Voting_plots_combined_cell_types_minus_messy_clusters", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
 
+# Add sample metadata
+final_proj <- add_sample_metadata_atac(final_proj, high_viral_load_samples, low_viral_load_samples,
+                                 d28_samples, d_minus_1_samples, male_samples, female_samples)
+viral_load_metadata <- parse_metadata_for_samples(final_proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
+                                                  d28_samples, d_minus_1_samples, male_samples, female_samples)
+day_metadata <- parse_metadata_for_samples(final_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
+sex_metadata <- parse_metadata_for_samples(final_proj, "sex", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
+
+# Print distributions for each cell type and create cell type proportions file for MAGICAL
 print_cell_type_distributions(final_proj)
 create_cell_type_proportion_MAGICAL_atac(final_proj, ATAC_output_dir, c("time_point"), day_metadata)
+
+# Call peaks
 addArchRGenome("hg38")
 final_proj <- pseudo_bulk_replicates_and_call_peaks(final_proj)
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility

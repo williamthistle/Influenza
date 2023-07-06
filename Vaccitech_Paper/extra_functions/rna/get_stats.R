@@ -260,6 +260,7 @@ create_magical_cell_type_proportion_file <- function(sc_obj, group, high_viral_l
       }
     }
     temp_df <- data.frame(cell_type_proportions)
+    cell_type <- sub(" ", "_", cell_type)
     names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
     cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
   }

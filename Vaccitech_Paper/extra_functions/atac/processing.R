@@ -237,7 +237,7 @@ print_cell_type_distributions <- function(proj) {
 # Method to create the cell type proportion file for MAGICAL
 create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadata_categories, day_metadata) {
   for(metadata_category in metadata_categories) {
-    if(metadata_category == "day") {
+    if(metadata_category == "time_point") {
       metadata <- day_metadata
     }
     cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = paste0("Sample_", names(metadata)))
