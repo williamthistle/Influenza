@@ -307,7 +307,7 @@ InitialProcessing_ATAC_alt <- function(proj, log_flag = FALSE) {
                                  iterations = 2,
                                  force = TRUE,
                                  clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
-                                 varFeatures = 20000, dimsToUse = 2:30,
+                                 varFeatures = 20000, dimsToUse = 1:30,
                                  saveIterations = TRUE)
   proj <- ArchR::addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
   proj <- ArchR::addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat",

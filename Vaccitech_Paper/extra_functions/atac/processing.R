@@ -194,7 +194,7 @@ get_cluster_info <- function(proj) {
 
 # Sometimes, we want to manually override the cell type for a given cluster (if we feel like majority vote got it wrong)
 override_cluster_label_atac <- function(proj, cluster_identities, cluster_label) {
-  idxPass <- which(proj$Clusters %in% cluster_identities)
+  idxPass <- which(proj$Harmony_clusters %in% cluster_identities)
   proj$Cell_type_voting[idxPass] <- cluster_label
   return(proj)
 }

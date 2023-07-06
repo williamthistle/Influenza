@@ -77,11 +77,11 @@ reference <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = 
                                  reference_file_name = reference_file_name, log_flag = TRUE)
 idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
 reference <- reference[,-idx]
-
 # Output dir for ATAC
 ATAC_output_dir <- paste0(output_dir, "ATAC", "/")
 if (!dir.exists(ATAC_output_dir)) {dir.create(ATAC_output_dir)}
 setwd(ATAC_output_dir)
+
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(data_path = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
@@ -96,19 +96,23 @@ ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 atac_proj <- combine_cell_types_atac(atac_proj)
 
 pal <- paletteDiscrete(values = atac_proj$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
-p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Harmony_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p5 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-ArchR::plotPDF(p1,p2,p3,p4,p5, name = "UMAP_after_Final_Cell_Type_Majority_Voting_plots_combined_cell_types", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
+p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Harmony_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p5 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p6 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+ArchR::plotPDF(p1,p2,p3,p4,p5,p6, name = "UMAP_after_Final_Cell_Type_Majority_Voting_plots_combined_cell_types", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
 
 cluster_info <- get_cluster_info(atac_proj)
 
 # Remove messy clusters
-idxPass <- which(atac_proj$Clusters %in% c("C2", "C3", "C4", "C5", "C6", "C23", "C29", "C30"))
+idxPass <- which(atac_proj$Harmony_clusters %in% c("C4", "C11", "C17", "C21", "C23", "C24", "C25", "C27", "C28", "C29", "C30", "C31", "C32"))
 cellsPass <- atac_proj$cellNames[-idxPass]
 final_proj <- atac_proj[cellsPass, ]
+
+# Override label
+final_proj <- override_cluster_label_atac(final_proj, "C8", "Proliferating")
 
 pal <- paletteDiscrete(values = final_proj$Cell_type_voting)
 p1 <- ArchR::plotEmbedding(ArchRProj = final_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
@@ -117,21 +121,21 @@ p3 <- ArchR::plotEmbedding(ArchRProj = final_proj, colorBy = "cellColData", name
 p4 <- ArchR::plotEmbedding(ArchRProj = final_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
 ArchR::plotPDF(p1,p2,p3,p4, name = "UMAP_after_Final_Cell_Type_Majority_Voting_plots_combined_cell_types_minus_messy_clusters", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
 
-print_cell_type_distributions(atac_proj)
-create_cell_type_proportion_MAGICAL_atac(atac_proj, ATAC_output_dir, c("day"), day_metadata)
+print_cell_type_distributions(final_proj)
+create_cell_type_proportion_MAGICAL_atac(final_proj, ATAC_output_dir, c("time_point"), day_metadata)
 addArchRGenome("hg38")
-atac_proj <- pseudo_bulk_replicates_and_call_peaks(atac_proj)
+final_proj <- pseudo_bulk_replicates_and_call_peaks(final_proj)
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
-atac_proj <- addPeakMatrix(atac_proj)
+final_proj <- addPeakMatrix(final_proj)
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
-calculate_daps_for_each_cell_type(atac_proj, differential_peaks_dir)
+calculate_daps_for_each_cell_type(final_proj, differential_peaks_dir)
 # Create Peaks.txt file for MAGICAL
-peak_txt_file <- create_peaks_file(atac_proj, ATAC_output_dir)
+peak_txt_file <- create_peaks_file(final_proj, ATAC_output_dir)
 # Create peak_motif_matches.txt file for MAGICAL
-create_peak_motif_matches_file(atac_proj, ATAC_output_dir, peak_txt_file)
+create_peak_motif_matches_file(final_proj, ATAC_output_dir, peak_txt_file)
 # Create pseudobulk counts for peaks for each cell type
 pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
 if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
-create_pseudobulk_atac(atac_proj, pseudo_bulk_dir)
+create_pseudobulk_atac(final_proj, pseudo_bulk_dir)
