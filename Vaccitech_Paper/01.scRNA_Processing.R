@@ -215,6 +215,6 @@ if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_
 run_differential_expression_group(hvl_sc_obj, HVL_differential_genes_dir, "time_point")
 
 create_magical_cell_type_proportion_file(hvl_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
-pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/HVL_RNA/")
-if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
-create_magical_cell_type_pseudobulk_files(sc_obj, pseudobulk_rna_dir)
+hvl_pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/HVL_RNA/")
+if (!dir.exists(hvl_pseudobulk_rna_dir)) {dir.create(hvl_pseudobulk_rna_dir, recursive = TRUE)}
+create_magical_cell_type_pseudobulk_files(hvl_sc_obj, hvl_pseudobulk_rna_dir)
