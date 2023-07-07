@@ -21,7 +21,7 @@ run_differential_expression_cluster <- function(sc_obj, marker_dir) {
   ) %dopar% {
     cluster_id <- cluster_ids[[i]]
     cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id, assay = "SCT", recorrect_umi = FALSE)
-    write.table(cluster.markers, paste0(marker_dir, "7_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
+    write.table(cluster.markers, paste0(marker_dir, "markers_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
     return(i)
   }
   message("All done!")
@@ -37,7 +37,7 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
     n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
   }
   
-  n.cores <- 8
+  n.cores <- 16
   
   message(paste0("Number of cores: ", n.cores))
   
@@ -68,7 +68,7 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
     if(group == "viral_load") {
       first_group <- "high"
       second_group <- "low"
-    } else if(group == "day") {
+    } else if(group == "time_point") {
       first_group <- "D28"
       second_group <- "D_minus_1"
     } else if(group == "sex") {

@@ -222,3 +222,101 @@ MajorityVote_RNA_alt <- function(sc_obj, current_resolution = 1, log_flag = FALS
   return(sc_obj)
 }
 
+#' Scale a vector to range(0,1)
+#'
+#' @param x Numeric vector
+#' @return A scaled vector ranging from 0 to 1
+scale_zero_one <- function(x) {(x - min(x))/(max(x) - min(x))}
+
+#' Append a list to a list-of-lists
+#'
+#' @param lst List
+#' @param ... Additional lists
+#' @return A list of lists
+lappend <- function (lst, ...){ c(lst, list(...))}
+
+#' Integrate batches (ATAC)
+#'
+#' @param proj ArchR project containing cells for all samples
+#' @param log_flag If set to TRUE, record certain output (e.g., parameters) to a previously set up log file. Most likely only used in the context of [run_SPEEDI()].
+#' @return An ArchR object which contains integrated data
+IntegrateByBatch_ATAC_alt <- function(proj, log_flag = FALSE) {
+  tile_sce <- ArchR::getMatrixFromProject(proj, useMatrix='TileMatrix', binarize = TRUE)
+  tile_reduc <- ArchR::getReducedDims(ArchRProj = proj, reducedDims = "IterativeLSI", returnMatrix = TRUE)
+  tile_reduc <- tile_reduc[match(colnames(tile_sce), rownames(tile_reduc)),]
+  for (i in colnames(SummarizedExperiment::colData(tile_sce))) {
+    SummarizedExperiment::colData(tile_sce)[[i]] <- as.vector(SummarizedExperiment::colData(tile_sce)[[i]])
+  }
+  rownames(tile_sce) <- paste0(as.character(SummarizedExperiment::rowData(tile_sce)$seqnames),
+                               '-',
+                               as.character(SummarizedExperiment::rowData(tile_sce)$start))
+  tile_seurat <- Seurat::CreateSeuratObject(SummarizedExperiment::assays(tile_sce)$TileMatrix[, rownames(tile_reduc)],
+                                            project = "peaks",
+                                            assay = "tileMatrix")
+  tile_seurat <- Seurat::AddMetaData(tile_seurat, data.frame(t(SummarizedExperiment::colData(tile_sce))))
+  cell.embeddings <- tile_reduc
+  feature.loadings <- matrix()
+  assay <- "tileMatrix"
+  sdev <- 0
+  reduction.key <- "LSI_"
+  reduction.data <- Seurat::CreateDimReducObject(
+    embeddings = cell.embeddings,
+    loadings = feature.loadings,
+    assay = assay,
+    stdev = sdev,
+    key = reduction.key,
+    misc = list()
+  )
+  tile_seurat@reductions$lsi <- reduction.data
+  tile_umap <- ArchR::getEmbedding(ArchRProj = proj, embedding = "UMAP", returnDF = TRUE)
+  cell.embeddings <- as.matrix(tile_umap)
+  feature.loadings <- matrix()
+  assay <- "tileMatrix"
+  sdev <- 0
+  reduction.key <- "UMAP_"
+  reduction.data <- Seurat::CreateDimReducObject(
+    embeddings = cell.embeddings,
+    loadings = feature.loadings,
+    assay = assay,
+    stdev = sdev,
+    key = reduction.key,
+    misc = list()
+  )
+  tile_seurat@reductions$umap <- reduction.data
+  tile_seurat$sample <- proj$Sample
+  # Step 4: Inferring batches
+  tile_seurat <- InferBatches_alt(tile_seurat, log_flag)
+  proj$Batch <- tile_seurat$batch
+  # If we only have one batch, we don't need to integrate by batch, so we exit the function
+  if(length(unique(proj$Batch)) == 1) {
+  } else {
+    proj <- ArchR::addHarmony(ArchRProj = proj, reducedDims = "IterativeLSI",
+                              dimsToUse = 2:30, scaleDims = TRUE,
+                              corCutOff = 0.75, groupBy = "Batch", force = TRUE)
+    proj <- ArchR::addUMAP(ArchRProj = proj, reducedDims = "Harmony", force = TRUE)
+    proj <- ArchR::addClusters(input = proj, reducedDims = "Harmony", method = "Seurat",
+                               name = "Harmony_clusters", resolution = 2, knnAssign = 30,
+                               maxClusters = NULL, force = TRUE)
+  }
+  gc()
+  return(proj)
+}
+
+InitialProcessing_ATAC_alt <- function(proj, log_flag = FALSE) {
+  proj <- ArchR::addIterativeLSI(ArchRProj = proj, useMatrix = "TileMatrix", name = "IterativeLSI",
+                                 iterations = 2,
+                                 force = TRUE,
+                                 clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
+                                 varFeatures = 20000, dimsToUse = 1:30,
+                                 saveIterations = TRUE)
+  proj <- ArchR::addUMAP(ArchRProj = proj, reducedDims = "IterativeLSI", force = TRUE)
+  proj <- ArchR::addClusters(input = proj, reducedDims = "IterativeLSI", method = "Seurat",
+                             name = "Clusters", resolution = 2, knnAssign = 30,
+                             maxClusters = NULL, force = TRUE)
+  p1 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p2 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "Clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  p3 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+  ArchR::plotPDF(p1,p2,p3, name = "UMAPs_After_Initial_Processing_plots", ArchRProj = proj, addDOC = FALSE, width = 5, height = 5)
+  gc()
+  return(proj)
+}

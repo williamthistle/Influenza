@@ -246,7 +246,7 @@ auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", 
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "Low Bulk D8", low_bulk_D8_sc_pseudobulk_gene_aucs, "low_bulk_D8_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "Low Bulk D28", low_bulk_D28_sc_pseudobulk_gene_aucs, "low_bulk_D28_gene_auc")
 # Single cell, MAGICAL filtering
-auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Single Cell", "Total Pseudobulk", curated_sc_magical_gene_aucs, "sc_pseudobulk_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Single Cell", "Total Pseudobulk", sc_magical_gene_aucs, "sc_pseudobulk_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "All Bulk D2", all_bulk_D2_sc_magical_gene_aucs, "all_bulk_D2_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "All Bulk D5", all_bulk_D5_sc_magical_gene_aucs, "all_bulk_D5_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "All Bulk D8", all_bulk_D8_sc_magical_gene_aucs, "all_bulk_D8_gene_auc")
@@ -274,7 +274,7 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bu
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "Low Bulk D8", low_bulk_D8_multiome_pseudobulk_gene_aucs, "low_bulk_D8_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "Low Bulk D28", low_bulk_D28_multiome_pseudobulk_gene_aucs, "low_bulk_D28_gene_auc")
 # Multiome, MAGICAL filtering
-auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Multiome", "Total Pseudobulk", curated_multiome_magical_gene_aucs, "multiome_pseudobulk_gene_auc")
+auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Multiome", "Total Pseudobulk", multiome_magical_gene_aucs, "multiome_pseudobulk_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "All Bulk D2", all_bulk_D2_multiome_magical_gene_aucs, "all_bulk_D2_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "All Bulk D5", all_bulk_D5_multiome_magical_gene_aucs, "all_bulk_D5_gene_auc")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "All Bulk D8", all_bulk_D8_multiome_magical_gene_aucs, "all_bulk_D8_gene_auc")
@@ -387,7 +387,7 @@ high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_b
 high_placebo_period_2_LRT_analysis_thr <- 1.5
 colnames(high_placebo_period_2_LRT_analysis_betas) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
 pheatmap(high_placebo_period_2_LRT_analysis_betas, breaks=seq(from=-high_placebo_period_2_LRT_analysis_thr, to=high_placebo_period_2_LRT_analysis_thr, length=101),
-         cluster_col=FALSE, fontsize_col=14)
+         cluster_col=FALSE, fontsize = 30, width = 16, height = 12, filename = "C:/Users/willi/Desktop/testing_high_pos.png", cex = 0.7)
 
 # See which of these genes are significant in LRT data - why are only 21/32 found to be significant? Because ALL vs HIGH?
 high_sc_neg_genes_LRT_pass <- c()
@@ -402,7 +402,7 @@ high_placebo_period_2_LRT_analysis_betas_neg <- high_placebo_period_2_LRT_analys
 high_placebo_period_2_LRT_analysis_betas_neg <- high_placebo_period_2_LRT_analysis_betas_neg[rownames(high_placebo_period_2_LRT_analysis_betas_neg) %in% high_sc_neg_genes_LRT_pass,]
 colnames(high_placebo_period_2_LRT_analysis_betas_neg) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
 pheatmap(high_placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-2, to=2, length=101),
-         cluster_col=FALSE, fontsize_col=14)
+         cluster_col=FALSE, fontsize = 22, width = 16, height = 12, filename = "C:/Users/willi/Desktop/testing_high_neg.png", cex = 0.8)
 
 
 
