@@ -109,6 +109,7 @@ sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
 save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.old.algorithm.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA.old.algorithm.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.final.algorithm.4.RNA.rds"))
+# vincy_obj <- readRDS("~/single_cell/analysis/vincy_analysis/integrated_obj_labeled.rds")
 
 sc_obj$old.predicted.id <- sc_obj$predicted.id
 Cell_type_combined <- sc_obj$predicted.id
@@ -184,3 +185,32 @@ create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"sex", high_vira
 pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/")
 if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
 create_magical_cell_type_pseudobulk_files(sc_obj, pseudobulk_rna_dir)
+
+# HVL WORK
+idxPass <- which(sc_obj$viral_load %in% "high")
+cellsPass <- names(sc_obj$orig.ident[idxPass])
+hvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
+               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+               group_by_category = "predicted.id", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
+               group_by_category = "sample", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
+               group_by_category = "time_point", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
+               group_by_category = "sex", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+
+differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL/")
+if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
+run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
+
