@@ -210,7 +210,7 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
-differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL/")
-if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
-run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
+HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_SCT/")
+if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
+run_differential_expression_group(hvl_sc_obj, HVL_differential_genes_dir, "time_point")
 
