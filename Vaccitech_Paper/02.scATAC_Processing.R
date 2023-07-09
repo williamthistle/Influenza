@@ -166,3 +166,25 @@ create_peak_motif_matches_file(final_proj, ATAC_output_dir, peak_txt_file)
 pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
 if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
 create_pseudobulk_atac(final_proj, pseudo_bulk_dir)
+
+# Do HVL work
+idxPass <- which(final_proj$viral_load %in% c("high"))
+cellsPass <- final_proj$cellNames[idxPass]
+HVL_final_proj <- final_proj[cellsPass, ]
+
+pal <- paletteDiscrete(values = HVL_final_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = HVL_final_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
+p2 <- ArchR::plotEmbedding(ArchRProj = HVL_final_proj, colorBy = "cellColData", name = "Harmony_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p3 <- ArchR::plotEmbedding(ArchRProj = HVL_final_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p4 <- ArchR::plotEmbedding(ArchRProj = HVL_final_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+ArchR::plotPDF(p1,p2,p3,p4, name = "HVL_UMAP_after_Final_Cell_Type_Majority_Voting_plots_combined_cell_types_minus_messy_clusters", ArchRProj = HVL_final_proj, addDOC = FALSE, width = 5, height = 5)
+
+hvl_day_metadata <- parse_metadata_for_samples(HVL_final_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
+                                               d28_samples, d_minus_1_samples, male_samples, female_samples)
+hvl_sex_metadata <- parse_metadata_for_samples(HVL_final_proj, "sex", high_viral_load_samples, low_viral_load_samples,
+                                               d28_samples, d_minus_1_samples, male_samples, female_samples)
+
+create_cell_type_proportion_MAGICAL_atac(HVL_final_proj, ATAC_output_dir, c("time_point"), hvl_day_metadata)
+
+
+

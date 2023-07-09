@@ -222,14 +222,14 @@ remove_cells_based_on_umap_atac <- function(proj, first_x, second_x, first_y, se
 # Method to print viral load / day / sex distributions within each cell type
 print_cell_type_distributions <- function(proj) {
   # See distribution for different metadata categories
-  for (cell_type in unique(final_proj$Cell_type_voting)) {
+  for (cell_type in unique(proj$Cell_type_voting)) {
     print(cell_type)
-    idxPass <- which(final_proj$predictedGroup %in% cell_type)
-    cellsPass <- final_proj$cellNames[idxPass]
-    filtered_cluster <-final_proj[cellsPass,]
+    idxPass <- which(proj$predictedGroup %in% cell_type)
+    cellsPass <- proj$cellNames[idxPass]
+    filtered_cluster <-proj[cellsPass,]
     print(length(cellsPass))
     print(table(filtered_cluster$viral_load))
-    print(table(filtered_cluster$day))
+    print(table(filtered_cluster$time_point))
     print(table(filtered_cluster$sex))
   }
 }
@@ -245,21 +245,21 @@ create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadat
     cell_counts <- vector()
     # Find total cell counts for each sample
     for (sample_id in names(metadata)) {
-      idxPass <- which(final_proj$Sample %in% sample_id)
+      idxPass <- which(proj$Sample %in% sample_id)
       print(length(idxPass))
-      cellsPass <- final_proj$cellNames[idxPass]
-      sample_subset <- subsetCells(final_proj, cellsPass)
+      cellsPass <- proj$cellNames[idxPass]
+      sample_subset <- subsetCells(proj, cellsPass)
       cell_counts <- append(cell_counts, nCells(sample_subset))
     }
     total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
-    for (cell_type in unique(final_proj$Cell_type_voting)) {
+    for (cell_type in unique(proj$Cell_type_voting)) {
       cell_type_proportions <- vector()
       print(cell_type)
       # Grab cells associated with cell type
-      idxPass <- which(final_proj$Cell_type_voting %in% cell_type)
+      idxPass <- which(proj$Cell_type_voting %in% cell_type)
       print(length(idxPass))
-      cellsPass <- final_proj$cellNames[idxPass]
-      cells_subset <- subsetCells(final_proj, cellsPass)
+      cellsPass <- proj$cellNames[idxPass]
+      cells_subset <- subsetCells(proj, cellsPass)
       for (sample_id in names(metadata)) {
         # Subset further based on cells associated with sample ID
         idxPass <- which(cells_subset$Sample %in% sample_id)
