@@ -356,10 +356,10 @@ create_peak_motif_matches_file <- function(proj, analysis_dir, peak_txt_file) {
 }
 
 # Create pseudobulk count files for each cell type
-create_pseudobulk_atac <- function(proj, pseudobulk_dir) {
+create_pseudobulk_atac <- function(proj, pseudo_bulk_dir) {
   # Create text file for each cell type containing pseudobulk counts for peaks
-  Cell_types <- unique(final_proj$Cell_type_voting)
-  sample.names <- unique(final_proj$Sample)
+  Cell_types <- unique(proj$Cell_type_voting)
+  sample.names <- unique(proj$Sample)
   peaks <- getPeakSet(proj)
   peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
   for (i in c(1:length(Cell_types))){

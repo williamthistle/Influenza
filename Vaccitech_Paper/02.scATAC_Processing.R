@@ -85,16 +85,16 @@ log_file_name <- paste0(gsub(" ", "_", Sys.time()), "_SPEEDI")
 log_file_name <- gsub(":", "-", log_file_name)
 log_file_name <- paste0(output_dir, log_file_name)
 log_file <- logr::log_open(log_file_name, logdir = FALSE)
-# Load reference
-reference <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = species, reference_dir = reference_dir,
-                                 reference_file_name = reference_file_name, log_flag = TRUE)
-idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
-reference <- reference[,-idx]
 # Output dir for ATAC
 ATAC_output_dir <- paste0(output_dir, "ATAC", "/")
 if (!dir.exists(ATAC_output_dir)) {dir.create(ATAC_output_dir)}
 setwd(ATAC_output_dir)
 
+# Load reference
+reference <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = species, reference_dir = reference_dir,
+                                 reference_file_name = reference_file_name, log_flag = TRUE)
+idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+reference <- reference[,-idx]
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(data_path = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
@@ -186,5 +186,22 @@ hvl_sex_metadata <- parse_metadata_for_samples(HVL_final_proj, "sex", high_viral
 
 create_cell_type_proportion_MAGICAL_atac(HVL_final_proj, ATAC_output_dir, c("time_point"), hvl_day_metadata)
 
-
+# Call peaks
+addArchRGenome("hg38")
+HVL_final_proj <- pseudo_bulk_replicates_and_call_peaks(HVL_final_proj)
+# Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
+# calculations
+HVL_final_proj <- addPeakMatrix(HVL_final_proj)
+# TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
+HVL_differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/HVL/")
+if (!dir.exists(HVL_differential_peaks_dir)) {dir.create(HVL_differential_peaks_dir, recursive = TRUE)}
+calculate_daps_for_each_cell_type(HVL_final_proj, HVL_differential_peaks_dir)
+# Create Peaks.txt file for MAGICAL
+HVL_peak_txt_file <- create_peaks_file(HVL_final_proj, ATAC_output_dir)
+# Create peak_motif_matches.txt file for MAGICAL
+create_peak_motif_matches_file(HVL_final_proj, ATAC_output_dir, HVL_peak_txt_file)
+# Create pseudobulk counts for peaks for each cell type
+HVL_pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/HVL/")
+if (!dir.exists(HVL_pseudo_bulk_dir)) {dir.create(HVL_pseudo_bulk_dir, recursive = TRUE)}
+create_pseudobulk_atac(HVL_final_proj, HVL_pseudo_bulk_dir)
 
