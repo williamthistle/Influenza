@@ -3,7 +3,7 @@ library(org.Hs.eg.db)
 
 grab_transformed_pseudobulk_counts <- function(pseudobulk_dir, cell_types) {
   total_pseudobulk_df <- NULL
-  if(grepl("Single Cell", pseudobulk_dir)) {
+  if(grepl("Aliza", pseudobulk_dir)) {
     # We start with B and add the rest - create sample-level pseudobulk counts
     total_pseudobulk_df <- read.table(paste0(pseudobulk_dir, "pseudo_bulk_RNA_count_B.txt"), header = TRUE, sep = "\t")
     for(cell_type in cell_types) {
@@ -60,7 +60,8 @@ create_metaintegrator_obj <- function(token, counts, metadata = NULL, case_time_
   metaintegrator_keys <- entrez_gene_list
   names(metaintegrator_keys) <- metaintegrator_keys
   
-  if(token == "multiome") {
+  
+  if(token == "mine") {
     #Remove "Sample_" from each column name
     for (col in 1:ncol(counts_entrez)){
       colnames(counts_entrez)[col] <-  sub("Sample_", "", colnames(counts_entrez)[col])
@@ -71,7 +72,7 @@ create_metaintegrator_obj <- function(token, counts, metadata = NULL, case_time_
       sample_class <- c(sample_class, sample_metadata[sample_metadata$aliquot == sample_name,]$time_point)
     }
     sample_class <- as.numeric(grepl("D28", sample_class))
-  } else if(token == "single cell") {
+  } else if(token == "Aliza") {
     # Create class vector (1 is disease, 0 is control)
     sample_names <- colnames(counts_entrez)
     sample_class <- as.numeric(grepl("D28", sample_names))

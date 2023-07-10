@@ -1,22 +1,7 @@
-library(SPEEDI)
-library(Seurat)
-library(parallel)
-library(doMC)
-library(BSgenome.Hsapiens.UCSC.hg38)
-library(openxlsx)
-# Load extra RNA functions
 home_dir <- "~/"
-source(paste0(home_dir, "extra_functions/rna/preprocessing_and_qc.R"))
-source(paste0(home_dir, "extra_functions/rna/get_stats.R"))
-source(paste0(home_dir, "extra_functions/rna/manipulate_data.R"))
-source(paste0(home_dir, "extra_functions/rna/differential_expression.R"))
-source(paste0(home_dir, "extra_functions/rna/visualization.R"))
-source(paste0(home_dir, "extra_functions/atac/preprocessing_and_qc.R"))
-source(paste0(home_dir, "extra_functions/atac/processing.R"))
-
+source(paste0(home_dir, "00.setup.R"))
 
 ################## SETUP ##################
-date <- Sys.Date()
 data_path <- "~/single_cell/data"
 reference_dir <- "~/references/"
 reference_file_name <- "pbmc_multimodal.h5seurat"

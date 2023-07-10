@@ -2,23 +2,11 @@ library(data.table)
 library(DESeq2)
 library(MetaIntegrator)
 
-# Set up
-base_dir <- "~/GitHub/Influenza/"
-source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-source(paste0(base_dir, "pseudobulk_analysis_helper.R"))
-source(paste0(base_dir, "Data Compendium/Compendium_Functions.R"))
-setup_bulk_analysis()
-sample_metadata <- read.table(paste0(base_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
-cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
-single_cell_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 4 Subject HVL (SPEEDI) - SCT/"
-single_cell_pseudobulk_dir <- paste0(single_cell_magical_dir, "scRNA_pseudobulk/")
-multiome_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
-multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
-set.seed(2000)
+base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
+source(paste0(base_dir, "00.setup.R"))
 
 # Tables containing results for single cell and multiome RNA-seq processing
 # Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
-# Note that LR includes latent variable subject in differential expression analysis
 single_cell_pseudobulk_gene_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_pseudobulk_genes.txt"), sep = "\t", header = TRUE)
 single_cell_magical_gene_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL.txt"), sep = "\t", header = TRUE)
 
@@ -423,18 +411,16 @@ placebo_period_2_D28_vs_D_minus_1_bulk_results <- run_deseq_bulk_analysis_time_s
 #all_pass_sc_neg_genes <- intersect(all_pass_sc_neg_genes, all_bulk_D5_sc_pseudobulk_gene_aucs[all_bulk_D5_sc_pseudobulk_gene_aucs$all_bulk_D5_gene_auc < 0.3,]$gene_name)
 #all_pass_sc_neg_genes <- intersect(all_pass_sc_neg_genes, all_bulk_D8_sc_pseudobulk_gene_aucs[all_bulk_D8_sc_pseudobulk_gene_aucs$all_bulk_D8_gene_auc < 0.3,]$gene_name)
 
-# Genes that passed D28 bulk and all high bulk RNA-seq (AUC > 0.7) was IL10RA - interferon based gene. 
+# Genes that passed D28 bulk and all high bulk RNA-seq (AUC > 0.7)
 high_sc_pos_genes <- high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc > 0.7,]$gene_name
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]$gene_name)
 high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$high_bulk_D8_gene_auc > 0.7,]$gene_name)
-high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc > 0.7,]$gene_name)
-# Genes that passed D28 bulk and all high bulk RNA-seq (AUC < 0.3) were TUBA1A and BAG1. WHY IS BAG1 NOW POSITIVE GENE?
+# Genes that passed D28 bulk and all high bulk RNA-seq (AUC < 0.3)
 high_sc_neg_genes <- high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc < 0.3,]$gene_name
 high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc < 0.3,]$gene_name)
 high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,]$gene_name)
 high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$high_bulk_D8_gene_auc < 0.3,]$gene_name)
-high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc < 0.3,]$gene_name)
 # No genes passed pseudobulk and all low bulk RNA-seq (AUC > 0.7)
 low_sc_pos_genes <- high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc > 0.7,]$gene_name
 low_sc_pos_genes <- intersect(low_sc_pos_genes, low_bulk_D2_sc_pseudobulk_gene_aucs[low_bulk_D2_sc_pseudobulk_gene_aucs$low_bulk_D2_gene_auc > 0.7,]$gene_name)
@@ -485,3 +471,6 @@ comparison_aucs <- comparison_aucs[,c(1,2,4,3)]
 
 curated_sc_pseudobulk_gene_aucs
 sc_bulk_D28_sc_pseudobulk_gene_aucs
+
+###### MISC UNORDERED STUFF ######
+
