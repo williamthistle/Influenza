@@ -66,6 +66,9 @@ if(is.null(analysis_name)) {
 output_dir <- paste0(output_dir, analysis_name, "/")
 if (!dir.exists(output_dir)) {dir.create(output_dir)}
 setwd(output_dir)
+# Output dirs for RNA
+RNA_output_dir <- paste0(output_dir, "RNA", "/")
+if (!dir.exists(RNA_output_dir)) {dir.create(RNA_output_dir)}
 # Create log file
 log_file_name <- paste0(gsub(" ", "_", Sys.time()), "_SPEEDI")
 log_file_name <- gsub(":", "-", log_file_name)
@@ -77,9 +80,6 @@ reference <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = 
 idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
 reference <- reference[,-idx]
 
-# Output dirs for RNA and ATAC
-RNA_output_dir <- paste0(output_dir, "RNA", "/")
-if (!dir.exists(RNA_output_dir)) {dir.create(RNA_output_dir)}
 # Read in RNA data, filter data, perform initial processing, infer batches, integrate by batch, and process UMAP of integration
 all_sc_exp_matrices <- Read_RNA(data_path = data_path, sample_id_list = sample_id_list, log_flag = TRUE)
 sc_obj <- FilterRawData_RNA(all_sc_exp_matrices = all_sc_exp_matrices, species = species,
