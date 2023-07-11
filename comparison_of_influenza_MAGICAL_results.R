@@ -25,6 +25,8 @@ single_cell_magical_gene_table <- read.table(paste0(single_cell_magical_dir, "D2
 multiome_pseudobulk_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome_sc_genes.txt"), sep = "\t", header = TRUE)
 multiome_magical_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome.txt"), sep = "\t", header = TRUE)
 
+single_cell_pseudobulk_gene_table_higher_fc <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_pseudobulk_genes_0.2.txt"), sep = "\t", header = TRUE)
+
 # Grab gene lists from result tables and report number of genes
 single_cell_pseudobulk_genes <- unique(single_cell_pseudobulk_gene_table$gene)
 print(paste0("Number of genes that pass pseudobulk (scRNA): ", length(single_cell_pseudobulk_genes)))
@@ -35,6 +37,8 @@ multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$gene)
 print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
 multiome_magical_genes <- unique(multiome_magical_gene_table$Gene_symbol)
 print(paste0("Number of genes that pass MAGICAL (multiome): ", length(multiome_magical_genes)))
+
+single_cell_pseudobulk_genes_higher_fc <- unique(single_cell_pseudobulk_gene_table_higher_fc$gene)
 
 # Create log transformed pseudobulk count tables
 single_cell_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(single_cell_pseudobulk_dir, cell_types)
