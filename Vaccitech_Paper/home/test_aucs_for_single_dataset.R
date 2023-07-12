@@ -1,6 +1,9 @@
 current_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 4 Subject HVL (SPEEDI) - SCT/"
 
 current_sc_pseudobulk_gene_table <- read.table(paste0(current_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
+
+cd14_monocytes_gene_table <- read.table(paste0(current_dir, "scRNA_DEGs/D28-vs-D_minus_1-degs-CD14_Mono-time_point.csv"), sep = ",", header = TRUE)
+
 #current_sc_magical_gene_table <- read.table(paste0(current_dir, "D28_D1_MAGICAL.txt"), sep = "\t", header = TRUE)
 
 #current_strict_sc_pseudobulk_gene_table <- read.table(paste0(current_dir, "D28_D1_MAGICAL_pseudobulk_genes_strict.txt"), sep = "\t", header = TRUE)
