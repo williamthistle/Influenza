@@ -200,7 +200,7 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
-HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_SCT/")
+HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_SCT_controlling_for_subject/")
 if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
 run_differential_expression_group(hvl_sc_obj, HVL_differential_genes_dir, "time_point")
 
@@ -208,3 +208,39 @@ create_magical_cell_type_proportion_file(hvl_sc_obj, RNA_output_dir, "time_point
 hvl_pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/HVL_RNA/")
 if (!dir.exists(hvl_pseudobulk_rna_dir)) {dir.create(hvl_pseudobulk_rna_dir, recursive = TRUE)}
 create_magical_cell_type_pseudobulk_files(hvl_sc_obj, hvl_pseudobulk_rna_dir)
+
+# Run pseudobulk DE
+pseudobulk_de_df <- run_de(hvl_sc_obj, replicate_col = "sample", cell_type_col = "magical_cell_types", label_col = "time_point", de_method = "DESeq2")
+pseudobulk_de_df <- na.omit(pseudobulk_de_df)
+pseudobulk_de_df <- pseudobulk_de_df[pseudobulk_de_df$p_val < 0.05,]
+pseudobulk_de_df <- pseudobulk_de_df[pseudobulk_de_df$avg_logFC < -0.3 | pseudobulk_de_df$avg_logFC > 0.3,]
+
+pseudobulk_cell_types_for_correction <- c("B", "CD4_Memory", "CD8_Memory", "CD14_Mono", "CD16_Mono", "NK_MAGICAL", "MAIT", "T_Naive")
+DEG_dir <- "/home/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/RNA/diff_genes/2023-07-06/HVL_SCT/"
+final_list_of_genes <- data.frame(Cell_Type = character(), Gene_Name = character(), sc_pval_adj = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
+                                  pseudo_bulk_log2FC = character())
+for(current_cell_type in pseudobulk_cell_types_for_correction) {
+  current_DEG_table <- read.table(paste0(DEG_dir, "D28-vs-D_minus_1-degs-", current_cell_type, "-time_point.csv"), sep = ",", header = TRUE)
+  current_DEG_table <- current_DEG_table[current_DEG_table$p_val_adj < 0.05,]
+  current_DEG_table <- current_DEG_table[abs(current_DEG_table$avg_log2FC) > 0.1,]
+  current_DEG_table <- current_DEG_table[current_DEG_table$pct.1 > 0.1 | current_DEG_table$pct.2 > 0.1,]
+  if(current_cell_type != "NK_MAGICAL") {
+    pseudobulk_de_df_cell_type_subset <- pseudobulk_de_df[pseudobulk_de_df$cell_type == sub("_", " ", current_cell_type),]
+  } else {
+    pseudobulk_de_df_cell_type_subset <- pseudobulk_de_df[pseudobulk_de_df$cell_type == current_cell_type,]
+  }
+  final_cell_type_genes <- intersect(current_DEG_table$X, pseudobulk_de_df_cell_type_subset$gene)
+  for(current_gene in final_cell_type_genes) {
+    current_sc_pval_adj <- current_DEG_table[current_DEG_table$X == current_gene,]$p_val_adj
+    current_sc_log2FC <- current_DEG_table[current_DEG_table$X == current_gene,]$avg_log2FC
+    current_pseudo_bulk_pval <- pseudobulk_de_df_cell_type_subset[pseudobulk_de_df_cell_type_subset$gene == current_gene,]$p_val
+    current_pseudo_bulk_log2FC <- pseudobulk_de_df_cell_type_subset[pseudobulk_de_df_cell_type_subset$gene == current_gene,]$avg_logFC
+    current_row <- data.frame(current_cell_type, current_gene, current_sc_pval_adj, current_sc_log2FC, current_pseudo_bulk_pval, current_pseudo_bulk_log2FC)
+    names(current_row) <- c("Cell_Type", "Gene_Name", "sc_pval_adj", "sc_log2FC", "pseudo_bulk_pval", "pseudo_bulk_log2FC")
+    final_list_of_genes <- rbind(final_list_of_genes, current_row)
+  }
+}
+
+write.table(final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+# Add printing of positive and negative fold change for ease
+

@@ -75,7 +75,8 @@ run_differential_expression_group <- function(sc_obj, analysis_dir, group) {
       first_group <- "M"
       second_group <- "F"
     }
-    diff_markers <- FindMarkers(cells_subset, ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0)
+    # diff_markers <- FindMarkers(cells_subset, ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0)
+    diff_markers = FindMarkers(cells_subset, test.use="LR", latent.vars = 'subject', ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0)
     cell_type <- sub(" ", "_", cell_type)
     write.csv(diff_markers, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type, "-", group, ".csv"), quote = FALSE)
     return(i)
