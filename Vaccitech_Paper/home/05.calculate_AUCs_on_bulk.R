@@ -312,10 +312,10 @@ for(gene in sc_pos_genes) {
 high_placebo_period_2_LRT_analysis_betas <- coef(high_placebo_period_2_LRT_analysis)
 high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_betas[, -c(1:13)]
 high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_betas[rownames(high_placebo_period_2_LRT_analysis_betas) %in% high_sc_pos_genes_LRT_pass,]
-high_placebo_period_2_LRT_analysis_thr <- 1.5
+high_placebo_period_2_LRT_analysis_thr <- 1.8
 colnames(high_placebo_period_2_LRT_analysis_betas) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
 pheatmap(high_placebo_period_2_LRT_analysis_betas, breaks=seq(from=-high_placebo_period_2_LRT_analysis_thr, to=high_placebo_period_2_LRT_analysis_thr, length=101),
-         cluster_col=FALSE, fontsize = 30, width = 16, height = 12, filename = "C:/Users/willi/Desktop/testing_high_pos.png", cex = 0.7)
+         cluster_col=FALSE, fontsize = 30, width = 16, height = 12, filename = "C:/Users/willi/Desktop/testing_low_pos.png", cex = 0.7)
 
 # See which of these genes are significant in LRT data - why are only 21/32 found to be significant? Because ALL vs HIGH?
 high_sc_neg_genes_LRT_pass <- c()

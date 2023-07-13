@@ -26,7 +26,7 @@ temp_auc_names <- c("Filtering_Assay", "Filtering_Method", "Discovery_Assay", "D
 
 # Calculate individual AUCs for our gene lists on their respective pseudobulk data
 current_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(current_sc_pseudobulk_genes, sc_pseudobulk_metaintegrator_obj, "sc_paired", "sc_pseudobulk"))
-temp_auc_df <- add_auc_row(temp_auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "Total Pseudobulk", current_sc_pseudobulk_gene_aucs, "sc_pseudobulk_gene_auc")
+temp_auc_df <- add_auc_row(temp_auc_df, temp_auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "Total Pseudobulk", current_sc_pseudobulk_gene_aucs, "sc_pseudobulk_gene_auc")
 
 #current_strict_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(current_strict_sc_pseudobulk_genes, sc_pseudobulk_metaintegrator_obj, "sc_paired", "sc_pseudobulk"))
 #temp_auc_df <- add_auc_row(temp_auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk (Strict)", "Single Cell", "Total Pseudobulk", current_strict_sc_pseudobulk_gene_aucs, "sc_pseudobulk_gene_auc")
@@ -39,7 +39,7 @@ temp_auc_df <- add_auc_row(temp_auc_df, auc_names, "Single Cell", "Cell Type Pse
 
 ### CALCULATE AUCS ON BULK (SAME SUBJECTS AS SINGLE CELL) - basically an alternative for pseudobulk
 current_sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(current_sc_pseudobulk_genes, sc_D28_bulk_metaintegrator_obj, "sc_paired", "sc_bulk_D28"))
-temp_auc_df <- add_auc_row(temp_auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "D28 Bulk for Single Cell Subjects", current_sc_bulk_D28_sc_pseudobulk_gene_aucs, "sc_bulk_D28_gene_auc")
+temp_auc_df <- add_auc_row(temp_auc_df, temp_auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "D28 Bulk for Single Cell Subjects", current_sc_bulk_D28_sc_pseudobulk_gene_aucs, "sc_bulk_D28_gene_auc")
 
 #current_strict_sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(current_strict_sc_pseudobulk_genes, sc_D28_bulk_metaintegrator_obj, "sc_paired", "sc_bulk_D28"))
 #temp_auc_df <- add_auc_row(temp_auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk (Strict)", "Single Cell", "D28 Bulk for Single Cell Subjects", current_strict_sc_bulk_D28_sc_pseudobulk_gene_aucs, "sc_bulk_D28_gene_auc")
@@ -52,7 +52,7 @@ temp_auc_df <- add_auc_row(temp_auc_df, auc_names, "Single Cell", "Cell Type Pse
 
 ### CALCULATE AUCS ON D28 HVL BULK
 current_high_sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(current_sc_pseudobulk_genes, high_D28_bulk_metaintegrator_obj, "sc_paired", "high_bulk_D28"))
-temp_auc_df <- add_auc_row(temp_auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "D28 Bulk for HVL Subjects", current_high_sc_bulk_D28_sc_pseudobulk_gene_aucs, "high_bulk_D28_gene_auc")
+temp_auc_df <- add_auc_row(temp_auc_df, temp_auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "D28 Bulk for HVL Subjects", current_high_sc_bulk_D28_sc_pseudobulk_gene_aucs, "high_bulk_D28_gene_auc")
 
 #current_high_strict_sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(current_strict_sc_pseudobulk_genes, high_D28_bulk_metaintegrator_obj, "sc_paired", "high_bulk_D28"))
 #temp_auc_df <- add_auc_row(temp_auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk (Strict)", "Single Cell", "D28 Bulk for HVL Subjects", current_high_strict_sc_bulk_D28_sc_pseudobulk_gene_aucs, "high_bulk_D28_gene_auc")

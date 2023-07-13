@@ -2,10 +2,11 @@ library(data.table)
 library(openxlsx)
 library(org.Hs.eg.db)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(ChIPseeker)
 
 # Set up 
 base_dir <- "~/GitHub/Influenza/"
-single_cell_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 6 Sample (Run by Aliza)/"
+single_cell_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 4 Subject HVL (SPEEDI) - SCT/"
 multiome_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
 old_wd <- getwd()
 setwd("~/")
@@ -17,10 +18,10 @@ set.seed(2000)
 # Tables containing results for single cell and multiome RNA-seq processing
 # Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
 # Note that LR includes latent variable subject in differential expression analysis
-single_cell_pseudobulk_pass_peak_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_peaks_passing_pseudobulk.txt"), sep = "\t", header = TRUE)
-single_cell_pseudobulk_pass_peak_FDR_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_peaks_passing_pseudobulk_FDR.txt"), sep = "\t", header = TRUE)
+single_cell_pseudobulk_pass_peak_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_peaks_passing_pseudobulk_unadjusted.txt"), sep = "\t", header = TRUE)
+#single_cell_pseudobulk_pass_peak_FDR_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_peaks_passing_pseudobulk_FDR.txt"), sep = "\t", header = TRUE)
 cell_types <- unique(single_cell_pseudobulk_pass_peak_table$cell_type)
-cell_types_FDR <- unique(single_cell_pseudobulk_pass_peak_FDR_table$cell_type)
+#cell_types_FDR <- unique(single_cell_pseudobulk_pass_peak_FDR_table$cell_type)
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 cell_type_peak_annotations <- list()
@@ -57,6 +58,46 @@ for(cell_type in cell_types_FDR) {
   index <- index + 1
 }
 
-print(length(cell_type_peak_annotations_FDR[[1]]$SYMBOL))
-print(length(intersect(cell_type_peak_annotations_FDR[[1]]$SYMBOL, mintchip_gene_table$SYMBOL)))
+# Figure out why NA is there
+mint_cell_type_peak_annotations <- list()
+index <- 1
+total_curated_peaks <- 0
+total_genes <- c()
+for(cell_type in cell_types) {
+  mint_cell_type_peak_annotations[[index]] <- cell_type_peak_annotations[[index]][cell_type_peak_annotations[[index]]$SYMBOL %in% mintchip_gene_table$SYMBOL,]
+  print(cell_type)
+  print(nrow(mint_cell_type_peak_annotations[[index]]))
+  total_curated_peaks <- total_curated_peaks + nrow(mint_cell_type_peak_annotations[[index]])
+  total_genes <- c(total_genes, mint_cell_type_peak_annotations[[index]]$SYMBOL)
+  index <- index + 1
+}
 
+index <- 1
+for(mint_cell_type_peak_annotation in mint_cell_type_peak_annotations) {
+  current_cell_type <- cell_types[index]
+  for(row_index in 1:nrow(mint_cell_type_peak_annotation)) {
+    seqname <- mint_cell_type_peak_annotation[row_index,]$seqnames
+    start <- mint_cell_type_peak_annotation[row_index,]$start
+    end <- mint_cell_type_peak_annotation[row_index,]$end
+    current_peak_table <- read.xlsx(paste0(single_cell_magical_dir, "scATAC_DAPs/", current_cell_type, "_D28_D1_diff.xlsx"), sheet = 1)
+  }
+  index <- index + 1
+}
+
+
+
+
+
+
+
+
+
+
+
+
+print(length(cell_type_peak_annotations[[1]]$SYMBOL))
+print(length(intersect(cell_type_peak_annotations[[1]]$SYMBOL, mintchip_gene_table$SYMBOL)))
+
+mint_cell_type_peak_annotations <- cell_type_peak_annotations[[1]][cell_type_peak_annotations[[1]]$SYMBOL %in% mintchip_gene_table$SYMBOL,]
+mint_cell_type_genes <- unique(mint_cell_type_peak_annotations$SYMBOL)
+cell_type_peak_annotations_subset <- cell_type_peak_annotations[[1]]
