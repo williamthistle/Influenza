@@ -25,7 +25,7 @@ cell_types <- unique(single_cell_pseudobulk_pass_peak_table$cell_type)
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 cell_type_peak_annotations <- list()
-cell_type_peak_annotations_FDR <- list()
+#cell_type_peak_annotations_FDR <- list()
 index <- 1
 
 for(cell_type in cell_types) {
@@ -44,19 +44,19 @@ for(cell_type in cell_types) {
 
 index <- 1
 
-for(cell_type in cell_types_FDR) {
-  cell_type_pseudobulk_pass_peak_table_FDR <- single_cell_pseudobulk_pass_peak_FDR_table[single_cell_pseudobulk_pass_peak_FDR_table$cell_type == cell_type,]
-  chipseeker_input_peaks_FDR <- cell_type_pseudobulk_pass_peak_table_FDR[,c(2,3,4)]
+#for(cell_type in cell_types_FDR) {
+#  cell_type_pseudobulk_pass_peak_table_FDR <- single_cell_pseudobulk_pass_peak_FDR_table[single_cell_pseudobulk_pass_peak_FDR_table$cell_type == cell_type,]
+#  chipseeker_input_peaks_FDR <- cell_type_pseudobulk_pass_peak_table_FDR[,c(2,3,4)]
   
-  chipseeker_input_peaks_FDR$chr[chipseeker_input_peaks_FDR$chr == "23"] <- "X"
-  chipseeker_input_peaks_FDR$chr <- paste0('chr', chipseeker_input_peaks_FDR$chr)
-  chipseeker_input_peaks_FDR$length <- chipseeker_input_peaks_FDR$end - chipseeker_input_peaks_FDR$start
+#  chipseeker_input_peaks_FDR$chr[chipseeker_input_peaks_FDR$chr == "23"] <- "X"
+#  chipseeker_input_peaks_FDR$chr <- paste0('chr', chipseeker_input_peaks_FDR$chr)
+#  chipseeker_input_peaks_FDR$length <- chipseeker_input_peaks_FDR$end - chipseeker_input_peaks_FDR$start
   
-  chipseeker_output_FDR <- annotatePeak(makeGRangesFromDataFrame(chipseeker_input_peaks_FDR), TxDb = txdb, annoDb = "org.Hs.eg.db")
-  chipseeker_output_df_FDR <- as.data.frame(chipseeker_output_FDR)
-  cell_type_peak_annotations_FDR[[index]] <- chipseeker_output_df_FDR
-  index <- index + 1
-}
+#  chipseeker_output_FDR <- annotatePeak(makeGRangesFromDataFrame(chipseeker_input_peaks_FDR), TxDb = txdb, annoDb = "org.Hs.eg.db")
+#  chipseeker_output_df_FDR <- as.data.frame(chipseeker_output_FDR)
+#  cell_type_peak_annotations_FDR[[index]] <- chipseeker_output_df_FDR
+#  index <- index + 1
+#}
 
 # Figure out why NA is there
 mint_cell_type_peak_annotations <- list()
