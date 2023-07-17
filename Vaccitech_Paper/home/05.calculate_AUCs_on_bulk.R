@@ -5,25 +5,23 @@ library(MetaIntegrator)
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+# Create log transformed pseudobulk count tables (HVL only!)
+sc_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(sc_pseudobulk_dir, possible_cell_types)
+multiome_14_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(multiome_pseudobulk_dir, possible_cell_types)
 
-
-# Create log transformed pseudobulk count tables
-sc_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(sc_pseudobulk_dir, cell_types)
-multiome_14_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(multiome_pseudobulk_dir, cell_types)
-
-# Create MetaIntegrator objects using pseudobulk count tables
+# Create MetaIntegrator objects using pseudobulk count tables (HVL only!)
 sc_pseudobulk_metaintegrator_obj <- create_metaintegrator_obj("mine", sc_pseudobulk_counts_log_transformed)
 multiome_pseudobulk_metaintegrator_obj <- create_metaintegrator_obj("mine", multiome_14_pseudobulk_counts_log_transformed)
 
-# Create MetaIntegrator objects for the specific subjects that we used for single-cell / multiome (HVL)
+# Create MetaIntegrator objects for the specific subjects that we used for single-cell / multiome (HVL only!)
 sc_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_sc_placebo_counts, high_sc_placebo_metadata, "2_D28", "2_D_minus_1")
 multiome_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", multiome_placebo_counts, multiome_placebo_metadata, "2_D28", "2_D_minus_1")
 
-# Create MetaIntegrator objects for the specific subjects that we didn't use for single-cell / multiome (HVL)
+# Create MetaIntegrator objects for the specific subjects that we didn't use for single-cell / multiome (HVL only!)
 non_sc_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_non_sc_placebo_counts, high_non_sc_placebo_metadata, "2_D28", "2_D_minus_1")
 #non_multiome_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", non_multiome_placebo_counts, non_multiome_placebo_metadata, "2_D28", "2_D_minus_1")
 
-# Create MetaIntegrator objects for all days (high and low)
+# Create MetaIntegrator objects for bulk for all days (HVL and LVL)
 high_D2_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placebo_counts, high_placebo_metadata, "2_D2", "2_D_minus_1")
 high_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placebo_counts, high_placebo_metadata, "2_D5", "2_D_minus_1")
 high_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placebo_counts, high_placebo_metadata, "2_D8", "2_D_minus_1")
@@ -38,17 +36,9 @@ low_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo
 # We test genes one at a time as positive genes in our gene set signature
 # If we get an AUC of under 0.3, that means that the same gene would score an AUC of over 0.7 as a negative gene
 # in our gene set signature
-# CURRENT PLAN: Use all_D28 auc of > 0.7 as filtering on original pseudobulk list (don't include pseudobulk AUC > 0.7)
-# alternatively, we could do both. But why would pseudobulk auc > 0.7 (with less data) be useful if we have all_D28 auc of >0.7 (includes that data + more)?
-# We also look at MAGICAL gene subset.
-# Then, we can look at each of these genes, see whether it's differentially expressed in our bulk data, and look at the trend - check out HumanBase, etc.
-# Also, we can look at expression in high and low
-# We can also do exactly the same for multiome
 # Our single cell data gives us single cell granularity on the genes being expressed. This also applies to the ATAC-seq data and our peaks! mintchip can help us verify our choices,
 # but the ATAC-seq gives us the cell type!
-# I just need a few good stories. Look at specific genes or families of genes and see why they're interesting!
-# What is the behavior of these genes throughout infection and why are they so persistent at D28?
-# List cell types for genes when reporting
+# TODO: List cell types for genes when reporting
 auc_df <- data.frame(Filtering_Assay = character(), Filtering_Method = character(), Discovery_Assay = character(), 
                      Discovery_Dataset = character(), Pos_Genes = integer(), Neg_Genes = integer(), Total_Passing_Genes = integer(), 
                      Total_Genes = integer(), Percentage_of_Passing_Genes = double(), stringsAsFactors = FALSE)
@@ -56,20 +46,33 @@ auc_names <- c("Filtering_Assay", "Filtering_Method", "Discovery_Assay", "Discov
 
 # Calculate individual AUCs for our gene lists on their respective pseudobulk data
 sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(sc_pseudobulk_genes, sc_pseudobulk_metaintegrator_obj, "sc_paired", "sc_pseudobulk"))
+curated_sc_pseudobulk_gene_aucs <- sc_pseudobulk_gene_aucs[sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc < 0.3 | sc_pseudobulk_gene_aucs$sc_pseudobulk_gene_auc > 0.7,]
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "Total Pseudobulk", sc_pseudobulk_gene_aucs, "sc_pseudobulk_gene_auc")
 
 #sc_magical_gene_aucs <- na.omit(test_individual_genes_on_datasets(sc_magical_genes, sc_pseudobulk_metaintegrator_obj, "sc_paired", "sc_magical"))
+#curated_sc_magical_gene_aucs <- sc_magical_gene_aucs[sc_magical_gene_aucs$sc_magical_gene_auc < 0.3 | sc_magical_gene_aucs$sc_magical_gene_auc > 0.7,]
 #auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Single Cell", "Total Pseudobulk", sc_magical_gene_aucs, "sc_magical_gene_auc")
 
 #multiome_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(multiome_pseudobulk_genes, multiome_pseudobulk_metaintegrator_obj, "multiome_paired", "multiome_pseudobulk"))
+#curated_multiome_pseudobulk_gene_aucs <- multiome_pseudobulk_gene_aucs[multiome_pseudobulk_gene_aucs$multiome_pseudobulk_gene_auc < 0.3 | multiome_pseudobulk_gene_aucs$multiome_pseudobulk_gene_auc > 0.7,]
 #auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Multiome", "Total Pseudobulk", multiome_pseudobulk_gene_aucs, "multiome_pseudobulk_gene_auc")
+
+#multiome_magical_gene_aucs <- na.omit(test_individual_genes_on_datasets(multiome_magical_genes, multiome_pseudobulk_metaintegrator_obj, "multiome_paired", "multiome_magical"))
+#curated_multiome_magical_gene_aucs <- multiome_magical_gene_aucs[multiome_magical_gene_aucs$multiome_magical_gene_auc < 0.3 | multiome_magical_gene_aucs$multiome_magical_gene_auc > 0.7,]
+#auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Single Cell", "Total Pseudobulk", multiome_magical_gene_aucs, "multiome_magical_gene_auc")
+
+
 
 ### CALCULATE AUCS ON BULK (SAME SUBJECTS AS SINGLE CELL) - basically an alternative for pseudobulk
 sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(sc_pseudobulk_genes, sc_D28_bulk_metaintegrator_obj, "sc_paired", "sc_bulk_D28"))
+curated_sc_bulk_D28_sc_pseudobulk_gene_aucs <- sc_bulk_D28_sc_pseudobulk_gene_aucs[sc_bulk_D28_sc_pseudobulk_gene_aucs$sc_bulk_D28_gene_auc < 0.3 | sc_bulk_D28_sc_pseudobulk_gene_aucs$sc_bulk_D28_gene_auc > 0.7,]
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "D28 Bulk for Single Cell Subjects", sc_bulk_D28_sc_pseudobulk_gene_aucs, "sc_bulk_D28_gene_auc")
 
 #sc_bulk_D28_sc_magical_gene_aucs <- na.omit(test_individual_genes_on_datasets(sc_magical_genes, sc_D28_bulk_metaintegrator_obj, "sc_paired", "sc_bulk_D28_magical"))
+#curated_sc_bulk_D28_sc_magical_gene_aucs <- sc_bulk_D28_sc_magical_gene_aucs[sc_bulk_D28_sc_magical_gene_aucs$sc_bulk_D28_magical_gene_auc < 0.3 | sc_bulk_D28_sc_magical_gene_aucs$sc_bulk_D28_magical_gene_auc > 0.7,]
 #auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Single Cell", "D28 Bulk for Single Cell Subjects", sc_bulk_D28_sc_magical_gene_aucs, "sc_bulk_D28_magical_gene_auc")
+
+
 
 ### CALCULATE AUCS ON D28 HVL BULK
 high_sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(sc_pseudobulk_genes, high_D28_bulk_metaintegrator_obj, "sc_paired", "high_bulk_D28"))
@@ -438,3 +441,5 @@ testing_sc_vs_other_analysis_d_minus_1 <- DESeq(testing_sc_vs_other_analysis_d_m
 testing_sc_vs_other_analysis_results_d_minus_1 <- results(testing_sc_vs_other_analysis_d_minus_1, contrast = c("subject_tag", "SC", "OTHER"), alpha = 0.05, lfcThreshold = 0.1)
 testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1 <- testing_sc_vs_other_analysis_results_d_minus_1[rownames(testing_sc_vs_other_analysis_results_d_minus_1) %in% sc_pseudobulk_genes,]
 testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1 <- testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1[order(testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1$padj),]
+
+# TODO: Should do the same for multiome!
