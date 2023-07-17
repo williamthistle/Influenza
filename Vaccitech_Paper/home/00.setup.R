@@ -9,20 +9,17 @@ source(paste0(base_dir, "Data Compendium/Compendium_Functions.R"))
 setup_bulk_analysis()
 sample_metadata <- read.table(paste0(base_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
 cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
-sc_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 4 Subject HVL (SPEEDI) - SCT/"
+sc_magical_dir <- "C:/Users/wat2/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 4 Subject HVL (SPEEDI) - SCT/"
 sc_pseudobulk_dir <- paste0(sc_magical_dir, "scRNA_pseudobulk/")
-multiome_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
+multiome_magical_dir <- "C:/Users/wat2/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
 multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
 set.seed(2000)
 
 # Tables containing results for single cell and multiome RNA-seq processing
 # Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
 # The strict tables have thresholds the same as Xi's paper (except unadjusted p-value instead of FDR used for peaks)
-sc_pseudobulk_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL_pseudobulk_genes.txt"), sep = "\t", header = TRUE)
+sc_pseudobulk_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
 sc_magical_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL.txt"), sep = "\t", header = TRUE)
-
-strict_sc_pseudobulk_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL_pseudobulk_genes_strict.txt"), sep = "\t", header = TRUE)
-strict_sc_magical_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL_strict.txt"), sep = "\t", header = TRUE)
 
 multiome_pseudobulk_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome_sc_genes.txt"), sep = "\t", header = TRUE)
 multiome_magical_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome.txt"), sep = "\t", header = TRUE)
@@ -32,11 +29,6 @@ sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table$gene)
 print(paste0("Number of genes that pass pseudobulk (scRNA): ", length(sc_pseudobulk_genes)))
 sc_magical_genes <- unique(sc_magical_gene_table$Gene_symbol)
 print(paste0("Number of genes that pass MAGICAL (scRNA): ", length(sc_magical_genes)))
-
-strict_sc_pseudobulk_genes <- unique(strict_sc_pseudobulk_gene_table$gene)
-print(paste0("Number of genes that pass pseudobulk (scRNA, stricter): ", length(strict_sc_pseudobulk_genes)))
-strict_sc_magical_genes <- unique(strict_sc_magical_gene_table$Gene_symbol)
-print(paste0("Number of genes that pass MAGICAL (scRNA, stricter): ", length(strict_sc_magical_genes)))
 
 multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$gene)
 print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
