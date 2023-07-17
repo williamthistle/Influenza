@@ -1,12 +1,12 @@
 # Load extra RNA functions
-home_dir <- "~/"
-source(paste0(home_dir, "00.setup.R"))
+home_dir <- "/Genomics/ogtr04/wat2/"
+source("~/00.setup.R")
 
 ################## SETUP ##################
-data_path <- "~/single_cell/data"
-reference_dir <- "~/references/"
+data_path <- paste0(home_dir, "single_cell/data")
+reference_dir <- paste0(home_dir, "references/")
 reference_file_name <- "pbmc_multimodal.h5seurat"
-output_dir <- "~/single_cell/analysis/"
+output_dir <- paste0(home_dir, "single_cell/analysis/")
 analysis_name <- "primary_analysis_6_subject_12_sample"
 reference_tissue <- "pbmc_full"
 reference_cell_type_attribute <- "celltype.l2"
@@ -16,7 +16,7 @@ data_type <- "RNA"
 # data_token is used to choose subset of data that we want to analyze (pre-defined in flu_data_tokens.tsv)
 data_token <- "single_cell_paired_sample"
 # Grab samples that we want to analyze
-data_tokens <- read.table(paste0(home_dir, "flu_data_tokens.tsv"), header = TRUE)
+data_tokens <- read.table("~/flu_data_tokens.tsv", header = TRUE)
 all_sample_id_list <- list.dirs(data_path, recursive = FALSE)
 all_sample_id_list <- strsplit(all_sample_id_list, "/")
 all_sample_id_list <- unlist(lapply(all_sample_id_list, tail, n = 1L))
@@ -25,7 +25,7 @@ samples <-  unlist(strsplit(samples, ","))
 sample_id_list <- all_sample_id_list[all_sample_id_list %in% samples]
 
 # Load information about samples
-sample_metadata <- read.table(paste0(home_dir, "/all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
+sample_metadata <- read.table("~/all_metadata_sheet.tsv", sep = "\t", header = TRUE)
 sample_metadata <- sample_metadata[sample_metadata$aliquot_id %in% sample_id_list,]
 sample_metadata_for_SPEEDI_df <- sample_metadata
 rownames(sample_metadata_for_SPEEDI_df) <- sample_metadata_for_SPEEDI_df$aliquot_id
