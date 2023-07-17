@@ -5,6 +5,8 @@ library(MetaIntegrator)
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+
+
 # Create log transformed pseudobulk count tables
 sc_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(sc_pseudobulk_dir, cell_types)
 multiome_14_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(multiome_pseudobulk_dir, cell_types)
@@ -413,3 +415,26 @@ sc_bulk_D28_sc_pseudobulk_gene_aucs
 
 ###### MISC UNORDERED STUFF ######
 
+# DESeq2 analysis comparing 4 SC subjects to the 9 non-SC subjects for each time point demonstrates that there is no significant difference between the groups of samples with respect to gene expression
+testing_sc_vs_other_metadata <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D28" | high_placebo_metadata$time_point == "2_D_minus_1",]
+testing_sc_vs_other_subject_tag <- testing_sc_vs_other_metadata$subject_id %in% sc_subjects
+testing_sc_vs_other_subject_tag <- replace(testing_sc_vs_other_subject_tag, testing_sc_vs_other_subject_tag == FALSE, "OTHER")
+testing_sc_vs_other_subject_tag <- replace(testing_sc_vs_other_subject_tag, testing_sc_vs_other_subject_tag == TRUE, "SC")
+testing_sc_vs_other_metadata$subject_tag <- testing_sc_vs_other_subject_tag
+testing_sc_vs_other_metadata <- testing_sc_vs_other_metadata[testing_sc_vs_other_metadata$subject_id  %in% names(table(testing_sc_vs_other_metadata$subject_id)[table(testing_sc_vs_other_metadata$subject_id) == 2]),]
+# D28 testing
+testing_sc_vs_other_metadata_d28 <- testing_sc_vs_other_metadata[testing_sc_vs_other_metadata$time_point == "2_D28",]
+testing_sc_vs_other_counts_d28 <- high_placebo_counts[rownames(testing_sc_vs_other_metadata_d28)]
+testing_sc_vs_other_analysis_d28 <- DESeqDataSetFromMatrix(countData = testing_sc_vs_other_counts_d28, colData = testing_sc_vs_other_metadata_d28, design = ~ subject_tag)
+testing_sc_vs_other_analysis_d28 <- DESeq(testing_sc_vs_other_analysis_d28)
+testing_sc_vs_other_analysis_results_d28 <- results(testing_sc_vs_other_analysis_d28, contrast = c("subject_tag", "SC", "OTHER"), alpha = 0.05, lfcThreshold = 0.1)
+testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d28 <- testing_sc_vs_other_analysis_results_d28[rownames(testing_sc_vs_other_analysis_results_d28) %in% sc_pseudobulk_genes,]
+testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d28 <- testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d28[order(testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d28$padj),]
+# D_minus_1 testing
+testing_sc_vs_other_metadata_d_minus_1 <- testing_sc_vs_other_metadata[testing_sc_vs_other_metadata$time_point == "2_D_minus_1",]
+testing_sc_vs_other_counts_d_minus_1 <- high_placebo_counts[rownames(testing_sc_vs_other_metadata_d_minus_1)]
+testing_sc_vs_other_analysis_d_minus_1 <- DESeqDataSetFromMatrix(countData = testing_sc_vs_other_counts_d_minus_1, colData = testing_sc_vs_other_metadata_d_minus_1, design = ~ subject_tag)
+testing_sc_vs_other_analysis_d_minus_1 <- DESeq(testing_sc_vs_other_analysis_d_minus_1)
+testing_sc_vs_other_analysis_results_d_minus_1 <- results(testing_sc_vs_other_analysis_d_minus_1, contrast = c("subject_tag", "SC", "OTHER"), alpha = 0.05, lfcThreshold = 0.1)
+testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1 <- testing_sc_vs_other_analysis_results_d_minus_1[rownames(testing_sc_vs_other_analysis_results_d_minus_1) %in% sc_pseudobulk_genes,]
+testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1 <- testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1[order(testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1$padj),]

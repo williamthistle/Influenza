@@ -56,7 +56,6 @@ multiome_placebo_counts <- placebo_counts[,(colnames(placebo_counts) %in% rownam
 high_sc_placebo_metadata <- high_placebo_metadata[(high_placebo_metadata$subject_id %in% sc_subjects),]
 high_sc_placebo_counts <- high_placebo_counts[,(colnames(high_placebo_counts) %in% rownames(high_sc_placebo_metadata))]
 
-# Should I do DESeq2 comparing the 4 SC subjects to the 9 non-SC subjects and demonstrate that they're very similar for the genes?
 high_non_sc_placebo_metadata <- high_placebo_metadata[!(high_placebo_metadata$subject_id %in% sc_subjects),]
 high_non_sc_placebo_counts <- high_placebo_counts[,(colnames(high_placebo_counts) %in% rownames(high_non_sc_placebo_metadata))]
 

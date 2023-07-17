@@ -87,6 +87,7 @@ sc_obj <- FilterRawData_RNA(all_sc_exp_matrices = all_sc_exp_matrices, species =
                             log_file_path = log_file_name, log_flag = TRUE)
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing_RNA(sc_obj = sc_obj, species = species, metadata_df = sample_metadata_for_SPEEDI_df, log_flag = TRUE)
+save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.4.RNA.rds"))
 sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE) # STOPPED AFTER THIS STEP - 6 batches with new approach instead of 3? Weird? 
 # save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA_old.rds"))
