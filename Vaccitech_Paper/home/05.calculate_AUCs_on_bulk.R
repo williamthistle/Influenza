@@ -84,9 +84,6 @@ auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", 
 high_non_sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(sc_pseudobulk_genes, non_sc_D28_bulk_metaintegrator_obj, "sc_paired", "high_bulk_D28_minus_training"))
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "D28 Bulk for HVL Subjects (Minus Training)", high_non_sc_bulk_D28_sc_pseudobulk_gene_aucs, "high_bulk_D28_minus_training_gene_auc")
 
-
-
-
 # Calculate gene AUCs for pseudobulk filtered genes (high and low) - single cell
 all_bulk_D2_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_sc_pseudobulk_genes, all_D2_bulk_metaintegrator_obj, "sc_paired", "all_bulk_D2"))
 all_bulk_D5_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(curated_sc_pseudobulk_genes, all_D5_bulk_metaintegrator_obj, "sc_paired", "all_bulk_D5"))
