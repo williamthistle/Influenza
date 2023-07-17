@@ -221,7 +221,7 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
 # Generate AUCS for individual genes on a list of datasets
 # I use source to declare the data source for the genes I'm testing (e.g., single cell, multiome) 
 # and disease_tag to provide a little more detail on what I'm testing on (e.g., bulk_day_2)
-test_individual_genes_on_datasets <- function(gene_list, data_list, source, disease_tag) {
+test_individual_genes_on_datasets <- function(gene_list, data_list, source, disease_tag = NULL) {
   gene_aucs <- c()
   # Sometimes genes aren't found in our ENTREZ mapping database - for those, we just remove them
   final_gene_list <- c()
@@ -248,7 +248,11 @@ test_individual_genes_on_datasets <- function(gene_list, data_list, source, dise
       print(paste0("Gene ", gene, " not found in database"))
     }
   }
-  gene_auc_name <- paste0(disease_tag, "_gene_auc")
+  if(!is.null(disease_tag)) {
+    gene_auc_name <- paste0(disease_tag, "_gene_auc")
+  } else {
+    gene_auc_name <- "gene_auc"
+  }
   final_df <- data.frame("gene_name" = final_gene_list, temp_name = gene_aucs, "source" = rep(source, length(final_gene_list)))
   names(final_df)[names(final_df) == "temp_name"] <- gene_auc_name
   return(final_df)

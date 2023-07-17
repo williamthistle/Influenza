@@ -118,11 +118,3 @@ add_auc_row <- function(auc_df, auc_names, filtering_assay, filtering_method, di
   names(current_row) <- auc_names
   auc_df <- rbind(auc_df, current_row)
 }
-
-find_aucs_of_interest <- function(gene_list, metaintegrator_obj, source) {
-  all_aucs <- na.omit(test_individual_genes_on_datasets(gene_list, metaintegrator_obj, source))
-  curated_gene_list <- all_aucs[all_aucs$gene_auc < 0.3 | all_aucs$gene_auc > 0.7,]$gene_name
-  high_genes <- all_aucs[all_aucs$gene_auc > 0.7,]$gene_name
-  low_genes <- all_aucs[all_aucs$gene_auc < 0.3,]$gene_name
-  return(list(all_aucs, curated_gene_list, high_genes, low_genes))
-}
