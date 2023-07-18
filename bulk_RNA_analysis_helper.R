@@ -1,3 +1,5 @@
+library(pheatmap)
+
 # Method to set up bulk analysis
 setup_bulk_analysis=function() {
   # Read in count and metadata files
@@ -212,7 +214,23 @@ run_deseq2_LRT <- function(counts, metadata) {
   LRT_analysis_results <- results(LRT_analysis, alpha = 0.05)
   LRT_analysis_results <- LRT_analysis_results[order(LRT_analysis_results$padj),]
   LRT_analysis_results <- subset(LRT_analysis_results, padj < 0.05)
-  return(LRT_analysis_results)
+  return(list(LRT_analysis, LRT_analysis_results))
+}
+
+plot_lrt_heatmap <- function(gene_list, LRT_analysis, heatmap_threshold, output_path) {
+  passing_genes <- c()
+  for(gene in gene_list) {
+    if(gene %in% rownames(LRT_analysis[[2]])) {
+      passing_genes <- c(passing_genes, gene)
+    }
+  }
+  
+  betas <- coef(LRT_analysis[[1]])
+  betas <- betas[, -c(1:13)] # TODO: Remove hard-coding of column numbers
+  betas <- betas[rownames(betas) %in% passing_genes,]
+  colnames(betas) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
+  pheatmap(betas, breaks=seq(from=-heatmap_threshold, to=heatmap_threshold, length=101),
+           cluster_col=FALSE, fontsize = 30, width = 16, height = 12, filename = output_path, cex = 0.7)
 }
 
 

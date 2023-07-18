@@ -179,47 +179,117 @@ InferBatches_alt <- function(sc_obj, log_flag = FALSE) {
   return(sc_obj)
 }
 
-MajorityVote_RNA_alt <- function(sc_obj, current_resolution = 1, log_flag = FALSE) {
-  if(Seurat::DefaultAssay(sc_obj) == "integrated") {
-    associated_res_attribute <- paste0("integrated_snn_res.", current_resolution)
+MajorityVote_RNA_alt <- function(sc_obj) {
+  message("Begin majority voting...")
+  DefaultAssay(sc_obj) <- "integrated"
+  if (is.null(sc_obj@graphs$integrated_snn)) {
+    sc_obj <- FindNeighbors(object = sc_obj, reduction = "pca", dims = 1:30)
   } else {
-    associated_res_attribute <- paste0("SCT_snn_res.", current_resolution)
+    message("Neighbors exist. Skipping constructing neighborhood graph...")
   }
-  sc_obj <- Seurat::FindNeighbors(sc_obj, reduction = "pca", dims = 1:30)
-  sc_obj <- Seurat::FindClusters(sc_obj, resolution = current_resolution)
+  sc_obj <- FindClusters(sc_obj, algorithm = 4, method='igraph', resolution = 2)
   sc_obj$predicted.id <- as.character(sc_obj$predicted.id)
+  votes <- c()
+  vote_levels_fix <- as.character(levels(sc_obj$seurat_clusters))
+  vote_levels_mod <- as.character(levels(sc_obj$seurat_clusters))
   
-  integrated_snn_res_df <- sc_obj[[associated_res_attribute]]
-  integrated_snn_res_cell_names <- rownames(integrated_snn_res_df)
-  integrated_snn_res_values <- integrated_snn_res_df[,1]
-  
-  cluster.dump <- as.numeric(levels(integrated_snn_res_values))
-  sc_obj$predicted_celltype_majority_vote <- sc_obj$seurat_clusters
-  levels(sc_obj$predicted_celltype_majority_vote) <- as.character(levels(sc_obj$predicted_celltype_majority_vote))
-  for (i in unique(sc_obj$predicted.id)) {
-    print(i)
-    cells <- names(sc_obj$predicted.id[sc_obj$predicted.id == i])
-    freq.table <- as.data.frame(table(integrated_snn_res_df[cells,]))
-    freq.table <- freq.table[order(freq.table$Freq, decreasing = TRUE),]
-    freq.table$diff <- abs(c(diff(freq.table$Freq), 0))
-    if(nrow(freq.table) > 30) {
-      freq.table <- freq.table[1:30,]
+  Idents(sc_obj) <- "seurat_clusters"
+  for (i in vote_levels_fix) {
+    sub_sc_obj <- subset(sc_obj, idents = i)
+    
+    gmeans <- c()
+    cell_types <- c()
+    
+    for (j in names(prop.table(table(sub_sc_obj$predicted.id))[prop.table(table(sub_sc_obj$predicted.id)) > 0.25])) {
+      cell_types <- c(cell_types, j)
+      scores <- sub_sc_obj$predicted.id.score[which(sub_sc_obj$predicted.id == j)]
+      gmeans <- c(gmeans, exp(mean(log(scores))))
     }
-    p.values <- outliers::dixon.test(freq.table$diff)$p.value[[1]]
-    max.index <- which.max(freq.table$diff)
-    clusters <- as.numeric(as.character(freq.table$Var1[1:max.index]))
-    levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(clusters)] <- i
-    cluster.dump <- cluster.dump[!cluster.dump %in% clusters]
+    
+    #         print(i)
+    #         print(cell_types)
+    #         print(gmeans)
+    
+    vote_levels_mod[which(vote_levels_fix == i)] <- cell_types[which.max(gmeans)]
   }
   
-  if (length(cluster.dump) > 0) {
-    for (i in cluster.dump) {
-      cells <- rownames(subset(integrated_snn_res_df, integrated_snn_res_df[,1] == i,))
-      freq.table <- as.data.frame(table(sc_obj$predicted.id[cells]))
-      levels(sc_obj$predicted_celltype_majority_vote)[levels(sc_obj$predicted_celltype_majority_vote) %in% as.character(i)] <- as.vector(freq.table$Var1)[which.max(freq.table$Freq)]
+  rare_ct <- names(which(prop.table(table(sc_obj$predicted.id)) < 0.05))
+  for (i in vote_levels_fix) {
+    sub_sc_obj <- subset(sc_obj, idents = i)
+    for (j in rare_ct) {
+      if (j %in% sub_sc_obj$predicted.id &
+          prop.table(table(sub_sc_obj$predicted.id))[j] > 0.25) {
+        #                 print(j)
+        #                 print(i)
+        vote_levels_mod[which(vote_levels_fix == i)] <- j
+      } 
     }
   }
+  
+  predicted_celltype_majority_vote <- sc_obj$seurat_clusters
+  levels(predicted_celltype_majority_vote) <- vote_levels_mod
+  predicted_celltype_majority_vote <- as.character(predicted_celltype_majority_vote)
+  sc_obj$predicted_celltype_majority_vote <- predicted_celltype_majority_vote
+  
   return(sc_obj)
+}
+
+MajorityVote_ATAC_alt <- function(proj) {
+  
+  message("Begin majority voting for scATAC-seq data...")
+  
+  tile_reduc <- getReducedDims(ArchRProj = proj, reducedDims = "Harmony", returnMatrix = TRUE)
+  tmp <- matrix(rnorm(nrow(tile_reduc) * 3, 10), ncol = nrow(tile_reduc), nrow = 3)
+  colnames(tmp) <- rownames(tile_reduc)
+  rownames(tmp) <- paste0("t",seq_len(nrow(tmp)))
+  obj <- Seurat::CreateSeuratObject(tmp, project='scATAC', min.cells=0, min.features=0)
+  obj[['Harmony']] <- Seurat::CreateDimReducObject(embeddings=tile_reduc, key='Harmony_', assay='RNA')
+  obj <- FindNeighbors(obj, reduction = "Harmony", dims = 1:29)
+  obj <- FindClusters(obj, algorithm = 4, method='igraph', resolution = 2)
+  obj <- RunUMAP(obj, reduction = "Harmony", dims = 1:29)
+  proj <- addCellColData(
+    ArchRProj = proj,
+    cells = names(obj$seurat_clusters), 
+    data = as.character(obj$seurat_clusters),
+    name = "seurat_clusters",
+    force = TRUE)
+  
+  rm(obj)
+  
+  Harmony_clusters <- as.factor(proj$seurat_clusters)
+  predictedGroup <- proj$predictedGroup
+  predictedScore <- proj$predictedScore
+  
+  votes <- c()
+  vote_levels <- as.character(levels(Harmony_clusters))
+  
+  
+  for (i in vote_levels) {
+    cluster_cells <- which(proj$seurat_clusters == i)
+    sub_predictedGroup <- predictedGroup[cluster_cells]
+    sub_predictedScore <- predictedScore[cluster_cells]
+    
+    gmeans <- c()
+    cell_types <- c()
+    
+    for (j in names(prop.table(table(sub_predictedGroup))[prop.table(table(sub_predictedGroup)) > 0.25])) {
+      cell_types <- c(cell_types, j)
+      cell_type_cells <- which(sub_predictedGroup == j)
+      gmeans <- c(gmeans, exp(mean(log(sub_predictedScore[cell_type_cells]))))
+    }
+    
+    vote_levels[vote_levels %in% as.character(i)] <- cell_types[which.max(gmeans)]
+  }
+  cell_type_voting <- Harmony_clusters
+  levels(cell_type_voting) <- vote_levels
+  cell_type_voting <- as.character(cell_type_voting)
+  
+  proj <- addCellColData(ArchRProj = proj, data = cell_type_voting,
+                         cells = proj$cellNames,
+                         name = "Cell_type_voting", force = TRUE)    
+  
+  message("...End majority voting for scATAC.")
+  return(proj)
 }
 
 #' Scale a vector to range(0,1)

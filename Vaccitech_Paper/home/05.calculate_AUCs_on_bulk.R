@@ -33,7 +33,7 @@ high_sc_bulk_D28_sc_pseudobulk_gene_info <- find_aucs_of_interest(sc_pseudobulk_
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_sc_bulk_D28_sc_pseudobulk_gene_info[[1]], "gene_auc")
 
 # SC (MAGICAL filtering)
-high_sc_bulk_D28_sc_magical_gene_info <- find_aucs_of_interest(sc_magical_genes, high_D28_bulk_metaintegrator_obj, "sc_paired")
+high_sc_bulk_D28_sc_magical_gene_info <- find_aucs_of_interest(sc_magical_gene_table, high_D28_bulk_metaintegrator_obj, "sc_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_sc_bulk_D28_sc_magical_gene_info[[1]], "gene_auc")
 
 # Multiome (pseudobulk filtering
@@ -44,14 +44,14 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bu
 high_multiome_bulk_D28_multiome_magical_gene_info <- find_aucs_of_interest(multiome_magical_genes, high_D28_bulk_metaintegrator_obj, "multiome_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_multiome_bulk_D28_multiome_magical_gene_info[[1]], "gene_auc")
 
-# Most likely, we will next combine SC pseudobulk genes and multiome pseudobulk genes for a combined search across HVL D2/D5/D8 and LVL D28 (not much signal in LVL D2/D5/D8)
+# Next, we combine SC pseudobulk genes and multiome pseudobulk genes for a combined search across HVL D2/D5/D8 and LVL D28 (not much signal in LVL D2/D5/D8)
 # MAGICAL genes may be interesting to look at further down the line
 # Are we seeing interesting behavior out of the MAGICAL genes for D2 / D5 / D8 / D28 or for LVL D28?
 # Which genes come up in both SC and multiome?
 intersecting_genes_between_sc_and_multiome <- intersect(high_sc_bulk_D28_sc_pseudobulk_gene_info[[2]], high_multiome_bulk_D28_multiome_pseudobulk_gene_info[[2]])
 combined_final_gene_list <- unique(c(high_sc_bulk_D28_sc_pseudobulk_gene_info[[2]], high_multiome_bulk_D28_multiome_pseudobulk_gene_info[[2]]))
 
-# Find AUCs for combined gene list for HVL D2/D5/D8 and LVL D2/D5/D8/D28
+# Find AUCs for combined gene list for HVL D2/D5/D8
 high_bulk_D2_combined_info <- find_aucs_of_interest(combined_final_gene_list, high_D2_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D2 Bulk for HVL Subjects", high_bulk_D2_combined_info[[1]], "gene_auc")
 
@@ -61,10 +61,11 @@ auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bu
 high_bulk_D8_combined_info <- find_aucs_of_interest(combined_final_gene_list, high_D8_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D8 Bulk for HVL Subjects", high_bulk_D8_combined_info[[1]], "gene_auc")
 
-# This one is a little redundant with the individual D28 sc/multiome objects but it may still be convenient for something!
+# Combines info from SC and multiome D28 analyses above
 high_bulk_D28_combined_info <- find_aucs_of_interest(combined_final_gene_list, high_D28_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_bulk_D28_combined_info[[1]], "gene_auc")
 
+# Find AUCs for combined gene list for LVL D2/D5/D8/D28
 low_bulk_D2_combined_info <- find_aucs_of_interest(combined_final_gene_list, low_D2_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D2 Bulk for LVL Subjects", low_bulk_D2_combined_info[[1]], "gene_auc")
 
@@ -78,47 +79,37 @@ low_bulk_D28_combined_info <- find_aucs_of_interest(combined_final_gene_list, lo
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for LVL Subjects", low_bulk_D28_combined_info[[1]], "gene_auc")
 
 # Find list of significant genes in bulk data - high (LRT)
-high_LRT_analysis_results <- run_deseq2_LRT(high_placebo_counts, high_placebo_metadata)
+high_LRT_analysis_results_info <- run_deseq2_LRT(high_placebo_counts, high_placebo_metadata)
 
 # Find list of significant genes in bulk data - low (LRT)
-low_LRT_analysis_results <- run_deseq2_LRT(low_placebo_counts, low_placebo_metadata)
+low_LRT_analysis_results_info <- run_deseq2_LRT(low_placebo_counts, low_placebo_metadata)
 
-### HIGH BULK PLACEBO DATA ###
-# See which of these genes are significant in LRT data
-high_sc_pos_genes_LRT_pass <- c()
-for(gene in sc_pos_genes) {
-  if(gene %in% rownames(high_placebo_period_2_LRT_analysis_results)) {
-    high_sc_pos_genes_LRT_pass <- c(high_sc_pos_genes_LRT_pass, gene)
-  }
-}
+# Plot heatmaps for our combined gene list (pos and neg) from SC and multiome (HVL D28 bulk curated) 
+# TODO: Decide whether we should look at fold change of genes that aren't significant
+# We have already decided these genes are important due to AUC > 0.7, so why do we need them to be significant in LRT analysis?
+# This could be even more relevant for LVL since nothing is significant (but maybe we still care about fold change!)
+plot_lrt_heatmap(high_bulk_D28_combined_info[[3]], high_LRT_analysis_results_info, 1.8, "C:/Users/willi/Desktop/testing_high_pos.png")
+plot_lrt_heatmap(high_bulk_D28_combined_info[[4]], high_LRT_analysis_results_info, 2, "C:/Users/willi/Desktop/testing_high_neg.png")
 
-high_placebo_period_2_LRT_analysis_betas <- coef(high_placebo_period_2_LRT_analysis)
-high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_betas[, -c(1:13)]
-high_placebo_period_2_LRT_analysis_betas <- high_placebo_period_2_LRT_analysis_betas[rownames(high_placebo_period_2_LRT_analysis_betas) %in% high_sc_pos_genes_LRT_pass,]
-high_placebo_period_2_LRT_analysis_thr <- 1.8
-colnames(high_placebo_period_2_LRT_analysis_betas) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
-pheatmap(high_placebo_period_2_LRT_analysis_betas, breaks=seq(from=-high_placebo_period_2_LRT_analysis_thr, to=high_placebo_period_2_LRT_analysis_thr, length=101),
-         cluster_col=FALSE, fontsize = 30, width = 16, height = 12, filename = "C:/Users/willi/Desktop/testing_low_pos.png", cex = 0.7)
+# Find genes that have AUC > 0.7 for D2 / D5 / D8 (HVL)
+high_pos_auc_all_time_points <- high_bulk_D28_combined_info[[3]]
+high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D2_combined_info[[3]])
+high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D5_combined_info[[3]])
+high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D8_combined_info[[3]])
 
-# See which of these genes are significant in LRT data - why are only 21/32 found to be significant? Because ALL vs HIGH?
-high_sc_neg_genes_LRT_pass <- c()
-for(gene in sc_neg_genes) {
-  if(gene %in% rownames(high_placebo_period_2_LRT_analysis_results)) {
-    high_sc_neg_genes_LRT_pass <- c(high_sc_neg_genes_LRT_pass, gene)
-  }
-}
+# Find genes that have AUC < 0.3 for D2 / D5 / D8 (HVL)
+high_neg_auc_all_time_points <- high_bulk_D28_combined_info[[4]]
+high_neg_auc_all_time_points <- intersect(high_neg_auc_all_time_points, high_bulk_D2_combined_info[[4]])
+high_neg_auc_all_time_points <- intersect(high_neg_auc_all_time_points, high_bulk_D5_combined_info[[4]])
+high_neg_auc_all_time_points <- intersect(high_neg_auc_all_time_points, high_bulk_D8_combined_info[[4]])
 
-high_placebo_period_2_LRT_analysis_betas_neg <- coef(high_placebo_period_2_LRT_analysis)
-high_placebo_period_2_LRT_analysis_betas_neg <- high_placebo_period_2_LRT_analysis_betas_neg[, -c(1:13)]
-high_placebo_period_2_LRT_analysis_betas_neg <- high_placebo_period_2_LRT_analysis_betas_neg[rownames(high_placebo_period_2_LRT_analysis_betas_neg) %in% high_sc_neg_genes_LRT_pass,]
-colnames(high_placebo_period_2_LRT_analysis_betas_neg) <- c("Day 2 vs Day -1", "Day 5 vs Day -1", "Day 8 vs Day -1", "Day 28 vs Day -1")
-pheatmap(high_placebo_period_2_LRT_analysis_betas_neg, breaks=seq(from=-2, to=2, length=101),
-         cluster_col=FALSE, fontsize = 22, width = 16, height = 12, filename = "C:/Users/willi/Desktop/testing_high_neg.png", cex = 0.8)
+# Find genes that have AUC > 0.7 for D28 (LVL)
+low_pos_auc_d28 <- high_bulk_D28_combined_info[[3]]
+low_pos_auc_d28 <- intersect(low_pos_auc_d28, low_bulk_D28_combined_info[[3]])
 
-
-# Grab DEGs for 2_D28 vs 2_D_minus_1 for bulk (Wald test)
-placebo_period_2_D28_vs_D_minus_1_bulk_results <- run_deseq_bulk_analysis_time_series("placebo", placebo_counts,placebo_metadata,
-                                                                                      "2_D28", "2_D_minus_1", "~/")
+# Find genes that have AUC < 0.3 for D28 (LVL)
+low_neg_auc_d28 <- high_bulk_D28_combined_info[[4]]
+low_neg_auc_d28 <- intersect(low_neg_auc_d28, low_bulk_D28_combined_info[[4]])
 
 
 
@@ -126,82 +117,11 @@ placebo_period_2_D28_vs_D_minus_1_bulk_results <- run_deseq_bulk_analysis_time_s
 
 # Should we include subsets of times?
 # See prediction in bulk datasets using pos and neg signatures, I guess?
-# See how many other genes have same trend as BAG1 (pos AUC in pseudo and fold change is generally negative or vice versa)
-
-
-
-# Genes that passed D28 bulk and all bulk RNA-seq (AUC > 0.7) was nothing
-#all_pass_sc_pos_genes <- all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$all_bulk_D28_gene_auc > 0.7,]$gene_name
-#all_pass_sc_pos_genes <- intersect(all_pass_sc_pos_genes, all_bulk_D2_sc_pseudobulk_gene_aucs[all_bulk_D2_sc_pseudobulk_gene_aucs$all_bulk_D2_gene_auc > 0.7,]$gene_name)
-#all_pass_sc_pos_genes <- intersect(all_pass_sc_pos_genes, all_bulk_D5_sc_pseudobulk_gene_aucs[all_bulk_D5_sc_pseudobulk_gene_aucs$all_bulk_D5_gene_auc > 0.7,]$gene_name)
-#all_pass_sc_pos_genes <- intersect(all_pass_sc_pos_genes, all_bulk_D8_sc_pseudobulk_gene_aucs[all_bulk_D8_sc_pseudobulk_gene_aucs$all_bulk_D8_gene_auc > 0.7,]$gene_name)
-
-# Genes that passed D28 bulk and all bulk RNA-seq (AUC < 0.3) were "OST4"    "C9orf78" "TMA7"    "UQCR11"  "BAG1" 
-#all_pass_sc_neg_genes <- all_bulk_D28_sc_pseudobulk_gene_aucs[all_bulk_D28_sc_pseudobulk_gene_aucs$all_bulk_D28_gene_auc < 0.3,]$gene_name
-#all_pass_sc_neg_genes <- intersect(all_pass_sc_neg_genes, all_bulk_D2_sc_pseudobulk_gene_aucs[all_bulk_D2_sc_pseudobulk_gene_aucs$all_bulk_D2_gene_auc < 0.3,]$gene_name)
-#all_pass_sc_neg_genes <- intersect(all_pass_sc_neg_genes, all_bulk_D5_sc_pseudobulk_gene_aucs[all_bulk_D5_sc_pseudobulk_gene_aucs$all_bulk_D5_gene_auc < 0.3,]$gene_name)
-#all_pass_sc_neg_genes <- intersect(all_pass_sc_neg_genes, all_bulk_D8_sc_pseudobulk_gene_aucs[all_bulk_D8_sc_pseudobulk_gene_aucs$all_bulk_D8_gene_auc < 0.3,]$gene_name)
-
-# Genes that passed D28 bulk and all high bulk RNA-seq (AUC > 0.7)
-high_sc_pos_genes <- high_non_sc_bulk_D28_sc_pseudobulk_gene_aucs[high_non_sc_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_minus_training_gene_auc > 0.7,]$gene_name
-high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc > 0.7,]$gene_name)
-high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc > 0.7,]$gene_name)
-high_sc_pos_genes <- intersect(high_sc_pos_genes, high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$high_bulk_D8_gene_auc > 0.7,]$gene_name)
-# Genes that passed D28 bulk and all high bulk RNA-seq (AUC < 0.3)
-high_sc_neg_genes <- high_non_sc_bulk_D28_sc_pseudobulk_gene_aucs[high_non_sc_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_minus_training_gene_auc < 0.3,]$gene_name
-high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D2_sc_pseudobulk_gene_aucs[high_bulk_D2_sc_pseudobulk_gene_aucs$high_bulk_D2_gene_auc < 0.3,]$gene_name)
-high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D5_sc_pseudobulk_gene_aucs[high_bulk_D5_sc_pseudobulk_gene_aucs$high_bulk_D5_gene_auc < 0.3,]$gene_name)
-high_sc_neg_genes <- intersect(high_sc_neg_genes, high_bulk_D8_sc_pseudobulk_gene_aucs[high_bulk_D8_sc_pseudobulk_gene_aucs$high_bulk_D8_gene_auc < 0.3,]$gene_name)
-# No genes passed pseudobulk and all low bulk RNA-seq (AUC > 0.7)
-low_sc_pos_genes <- high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc > 0.7,]$gene_name
-low_sc_pos_genes <- intersect(low_sc_pos_genes, low_bulk_D2_sc_pseudobulk_gene_aucs[low_bulk_D2_sc_pseudobulk_gene_aucs$low_bulk_D2_gene_auc > 0.7,]$gene_name)
-low_sc_pos_genes <- intersect(low_sc_pos_genes, low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$low_bulk_D5_gene_auc > 0.7,]$gene_name)
-low_sc_pos_genes <- intersect(low_sc_pos_genes, low_bulk_D8_sc_pseudobulk_gene_aucs[low_bulk_D8_sc_pseudobulk_gene_aucs$low_bulk_D8_gene_auc > 0.7,]$gene_name)
-low_sc_pos_genes <- intersect(low_sc_pos_genes, low_bulk_D28_sc_pseudobulk_gene_aucs[low_bulk_D28_sc_pseudobulk_gene_aucs$low_bulk_D28_gene_auc > 0.7,]$gene_name)
-# No genes passed pseudobulk and all low bulk RNA-seq (AUC < 0.3)
-low_sc_neg_genes <- high_bulk_D28_sc_pseudobulk_gene_aucs[high_bulk_D28_sc_pseudobulk_gene_aucs$high_bulk_D28_gene_auc < 0.3,]$gene_name
-low_sc_neg_genes <- intersect(low_sc_neg_genes, low_bulk_D2_sc_pseudobulk_gene_aucs[low_bulk_D2_sc_pseudobulk_gene_aucs$low_bulk_D2_gene_auc < 0.3,]$gene_name)
-low_sc_neg_genes <- intersect(low_sc_neg_genes, low_bulk_D5_sc_pseudobulk_gene_aucs[low_bulk_D5_sc_pseudobulk_gene_aucs$low_bulk_D5_gene_auc < 0.3,]$gene_name)
-low_sc_neg_genes <- intersect(low_sc_neg_genes, low_bulk_D8_sc_pseudobulk_gene_aucs[low_bulk_D8_sc_pseudobulk_gene_aucs$low_bulk_D8_gene_auc < 0.3,]$gene_name)
-low_sc_neg_genes <- intersect(low_sc_neg_genes, low_bulk_D28_sc_pseudobulk_gene_aucs[low_bulk_D28_sc_pseudobulk_gene_aucs$low_bulk_D28_gene_auc < 0.3,]$gene_name)
-# Genes that passed 
-
-# Test to see if dumb way of doing FC and p-value thresholding results in "better" alignment with what people generally think
-
-
-# See if those are usually found in MAGICAL
-
-# For SC data
-# Sample 1 - 318475c9c36293a5 - HVL
-# Sample 2 - fac0a26252aed8d9 - HVL
-# Sample 3 - e5c7a7c9f56d67f1 - HVL
-# Sample 4 - 2418b55aca2c78d6 - LVL
-# Sample 5 - 82302d3a293e261b - LVL
-# Sample 6 - 76690d37e925ba09 - HVL
-
-# 80633 HVL
-# 35496 LVL
 
 # Humanbase for DEGs in Bulk
 # Humanbase for DEGs in cell types (pseudobulk or no? No, right?)
 
-# Testing on bulk D5 - no wonder there isn't perfect overlap, right? Test bulk for D28 and see what you find!
 # Interesting idea - compare AUCs in our gene list(s) to other datasets (e.g., Data Compendium discovery or our own bulk RNA-seq)
-# Do I need to remove 0 qPCR value person from LVL for BULK as well? Should we just completely remove this individual from consideration?
-
-
-
-
-# Interesting idea - compare AUCs in our gene list(s) to other datasets (e.g., Data Compendium discovery or our own bulk RNA-seq)
-# # IDEA - separate into HVL and LVL and see whether it has higher AUC for higher viral load ppl
-comparison_aucs <- sc_pseudobulk_aucs
-comparison_aucs$discovery_aucs <- sc_discovery_flu_aucs$flu_discovery_gene_auc
-comparison_aucs <- comparison_aucs[,c(1,2,4,3)]
-
-
-
-curated_sc_pseudobulk_gene_aucs
-sc_bulk_D28_sc_pseudobulk_gene_aucs
 
 ###### MISC UNORDERED STUFF ######
 
