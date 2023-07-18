@@ -118,7 +118,7 @@ Cell_type_combined[idx] <- "T Naive"
 idx <- grep("Treg", Cell_type_combined)
 Cell_type_combined[idx] <- "T Naive"
 sc_obj$predicted.id <- Cell_type_combined
-sc_obj <- MajorityVote_RNA_alt(sc_obj, current_resolution = 2)
+sc_obj <- MajorityVote_RNA_alt(sc_obj)
 
 print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
@@ -128,6 +128,18 @@ print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_
                log_flag = log_flag)
 print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
                group_by_category = "predicted.id", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Viral_Load.png",
+               group_by_category = "viral_load", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
+               group_by_category = "sample", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Day.png",
+               group_by_category = "time_point", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
+               group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
 cluster_info <- capture_cluster_info(sc_obj)
