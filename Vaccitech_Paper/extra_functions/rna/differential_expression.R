@@ -7,7 +7,7 @@ run_differential_expression_cluster <- function(sc_obj, marker_dir) {
     n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
   }
   
-  n.cores <- 8
+  n.cores <- 16
   
   message(paste0("Number of cores: ", n.cores))
   

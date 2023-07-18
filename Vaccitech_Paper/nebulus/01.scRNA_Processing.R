@@ -144,6 +144,8 @@ print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_
 
 cluster_info <- capture_cluster_info(sc_obj)
 
+run_differential_expression_cluster(sc_obj, RNA_output_dir)
+
 messy_clusters <- c(34,40)
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
