@@ -87,20 +87,42 @@ sc_obj <- FilterRawData_RNA(all_sc_exp_matrices = all_sc_exp_matrices, species =
                             log_file_path = log_file_name, log_flag = TRUE)
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing_RNA(sc_obj = sc_obj, species = species, metadata_df = sample_metadata_for_SPEEDI_df, log_flag = TRUE)
-save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.4.RNA.rds"))
-sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE) # STOPPED AFTER THIS STEP - 6 batches with new approach instead of 3? Weird? 
-# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.rds"))
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA_old.rds"))
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.4.RNA.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_7_subject_14_sample.step.4.RNA.rds"))
+sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE)
 sc_obj <- IntegrateByBatch_RNA(sc_obj = sc_obj, log_flag = TRUE)
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.6.RNA.rds"))
 sc_obj <- VisualizeIntegration(sc_obj = sc_obj, log_flag = TRUE)
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.7.RNA.rds"))
 sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
                            reference_cell_type_attribute = reference_cell_type_attribute,
                            output_dir = RNA_output_dir, log_flag = TRUE)
-# sc_obj <- MajorityVote_RNA_alt(sc_obj)
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.final.algorithm.4.RNA.rds")) # NOT CURRENTLY USED
-save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.old.algorithm.rds"))
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA.old.algorithm.rds"))
-# vincy_obj <- readRDS("~/single_cell/analysis/vincy_analysis/integrated_obj_labeled.rds")
+sc_obj <- MajorityVote_RNA_alt(sc_obj)
+save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.8.RNA.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_7_subject_14_sample.step.8.RNA.rds"))
+
+print_UMAP_RNA(sc_obj, file_name = "Initial_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Initial_RNA_UMAP_by_Cluster.png",
+               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Initial_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+               group_by_category = "predicted.id", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Initial_RNA_UMAP_by_Viral_Load.png",
+               group_by_category = "viral_load", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Initial_RNA_UMAP_by_Sample.png",
+               group_by_category = "sample", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Initial_RNA_UMAP_by_Day.png",
+               group_by_category = "time_point", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Initial_RNA_UMAP_by_Sex.png",
+               group_by_category = "sex", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+
 
 sc_obj$old.predicted.id <- sc_obj$predicted.id
 Cell_type_combined <- sc_obj$predicted.id

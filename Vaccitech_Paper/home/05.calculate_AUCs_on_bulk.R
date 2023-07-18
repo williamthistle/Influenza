@@ -19,7 +19,6 @@ low_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo
 # in our gene set signature
 # Our single cell data gives us single cell granularity on the genes being expressed. This also applies to the ATAC-seq data and our peaks! mintchip can help us verify our choices,
 # but the ATAC-seq gives us the cell type!
-# TODO: List cell types for genes when reporting
 auc_df <- data.frame(Filtering_Assay = character(), Filtering_Method = character(), Discovery_Assay = character(), 
                      Discovery_Dataset = character(), Pos_Genes = integer(), Neg_Genes = integer(), Total_Passing_Genes = integer(), 
                      Total_Genes = integer(), Percentage_of_Passing_Genes = double(), stringsAsFactors = FALSE)
