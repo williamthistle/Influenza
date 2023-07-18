@@ -224,6 +224,7 @@ calculateScoreRobust <- function(filterObject, datasetObject, suppressMessages =
 test_individual_genes_on_datasets <- function(gene_list, data_list, source, disease_tag = NULL) {
   gene_aucs <- c()
   # Sometimes genes aren't found in our ENTREZ mapping database - for those, we just remove them
+  # TODO: Why? Should I keep these and just keep them ENTREZ unlabeled?
   final_gene_list <- c()
   for(gene in gene_list) {
     if(gene %in% keys(org.Hs.eg.db, keytype = "SYMBOL")) {

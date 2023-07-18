@@ -119,7 +119,13 @@ add_auc_row <- function(auc_df, auc_names, filtering_assay, filtering_method, di
   auc_df <- rbind(auc_df, current_row)
 }
 
-find_aucs_of_interest <- function(gene_list, metaintegrator_obj, source) {
+find_aucs_of_interest <- function(gene_table, metaintegrator_obj, source) {
+  gene_list <- NULL
+  if("Gene_Name" %in% colnames(gene_table)) {
+    gene_list <- unique(gene_table$Gene_Name)
+  } else {
+    gene_list <- unique(gene_table$Gene_symbol)
+  }
   all_aucs <- na.omit(test_individual_genes_on_datasets(gene_list, metaintegrator_obj, source))
   curated_gene_list <- all_aucs[all_aucs$gene_auc < 0.3 | all_aucs$gene_auc > 0.7,]$gene_name
   high_genes <- all_aucs[all_aucs$gene_auc > 0.7,]$gene_name
