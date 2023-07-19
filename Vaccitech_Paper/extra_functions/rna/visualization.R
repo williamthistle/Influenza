@@ -20,6 +20,30 @@ print_UMAP_RNA <- function(sc_obj, file_name, group_by_category = NULL, output_d
   return(TRUE)
 }
 
+# Method to print a well-organized UMAP plot for our snRNA-seq data (with extra axis ticks)
+print_UMAP_RNA_detailed <- function(sc_obj, file_name, group_by_category = NULL, output_dir = getwd(), log_flag = FALSE) {
+  # Normalize paths (in case user provides relative paths)
+  output_dir <- normalize_dir_path(output_dir)
+  sample_count <- length(unique(sc_obj$sample))
+  cell_count <- length(sc_obj$cell_name)
+  current_title <- paste0("RNA Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
+  if(!is.null(group_by_category)) {
+    p <- Seurat::DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, label = TRUE,
+                         label.size = 3, repel = TRUE, raster = FALSE) +
+      ggplot2::labs(title = current_title) +
+      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)) + scale_x_continuous(n.breaks=20) +
+      scale_y_continuous(n.breaks=20)
+  } else {
+    p <- Seurat::DimPlot(sc_obj, reduction = "umap", label = TRUE,
+                         label.size = 3, repel = TRUE, raster = FALSE) +
+      ggplot2::labs(title = current_title) +
+      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)) +   scale_x_continuous(n.breaks=20) +
+      scale_y_continuous(n.breaks=20)
+  }
+  ggplot2::ggsave(paste0(output_dir, file_name), plot = p, device = "png", dpi = 300)
+  return(TRUE)
+}
+
 print_UMAP_stage_1 <- function(sc_obj, sample_count, plot_dir, date) {
   print_UMAP(sc_obj, sample_count, "predicted_celltype_majority_vote", plot_dir, paste0("pre.clusters_by_cell_type_majority_vote_", date, ".png"))
   print_UMAP(sc_obj, sample_count, "seurat_clusters", plot_dir, paste0("pre.clusters_by_cluster_num_", date, ".png"))

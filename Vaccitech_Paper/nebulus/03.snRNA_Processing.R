@@ -153,29 +153,29 @@ idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
-sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -2.25, 0, 1, 2.5) # 14 sample multiome
-sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, 1.5, 2.5, -3, -1.5) # 14 sample multiome
-sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, 2.2, 3.5, -6, -4) # 14 sample multiome
+sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, 0, 5, 1, 3) # 14 sample multiome
+sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -4, 0, 2, 3) # 14 sample multiome
+sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -3.5, -1, -6, -4.5) # 14 sample multiome
 
-print_UMAP_RNA(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
+print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
                group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
                group_by_category = "predicted.id", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Viral_Load.png",
+print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Viral_Load.png",
                group_by_category = "viral_load", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
+print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
                group_by_category = "sample", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
+print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
                group_by_category = "time_point", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
+print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
