@@ -96,7 +96,7 @@ sc_obj <- VisualizeIntegration(sc_obj = sc_obj, log_flag = TRUE)
 # save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.7.RNA.rds"))
 sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
                            reference_cell_type_attribute = reference_cell_type_attribute,
-                           output_dir = RNA_output_dir, log_flag = TRUE)
+                           output_dir = RNA_output_dir, data_type = "snRNA", log_flag = TRUE)
 sc_obj <- MajorityVote_RNA_alt(sc_obj)
 save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.8.RNA.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_7_subject_14_sample.step.8.RNA.rds"))
