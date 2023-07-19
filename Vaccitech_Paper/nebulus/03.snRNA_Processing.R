@@ -145,10 +145,14 @@ sc_obj <- MajorityVote_RNA_alt(sc_obj, res = 3)
 
 cluster_info <- capture_cluster_info(sc_obj)
 
-messy_clusters <- c(1,2,4,7,12,17,22,27,28)
+messy_clusters <- c(1,2,4,7,12,16,17,22,27,28,47)
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
+sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -2.25, 0, 1, 2.5) # 14 sample multiome
+sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, 1.5, 2.5, -3, -1.5) # 14 sample multiome
+sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, 2.2, 3.5, -6, -4) # 14 sample multiome
 
 print_UMAP_RNA(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
