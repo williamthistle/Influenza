@@ -206,9 +206,9 @@ MajorityVote_RNA_alt <- function(sc_obj) {
       gmeans <- c(gmeans, exp(mean(log(scores))))
     }
     
-    #         print(i)
-    #         print(cell_types)
-    #         print(gmeans)
+             print(i)
+             print(cell_types)
+             print(gmeans)
     
     vote_levels_mod[which(vote_levels_fix == i)] <- cell_types[which.max(gmeans)]
   }
