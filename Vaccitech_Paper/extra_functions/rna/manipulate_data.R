@@ -179,7 +179,7 @@ InferBatches_alt <- function(sc_obj, log_flag = FALSE) {
   return(sc_obj)
 }
 
-MajorityVote_RNA_alt <- function(sc_obj) {
+MajorityVote_RNA_alt <- function(sc_obj, res = 2) {
   message("Begin majority voting...")
   DefaultAssay(sc_obj) <- "integrated"
   if (is.null(sc_obj@graphs$integrated_snn)) {
@@ -187,7 +187,7 @@ MajorityVote_RNA_alt <- function(sc_obj) {
   } else {
     message("Neighbors exist. Skipping constructing neighborhood graph...")
   }
-  sc_obj <- FindClusters(sc_obj, algorithm = 4, method='igraph', resolution = 2)
+  sc_obj <- FindClusters(sc_obj, algorithm = 4, method='igraph', resolution = res)
   sc_obj$predicted.id <- as.character(sc_obj$predicted.id)
   votes <- c()
   vote_levels_fix <- as.character(levels(sc_obj$seurat_clusters))
