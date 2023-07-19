@@ -92,6 +92,9 @@ sc_obj <- InitialProcessing_RNA(sc_obj = sc_obj, species = species, metadata_df 
 sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE)
 sc_obj <- IntegrateByBatch_RNA(sc_obj = sc_obj, log_flag = TRUE)
 # save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.6.RNA.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_7_subject_14_sample.step.6.RNA.rds"))
+# plan("multiprocess", workers = 16)
+# options(future.globals.maxSize = 8000 * 1024^2)
 sc_obj <- VisualizeIntegration(sc_obj = sc_obj, log_flag = TRUE)
 # save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".step.7.RNA.rds"))
 sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
