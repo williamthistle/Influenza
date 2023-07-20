@@ -97,8 +97,9 @@ sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
                            output_dir = RNA_output_dir, log_flag = TRUE)
 # sc_obj <- MajorityVote_RNA_alt(sc_obj)
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.final.algorithm.4.RNA.rds"))
-save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.old.algorithm.rds"))
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".final.algorithm.4.RNA.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA.old.algorithm.rds"))  # NOT CURRENTLY USED
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.old.algorithm.rds"))
 # vincy_obj <- readRDS("~/single_cell/analysis/vincy_analysis/integrated_obj_labeled.rds")
 
 sc_obj$old.predicted.id <- sc_obj$predicted.id
@@ -179,11 +180,11 @@ print_UMAP_RNA(sc_obj, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 sc_obj <- combine_cell_types_magical(sc_obj)
 # Run differential expression for each cell type within each group of interest
-differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/final/")
+differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/alg_4/")
 if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
 run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
-run_differential_expression_group(sc_obj, differential_genes_dir, "viral_load") # NOT RUN YET
-run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
+#run_differential_expression_group(sc_obj, differential_genes_dir, "viral_load") # NOT RUN YET
+#run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
 
 create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
 create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"viral_load", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
