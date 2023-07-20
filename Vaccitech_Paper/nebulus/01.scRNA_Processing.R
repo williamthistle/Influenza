@@ -96,9 +96,9 @@ sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
                            reference_cell_type_attribute = reference_cell_type_attribute,
                            output_dir = RNA_output_dir, log_flag = TRUE)
 # sc_obj <- MajorityVote_RNA_alt(sc_obj)
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.final.algorithm.4.RNA.rds")) # NOT CURRENTLY USED
+# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.final.algorithm.4.RNA.rds"))
 save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.old.algorithm.rds"))
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA.old.algorithm.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA.old.algorithm.rds"))  # NOT CURRENTLY USED
 # vincy_obj <- readRDS("~/single_cell/analysis/vincy_analysis/integrated_obj_labeled.rds")
 
 sc_obj$old.predicted.id <- sc_obj$predicted.id
@@ -111,14 +111,17 @@ idx <- grep("cDC", Cell_type_combined)
 Cell_type_combined[idx] <- "cDC"
 idx <- grep("Proliferating", Cell_type_combined)
 Cell_type_combined[idx] <- "Proliferating"
-idx <- grep("CD4 Naive", Cell_type_combined)
-Cell_type_combined[idx] <- "T Naive"
-idx <- grep("CD8 Naive", Cell_type_combined)
-Cell_type_combined[idx] <- "T Naive"
-idx <- grep("Treg", Cell_type_combined)
-Cell_type_combined[idx] <- "T Naive"
+#idx <- grep("CD4 Naive", Cell_type_combined)
+#Cell_type_combined[idx] <- "T Naive"
+#idx <- grep("CD8 Naive", Cell_type_combined)
+#Cell_type_combined[idx] <- "T Naive"
+#idx <- grep("Treg", Cell_type_combined)
+#Cell_type_combined[idx] <- "T Naive"
 sc_obj$predicted.id <- Cell_type_combined
 sc_obj <- MajorityVote_RNA_alt(sc_obj)
+
+# Override our mystery cell type to indicate that it's special (was originally CD4 Naive)
+sc_obj <- override_cluster_label(sc_obj, c(29), "Unknown")
 
 print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
