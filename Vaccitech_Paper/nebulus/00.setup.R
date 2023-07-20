@@ -6,6 +6,7 @@ library(dplyr)
 library(BSgenome.Hsapiens.UCSC.hg38)
 library(openxlsx)
 library(future)
+library(Libra)
 # Load extra RNA functions
 home_dir <- "~/"
 source(paste0(home_dir, "extra_functions/rna/preprocessing_and_qc.R"))
