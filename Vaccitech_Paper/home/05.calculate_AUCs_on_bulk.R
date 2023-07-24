@@ -35,7 +35,7 @@ auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", 
 high_sc_bulk_D28_sc_magical_gene_info <- find_aucs_of_interest(sc_magical_gene_table, high_D28_bulk_metaintegrator_obj, "sc_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_sc_bulk_D28_sc_magical_gene_info[[1]], "gene_auc")
 
-# Multiome (pseudobulk filtering
+# Multiome (pseudobulk filtering)
 high_multiome_bulk_D28_multiome_pseudobulk_gene_info <- find_aucs_of_interest(multiome_pseudobulk_gene_table, high_D28_bulk_metaintegrator_obj, "multiome_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_multiome_bulk_D28_multiome_pseudobulk_gene_info[[1]], "gene_auc")
 
