@@ -16,7 +16,7 @@ onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 sc_magical_dir <- paste0(onedrive_dir, "Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 4 Subject HVL (SPEEDI) - SCT/")
 sc_pseudobulk_dir <- paste0(sc_magical_dir, "scRNA_pseudobulk/")
-multiome_magical_dir <- paste0(onedrive_dir, "Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/")
+multiome_magical_dir <- paste0(onedrive_dir, "Influenza Analysis/True Multiome/MAGICAL Analyses/5 Placebo Subjects HVL/")
 multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
 set.seed(2000)
 
@@ -25,8 +25,8 @@ set.seed(2000)
 sc_pseudobulk_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
 sc_magical_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL.txt"), sep = "\t", header = TRUE)
 
-multiome_pseudobulk_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome_sc_genes.txt"), sep = "\t", header = TRUE)
-multiome_magical_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome.txt"), sep = "\t", header = TRUE)
+multiome_pseudobulk_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
+#multiome_magical_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome.txt"), sep = "\t", header = TRUE)
 
 # Grab gene lists from result tables and report number of genes
 sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table$Gene_Name)
@@ -34,10 +34,10 @@ print(paste0("Number of genes that pass pseudobulk (scRNA): ", length(sc_pseudob
 sc_magical_genes <- unique(sc_magical_gene_table$Gene_symbol)
 print(paste0("Number of genes that pass MAGICAL (scRNA): ", length(sc_magical_genes)))
 
-multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$gene)
+multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
-multiome_magical_genes <- unique(multiome_magical_gene_table$Gene_symbol)
-print(paste0("Number of genes that pass MAGICAL (multiome): ", length(multiome_magical_genes)))
+#multiome_magical_genes <- unique(multiome_magical_gene_table$Gene_symbol)
+#print(paste0("Number of genes that pass MAGICAL (multiome): ", length(multiome_magical_genes)))
 
 # Next, let's test our gene lists on the actual bulk RNA-seq data! (Should I add extra samples for subjects that have them? How to label as HVL or LVL?)
 # First, let's remove the 0 PCR sample from low because it's questionable

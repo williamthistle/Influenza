@@ -180,13 +180,13 @@ print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA
                log_flag = log_flag)
 
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
-sc_obj <- combine_cell_types_magical(sc_obj)
+sc_obj_subset <- combine_cell_types_magical(sc_obj_subset)
 # Run differential expression for each cell type within each group of interest
 differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/final/")
 if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
 run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
-run_differential_expression_group(sc_obj, differential_genes_dir, "viral_load") # NOT RUN YET
-run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
+#run_differential_expression_group(sc_obj, differential_genes_dir, "viral_load") # NOT RUN YET
+#run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
 
 create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
 create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"viral_load", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
@@ -197,9 +197,9 @@ if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive =
 create_magical_cell_type_pseudobulk_files(sc_obj, pseudobulk_rna_dir)
 
 # HVL WORK
-idxPass <- which(sc_obj$viral_load %in% "high")
-cellsPass <- names(sc_obj$orig.ident[idxPass])
-hvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+idxPass <- which(sc_obj_subset$viral_load %in% "high")
+cellsPass <- names(sc_obj_subset$orig.ident[idxPass])
+hvl_sc_obj <- subset(x = sc_obj_subset, subset = cell_name %in% cellsPass)
 
 print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
@@ -220,23 +220,24 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
-HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_SCT_controlling_for_subject/")
+HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_SCT/")
 if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
 run_differential_expression_group(hvl_sc_obj, HVL_differential_genes_dir, "time_point")
 
 create_magical_cell_type_proportion_file(hvl_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
 hvl_pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/HVL_RNA/")
-if (!dir.exists(hvl_pseudobulk_rna_dir)) {dir.create(hvl_pseudobulk_rna_dir, recursive = TRUE)}
-create_magical_cell_type_pseudobulk_files(hvl_sc_obj, hvl_pseudobulk_rna_dir)
+#if (!dir.exists(hvl_pseudobulk_rna_dir)) {dir.create(hvl_pseudobulk_rna_dir, recursive = TRUE)}
+#create_magical_cell_type_pseudobulk_files(hvl_sc_obj, hvl_pseudobulk_rna_dir)
 
 # Run pseudobulk DE
+DefaultAssay(hvl_sc_obj) <- "RNA"
 pseudobulk_de_df <- run_de(hvl_sc_obj, replicate_col = "sample", cell_type_col = "magical_cell_types", label_col = "time_point", de_method = "DESeq2")
 pseudobulk_de_df <- na.omit(pseudobulk_de_df)
 pseudobulk_de_df <- pseudobulk_de_df[pseudobulk_de_df$p_val < 0.05,]
 pseudobulk_de_df <- pseudobulk_de_df[pseudobulk_de_df$avg_logFC < -0.3 | pseudobulk_de_df$avg_logFC > 0.3,]
 
-pseudobulk_cell_types_for_correction <- c("B", "CD4_Memory", "CD8_Memory", "CD14_Mono", "CD16_Mono", "NK_MAGICAL", "MAIT", "T_Naive")
-DEG_dir <- "/home/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/RNA/diff_genes/2023-07-06/HVL_SCT/"
+pseudobulk_cell_types_for_correction <- c("B", "CD4_Memory", "CD8_Memory", "CD14_Mono", "CD16_Mono", "NK_MAGICAL", "T_Naive")
+DEG_dir <- "/Genomics/ogtr04/wat2/multiome/analysis/primary_analysis_7_subject_14_sample/RNA/diff_genes/2023-07-24/HVL_SCT/"
 final_list_of_genes <- data.frame(Cell_Type = character(), Gene_Name = character(), sc_pval_adj = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
                                   pseudo_bulk_log2FC = character())
 for(current_cell_type in pseudobulk_cell_types_for_correction) {
@@ -262,5 +263,6 @@ for(current_cell_type in pseudobulk_cell_types_for_correction) {
 }
 
 write.table(final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+DefaultAssay(hvl_sc_obj) <- "integrated"
 # Add printing of positive and negative fold change for ease
 
