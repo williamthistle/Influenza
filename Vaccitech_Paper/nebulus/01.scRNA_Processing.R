@@ -124,25 +124,25 @@ sc_obj <- MajorityVote_RNA_alt(sc_obj)
 # Override our mystery cell type to indicate that it's special (was originally CD4 Naive)
 sc_obj <- override_cluster_label(sc_obj, c(29), "Unknown")
 
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Cluster.png",
                group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
                group_by_category = "predicted.id", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Viral_Load.png",
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Viral_Load.png",
                group_by_category = "viral_load", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Sample.png",
                group_by_category = "sample", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Day.png",
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Day.png",
                group_by_category = "time_point", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
+print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 

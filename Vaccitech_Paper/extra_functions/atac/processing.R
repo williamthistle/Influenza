@@ -122,16 +122,16 @@ combine_cell_types_atac <- function(proj) {
   proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD4 Naive", "T Naive")
   proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD8 Naive", "T Naive")
   proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "NK_CD56bright", "NK")
-  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "Treg", "T Naive")
-  cM <- as.matrix(ArchR::confusionMatrix(proj$Harmony_clusters, proj$predictedGroup))
-  Cell_type_voting <- proj$Harmony_clusters
-  pre_cluster <- rownames(cM)
-  max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
-  for (m in c(1:length(pre_cluster))){
-    idxSample <- which(proj$Harmony_clusters == pre_cluster[m])
-    Cell_type_voting[idxSample] <- max_celltype[m]
-  }
-  proj <- addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
+  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "Treg", "CD4 Memory")
+  #cM <- as.matrix(ArchR::confusionMatrix(proj$Harmony_clusters, proj$predictedGroup))
+  #Cell_type_voting <- proj$Harmony_clusters
+  #pre_cluster <- rownames(cM)
+  #max_celltype <- colnames(cM)[apply(cM, 1 , which.max)]
+  #for (m in c(1:length(pre_cluster))){
+  #  idxSample <- which(proj$Harmony_clusters == pre_cluster[m])
+  #  Cell_type_voting[idxSample] <- max_celltype[m]
+  #}
+  #proj <- addCellColData(ArchRProj = proj, data = Cell_type_voting, cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
   return(proj)
 }
 
@@ -174,10 +174,10 @@ get_cluster_info <- function(proj) {
   cluster_day_distributions <- list()
   cluster_sex_distributions <- list()
   idx <- 1
-  unique_cluster_ids <- unique(proj$Harmony_clusters)
+  unique_cluster_ids <- unique(proj$seurat_clusters)
   unique_cluster_ids <- unique_cluster_ids[order(nchar(unique_cluster_ids), unique_cluster_ids)]
   for (cluster in unique_cluster_ids) {
-    idxPass <- which(proj$Harmony_clusters %in% cluster)
+    idxPass <- which(proj$seurat_clusters %in% cluster)
     cellsPass <- proj$cellNames[idxPass]
     filtered_cluster <-proj[cellsPass,]
     cluster_cell_type_predictions <- append(cluster_cell_type_predictions, table(filtered_cluster$Cell_type_voting))
@@ -194,7 +194,7 @@ get_cluster_info <- function(proj) {
 
 # Sometimes, we want to manually override the cell type for a given cluster (if we feel like majority vote got it wrong)
 override_cluster_label_atac <- function(proj, cluster_identities, cluster_label) {
-  idxPass <- which(proj$Harmony_clusters %in% cluster_identities)
+  idxPass <- which(proj$seurat_clusters %in% cluster_identities)
   proj$Cell_type_voting[idxPass] <- cluster_label
   return(proj)
 }

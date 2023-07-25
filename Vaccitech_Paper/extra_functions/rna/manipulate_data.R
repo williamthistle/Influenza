@@ -278,7 +278,12 @@ MajorityVote_ATAC_alt <- function(proj) {
       gmeans <- c(gmeans, exp(mean(log(sub_predictedScore[cell_type_cells]))))
     }
     
-    vote_levels[vote_levels %in% as.character(i)] <- cell_types[which.max(gmeans)]
+    if(!is.null(cell_types)) {
+      vote_levels[vote_levels %in% as.character(i)] <- cell_types[which.max(gmeans)]
+    } else {
+      vote_levels[vote_levels %in% as.character(i)] <- "Undetermined"
+    }
+    
   }
   cell_type_voting <- Harmony_clusters
   levels(cell_type_voting) <- vote_levels
