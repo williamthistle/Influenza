@@ -266,3 +266,39 @@ write.table(final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes
 DefaultAssay(hvl_sc_obj) <- "integrated"
 # Add printing of positive and negative fold change for ease
 
+
+DefaultAssay(hvl_sc_obj) <- "SCT"
+
+idxPass <- which(hvl_sc_obj$time_point %in% "D28")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_sc_obj_d28 <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+
+idxPass <- which(hvl_sc_obj$time_point %in% "D_minus_1")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_sc_obj_d_minus_1 <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+DefaultAssay(hvl_sc_obj_d28) <- "SCT"
+DefaultAssay(hvl_sc_obj_d_minus_1) <- "SCT"
+
+d28_plot <- FeaturePlot(hvl_sc_obj_d28, features = c("SYAP1"))
+ggsave(filename = paste0(RNA_output_dir, "multiome_D28_SYAP1.png"), plot = d28_plot, device = "png")
+d_minus_1_plot <- FeaturePlot(hvl_sc_obj_d_minus_1, features = c("SYAP1"))
+ggsave(filename = paste0(RNA_output_dir, "multiome_D_minus_1_SYAP1.png"), plot = d_minus_1_plot, device = "png")
+
+# Downsampling experiment
+idxPass <- which(hvl_sc_obj$predicted_celltype_majority_vote %in% "CD14 Mono")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+cd14_mono_hvl_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+downsampled_indices <- which(cd14_mono_hvl_sc_obj$time_point %in% "D_minus_1")
+other_indices <- which(cd14_mono_hvl_sc_obj$time_point %in% "D28")
+cellsPass <- names(cd14_mono_hvl_sc_obj$orig.ident[downsampled_indices])
+cellsPass <- sample(cellsPass, length(other_indices))
+otherCellsPass <- names(cd14_mono_hvl_sc_obj$orig.ident[other_indices])
+allCellsPass <- c(cellsPass, otherCellsPass)
+downsampled_cd14_mono_hvl_sc_obj <- subset(x = cd14_mono_hvl_sc_obj, subset = cell_name %in% allCellsPass)
+Idents(downsampled_cd14_mono_hvl_sc_obj) <- "time_point"
+downsampled_cd14_mono_de <- FindMarkers(downsampled_cd14_mono_hvl_sc_obj, ident.1 = "D_minus_1", ident.2 = "D28", logfc.threshold = 0.1, min.pct = 0.1, assay = "SCT", recorrect_umi = FALSE)
+
+

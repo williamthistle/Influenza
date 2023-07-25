@@ -87,7 +87,7 @@ sc_obj <- FilterRawData_RNA(all_sc_exp_matrices = all_sc_exp_matrices, species =
                             log_file_path = log_file_name, log_flag = TRUE)
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing_RNA(sc_obj = sc_obj, species = species, metadata_df = sample_metadata_for_SPEEDI_df, log_flag = TRUE)
-sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE) # STOPPED AFTER THIS STEP - 6 batches with new approach instead of 3? Weird? 
+sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE) # STOPPED AFTER THIS STEP - 6 batches with new approach instead of 3? Weird?
 # save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA_old.rds"))
 sc_obj <- IntegrateByBatch_RNA(sc_obj = sc_obj, log_flag = TRUE)
@@ -263,3 +263,17 @@ for(current_cell_type in pseudobulk_cell_types_for_correction) {
 write.table(final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
 # Add printing of positive and negative fold change for ease
 
+DefaultAssay(hvl_sc_obj) <- "SCT"
+
+idxPass <- which(hvl_sc_obj$time_point %in% "D28")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+sc_hvl_sc_obj_d28 <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+idxPass <- which(hvl_sc_obj$time_point %in% "D_minus_1")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+sc_hvl_sc_obj_d_minus_1 <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+d28_IRAK3_plot <- FeaturePlot(sc_hvl_sc_obj_d28, features = c("IRAK3"))
+ggsave(filename = paste0(RNA_output_dir, "D28_IRAK3.png"), plot = d28_IRAK3_plot, device = "png")
+d_minus_1_IRAK3_plot <- FeaturePlot(sc_hvl_sc_obj_d_minus_1, features = c("IRAK3"))
+ggsave(filename = paste0(RNA_output_dir, "D_minus_1_IRAK3.png"), plot = d_minus_1_IRAK3_plot, device = "png")
