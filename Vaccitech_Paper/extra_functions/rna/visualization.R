@@ -37,7 +37,7 @@ print_UMAP_RNA_detailed <- function(sc_obj, file_name, group_by_category = NULL,
     p <- Seurat::DimPlot(sc_obj, reduction = "umap", label = TRUE,
                          label.size = 3, repel = TRUE, raster = FALSE) +
       ggplot2::labs(title = current_title) +
-      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)) +   scale_x_continuous(n.breaks=20) +
+      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)) + scale_x_continuous(n.breaks=20) +
       scale_y_continuous(n.breaks=20)
   }
   ggplot2::ggsave(paste0(output_dir, file_name), plot = p, device = "png", dpi = 300)

@@ -167,41 +167,6 @@ pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
 if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
 create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
 
-
-
-pal <- paletteDiscrete(values = HVL_final_proj$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = HVL_final_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
-p2 <- ArchR::plotEmbedding(ArchRProj = HVL_final_proj, colorBy = "cellColData", name = "Harmony_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = HVL_final_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p4 <- ArchR::plotEmbedding(ArchRProj = HVL_final_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-ArchR::plotPDF(p1,p2,p3,p4, name = "HVL_UMAP_after_Final_Cell_Type_Majority_Voting_plots_combined_cell_types_minus_messy_clusters", ArchRProj = HVL_final_proj, addDOC = FALSE, width = 5, height = 5)
-
-hvl_day_metadata <- parse_metadata_for_samples(HVL_final_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
-                                               d28_samples, d_minus_1_samples, male_samples, female_samples)
-hvl_sex_metadata <- parse_metadata_for_samples(HVL_final_proj, "sex", high_viral_load_samples, low_viral_load_samples,
-                                               d28_samples, d_minus_1_samples, male_samples, female_samples)
-
-create_cell_type_proportion_MAGICAL_atac(HVL_final_proj, ATAC_output_dir, c("time_point"), hvl_day_metadata)
-
-# Call peaks
-addArchRGenome("hg38")
-HVL_final_proj <- pseudo_bulk_replicates_and_call_peaks(HVL_final_proj)
-# Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
-# calculations
-HVL_final_proj <- addPeakMatrix(HVL_final_proj)
-# TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
-HVL_differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/HVL/")
-if (!dir.exists(HVL_differential_peaks_dir)) {dir.create(HVL_differential_peaks_dir, recursive = TRUE)}
-calculate_daps_for_each_cell_type(HVL_final_proj, HVL_differential_peaks_dir)
-# Create Peaks.txt file for MAGICAL
-HVL_peak_txt_file <- create_peaks_file(HVL_final_proj, ATAC_output_dir)
-# Create peak_motif_matches.txt file for MAGICAL
-create_peak_motif_matches_file(HVL_final_proj, ATAC_output_dir, HVL_peak_txt_file)
-# Create pseudobulk counts for peaks for each cell type
-HVL_pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/HVL/")
-if (!dir.exists(HVL_pseudo_bulk_dir)) {dir.create(HVL_pseudo_bulk_dir, recursive = TRUE)}
-create_pseudobulk_atac(HVL_final_proj, HVL_pseudo_bulk_dir)
-
 ### ETC ###
 # Print distributions for each cell type and create cell type proportions file for MAGICAL
 print_cell_type_distributions(final_proj)

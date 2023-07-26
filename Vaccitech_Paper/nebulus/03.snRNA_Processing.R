@@ -148,7 +148,7 @@ sc_obj <- MajorityVote_RNA_alt(sc_obj, res = 3)
 
 cluster_info <- capture_cluster_info(sc_obj)
 
-messy_clusters <- c(1,2,4,7,12,16,17,22,27,28,47)
+messy_clusters <- c(1,4,7,12,16,17,22,27,28,47)
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
@@ -156,6 +156,8 @@ sc_obj_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, 0, 5, 1, 3) # 14 sample multiome
 sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -4, 0, 2, 3) # 14 sample multiome
 sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -3.5, -1, -6, -4.5) # 14 sample multiome
+
+#sc_obj_subset <- override_cluster_label(sc_obj_subset, c(26), "Treg")
 
 print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
@@ -179,6 +181,9 @@ print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
+cells_for_ATAC <- data.frame("cells" = sc_obj_subset$cell_name, voted_type = sc_obj_subset$predicted_celltype_majority_vote)
+write.csv(cells_for_ATAC, file = paste0(RNA_output_dir, "rna_seq_labeled_cells-14_final.csv"), quote = FALSE, row.names = FALSE)
+
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 sc_obj_subset <- combine_cell_types_magical(sc_obj_subset)
 # Run differential expression for each cell type within each group of interest
@@ -189,8 +194,8 @@ run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
 #run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
 
 create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
-create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"viral_load", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
-create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"sex", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
+create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "viral_load", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
+create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "sex", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
 
 pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/")
 if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
@@ -267,6 +272,9 @@ DefaultAssay(hvl_sc_obj) <- "integrated"
 # Add printing of positive and negative fold change for ease
 
 
+
+
+### ETC ###
 DefaultAssay(hvl_sc_obj) <- "SCT"
 
 idxPass <- which(hvl_sc_obj$time_point %in% "D28")
