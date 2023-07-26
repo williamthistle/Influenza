@@ -22,17 +22,17 @@ set.seed(2000)
 
 # Tables containing results for single cell and multiome RNA-seq processing
 # Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
-sc_pseudobulk_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_gene_table <- read.table(paste0(sc_pseudobulk_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
 #sc_magical_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL.txt"), sep = "\t", header = TRUE)
 
-multiome_pseudobulk_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
+multiome_pseudobulk_gene_table <- read.table(paste0(multiome_pseudobulk_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
 #multiome_magical_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome.txt"), sep = "\t", header = TRUE)
 
 # Grab gene lists from result tables and report number of genes
 sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (scRNA): ", length(sc_pseudobulk_genes)))
-sc_magical_genes <- unique(sc_magical_gene_table$Gene_symbol)
-print(paste0("Number of genes that pass MAGICAL (scRNA): ", length(sc_magical_genes)))
+#sc_magical_genes <- unique(sc_magical_gene_table$Gene_symbol)
+#print(paste0("Number of genes that pass MAGICAL (scRNA): ", length(sc_magical_genes)))
 
 multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
