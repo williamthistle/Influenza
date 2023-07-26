@@ -159,69 +159,55 @@ sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -3.5, -1, -6, -4.5) #
 
 #sc_obj_subset <- override_cluster_label(sc_obj_subset, c(26), "Treg")
 
-print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+# Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
+sc_obj_subset <- combine_cell_types_magical(sc_obj_subset)
+
+print_UMAP_RNA(sc_obj_subset, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
+print_UMAP_RNA(sc_obj_subset, file_name = "Final_RNA_UMAP_by_Cluster.png",
                group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+print_UMAP_RNA(sc_obj_subset, file_name = "Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
                group_by_category = "predicted.id", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Viral_Load.png",
+print_UMAP_RNA(sc_obj_subset, file_name = "Final_RNA_UMAP_by_Viral_Load.png",
                group_by_category = "viral_load", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
+print_UMAP_RNA(sc_obj_subset, file_name = "Final_RNA_UMAP_by_Sample.png",
                group_by_category = "sample", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
+print_UMAP_RNA(sc_obj_subset, file_name = "Final_RNA_UMAP_by_Day.png",
                group_by_category = "time_point", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA_detailed(sc_obj_subset, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
+print_UMAP_RNA(sc_obj_subset, file_name = "Final_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
 cells_for_ATAC <- data.frame("cells" = sc_obj_subset$cell_name, voted_type = sc_obj_subset$predicted_celltype_majority_vote)
 write.csv(cells_for_ATAC, file = paste0(RNA_output_dir, "rna_seq_labeled_cells-14_final.csv"), quote = FALSE, row.names = FALSE)
 
-# Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
-sc_obj_subset <- combine_cell_types_magical(sc_obj_subset)
-# Run differential expression for each cell type within each group of interest
-differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/final/")
-if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
-run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
-#run_differential_expression_group(sc_obj, differential_genes_dir, "viral_load") # NOT RUN YET
-#run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
-
-create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
-create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "viral_load", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
-create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "sex", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
-
-pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/")
-if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
-create_magical_cell_type_pseudobulk_files(sc_obj, pseudobulk_rna_dir)
-
 # HVL WORK
 idxPass <- which(sc_obj_subset$viral_load %in% "high")
 cellsPass <- names(sc_obj_subset$orig.ident[idxPass])
 hvl_sc_obj <- subset(x = sc_obj_subset, subset = cell_name %in% cellsPass)
 
-print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Cluster.png",
                group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
                group_by_category = "predicted.id", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Sample.png",
                group_by_category = "sample", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Day.png",
                group_by_category = "time_point", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
@@ -313,4 +299,17 @@ downsampled_cd14_mono_hvl_sc_obj <- subset(x = cd14_mono_hvl_sc_obj, subset = ce
 Idents(downsampled_cd14_mono_hvl_sc_obj) <- "time_point"
 downsampled_cd14_mono_de <- FindMarkers(downsampled_cd14_mono_hvl_sc_obj, ident.1 = "D_minus_1", ident.2 = "D28", logfc.threshold = 0.1, min.pct = 0.1, assay = "SCT", recorrect_umi = FALSE)
 
+# Run differential expression for each cell type within each group of interest (for ALL)
+#differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/final/")
+#if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
+#run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
+#run_differential_expression_group(sc_obj, differential_genes_dir, "viral_load") # NOT RUN YET
+#run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
 
+#create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
+#create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "viral_load", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
+#create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "sex", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
+
+#pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/")
+#if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
+#create_magical_cell_type_pseudobulk_files(sc_obj, pseudobulk_rna_dir)

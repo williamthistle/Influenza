@@ -14,16 +14,16 @@ setwd(onedrive_dir)
 setwd("../")
 onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
-sc_magical_dir <- paste0(onedrive_dir, "Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 4 Subject HVL (SPEEDI) - SCT/")
-sc_pseudobulk_dir <- paste0(sc_magical_dir, "scRNA_pseudobulk/")
-multiome_magical_dir <- paste0(onedrive_dir, "Influenza Analysis/True Multiome/MAGICAL Analyses/5 Placebo Subjects HVL/")
-multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
+sc_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs/")
+#sc_magical_dir <- paste0(sc_magical_dir, "scRNA_pseudobulk/")
+multiome_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Multiome/RNA/HVL/DEGs/")
+#multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
 set.seed(2000)
 
 # Tables containing results for single cell and multiome RNA-seq processing
 # Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
 sc_pseudobulk_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
-sc_magical_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL.txt"), sep = "\t", header = TRUE)
+#sc_magical_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL.txt"), sep = "\t", header = TRUE)
 
 multiome_pseudobulk_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), sep = "\t", header = TRUE)
 #multiome_magical_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome.txt"), sep = "\t", header = TRUE)
