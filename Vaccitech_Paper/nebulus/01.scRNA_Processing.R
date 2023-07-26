@@ -124,83 +124,56 @@ sc_obj <- MajorityVote_RNA_alt(sc_obj)
 # Override our mystery cell type to indicate that it's special (was originally CD4 Naive)
 sc_obj <- override_cluster_label(sc_obj, c(29), "Unknown")
 
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
-               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Cluster.png",
-               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
-               group_by_category = "predicted.id", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Viral_Load.png",
-               group_by_category = "viral_load", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Sample.png",
-               group_by_category = "sample", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Day.png",
-               group_by_category = "time_point", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Alg4_Initial_RNA_UMAP_by_Sex.png",
-               group_by_category = "sex", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-
+# Capture info about each cluster
 cluster_info <- capture_cluster_info(sc_obj)
-
-run_differential_expression_cluster(sc_obj, RNA_output_dir)
-
-#messy_clusters <- c(34,40)
-#idxPass <- which(Idents(sc_obj) %in% messy_clusters)
-#cellsPass <- names(sc_obj$orig.ident[-idxPass])
-#sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
-
-print_UMAP_RNA(sc_obj, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
-               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
-               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
-               group_by_category = "predicted.id", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Viral_Load.png",
-               group_by_category = "viral_load", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
-               group_by_category = "sample", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
-               group_by_category = "time_point", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
-               group_by_category = "sex", output_dir = RNA_output_dir,
-               log_flag = log_flag)
 
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 sc_obj <- combine_cell_types_magical(sc_obj)
+
+# Print UMAPs for all subjects (HVL and LVL)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Cluster.png",
+               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+               group_by_category = "predicted.id", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Viral_Load.png",
+               group_by_category = "viral_load", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Sample.png",
+               group_by_category = "sample", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Day.png",
+               group_by_category = "time_point", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Sex.png",
+               group_by_category = "sex", output_dir = RNA_output_dir,
+               log_flag = log_flag)
 
 # HVL WORK
 idxPass <- which(sc_obj$viral_load %in% "high")
 cellsPass <- names(sc_obj$orig.ident[idxPass])
 hvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
-print_UMAP_RNA(hvl_sc_obj, file_name = "Alg4_HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "Alg4_HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
                group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "Alg4_HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
                group_by_category = "predicted.id", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "Alg4_HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
                group_by_category = "sample", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "Alg4_HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
                group_by_category = "time_point", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(hvl_sc_obj, file_name = "Alg4_HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
+print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
@@ -247,9 +220,16 @@ for(current_cell_type in pseudobulk_cell_types_for_correction) {
 }
 
 write.table(final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
-# Add printing of positive and negative fold change for ease
+pos_final_list_of_genes <- final_list_of_genes[final_list_of_genes$sc_log2FC > 0,]
+write.table(pos_final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes_pos.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+neg_final_list_of_genes <- final_list_of_genes[final_list_of_genes$sc_log2FC < 0,]
+write.table(neg_final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes_neg.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
 
 ### ETC ###
+
+# Find markers for each cluster
+run_differential_expression_cluster(sc_obj, RNA_output_dir)
+
 # Run differential expression for each cell type within each group of interest
 #differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/alg_4/")
 #if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
@@ -279,3 +259,5 @@ d28_IRAK3_plot <- FeaturePlot(sc_hvl_sc_obj_d28, features = c("IRAK3"))
 ggsave(filename = paste0(RNA_output_dir, "D28_IRAK3.png"), plot = d28_IRAK3_plot, device = "png")
 d_minus_1_IRAK3_plot <- FeaturePlot(sc_hvl_sc_obj_d_minus_1, features = c("IRAK3"))
 ggsave(filename = paste0(RNA_output_dir, "D_minus_1_IRAK3.png"), plot = d_minus_1_IRAK3_plot, device = "png")
+
+

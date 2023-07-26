@@ -268,13 +268,17 @@ for(current_cell_type in pseudobulk_cell_types_for_correction) {
 }
 
 write.table(final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+pos_final_list_of_genes <- final_list_of_genes[final_list_of_genes$sc_log2FC > 0,]
+write.table(pos_final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes_pos.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+neg_final_list_of_genes <- final_list_of_genes[final_list_of_genes$sc_log2FC < 0,]
+write.table(neg_final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes_neg.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+
 DefaultAssay(hvl_sc_obj) <- "integrated"
-# Add printing of positive and negative fold change for ease
-
-
-
+# Add printing of positive and negative fold change for HumanBase ease
 
 ### ETC ###
+
+# Compare gene expression for a given gene between D_minus_1 and D28
 DefaultAssay(hvl_sc_obj) <- "SCT"
 
 idxPass <- which(hvl_sc_obj$time_point %in% "D28")
@@ -294,7 +298,7 @@ ggsave(filename = paste0(RNA_output_dir, "multiome_D28_SYAP1.png"), plot = d28_p
 d_minus_1_plot <- FeaturePlot(hvl_sc_obj_d_minus_1, features = c("SYAP1"))
 ggsave(filename = paste0(RNA_output_dir, "multiome_D_minus_1_SYAP1.png"), plot = d_minus_1_plot, device = "png")
 
-# Downsampling experiment
+# Downsampling experiment - it didn't make any real difference (e.g., fold change didn't magically change direction)
 idxPass <- which(hvl_sc_obj$predicted_celltype_majority_vote %in% "CD14 Mono")
 cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
 cd14_mono_hvl_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)

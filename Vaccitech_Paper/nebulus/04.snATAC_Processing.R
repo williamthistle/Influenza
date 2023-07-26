@@ -76,37 +76,28 @@ log_file_name <- gsub(":", "-", log_file_name)
 log_file_name <- paste0(output_dir, log_file_name)
 log_file <- logr::log_open(log_file_name, logdir = FALSE)
 
-# Load reference
-reference <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = species, reference_dir = reference_dir,
-                                 reference_file_name = reference_file_name, log_flag = TRUE)
-idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
-reference <- reference[,-idx]
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(data_path = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
-atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE) # Run with dims 2:30
+atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE) # Try before and after filtering?
+atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj, log_flag = TRUE) # Try before filtering and after filtering?
 
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
 
 atac_proj <- add_rna_labels_for_atac_data(atac_proj, ATAC_output_dir, source_rna_file = "rna_seq_labeled_cells-14_final.csv", subset_to_rna = TRUE)
-
 atac_proj <- combine_cell_types_atac(atac_proj)
 
 # For convenience
 atac_proj$Cell_type_voting <- atac_proj$predictedGroup
 atac_proj <- remove_cell_types(atac_proj, c("HSPC", "Plasmablast", "Proliferating"))
-final_proj <- remove_cells_based_on_umap_atac(final_proj, -2, 1, -3, 2) # Multiome 14
-final_proj <- remove_cells_based_on_umap_atac(final_proj, 1, 4.5, -4.5, -2.5) # Multiome 14
-final_proj <- remove_cells_based_on_umap_atac(final_proj, -2.5, -2, -2.5, 0.5) # Multiome 14
-
-
-
 
 p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
 p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-ArchR::plotPDF(p1,p2,p3, name = "UMAP_subset_RNA", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
+p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+
+ArchR::plotPDF(p1,p2,p3,p4, name = "UMAP_subset_RNA_3_combined_cell_types", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
 
 atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
                                       d28_samples, d_minus_1_samples, male_samples, female_samples)
@@ -117,60 +108,38 @@ day_metadata <- parse_metadata_for_samples(atac_proj, "time_point", high_viral_l
 sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_samples, low_viral_load_samples,
                                            d28_samples, d_minus_1_samples, male_samples, female_samples)
 
-cluster_info <- get_cluster_info(atac_proj)
-
-# Remove messy clusters
-# C4 looks like unintegrated cells but it comes from LVL so it won't be relevant for our HVL analysis
-idxPass <- which(atac_proj$seurat_clusters %in% c("4", "10", "18", "19", "21", "25", "26", "28", "29"))
-cellsPass <- atac_proj$cellNames[-idxPass]
-atac_proj_minus_clusters <- atac_proj[cellsPass, ]
-
-# Override label
-atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, "24", "Proliferating")
-
-pal <- paletteDiscrete(values = atac_proj_minus_clusters$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "seurat_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p5 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p6 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-ArchR::plotPDF(p1,p2,p3,p4,p5,p6, name = "UMAP_new_batch_correction_and_majority_vote_minus_clusters", ArchRProj = atac_proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
-
 # Subset to HVL
-idxPass <- which(atac_proj_minus_clusters$viral_load %in% c("high"))
-cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
-HVL_proj_minus_clusters <- atac_proj_minus_clusters[cellsPass, ]
+idxPass <- which(atac_proj$viral_load %in% c("high"))
+cellsPass <- atac_proj$cellNames[idxPass]
+HVL_atac_proj <- atac_proj[cellsPass, ]
 
-pal <- paletteDiscrete(values = HVL_proj_minus_clusters$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p2 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "seurat_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p4 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p5 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p6 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-ArchR::plotPDF(p1,p2,p3,p4,p5,p6, name = "HVL_UMAP_new_batch_correction_and_majority_vote_minus_clusters", ArchRProj = HVL_proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
+pal <- paletteDiscrete(values = HVL_atac_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = HVL_atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
+p2 <- ArchR::plotEmbedding(ArchRProj = HVL_atac_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p3 <- ArchR::plotEmbedding(ArchRProj = HVL_atac_proj, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p4 <- ArchR::plotEmbedding(ArchRProj = HVL_atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+ArchR::plotPDF(p1,p2,p3,p4, name = "HVL_UMAP_subset_RNA_3_combined_cell_types", ArchRProj = HVL_atac_proj, addDOC = FALSE, width = 5, height = 5)
 
 # Call peaks
 addArchRGenome("hg38")
-HVL_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(HVL_proj_minus_clusters)
+HVL_atac_proj <- pseudo_bulk_replicates_and_call_peaks(HVL_atac_proj)
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
-HVL_proj_minus_clusters <- addPeakMatrix(HVL_proj_minus_clusters)
+HVL_atac_proj <- addPeakMatrix(HVL_atac_proj)
 # TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
-calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir)
+calculate_daps_for_each_cell_type(HVL_atac_proj, differential_peaks_dir)
 # Create Peaks.txt file for MAGICAL
-peak_txt_file <- create_peaks_file(HVL_proj_minus_clusters, ATAC_output_dir)
+peak_txt_file <- create_peaks_file(HVL_atac_proj, ATAC_output_dir)
 # Create peak_motif_matches.txt file for MAGICAL
-create_peak_motif_matches_file(HVL_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
+create_peak_motif_matches_file(HVL_atac_proj, ATAC_output_dir, peak_txt_file)
 # Create pseudobulk counts for peaks for each cell type
 pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
 if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
-create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
+create_pseudobulk_atac(HVL_atac_proj, pseudo_bulk_dir)
 
 ### ETC ###
 # Print distributions for each cell type and create cell type proportions file for MAGICAL
-print_cell_type_distributions(final_proj)
-create_cell_type_proportion_MAGICAL_atac(final_proj, ATAC_output_dir, c("time_point"), day_metadata)
+print_cell_type_distributions(HVL_atac_proj)
+create_cell_type_proportion_MAGICAL_atac(HVL_atac_proj, ATAC_output_dir, c("time_point"), day_metadata)

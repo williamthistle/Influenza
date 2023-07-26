@@ -66,15 +66,15 @@ if(is.null(analysis_name)) {
 output_dir <- paste0(output_dir, analysis_name, "/")
 if (!dir.exists(output_dir)) {dir.create(output_dir)}
 setwd(output_dir)
+# Output dir for ATAC
+ATAC_output_dir <- paste0(output_dir, "ATAC", "/")
+if (!dir.exists(ATAC_output_dir)) {dir.create(ATAC_output_dir)}
+setwd(ATAC_output_dir)
 # Create log file
 log_file_name <- paste0(gsub(" ", "_", Sys.time()), "_SPEEDI")
 log_file_name <- gsub(":", "-", log_file_name)
 log_file_name <- paste0(output_dir, log_file_name)
 log_file <- logr::log_open(log_file_name, logdir = FALSE)
-# Output dir for ATAC
-ATAC_output_dir <- paste0(output_dir, "ATAC", "/")
-if (!dir.exists(ATAC_output_dir)) {dir.create(ATAC_output_dir)}
-setwd(ATAC_output_dir)
 
 # Load reference
 reference <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = species, reference_dir = reference_dir,
