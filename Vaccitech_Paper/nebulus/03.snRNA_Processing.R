@@ -211,7 +211,7 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
-HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_SCT/")
+HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_SCT_minus_2_subjects/")
 if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
 run_differential_expression_group(hvl_sc_obj, HVL_differential_genes_dir, "time_point")
 
@@ -228,7 +228,7 @@ pseudobulk_de_df <- pseudobulk_de_df[pseudobulk_de_df$p_val < 0.05,]
 pseudobulk_de_df <- pseudobulk_de_df[pseudobulk_de_df$avg_logFC < -0.3 | pseudobulk_de_df$avg_logFC > 0.3,]
 
 pseudobulk_cell_types_for_correction <- c("B", "CD4_Memory", "CD8_Memory", "CD14_Mono", "CD16_Mono", "NK_MAGICAL", "T_Naive")
-DEG_dir <- "/Genomics/ogtr04/wat2/multiome/analysis/primary_analysis_7_subject_14_sample/RNA/diff_genes/2023-07-24/HVL_SCT/"
+DEG_dir <- "/Genomics/ogtr04/wat2/multiome/analysis/primary_analysis_7_subject_14_sample/RNA/diff_genes/2023-07-26/HVL_SCT_minus_2_subject/"
 final_list_of_genes <- data.frame(Cell_Type = character(), Gene_Name = character(), sc_pval_adj = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
                                   pseudo_bulk_log2FC = character())
 for(current_cell_type in pseudobulk_cell_types_for_correction) {
@@ -313,3 +313,49 @@ downsampled_cd14_mono_de <- FindMarkers(downsampled_cd14_mono_hvl_sc_obj, ident.
 #pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/")
 #if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
 #create_magical_cell_type_pseudobulk_files(sc_obj, pseudobulk_rna_dir)
+
+# Looking at HVL D28 / D minus 1
+idxPass <- which(hvl_sc_obj$time_point %in% "D28")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_sc_obj_d28 <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+print_UMAP_RNA(hvl_sc_obj_d28, file_name = "HVL_D28_Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj_d28, file_name = "HVL_D28_Final_RNA_UMAP_by_Cluster.png",
+               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj_d28, file_name = "HVL_D28_Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+               group_by_category = "predicted.id", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj_d28, file_name = "HVL_D28_Final_RNA_UMAP_by_Sample.png",
+               group_by_category = "sample", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj_d28, file_name = "HVL_D28_Final_RNA_UMAP_by_Sex.png",
+               group_by_category = "sex", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+
+idxPass <- which(hvl_sc_obj$time_point %in% "D_minus_1")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_sc_obj_d_minus_1 <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+print_UMAP_RNA(hvl_sc_obj_d_minus_1, file_name = "HVL_D_minus_1_Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj_d_minus_1, file_name = "HVL_D_minus_1_Final_RNA_UMAP_by_Cluster.png",
+               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj_d_minus_1, file_name = "HVL_D_minus_1_Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+               group_by_category = "predicted.id", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj_d_minus_1, file_name = "HVL_D_minus_1_Final_RNA_UMAP_by_Sample.png",
+               group_by_category = "sample", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+print_UMAP_RNA(hvl_sc_obj_d_minus_1, file_name = "HVL_D_minus_1_Final_RNA_UMAP_by_Sex.png",
+               group_by_category = "sex", output_dir = RNA_output_dir,
+               log_flag = log_flag)
+
+# Test - remove bad hb subject
+idxPass <- which(hvl_sc_obj$subject_id %in% c("107e17d7385481b5","45f5e825ba3408e0"))
+cellsPass <- names(hvl_sc_obj$orig.ident[-idxPass])
+hvl_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
