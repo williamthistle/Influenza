@@ -261,3 +261,11 @@ d_minus_1_IRAK3_plot <- FeaturePlot(sc_hvl_sc_obj_d_minus_1, features = c("IRAK3
 ggsave(filename = paste0(RNA_output_dir, "D_minus_1_IRAK3.png"), plot = d_minus_1_IRAK3_plot, device = "png")
 
 
+
+
+
+
+idxPass <- which(hvl_sc_obj$predicted_celltype_majority_vote %in% "Unknown")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+unknown_hvl_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
