@@ -177,9 +177,15 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
-HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_final/")
+HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id/")
 if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
-run_differential_expression_group(hvl_sc_obj, HVL_differential_genes_dir, "time_point")
+run_differential_expression_controlling_for_subject_id(hvl_sc_obj, HVL_differential_genes_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(hvl_sc_obj$predicted_celltype_majority_vote))
+HVL_differential_genes_MAGICAL_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id_MAGICAL/")
+if (!dir.exists(HVL_differential_genes_MAGICAL_dir)) {dir.create(HVL_differential_genes_MAGICAL_dir, recursive = TRUE)}
+run_differential_expression_controlling_for_subject_id(hvl_sc_obj, HVL_differential_genes_MAGICAL_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(hvl_sc_obj$magical_cell_types))
+
+
+
 
 create_magical_cell_type_proportion_file(hvl_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
 hvl_pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/HVL_RNA/")
