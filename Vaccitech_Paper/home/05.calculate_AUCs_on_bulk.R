@@ -8,6 +8,10 @@ high_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placeb
 high_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placebo_counts, high_placebo_metadata, "2_D8", "2_D_minus_1")
 high_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_placebo_counts, high_placebo_metadata, "2_D28", "2_D_minus_1")
 
+high_D28_non_sc_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_non_sc_placebo_counts, high_non_sc_placebo_metadata, "2_D28", "2_D_minus_1")
+high_D28_non_multiome_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_non_multiome_placebo_counts, high_non_multiome_placebo_metadata, "2_D28", "2_D_minus_1")
+
+
 low_D2_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D2", "2_D_minus_1")
 low_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D5", "2_D_minus_1")
 low_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D8", "2_D_minus_1")
@@ -28,15 +32,15 @@ auc_names <- c("Filtering_Assay", "Filtering_Method", "Discovery_Assay", "Discov
 # Note that our initial gene lists (from pseudobulk filtering / MAGICAL) are further curated using all D28 HVL bulk data
 
 # SC (pseudobulk filtering)
-high_sc_bulk_D28_sc_pseudobulk_gene_info <- find_aucs_of_interest(sc_pseudobulk_gene_table, high_D28_bulk_metaintegrator_obj, "sc_paired")
+high_sc_bulk_D28_sc_pseudobulk_gene_info <- find_aucs_of_interest(sc_pseudobulk_gene_table, high_D28_non_sc_bulk_metaintegrator_obj, "sc_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_sc_bulk_D28_sc_pseudobulk_gene_info[[1]], "gene_auc")
 
 # SC (MAGICAL filtering)
-high_sc_bulk_D28_sc_magical_gene_info <- find_aucs_of_interest(sc_magical_gene_table, high_D28_bulk_metaintegrator_obj, "sc_paired")
-auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_sc_bulk_D28_sc_magical_gene_info[[1]], "gene_auc")
+#high_sc_bulk_D28_sc_magical_gene_info <- find_aucs_of_interest(sc_magical_gene_table, high_D28_bulk_metaintegrator_obj, "sc_paired")
+#auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_sc_bulk_D28_sc_magical_gene_info[[1]], "gene_auc")
 
 # Multiome (pseudobulk filtering)
-high_multiome_bulk_D28_multiome_pseudobulk_gene_info <- find_aucs_of_interest(multiome_pseudobulk_gene_table, high_D28_bulk_metaintegrator_obj, "multiome_paired")
+high_multiome_bulk_D28_multiome_pseudobulk_gene_info <- find_aucs_of_interest(multiome_pseudobulk_gene_table, high_D28_non_multiome_bulk_metaintegrator_obj, "multiome_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_multiome_bulk_D28_multiome_pseudobulk_gene_info[[1]], "gene_auc")
 
 # Multiome (MAGICAL filtering)
@@ -154,8 +158,9 @@ testing_sc_vs_other_analysis_results_pseudobulk_gene_subset_d_minus_1 <- testing
 # We don't really use these analyses currently
 
 # Create log transformed pseudobulk count tables (HVL only!)
-sc_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(sc_pseudobulk_dir, possible_cell_types)
-multiome_14_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(multiome_pseudobulk_dir, possible_cell_types)
+# TODO: Need to edit possible_cell_types
+#sc_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(sc_pseudobulk_dir, possible_cell_types)
+#multiome_14_pseudobulk_counts_log_transformed <- grab_transformed_pseudobulk_counts(multiome_pseudobulk_dir, possible_cell_types)
 
 # Create MetaIntegrator objects using pseudobulk count tables (HVL only!)
 sc_pseudobulk_metaintegrator_obj <- create_metaintegrator_obj("mine", sc_pseudobulk_counts_log_transformed)
