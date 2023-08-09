@@ -11,7 +11,6 @@ high_D28_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_place
 high_D28_non_sc_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_non_sc_placebo_counts, high_non_sc_placebo_metadata, "2_D28", "2_D_minus_1")
 high_D28_non_multiome_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", high_non_multiome_placebo_counts, high_non_multiome_placebo_metadata, "2_D28", "2_D_minus_1")
 
-
 low_D2_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D2", "2_D_minus_1")
 low_D5_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D5", "2_D_minus_1")
 low_D8_bulk_metaintegrator_obj <- create_metaintegrator_obj("bulk", low_placebo_counts, low_placebo_metadata, "2_D8", "2_D_minus_1")
@@ -32,7 +31,7 @@ auc_names <- c("Filtering_Assay", "Filtering_Method", "Discovery_Assay", "Discov
 # Note that our initial gene lists (from pseudobulk filtering / MAGICAL) are further curated using all D28 HVL bulk data
 
 # SC (pseudobulk filtering)
-high_sc_bulk_D28_sc_pseudobulk_gene_info <- find_aucs_of_interest(sc_pseudobulk_gene_table, high_D28_non_sc_bulk_metaintegrator_obj, "sc_paired")
+high_sc_bulk_D28_non_sc_pseudobulk_gene_info <- find_aucs_of_interest(sc_pseudobulk_gene_table, high_D28_non_sc_bulk_metaintegrator_obj, "sc_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_sc_bulk_D28_sc_pseudobulk_gene_info[[1]], "gene_auc")
 
 # SC (MAGICAL filtering)
@@ -40,7 +39,7 @@ auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", 
 #auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "MAGICAL", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_sc_bulk_D28_sc_magical_gene_info[[1]], "gene_auc")
 
 # Multiome (pseudobulk filtering)
-high_multiome_bulk_D28_multiome_pseudobulk_gene_info <- find_aucs_of_interest(multiome_pseudobulk_gene_table, high_D28_non_multiome_bulk_metaintegrator_obj, "multiome_paired")
+high_multiome_bulk_D28_non_multiome_pseudobulk_gene_info <- find_aucs_of_interest(multiome_pseudobulk_gene_table, high_D28_non_multiome_bulk_metaintegrator_obj, "multiome_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_multiome_bulk_D28_multiome_pseudobulk_gene_info[[1]], "gene_auc")
 
 # Multiome (MAGICAL filtering)
@@ -54,31 +53,37 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "Cell Type Pseudobulk", "Bu
 intersecting_genes_between_sc_and_multiome <- intersect(high_sc_bulk_D28_sc_pseudobulk_gene_info[[2]], high_multiome_bulk_D28_multiome_pseudobulk_gene_info[[2]])
 combined_final_gene_list <- unique(c(high_sc_bulk_D28_sc_pseudobulk_gene_info[[2]], high_multiome_bulk_D28_multiome_pseudobulk_gene_info[[2]]))
 
+sc_pseudobulk_gene_table_filtered <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% high_sc_bulk_D28_non_sc_pseudobulk_gene_info[[2]],]
+multiome_pseudobulk_gene_table_filtered <- multiome_pseudobulk_gene_table[multiome_pseudobulk_gene_table$Gene_Name %in% high_multiome_bulk_D28_non_multiome_pseudobulk_gene_info[[2]],]
+
+combined_pseudobulk_gene_table_filtered <- rbind(sc_pseudobulk_gene_table_filtered, multiome_pseudobulk_gene_table_filtered)
+
+
 # Find AUCs for combined gene list for HVL D2/D5/D8
-high_bulk_D2_combined_info <- find_aucs_of_interest(combined_final_gene_list, high_D2_bulk_metaintegrator_obj, "combined_paired")
+high_bulk_D2_combined_info <- find_aucs_of_interest(combined_pseudobulk_gene_table_filtered, high_D2_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D2 Bulk for HVL Subjects", high_bulk_D2_combined_info[[1]], "gene_auc")
 
-high_bulk_D5_combined_info <- find_aucs_of_interest(combined_final_gene_list, high_D5_bulk_metaintegrator_obj, "combined_paired")
+high_bulk_D5_combined_info <- find_aucs_of_interest(combined_pseudobulk_gene_table_filtered, high_D5_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D5 Bulk for HVL Subjects", high_bulk_D5_combined_info[[1]], "gene_auc")
 
-high_bulk_D8_combined_info <- find_aucs_of_interest(combined_final_gene_list, high_D8_bulk_metaintegrator_obj, "combined_paired")
+high_bulk_D8_combined_info <- find_aucs_of_interest(combined_pseudobulk_gene_table_filtered, high_D8_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D8 Bulk for HVL Subjects", high_bulk_D8_combined_info[[1]], "gene_auc")
 
 # Combines info from SC and multiome D28 analyses above
-high_bulk_D28_combined_info <- find_aucs_of_interest(combined_final_gene_list, high_D28_bulk_metaintegrator_obj, "combined_paired")
+high_bulk_D28_combined_info <- find_aucs_of_interest(combined_pseudobulk_gene_table_filtered, high_D28_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for HVL Subjects", high_bulk_D28_combined_info[[1]], "gene_auc")
 
 # Find AUCs for combined gene list for LVL D2/D5/D8/D28
-low_bulk_D2_combined_info <- find_aucs_of_interest(combined_final_gene_list, low_D2_bulk_metaintegrator_obj, "combined_paired")
+low_bulk_D2_combined_info <- find_aucs_of_interest(combined_pseudobulk_gene_table_filtered, low_D2_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D2 Bulk for LVL Subjects", low_bulk_D2_combined_info[[1]], "gene_auc")
 
-low_bulk_D5_combined_info <- find_aucs_of_interest(combined_final_gene_list, low_D5_bulk_metaintegrator_obj, "combined_paired")
+low_bulk_D5_combined_info <- find_aucs_of_interest(combined_pseudobulk_gene_table_filtered, low_D5_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D5 Bulk for LVL Subjects", low_bulk_D5_combined_info[[1]], "gene_auc")
 
-low_bulk_D8_combined_info <- find_aucs_of_interest(combined_final_gene_list, low_D8_bulk_metaintegrator_obj, "combined_paired")
+low_bulk_D8_combined_info <- find_aucs_of_interest(combined_pseudobulk_gene_table_filtered, low_D8_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D8 Bulk for LVL Subjects", low_bulk_D8_combined_info[[1]], "gene_auc")
 
-low_bulk_D28_combined_info <- find_aucs_of_interest(combined_final_gene_list, low_D28_bulk_metaintegrator_obj, "combined_paired")
+low_bulk_D28_combined_info <- find_aucs_of_interest(combined_pseudobulk_gene_table_filtered, low_D28_bulk_metaintegrator_obj, "combined_paired")
 auc_df <- add_auc_row(auc_df, auc_names, "Combined", "Cell Type Pseudobulk", "Bulk RNA-Seq", "D28 Bulk for LVL Subjects", low_bulk_D28_combined_info[[1]], "gene_auc")
 
 # Find list of significant genes in bulk data - high (LRT)
@@ -94,6 +99,15 @@ low_LRT_analysis_results_info <- run_deseq2_LRT(low_placebo_counts, low_placebo_
 plot_lrt_heatmap(high_bulk_D28_combined_info[[3]], high_LRT_analysis_results_info, 1.8, "C:/Users/willi/Desktop/testing_high_pos.png")
 plot_lrt_heatmap(high_bulk_D28_combined_info[[4]], high_LRT_analysis_results_info, 2, "C:/Users/willi/Desktop/testing_high_neg.png")
 
+
+
+# Find genes that have AUC > 0.7 for D2 / D5 / D8 (HVL, SC)
+high_pos_auc_all_time_points <- high_sc_bulk_D28_sc_pseudobulk_gene_info[[3]]
+high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D2_combined_info[[3]])
+high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D5_combined_info[[3]])
+high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D8_combined_info[[3]])
+
+
 # Find genes that have AUC > 0.7 for D2 / D5 / D8 (HVL)
 high_pos_auc_all_time_points <- high_bulk_D28_combined_info[[3]]
 high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D2_combined_info[[3]])
@@ -101,13 +115,13 @@ high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bul
 high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D8_combined_info[[3]])
 
 # Find genes that have AUC < 0.3 for D2 / D5 / D8 (HVL)
-high_neg_auc_all_time_points <- high_bulk_D28_combined_info[[4]]
+high_neg_auc_all_time_points <- high_sc_bulk_D28_sc_pseudobulk_gene_info[[4]]
 high_neg_auc_all_time_points <- intersect(high_neg_auc_all_time_points, high_bulk_D2_combined_info[[4]])
 high_neg_auc_all_time_points <- intersect(high_neg_auc_all_time_points, high_bulk_D5_combined_info[[4]])
 high_neg_auc_all_time_points <- intersect(high_neg_auc_all_time_points, high_bulk_D8_combined_info[[4]])
 
 # Find genes that have AUC > 0.7 for D28 (LVL)
-low_pos_auc_d28 <- high_bulk_D28_combined_info[[3]]
+low_pos_auc_d28 <- high_sc_bulk_D28_sc_pseudobulk_gene_info[[3]]
 low_pos_auc_d28 <- intersect(low_pos_auc_d28, low_bulk_D28_combined_info[[3]])
 
 # Find genes that have AUC < 0.3 for D28 (LVL)

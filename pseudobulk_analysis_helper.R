@@ -126,6 +126,7 @@ find_aucs_of_interest <- function(gene_table, metaintegrator_obj, source) {
     colnames(gene_table)[2] <- "Gene_Name"
     colnames(gene_table)[7] <- "sc_log2FC"
   }
+  gene_list <- unique(gene_table$Gene_Name)
   all_aucs <- na.omit(test_individual_genes_on_datasets(gene_list, metaintegrator_obj, source))
   cell_type_df <- data.frame(Gene_Name = character(), Cell_Type = character(), stringsAsFactors = FALSE)
   gene_table_subset <- gene_table[gene_table$Gene_Name %in% all_aucs$gene_name,]
@@ -144,9 +145,7 @@ find_aucs_of_interest <- function(gene_table, metaintegrator_obj, source) {
   for(current_gene in all_aucs$gene_name) {
     associated_fc <- gene_table[gene_table$Gene_Name == current_gene,]$sc_log2FC
     associated_auc <- all_aucs[all_aucs$gene_name == current_gene,]$gene_auc
-    if(associated_fc < 0 & associated_auc < 0.5) {
-      curated_gene_list <- c(curated_gene_list, current_gene)
-    } else if(associated_fc > 0 & associated_auc > 0.5) {
+    if((all(associated_fc < 0) & all(associated_auc < 0.5)) | (all(associated_fc > 0) & all(associated_auc > 0.5))) {
       curated_gene_list <- c(curated_gene_list, current_gene)
     }
   }
