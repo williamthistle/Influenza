@@ -121,35 +121,34 @@ add_auc_row <- function(auc_df, auc_names, filtering_assay, filtering_method, di
 
 find_aucs_of_interest <- function(gene_table, metaintegrator_obj, source) {
   gene_list <- NULL
-  if("Gene_Name" %in% colnames(gene_table)) {
-    gene_list <- unique(gene_table$Gene_Name)
-  } else {
-    gene_list <- unique(gene_table$Gene_symbol)
+  if("Gene_symbol" %in% colnames(gene_table)) {
+    colnames(gene_table)[1] <- "Cell_Type"
+    colnames(gene_table)[2] <- "Gene_Name"
+    colnames(gene_table)[7] <- "sc_log2FC"
   }
+  gene_list <- unique(gene_table$Gene_Name)
   all_aucs <- na.omit(test_individual_genes_on_datasets(gene_list, metaintegrator_obj, source))
   cell_type_df <- data.frame(Gene_Name = character(), Cell_Type = character(), stringsAsFactors = FALSE)
-  if("Gene_Name" %in% colnames(gene_table)) {
-    gene_table_subset <- gene_table[gene_table$Gene_Name %in% all_aucs$gene_name,]
-    for(gene_name in unique(gene_table_subset$Gene_Name)) {
-      gene_subset <- gene_table_subset[gene_table_subset$Gene_Name %in% gene_name,]
-      cell_types <- paste(gene_subset$Cell_Type, collapse = ",")
-      current_row <- data.frame(unique(gene_subset$Gene_Name), cell_types)
-      names(current_row) <- c("Gene_Name", "Cell_Type")
-      cell_type_df <- rbind(cell_type_df, current_row)
-    }
-    all_aucs$gene_name <- all_aucs$gene_name[order(match(all_aucs$gene_name,cell_type_df$Gene_Name))]
-  } else {
-    gene_table_subset <- gene_table[gene_table$Gene_symbol %in% all_aucs$gene_name,]
-    for(gene_name in unique(gene_table_subset$Gene_symbol)) {
-      gene_subset <- gene_table_subset[gene_table_subset$Gene_symbol %in% gene_name,]
-      cell_types <- paste(gene_subset$Cell_type, collapse = ",")
-      current_row <- data.frame(unique(gene_subset$Gene_symbol), cell_types)
-      names(current_row) <- c("Gene_Name", "Cell_Type")
-      cell_type_df <- rbind(cell_type_df, current_row)
-    }
-    all_aucs$gene_name <- all_aucs$gene_name[order(match(all_aucs$gene_name,cell_type_df$Gene_symbol))]
+  gene_table_subset <- gene_table[gene_table$Gene_Name %in% all_aucs$gene_name,]
+  for(gene_name in unique(gene_table_subset$Gene_Name)) {
+    gene_subset <- gene_table_subset[gene_table_subset$Gene_Name %in% gene_name,]
+    cell_types <- paste(gene_subset$Cell_Type, collapse = ",")
+    current_row <- data.frame(unique(gene_subset$Gene_Name), cell_types)
+    names(current_row) <- c("Gene_Name", "Cell_Type")
+    cell_type_df <- rbind(cell_type_df, current_row)
   }
+  all_aucs$gene_name <- all_aucs$gene_name[order(match(all_aucs$gene_name,cell_type_df$Gene_Name))]
   all_aucs$cell_type <- cell_type_df$Cell_Type
+  # Only use genes that have AUC that matches fold change direction (pos FC = pos AUC, neg FC = neg AUC)
+  # for further analysis.
+  curated_gene_list <- c()
+  for(current_gene in all_aucs$gene_name) {
+    associated_fc <- gene_table[gene_table$Gene_Name == current_gene,]$sc_log2FC
+    associated_auc <- all_aucs[all_aucs$gene_name == current_gene,]$gene_auc
+    if((all(associated_fc < 0) & all(associated_auc < 0.5)) | (all(associated_fc > 0) & all(associated_auc > 0.5))) {
+      curated_gene_list <- c(curated_gene_list, current_gene)
+    }
+  }
   curated_gene_list <- all_aucs[all_aucs$gene_auc < 0.3 | all_aucs$gene_auc > 0.7,]$gene_name
   high_genes <- all_aucs[all_aucs$gene_auc > 0.7,]$gene_name
   low_genes <- all_aucs[all_aucs$gene_auc < 0.3,]$gene_name
