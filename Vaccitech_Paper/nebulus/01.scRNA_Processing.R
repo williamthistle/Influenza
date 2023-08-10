@@ -21,7 +21,7 @@ all_sample_id_list <- list.dirs(data_path, recursive = FALSE)
 all_sample_id_list <- strsplit(all_sample_id_list, "/")
 all_sample_id_list <- unlist(lapply(all_sample_id_list, tail, n = 1L))
 samples <- data_tokens[data_tokens$token == data_token,]$samples
-samples <-  unlist(strsplit(samples, ","))
+samples <- unlist(strsplit(samples, ","))
 sample_id_list <- all_sample_id_list[all_sample_id_list %in% samples]
 
 # Load information about samples
