@@ -109,7 +109,7 @@ high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bul
 
 
 # Find genes that have AUC > 0.7 for D2 / D5 / D8 (HVL)
-high_pos_auc_all_time_points <- high_bulk_D28_combined_info[[3]]
+high_pos_auc_all_time_points <- high_sc_bulk_D28_sc_pseudobulk_gene_info[[3]]
 high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D2_combined_info[[3]])
 high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D5_combined_info[[3]])
 high_pos_auc_all_time_points <- intersect(high_pos_auc_all_time_points, high_bulk_D8_combined_info[[3]])
@@ -125,7 +125,7 @@ low_pos_auc_d28 <- high_sc_bulk_D28_sc_pseudobulk_gene_info[[3]]
 low_pos_auc_d28 <- intersect(low_pos_auc_d28, low_bulk_D28_combined_info[[3]])
 
 # Find genes that have AUC < 0.3 for D28 (LVL)
-low_neg_auc_d28 <- high_bulk_D28_combined_info[[4]]
+low_neg_auc_d28 <- high_sc_bulk_D28_sc_pseudobulk_gene_info[[4]]
 low_neg_auc_d28 <- intersect(low_neg_auc_d28, low_bulk_D28_combined_info[[4]])
 
 
