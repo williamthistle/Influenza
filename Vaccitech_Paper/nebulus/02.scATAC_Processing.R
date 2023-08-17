@@ -158,9 +158,9 @@ HVL_proj_minus_clusters <- addPeakMatrix(HVL_proj_minus_clusters)
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir)
-# Create Peaks.txt file for MAGICAL
+# Create Peaks.txt file
 peak_txt_file <- create_peaks_file(HVL_proj_minus_clusters, ATAC_output_dir)
-# Create peak_motif_matches.txt file for MAGICAL
+# Create peak_motif_matches.txt file
 create_peak_motif_matches_file(HVL_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
 # Create pseudobulk counts for peaks for each cell type
 pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")

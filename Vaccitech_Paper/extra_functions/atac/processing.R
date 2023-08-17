@@ -299,19 +299,21 @@ calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
     marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "time_point",
                                        testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), normBy = "ReadsInPeaks", maxCells = 15000,
                                        useGroups = "D28", bgdGroups = "D_minus_1")
+    marker_de <- data.frame(chr = rownames(marker_D28_D1), start = rownames(marker_D28_D1), end = rownames(marker_D28_D1), log2FC = rownames(marker_D28_D1), mean = rownames(marker_D28_D1),
+                                   mean_diff = rownames(marker_D28_D1), AUC = rownames(marker_D28_D1), mean_BGD = rownames(marker_D28_D1), pval = rownames(marker_D28_D1), FDR = rownames(marker_D28_D1))  
     # Grab relevant stats
-    marker_log_2_fc <- assays(marker_D28_D1)$Log2FC
-    marker_mean <- assays(marker_D28_D1)$Mean
-    marker_fdr <- assays(marker_D28_D1)$FDR
-    marker_pval <- assays(marker_D28_D1)$Pval
-    marker_mean_diff <- assays(marker_D28_D1)$MeanDiff
-    marker_auc <- assays(marker_D28_D1)$AUC
-    marker_mean_bgd <- assays(marker_D28_D1)$MeanBGD
-    # Print stats to Excel spreadsheet (used by MAGICAL)
+    marker_de$chr <- as.character(rowData(marker_D28_D1)$seqnames)
+    marker_de$start <- as.character(rowData(marker_D28_D1)$start)
+    marker_de$end <- as.character(rowData(marker_D28_D1)$end)
+    marker_de$log2FC <- assays(marker_D28_D1)$Log2FC[,1]
+    marker_de$mean <- assays(marker_D28_D1)$Mean[,1]
+    marker_de$mean_diff <- assays(marker_D28_D1)$MeanDiff[,1]
+    marker_de$AUC <- assays(marker_D28_D1)$AUC[,1]
+    marker_de$mean_BGD <- assays(marker_D28_D1)$MeanBGD[,1]
+    marker_de$pval <- assays(marker_D28_D1)$Pval[,1]
+    marker_de$FDR <- assays(marker_D28_D1)$FDR[,1]
     cell_type <- sub(" ", "_", cell_type)
-    list_of_datasets <- list("Log2FC" = marker_log_2_fc, "Mean" = marker_mean, "FDR" = marker_fdr, "Pval" = marker_pval, 
-                             "MeanDiff" = marker_mean_diff, "AUC" = marker_auc, "MeanBGD" = marker_mean_bgd)
-    write.xlsx(list_of_datasets, file = paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff.xlsx"), colNames = FALSE)
+    write.table(marker_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff.tsv"), quote = FALSE, sep = "\t")
   }
 }
 
