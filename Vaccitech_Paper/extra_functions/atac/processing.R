@@ -373,17 +373,17 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     }
   }
   # Write final lenient table
-  write.table(final_lenient_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_lenient_final.tsv"), quote = FALSE, sep = "\t")
+  write.table(final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final.tsv"), quote = FALSE, sep = "\t")
   pos_final_lenient_de <- final_lenient_de[final_lenient_de$sc_log2FC > 0,]
-  write.table(pos_final_lenient_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_lenient_final_pos.tsv"), quote = FALSE, sep = "\t")
+  write.table(pos_final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final_pos.tsv"), quote = FALSE, sep = "\t")
   neg_final_lenient_de <- final_lenient_de[final_lenient_de$sc_log2FC < 0,]
-  write.table(neg_final_lenient_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_lenient_final_neg.tsv"), quote = FALSE, sep = "\t")
+  write.table(neg_final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final_neg.tsv"), quote = FALSE, sep = "\t")
   # Write final strict table
-  write.table(final_strict_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_strict_final.tsv"), quote = FALSE, sep = "\t")
+  write.table(final_strict_de, paste0(differential_peaks_dir, "D28_D1_diff_strict_final.tsv"), quote = FALSE, sep = "\t")
   pos_final_strict_de <- final_strict_de[final_strict_de$sc_log2FC > 0,]
-  write.table(pos_final_strict_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_strict_final_pos.tsv"), quote = FALSE, sep = "\t")
+  write.table(pos_final_strict_de, paste0(differential_peaks_dir, "D28_D1_diff_strict_final_pos.tsv"), quote = FALSE, sep = "\t")
   neg_final_strict_de <- final_strict_de[final_strict_de$sc_log2FC < 0,]
-  write.table(neg_final_strict_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_strict_final_neg.tsv"), quote = FALSE, sep = "\t")
+  write.table(neg_final_strict_de, paste0(differential_peaks_dir, "D28_D1_diff_strict_final_neg.tsv"), quote = FALSE, sep = "\t")
   print(paste0("Done performing differential expression for group ", group, " for each cell type"))
 }
 
