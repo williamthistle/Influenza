@@ -285,11 +285,19 @@ pseudo_bulk_replicates_and_call_peaks <- function(proj) {
 }
 
 # Calculate differentially accessible peaks for each cell type
-calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir) {
+calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir, metadata_df) {
   pseudo_bulk_dir <- paste0(differential_peaks_dir, "associated_pseudobulk/")
   if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
   create_pseudobulk_atac(atac_proj, pseudo_bulk_dir)
+  # Group used for DEGs
+  group <- "time_point"
   # Calculate differential accessible peaks for each cell type
+  final_lenient_de <- data.frame(Cell_Type = character(), chr = character(), start = character(), end = character(), idx = character(),
+                                 sc_log2FC = character(), sc_pval = character(), sc_FDR = character(), pseudobulk_log2FC = character(),
+                                 pseudobulk_pval = character())  
+  final_strict_de <- data.frame(Cell_Type = character(), chr = character(), start = character(), end = character(), idx = character(),
+                                 sc_log2FC = character(), sc_pval = character(), sc_FDR = character(), pseudobulk_log2FC = character(),
+                                 pseudobulk_pval = character())  
   for (cell_type in unique(atac_proj$Cell_type_voting)) {
     print(cell_type)
     # Grab cells associated with cell type
@@ -298,16 +306,16 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir)
     cellsPass <- atac_proj$cellNames[idxPass]
     cells_subset <- atac_proj[cellsPass,]
     print(cells_subset)
-    # Find DAPs
-    marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "time_point",
+    # Find DAPs (single cell level)
+    marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = group,
                                        testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), normBy = "ReadsInPeaks", maxCells = 15000,
                                        useGroups = "D28", bgdGroups = "D_minus_1")
-    marker_de <- data.frame(chr = rownames(marker_D28_D1), start = rownames(marker_D28_D1), end = rownames(marker_D28_D1), log2FC = rownames(marker_D28_D1), mean = rownames(marker_D28_D1),
-                                   mean_diff = rownames(marker_D28_D1), AUC = rownames(marker_D28_D1), mean_BGD = rownames(marker_D28_D1), pval = rownames(marker_D28_D1), FDR = rownames(marker_D28_D1))  
-    # Grab relevant stats
+    marker_de <- data.frame(chr = rownames(marker_D28_D1), start = rownames(marker_D28_D1), end = rownames(marker_D28_D1), idx = rownames(marker_D28_D1), log2FC = rownames(marker_D28_D1), mean = rownames(marker_D28_D1),
+                                  mean_diff = rownames(marker_D28_D1), AUC = rownames(marker_D28_D1), mean_BGD = rownames(marker_D28_D1), pval = rownames(marker_D28_D1), FDR = rownames(marker_D28_D1))  
     marker_de$chr <- as.character(rowData(marker_D28_D1)$seqnames)
     marker_de$start <- as.character(rowData(marker_D28_D1)$start)
     marker_de$end <- as.character(rowData(marker_D28_D1)$end)
+    marker_de$idx <- as.character(rowData(marker_D28_D1)$idx)
     marker_de$log2FC <- assays(marker_D28_D1)$Log2FC[,1]
     marker_de$mean <- assays(marker_D28_D1)$Mean[,1]
     marker_de$mean_diff <- assays(marker_D28_D1)$MeanDiff[,1]
@@ -316,9 +324,67 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir)
     marker_de$pval <- assays(marker_D28_D1)$Pval[,1]
     marker_de$FDR <- assays(marker_D28_D1)$FDR[,1]
     cell_type <- sub(" ", "_", cell_type)
-    write.table(marker_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff.tsv"), quote = FALSE, sep = "\t")
-    
+    write.table(marker_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_sc.tsv"), quote = FALSE, sep = "\t")
+    # Perform pseudobulk correction
+    pseudobulk_counts <- read.table(paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), sep = "\t", header = TRUE, check.names = FALSE)
+    sample_metadata <- cells_subset$Sample
+    for(j in 1:nrow(metadata_df)) {
+      sample_metadata <- gsub(rownames(metadata_df)[j], metadata_df[j,1], sample_metadata)
+    }
+    cells_subset <- addCellColData(ArchRProj = cells_subset, data = sample_metadata, cells = cells_subset$cellNames, name = "subject_id", force = TRUE)
+    pseudobulk_metadata <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$subject_id %in% cells_subset$subject_id,]
+    pseudobulk_metadata$aliquots <- rownames(pseudobulk_metadata)
+    pseudobulk_metadata <- pseudobulk_metadata[match(colnames(pseudobulk_counts), pseudobulk_metadata$aliquots),]
+    pseudobulk_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = pseudobulk_counts, colData = pseudobulk_metadata, design = stats::formula(paste("~ subject_id + ",group)))
+    pseudobulk_analysis <- DESeq2::DESeq(pseudobulk_analysis)
+    pseudobulk_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(pseudobulk_analysis), n=1)
+    pseudobulk_analysis_results <- DESeq2::results(pseudobulk_analysis, name=pseudobulk_analysis_results_contrast)
+    pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
+    pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
+    pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
+    write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t")
+    # Lenient uses pval < 0.05 for sc peaks
+    marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
+    marker_de_lenient <- marker_de_passing_fc[marker_de_passing_fc$pval < 0.05,]
+    for(current_pseudobulk_peak_row_index in 1:nrow(pseudobulk_analysis_results)) {
+      current_pseudobulk_row <- pseudobulk_analysis_results[current_pseudobulk_peak_row_index,]
+      chr_peak_index_combo <- rownames(current_pseudobulk_row)
+      chr <- strsplit(chr_peak_index_combo, "_")[[1]][1]
+      peak_index <- strsplit(chr_peak_index_combo, "_")[[1]][2]
+      # Check for overlap between pseudo and lenient
+      marker_de_subset_lenient <- marker_de_lenient[marker_de_lenient$chr == chr,]
+      marker_de_subset_lenient <- marker_de_subset_lenient[marker_de_subset_lenient$idx == peak_index,]
+      if(nrow(marker_de_subset_lenient) > 0) {
+        start <- marker_de_subset_lenient$start
+        end <- marker_de_subset_lenient$end
+        sc_log2FC <- marker_de_subset_lenient$log2FC
+        sc_pval <- marker_de_subset_lenient$pval
+        sc_FDR <- marker_de_subset_lenient$FDR
+        pseudobulk_log2FC <- current_pseudobulk_row$log2FoldChange
+        pseudobulk_pval <- current_pseudobulk_row$pvalue
+        current_row <- data.frame(cell_type, chr, start, end, peak_index, sc_log2FC, sc_pval, sc_FDR, pseudobulk_log2FC, pseudobulk_pval)
+        names(current_row) <- c("Cell_Type", "chr", "start", "end", "idx", "sc_log2FC", "sc_pval", "sc_FDR", "pseudobulk_log2FC", "pseudobulk_pval")
+        final_lenient_de <- rbind(final_lenient_de, current_row)
+        # strict uses FDR < 0.05 (more stringent than unadjusted p-value)
+        if(sc_FDR < 0.05) {
+          final_strict_de <- rbind(final_strict_de, current_row)
+        }
+      }
+    }
   }
+  # Write final lenient table
+  write.table(final_lenient_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_final.tsv"), quote = FALSE, sep = "\t")
+  pos_final_lenient_de <- final_lenient_de[final_lenient_de$sc_log2FC > 0,]
+  write.table(pos_final_lenient_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_final_pos.tsv"), quote = FALSE, sep = "\t")
+  neg_final_lenient_de <- final_lenient_de[final_lenient_de$sc_log2FC < 0,]
+  write.table(neg_final_lenient_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_final_neg.tsv"), quote = FALSE, sep = "\t")
+  # Write final strict table
+  write.table(final_strict_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_final.tsv"), quote = FALSE, sep = "\t")
+  pos_final_strict_de <- final_strict_de[final_strict_de$sc_log2FC > 0,]
+  write.table(pos_final_strict_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_final_pos.tsv"), quote = FALSE, sep = "\t")
+  neg_final_strict_de <- final_strict_de[final_strict_de$sc_log2FC < 0,]
+  write.table(neg_final_strict_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_final_neg.tsv"), quote = FALSE, sep = "\t")
+  print(paste0("Done performing differential expression for group ", group, " for each cell type"))
 }
 
 # Create Peaks.txt file (list of peaks) used by MAGICAL
@@ -361,9 +427,9 @@ create_pseudobulk_atac <- function(proj, pseudo_bulk_dir) {
   peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE, binarize = FALSE, threads = getArchRThreads(), logFile = createLogFile("getMatrixFromProject"))
   for (i in c(1:length(Cell_types))){
     pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
-    # We add Sample_ to the beginning of each column name to avoid MATLAB (MAGICAL) complaining
-    colnames(pseudo_bulk)<-paste0("Sample_", sample.names)
-    rownames(pseudo_bulk)<-peaks@elementMetadata$idx
+    # We add Sample_ to the beginning of each column name to avoid MATLAB (MAGICAL) complaining - currently not doing this
+    colnames(pseudo_bulk)<- sample.names
+    rownames(pseudo_bulk) <- paste0(as.character(peaks@seqnames), "_", peaks@elementMetadata$idx)
     for (s in c(1:length(sample.names))){
       idxMatch <- which(str_detect(peak_count$Cell_type_voting,Cell_types[i]) & str_detect(as.character(peak_count$Sample),sample.names[s]))
       if (length(idxMatch)>1){
@@ -371,6 +437,6 @@ create_pseudobulk_atac <- function(proj, pseudo_bulk_dir) {
       }
     }
     cell_type <- sub(" ", "_", Cell_types[i])
-    write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), quote = FALSE, sep = "\t", col.names = NA)
+    write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), quote = FALSE, sep = "\t")
   }
 }

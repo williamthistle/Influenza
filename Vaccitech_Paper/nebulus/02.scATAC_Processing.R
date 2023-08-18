@@ -155,11 +155,11 @@ HVL_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(HVL_proj_minus_
 # calculations
 HVL_proj_minus_clusters <- addPeakMatrix(HVL_proj_minus_clusters)
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = HVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "HVL"), load = FALSE)
-# load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
+# load ArchR project: HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
 # TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
-calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir)
+calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir, sample_metadata_for_SPEEDI_df)
 # Create Peaks.txt file
 peak_txt_file <- create_peaks_file(HVL_proj_minus_clusters, ATAC_output_dir)
 # Create peak_motif_matches.txt file
