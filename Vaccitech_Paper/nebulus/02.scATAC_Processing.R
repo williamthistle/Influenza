@@ -154,6 +154,8 @@ HVL_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(HVL_proj_minus_
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
 HVL_proj_minus_clusters <- addPeakMatrix(HVL_proj_minus_clusters)
+# save ArchR project: ArchR::saveArchRProject(ArchRProj = HVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "HVL"), load = FALSE)
+# load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
 # TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}

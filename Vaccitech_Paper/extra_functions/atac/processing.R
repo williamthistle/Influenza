@@ -286,6 +286,9 @@ pseudo_bulk_replicates_and_call_peaks <- function(proj) {
 
 # Calculate differentially accessible peaks for each cell type
 calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
+  pseudo_bulk_dir <- paste0(differential_peaks_dir, "associated_pseudobulk/")
+  if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
+  create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
   # Calculate differential accessible peaks for each cell type
   for (cell_type in unique(proj$Cell_type_voting)) {
     print(cell_type)
@@ -314,6 +317,7 @@ calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
     marker_de$FDR <- assays(marker_D28_D1)$FDR[,1]
     cell_type <- sub(" ", "_", cell_type)
     write.table(marker_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff.tsv"), quote = FALSE, sep = "\t")
+    
   }
 }
 
@@ -354,7 +358,7 @@ create_pseudobulk_atac <- function(proj, pseudo_bulk_dir) {
   Cell_types <- unique(proj$Cell_type_voting)
   sample.names <- unique(proj$Sample)
   peaks <- getPeakSet(proj)
-  peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),logFile = createLogFile("getMatrixFromProject"))
+  peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE, binarize = FALSE, threads = getArchRThreads(), logFile = createLogFile("getMatrixFromProject"))
   for (i in c(1:length(Cell_types))){
     pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
     # We add Sample_ to the beginning of each column name to avoid MATLAB (MAGICAL) complaining
