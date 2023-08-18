@@ -285,18 +285,18 @@ pseudo_bulk_replicates_and_call_peaks <- function(proj) {
 }
 
 # Calculate differentially accessible peaks for each cell type
-calculate_daps_for_each_cell_type <- function(proj, differential_peaks_dir) {
+calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir) {
   pseudo_bulk_dir <- paste0(differential_peaks_dir, "associated_pseudobulk/")
   if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
-  create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
+  create_pseudobulk_atac(atac_proj, pseudo_bulk_dir)
   # Calculate differential accessible peaks for each cell type
-  for (cell_type in unique(proj$Cell_type_voting)) {
+  for (cell_type in unique(atac_proj$Cell_type_voting)) {
     print(cell_type)
     # Grab cells associated with cell type
-    idxPass <- which(proj$Cell_type_voting %in% cell_type)
+    idxPass <- which(atac_proj$Cell_type_voting %in% cell_type)
     print(length(idxPass))
-    cellsPass <- proj$cellNames[idxPass]
-    cells_subset <- proj[cellsPass,]
+    cellsPass <- atac_proj$cellNames[idxPass]
+    cells_subset <- atac_proj[cellsPass,]
     print(cells_subset)
     # Find DAPs
     marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = "time_point",
