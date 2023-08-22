@@ -149,8 +149,9 @@ find_aucs_of_interest <- function(gene_table, metaintegrator_obj, source) {
       curated_gene_list <- c(curated_gene_list, current_gene)
     }
   }
-  curated_gene_list <- all_aucs[all_aucs$gene_auc < 0.3 | all_aucs$gene_auc > 0.7,]$gene_name
-  high_genes <- all_aucs[all_aucs$gene_auc > 0.7,]$gene_name
-  low_genes <- all_aucs[all_aucs$gene_auc < 0.3,]$gene_name
+  curated_all_aucs <- all_aucs[all_aucs$gene_name %in% curated_gene_list,]
+  curated_gene_list <- curated_all_aucs[curated_all_aucs$gene_auc < 0.3 | curated_all_aucs$gene_auc > 0.7,]$gene_name
+  high_genes <- curated_all_aucs[curated_all_aucs$gene_auc > 0.7,]$gene_name
+  low_genes <- curated_all_aucs[curated_all_aucs$gene_auc < 0.3,]$gene_name
   return(list(all_aucs, curated_gene_list, high_genes, low_genes))
 }
