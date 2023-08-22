@@ -83,23 +83,20 @@ reference <- reference[,-idx]
 # Read in RNA data, filter data, perform initial processing, infer batches, integrate by batch, and process UMAP of integration
 all_sc_exp_matrices <- Read_RNA(data_path = data_path, sample_id_list = sample_id_list, log_flag = TRUE)
 sc_obj <- FilterRawData_RNA(all_sc_exp_matrices = all_sc_exp_matrices, species = species,
-                            record_doublets = record_doublets, output_dir = RNA_output_dir,
+                            record_doublets = FALSE, output_dir = RNA_output_dir,
                             log_file_path = log_file_name, log_flag = TRUE)
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing_RNA(sc_obj = sc_obj, species = species, metadata_df = sample_metadata_for_SPEEDI_df, log_flag = TRUE)
-sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE) # STOPPED AFTER THIS STEP - 6 batches with new approach instead of 3? Weird?
-# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.rds"))
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA_old.rds"))
+sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE)
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".new.batch.inference.4.RNA.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.new.batch.inference.4.RNA.rd"))
 sc_obj <- IntegrateByBatch_RNA(sc_obj = sc_obj, log_flag = TRUE)
-sc_obj <- VisualizeIntegration(sc_obj = sc_obj, log_flag = TRUE)
+sc_obj <- VisualizeIntegration(sc_obj = sc_obj, output_dir = RNA_output_dir, log_flag = TRUE)
 sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
                            reference_cell_type_attribute = reference_cell_type_attribute,
                            output_dir = RNA_output_dir, log_flag = TRUE)
-# sc_obj <- MajorityVote_RNA_alt(sc_obj)
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.final.algorithm.4.RNA.rds"))
-# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".final.algorithm.4.RNA.rds"))
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.RNA.old.algorithm.rds"))  # NOT CURRENTLY USED
-# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".RNA.old.algorithm.rds"))
+save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".new.batch.inference.final.RNA.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.new.batch.inference.final.RNA.rds"))
 # vincy_obj <- readRDS("~/single_cell/analysis/vincy_analysis/integrated_obj_labeled.rds") # VINCY'S ANALYSIS
 
 sc_obj$old.predicted.id <- sc_obj$predicted.id
@@ -116,19 +113,19 @@ Cell_type_combined[idx] <- "Proliferating"
 #Cell_type_combined[idx] <- "T Naive"
 #idx <- grep("CD8 Naive", Cell_type_combined)
 #Cell_type_combined[idx] <- "T Naive"
-#idx <- grep("Treg", Cell_type_combined)
-#Cell_type_combined[idx] <- "T Naive"
+idx <- grep("Treg", Cell_type_combined)
+Cell_type_combined[idx] <- "CD4 Memory"
 sc_obj$predicted.id <- Cell_type_combined
-sc_obj <- MajorityVote_RNA_alt(sc_obj)
+#sc_obj <- MajorityVote_RNA(sc_obj)
 
 # Override our mystery cell type to indicate that it's special (was originally CD4 Naive)
-sc_obj <- override_cluster_label(sc_obj, c(29), "Unknown")
+#sc_obj <- override_cluster_label(sc_obj, c(32), "Unknown")
 
 # Capture info about each cluster
-cluster_info <- capture_cluster_info(sc_obj)
+#cluster_info <- capture_cluster_info(sc_obj)
 
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
-sc_obj <- combine_cell_types_magical(sc_obj)
+#sc_obj <- combine_cell_types_magical(sc_obj)
 
 # Print UMAPs for all subjects (HVL and LVL)
 print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
@@ -158,6 +155,13 @@ idxPass <- which(sc_obj$viral_load %in% "high")
 cellsPass <- names(sc_obj$orig.ident[idxPass])
 hvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
+hvl_sc_obj <- MajorityVote_RNA(hvl_sc_obj)
+
+messy_clusters <- c(32)
+idxPass <- which(Idents(hvl_sc_obj) %in% messy_clusters)
+cellsPass <- names(hvl_sc_obj$orig.ident[-idxPass])
+hvl_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
 print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
@@ -177,6 +181,13 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
+hvl_cluster_info <- capture_cluster_info(hvl_sc_obj)
+
+
+
+# Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
+hvl_sc_obj <- combine_cell_types_magical(hvl_sc_obj)
+
 HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id/")
 if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
 run_differential_expression_controlling_for_subject_id(hvl_sc_obj, HVL_differential_genes_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(hvl_sc_obj$predicted_celltype_majority_vote))
@@ -185,51 +196,10 @@ if (!dir.exists(HVL_differential_genes_MAGICAL_dir)) {dir.create(HVL_differentia
 run_differential_expression_controlling_for_subject_id(hvl_sc_obj, HVL_differential_genes_MAGICAL_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(hvl_sc_obj$magical_cell_types))
 
 
-
-
 create_magical_cell_type_proportion_file(hvl_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
 hvl_pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/HVL_RNA/")
 if (!dir.exists(hvl_pseudobulk_rna_dir)) {dir.create(hvl_pseudobulk_rna_dir, recursive = TRUE)}
 create_magical_cell_type_pseudobulk_files(hvl_sc_obj, hvl_pseudobulk_rna_dir)
-
-# Run pseudobulk DE
-DefaultAssay(hvl_sc_obj) <- "RNA"
-pseudobulk_de_df <- run_de(hvl_sc_obj, replicate_col = "sample", cell_type_col = "magical_cell_types", label_col = "time_point", de_method = "DESeq2")
-pseudobulk_de_df <- na.omit(pseudobulk_de_df)
-pseudobulk_de_df <- pseudobulk_de_df[pseudobulk_de_df$p_val < 0.05,]
-pseudobulk_de_df <- pseudobulk_de_df[pseudobulk_de_df$avg_logFC < -0.3 | pseudobulk_de_df$avg_logFC > 0.3,]
-
-pseudobulk_cell_types_for_correction <- c("B", "CD4_Memory", "CD8_Memory", "CD14_Mono", "CD16_Mono", "NK_MAGICAL", "MAIT", "T_Naive")
-DEG_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/RNA/diff_genes/2023-07-19/HVL_final/"
-final_list_of_genes <- data.frame(Cell_Type = character(), Gene_Name = character(), sc_pval_adj = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
-                                  pseudo_bulk_log2FC = character())
-for(current_cell_type in pseudobulk_cell_types_for_correction) {
-  current_DEG_table <- read.table(paste0(DEG_dir, "D28-vs-D_minus_1-degs-", current_cell_type, "-time_point.csv"), sep = ",", header = TRUE)
-  current_DEG_table <- current_DEG_table[current_DEG_table$p_val_adj < 0.05,]
-  current_DEG_table <- current_DEG_table[abs(current_DEG_table$avg_log2FC) > 0.1,]
-  current_DEG_table <- current_DEG_table[current_DEG_table$pct.1 > 0.1 | current_DEG_table$pct.2 > 0.1,]
-  if(current_cell_type != "NK_MAGICAL") {
-    pseudobulk_de_df_cell_type_subset <- pseudobulk_de_df[pseudobulk_de_df$cell_type == sub("_", " ", current_cell_type),]
-  } else {
-    pseudobulk_de_df_cell_type_subset <- pseudobulk_de_df[pseudobulk_de_df$cell_type == current_cell_type,]
-  }
-  final_cell_type_genes <- intersect(current_DEG_table$X, pseudobulk_de_df_cell_type_subset$gene)
-  for(current_gene in final_cell_type_genes) {
-    current_sc_pval_adj <- current_DEG_table[current_DEG_table$X == current_gene,]$p_val_adj
-    current_sc_log2FC <- current_DEG_table[current_DEG_table$X == current_gene,]$avg_log2FC
-    current_pseudo_bulk_pval <- pseudobulk_de_df_cell_type_subset[pseudobulk_de_df_cell_type_subset$gene == current_gene,]$p_val
-    current_pseudo_bulk_log2FC <- pseudobulk_de_df_cell_type_subset[pseudobulk_de_df_cell_type_subset$gene == current_gene,]$avg_logFC
-    current_row <- data.frame(current_cell_type, current_gene, current_sc_pval_adj, current_sc_log2FC, current_pseudo_bulk_pval, current_pseudo_bulk_log2FC)
-    names(current_row) <- c("Cell_Type", "Gene_Name", "sc_pval_adj", "sc_log2FC", "pseudo_bulk_pval", "pseudo_bulk_log2FC")
-    final_list_of_genes <- rbind(final_list_of_genes, current_row)
-  }
-}
-
-write.table(final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
-pos_final_list_of_genes <- final_list_of_genes[final_list_of_genes$sc_log2FC > 0,]
-write.table(pos_final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes_pos.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
-neg_final_list_of_genes <- final_list_of_genes[final_list_of_genes$sc_log2FC < 0,]
-write.table(neg_final_list_of_genes, paste0(DEG_dir, "D28_D1_DESeq2_pseudobulk_genes_neg.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
 
 ### ETC ###
 
