@@ -209,9 +209,9 @@ auc_df <- add_auc_row(auc_df, auc_names, "Multiome", "MAGICAL", "Multiome", "Tot
 # AUCS ON BULK (SAME SUBJECTS AS SINGLE CELL) - I am not really using these data for anything currently
 
 # Single Cell (Pseudobulk)
-sc_bulk_D28_sc_pseudobulk_gene_aucs <- na.omit(test_individual_genes_on_datasets(sc_pseudobulk_genes, sc_D28_bulk_metaintegrator_obj, "sc_paired", "sc_bulk_D28"))
-curated_sc_bulk_D28_sc_pseudobulk_gene_aucs <- sc_bulk_D28_sc_pseudobulk_gene_aucs[sc_bulk_D28_sc_pseudobulk_gene_aucs$sc_bulk_D28_gene_auc < 0.3 | sc_bulk_D28_sc_pseudobulk_gene_aucs$sc_bulk_D28_gene_auc > 0.7,]
-auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "D28 Bulk for Single Cell Subjects", sc_bulk_D28_sc_pseudobulk_gene_aucs, "sc_bulk_D28_gene_auc")
+sc_bulk_D28_sc_pseudobulk_gene_info <- find_aucs_of_interest(sc_pseudobulk_gene_table, sc_D28_bulk_metaintegrator_obj, "sc_paired")
+
+#auc_df <- add_auc_row(auc_df, auc_names, "Single Cell", "Cell Type Pseudobulk", "Single Cell", "D28 Bulk for Single Cell Subjects", sc_bulk_D28_sc_pseudobulk_gene_aucs, "sc_bulk_D28_gene_auc")
 
 # Single Cell (MAGICAL)
 sc_bulk_D28_sc_magical_gene_aucs <- na.omit(test_individual_genes_on_datasets(sc_magical_genes, sc_D28_bulk_metaintegrator_obj, "sc_paired", "sc_bulk_D28_magical"))
