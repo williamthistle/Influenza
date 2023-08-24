@@ -84,14 +84,66 @@ reference <- reference[,-idx]
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(data_path = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
-atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE) # Try before and after filtering?
-atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj, log_flag = TRUE) # Try before filtering and after filtering?
+atac_proj <- InitialProcessing_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE) # Try before and after filtering?
+atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj,  output_dir = ATAC_output_dir, log_flag = TRUE) # Try before filtering and after filtering?
 atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_dir = ATAC_output_dir,
-                               reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
+                               reference_cell_type_attribute = reference_cell_type_attribute,  output_dir = ATAC_output_dir, 
+                               log_flag = TRUE)
 
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
 
+atac_proj <- combine_cell_types_atac(atac_proj)
+atac_proj <- MajorityVote_ATAC(proj = atac_proj)
+
+num_cells <- length(atac_proj$cellNames)
+num_samples <- length(unique(atac_proj$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
+
+pal <- paletteDiscrete(values = atac_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
+
+atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
+                                      d28_samples, d_minus_1_samples, male_samples, female_samples)
+viral_load_metadata <- parse_metadata_for_samples(atac_proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
+                                                  d28_samples, d_minus_1_samples, male_samples, female_samples)
+day_metadata <- parse_metadata_for_samples(atac_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
+sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
+
+cluster_info <- get_cluster_info(atac_proj)
+
+idxPass <- which(atac_proj$seurat_clusters %in% c("2","3","4","6","7","13","15","18","19","20","23"))
+cellsPass <- atac_proj$cellNames[-idxPass]
+atac_proj_minus_clusters <- atac_proj[cellsPass, ]
+
+num_cells <- length(atac_proj_minus_clusters$cellNames)
+num_samples <- length(unique(atac_proj_minus_clusters$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
+
+pal <- paletteDiscrete(values = atac_proj_minus_clusters$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
+
+### ETC
 atac_proj <- add_rna_labels_for_atac_data(atac_proj, ATAC_output_dir, source_rna_file = "rna_seq_labeled_cells-14_final.csv", subset_to_rna = TRUE)
 atac_proj <- combine_cell_types_atac(atac_proj)
 
