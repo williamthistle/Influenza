@@ -343,9 +343,9 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
     write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t")
-    # Lenient uses pval < 0.05 for sc peaks
+    # Lenient uses pval < 0.01 for sc peaks
     marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
-    marker_de_lenient <- marker_de_passing_fc[marker_de_passing_fc$pval < 0.05,]
+    marker_de_lenient <- marker_de_passing_fc[marker_de_passing_fc$pval < 0.01,]
     for(current_pseudobulk_peak_row_index in 1:nrow(pseudobulk_analysis_results)) {
       current_pseudobulk_row <- pseudobulk_analysis_results[current_pseudobulk_peak_row_index,]
       chr_peak_index_combo <- rownames(current_pseudobulk_row)
@@ -365,8 +365,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
         current_row <- data.frame(cell_type, chr, start, end, peak_index, sc_log2FC, sc_pval, sc_FDR, pseudobulk_log2FC, pseudobulk_pval)
         names(current_row) <- c("Cell_Type", "chr", "start", "end", "idx", "sc_log2FC", "sc_pval", "sc_FDR", "pseudobulk_log2FC", "pseudobulk_pval")
         final_lenient_de <- rbind(final_lenient_de, current_row)
-        # strict uses FDR < 0.05 (more stringent than unadjusted p-value)
-        if(sc_FDR < 0.05) {
+        # strict uses FDR < 0.1 (more stringent than unadjusted p-value)
+        if(sc_FDR < 0.1) {
           final_strict_de <- rbind(final_strict_de, current_row)
         }
       }

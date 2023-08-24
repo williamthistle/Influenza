@@ -86,24 +86,30 @@ atac_proj <- Read_ATAC(data_path = data_path, sample_id_list = sample_id_list, s
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
 atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE)
 # Note - when I don't use batch correction (and same numFeatures / resolution as Vincy), my plot looks very similar to Vincy's!
-atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj, log_flag = TRUE)
-atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference,
+atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
+atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_dir = ATAC_output_dir,
                                reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
-atac_proj <- MajorityVote_ATAC_alt(proj = atac_proj)
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
 
 atac_proj <- combine_cell_types_atac(atac_proj)
-atac_proj <- MajorityVote_ATAC_alt(proj = atac_proj)
+atac_proj <- MajorityVote_ATAC(proj = atac_proj)
+
+num_cells <- length(atac_proj$cellNames)
+num_samples <- length(unique(atac_proj$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
 
 pal <- paletteDiscrete(values = atac_proj$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "seurat_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p5 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p6 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-ArchR::plotPDF(p1,p2,p3,p4,p5,p6, name = "UMAP_new_batch_correction_and_majority_vote", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
 
 atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
                                        d28_samples, d_minus_1_samples, male_samples, female_samples)
@@ -118,35 +124,47 @@ cluster_info <- get_cluster_info(atac_proj)
 
 # Remove messy clusters
 # C4 looks like unintegrated cells but it comes from LVL so it won't be relevant for our HVL analysis
-idxPass <- which(atac_proj$seurat_clusters %in% c("4", "10", "18", "19", "21", "25", "26", "28", "29"))
+idxPass <- which(atac_proj$seurat_clusters %in% c("4", "7", "13", "16", "20", "24", "28", "29"))
 cellsPass <- atac_proj$cellNames[-idxPass]
 atac_proj_minus_clusters <- atac_proj[cellsPass, ]
 
-# Override label
-atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, "24", "Proliferating")
+num_cells <- length(atac_proj_minus_clusters$cellNames)
+num_samples <- length(unique(atac_proj_minus_clusters$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
 
 pal <- paletteDiscrete(values = atac_proj_minus_clusters$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "seurat_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p5 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p6 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-ArchR::plotPDF(p1,p2,p3,p4,p5,p6, name = "UMAP_new_batch_correction_and_majority_vote_minus_clusters", ArchRProj = atac_proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
 
 # Subset to HVL
 idxPass <- which(atac_proj_minus_clusters$viral_load %in% c("high"))
 cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
 HVL_proj_minus_clusters <- atac_proj_minus_clusters[cellsPass, ]
 
+num_cells <- length(HVL_proj_minus_clusters$cellNames)
+num_samples <- length(unique(HVL_proj_minus_clusters$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
+
 pal <- paletteDiscrete(values = HVL_proj_minus_clusters$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p2 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "seurat_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p4 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p5 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p6 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-ArchR::plotPDF(p1,p2,p3,p4,p5,p6, name = "HVL_UMAP_new_batch_correction_and_majority_vote_minus_clusters", ArchRProj = HVL_proj_minus_clusters, addDOC = FALSE, width = 5, height = 5)
+p1 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters_HVL.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
+
 
 # Call peaks
 addArchRGenome("hg38")
@@ -173,3 +191,14 @@ create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
 # Print distributions for each cell type and create cell type proportions file for MAGICAL
 print_cell_type_distributions(final_proj)
 create_cell_type_proportion_MAGICAL_atac(final_proj, ATAC_output_dir, c("time_point"), day_metadata)
+
+
+pal <- paletteDiscrete(values = atac_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "predictedGroup", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
+p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "seurat_clusters", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p5 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+p6 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+ArchR::plotPDF(p1,p2,p3,p4,p5,p6, name = "UMAP_new_batch_correction_and_majority_vote", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
+
