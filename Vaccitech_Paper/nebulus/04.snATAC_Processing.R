@@ -87,7 +87,7 @@ atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
 atac_proj <- InitialProcessing_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE) # Try before and after filtering?
 atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj,  output_dir = ATAC_output_dir, log_flag = TRUE) # Try before filtering and after filtering?
 atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_dir = ATAC_output_dir,
-                               reference_cell_type_attribute = reference_cell_type_attribute,  output_dir = ATAC_output_dir, 
+                               reference_cell_type_attribute = reference_cell_type_attribute,
                                log_flag = TRUE)
 
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
