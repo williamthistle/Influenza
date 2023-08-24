@@ -76,11 +76,18 @@ log_file_name <- gsub(":", "-", log_file_name)
 log_file_name <- paste0(output_dir, log_file_name)
 log_file <- logr::log_open(log_file_name, logdir = FALSE)
 
+# Load reference
+reference <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = species, reference_dir = reference_dir,
+                                 reference_file_name = reference_file_name, log_flag = TRUE)
+idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+reference <- reference[,-idx]
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(data_path = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
 atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE) # Try before and after filtering?
 atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj, log_flag = TRUE) # Try before filtering and after filtering?
+atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_dir = ATAC_output_dir,
+                               reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
 
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
