@@ -213,7 +213,7 @@ HVL_atac_proj <- addPeakMatrix(HVL_atac_proj)
 # TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
-calculate_daps_for_each_cell_type(HVL_atac_proj, differential_peaks_dir)
+calculate_daps_for_each_cell_type(HVL_atac_proj, differential_peaks_dir, sample_metadata_for_SPEEDI_df)
 # Create Peaks.txt file for MAGICAL
 peak_txt_file <- create_peaks_file(HVL_atac_proj, ATAC_output_dir)
 # Create peak_motif_matches.txt file for MAGICAL
