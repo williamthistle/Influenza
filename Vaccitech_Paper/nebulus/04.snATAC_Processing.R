@@ -93,6 +93,18 @@ atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_d
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
 
+atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
+                                      d28_samples, d_minus_1_samples, male_samples, female_samples)
+viral_load_metadata <- parse_metadata_for_samples(atac_proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
+                                                  d28_samples, d_minus_1_samples, male_samples, female_samples)
+day_metadata <- parse_metadata_for_samples(atac_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
+sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
+
+
+# FIRST APPROACH: TREATING ATAC-SEQ AS SEPARATE ASSAY
+
 atac_proj <- combine_cell_types_atac(atac_proj)
 atac_proj <- MajorityVote_ATAC(proj = atac_proj)
 
@@ -111,15 +123,6 @@ p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData",
 ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type.png"), 
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
-
-atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
-                                      d28_samples, d_minus_1_samples, male_samples, female_samples)
-viral_load_metadata <- parse_metadata_for_samples(atac_proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
-                                                  d28_samples, d_minus_1_samples, male_samples, female_samples)
-day_metadata <- parse_metadata_for_samples(atac_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
-                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
-sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_samples, low_viral_load_samples,
-                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
 
 cluster_info <- get_cluster_info(atac_proj)
 
@@ -143,34 +146,56 @@ ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
 
-### ETC
+# SECOND APPROACH: USING RNA-SEQ LABELS FOR ATAC-SEQ
 atac_proj <- add_rna_labels_for_atac_data(atac_proj, ATAC_output_dir, source_rna_file = "rna_seq_labeled_cells-14_final.csv", subset_to_rna = TRUE)
 atac_proj <- combine_cell_types_atac(atac_proj)
 
 # For convenience
 atac_proj$Cell_type_voting <- atac_proj$predictedGroup
-atac_proj <- remove_cell_types(atac_proj, c("HSPC", "Plasmablast", "Proliferating"))
 
-p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p2 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Sample", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p3 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "Batch", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
-p4 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", name = "TSSEnrichment", embedding = "UMAP", force = TRUE, keepAxis = TRUE)
+num_cells <- length(atac_proj$cellNames)
+num_samples <- length(unique(atac_proj$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
 
-ArchR::plotPDF(p1,p2,p3,p4, name = "UMAP_subset_RNA_3_combined_cell_types", ArchRProj = atac_proj, addDOC = FALSE, width = 5, height = 5)
+atac_proj <- remove_cell_types(atac_proj, c("HSPC", "Plasmablast", "Proliferating", "MAIT"))
+#atac_proj <- remove_cells_based_on_umap_atac(atac_proj, 1, 6, -1.5, 1)
 
-atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
-                                      d28_samples, d_minus_1_samples, male_samples, female_samples)
-viral_load_metadata <- parse_metadata_for_samples(atac_proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
-                                                  d28_samples, d_minus_1_samples, male_samples, female_samples)
-day_metadata <- parse_metadata_for_samples(atac_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
-                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
-sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_samples, low_viral_load_samples,
-                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
+pal <- paletteDiscrete(values = atac_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By RNA Transferred Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10)) + scale_x_continuous(n.breaks=20) +
+  scale_y_continuous(n.breaks=20)
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_RNA_Label_Transferred.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
 
 # Subset to HVL
 idxPass <- which(atac_proj$viral_load %in% c("high"))
 cellsPass <- atac_proj$cellNames[idxPass]
 HVL_atac_proj <- atac_proj[cellsPass, ]
+
+num_cells <- length(HVL_atac_proj$cellNames)
+num_samples <- length(unique(HVL_atac_proj$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
+
+pal <- paletteDiscrete(values = HVL_atac_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = HVL_atac_proj, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By RNA Transferred Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_RNA_Label_Transferred_HVL.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
+
+
+
 
 pal <- paletteDiscrete(values = HVL_atac_proj$Cell_type_voting)
 p1 <- ArchR::plotEmbedding(ArchRProj = HVL_atac_proj, colorBy = "cellColData", name = "Cell_type_voting", embedding = "UMAP", pal = pal, force = TRUE, keepAxis = TRUE)
