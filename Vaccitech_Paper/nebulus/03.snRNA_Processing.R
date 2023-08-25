@@ -152,12 +152,6 @@ idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
-#sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, 0, 5, 1, 3) # 14 sample multiome
-#sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -4, 0, 2, 3) # 14 sample multiome
-#sc_obj_subset <- remove_cells_based_on_umap(sc_obj_subset, -3.5, -1, -6, -4.5) # 14 sample multiome
-
-#sc_obj_subset <- override_cluster_label(sc_obj_subset, c(26), "Treg")
-
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 sc_obj_subset <- combine_cell_types_magical(sc_obj_subset)
 
