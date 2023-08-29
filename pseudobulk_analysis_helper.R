@@ -109,12 +109,11 @@ create_metaintegrator_obj <- function(token, counts, metadata = NULL, case_time_
   return(internal_data_list)
 }
 
-add_auc_row <- function(auc_df, auc_names, filtering_assay, filtering_method, discovery_assay, discovery_dataset, discovery_auc_df, auc_col_name) {
-  current_row <- data.frame(filtering_assay, filtering_method, discovery_assay, discovery_dataset, nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]),
-                            nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,]), 
-                            nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]) + nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,]),
-                            nrow(discovery_auc_df), (nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]) + 
-                                                              nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,])) / nrow(discovery_auc_df))
+add_auc_row <- function(auc_df, auc_names, filtering_assay, filtering_method, discovery_assay, discovery_dataset, discovery_auc_obj, auc_col_name) {
+  current_row <- data.frame(filtering_assay, filtering_method, discovery_assay, discovery_dataset, length(discovery_auc_obj[[3]]),
+                            length(discovery_auc_obj[[4]]), 
+                            length(discovery_auc_obj[[2]]),
+                            nrow(discovery_auc_obj[[1]]), length(discovery_auc_obj[[2]]) / nrow(discovery_auc_obj[[1]]))
   names(current_row) <- auc_names
   auc_df <- rbind(auc_df, current_row)
 }
