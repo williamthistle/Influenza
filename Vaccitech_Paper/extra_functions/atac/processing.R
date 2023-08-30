@@ -327,7 +327,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     marker_de$pval <- assays(marker_D28_D1)$Pval[,1]
     marker_de$FDR <- assays(marker_D28_D1)$FDR[,1]
     cell_type <- sub(" ", "_", cell_type)
-    write.table(marker_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_sc.tsv"), quote = FALSE, sep = "\t")
+    write.table(marker_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_sc.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     # Perform pseudobulk correction
     pseudobulk_counts <- read.table(paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), sep = "\t", header = TRUE, check.names = FALSE)
     sample_metadata <- cells_subset$Sample
@@ -345,7 +345,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
-    write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t")
+    write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     # Most lenient uses pval < 0.05 for sc peaks
     marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.3 | marker_de$log2FC > 0.3,]
     marker_de_lenient <- marker_de_passing_fc[marker_de_passing_fc$pval < 0.05,]
@@ -380,23 +380,23 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     }
   }
   # Write final lenient table
-  write.table(final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final.tsv"), quote = FALSE, sep = "\t")
+  write.table(final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   pos_final_lenient_de <- final_lenient_de[final_lenient_de$sc_log2FC > 0,]
-  write.table(pos_final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final_pos.tsv"), quote = FALSE, sep = "\t")
+  write.table(pos_final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final_pos.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   neg_final_lenient_de <- final_lenient_de[final_lenient_de$sc_log2FC < 0,]
-  write.table(neg_final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final_neg.tsv"), quote = FALSE, sep = "\t")
+  write.table(neg_final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final_neg.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   # Write final stricter table
-  write.table(final_stricter_de, paste0(differential_peaks_dir, "D28_D1_diff_stricter_final.tsv"), quote = FALSE, sep = "\t")
+  write.table(final_stricter_de, paste0(differential_peaks_dir, "D28_D1_diff_stricter_final.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   pos_final_stricter_de <- final_stricter_de[final_stricter_de$sc_log2FC > 0,]
-  write.table(pos_final_stricter_de, paste0(differential_peaks_dir, "D28_D1_diff_stricter_final_pos.tsv"), quote = FALSE, sep = "\t")
+  write.table(pos_final_stricter_de, paste0(differential_peaks_dir, "D28_D1_diff_stricter_final_pos.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   neg_final_stricter_de <- final_stricter_de[final_stricter_de$sc_log2FC < 0,]
-  write.table(neg_final_stricter_de, paste0(differential_peaks_dir, "D28_D1_diff_stricter_final_neg.tsv"), quote = FALSE, sep = "\t")
+  write.table(neg_final_stricter_de, paste0(differential_peaks_dir, "D28_D1_diff_stricter_final_neg.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   # Write final strictest table
-  write.table(final_strictest_de, paste0(differential_peaks_dir, "D28_D1_diff_strictest_final.tsv"), quote = FALSE, sep = "\t")
+  write.table(final_strictest_de, paste0(differential_peaks_dir, "D28_D1_diff_strictest_final.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   pos_final_strictest_de <- final_strictest_de[final_strictest_de$sc_log2FC > 0,]
-  write.table(pos_final_strictest_de, paste0(differential_peaks_dir, "D28_D1_diff_strictest_final_pos.tsv"), quote = FALSE, sep = "\t")
+  write.table(pos_final_strictest_de, paste0(differential_peaks_dir, "D28_D1_diff_strictest_final_pos.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   neg_final_strictest_de <- final_strictest_de[final_strictest_de$sc_log2FC < 0,]
-  write.table(neg_final_strictest_de, paste0(differential_peaks_dir, "D28_D1_diff_strictest_final_neg.tsv"), quote = FALSE, sep = "\t")
+  write.table(neg_final_strictest_de, paste0(differential_peaks_dir, "D28_D1_diff_strictest_final_neg.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   print(paste0("Done performing differential expression for group ", group, " for each cell type"))
 }
 

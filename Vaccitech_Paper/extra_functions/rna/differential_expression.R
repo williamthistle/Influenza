@@ -116,7 +116,7 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
       current_de = FindMarkers(cells_subset, test.use="LR", latent.vars = 'subject_id', ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0.1, min.pct = 0.1, assay = "SCT", recorrect_umi = FALSE)
       current_de <- current_de[current_de$p_val_adj < 0.05,]
       cell_type_for_file_name <- sub(" ", "_", current_cell_type)
-      write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc.tsv"), quote = FALSE, sep = "\t")
+      write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
       # Run pseudobulk
       Seurat::DefaultAssay(cells_subset) <- "RNA"
       pseudobulk_counts <- SPEEDI::create_pseudobulk_counts(cells_subset, log_flag = FALSE)
@@ -130,7 +130,7 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
       pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
       pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
       pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
-      write.table(pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk.tsv"), quote = FALSE, sep = "\t")
+      write.table(pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
       final_genes <- intersect(rownames(current_de), rownames(pseudobulk_analysis_results))
       # Record information about remaining genes in final_current_de
       for(current_gene in final_genes) {
@@ -144,11 +144,11 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
       }
     }
   }
-  write.table(final_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", group, ".final.list.tsv"), quote = FALSE, sep = "\t")
+  write.table(final_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", group, ".final.list.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   pos_final_current_de <- final_current_de[final_current_de$sc_log2FC > 0,]
-  write.table(pos_final_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", group, ".final.pos.list.tsv"), quote = FALSE, sep = "\t")
+  write.table(pos_final_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", group, ".final.pos.list.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   neg_final_current_de <- final_current_de[final_current_de$sc_log2FC < 0,]
-  write.table(neg_final_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", group, ".final.neg.list.tsv"), quote = FALSE, sep = "\t")
+  write.table(neg_final_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", group, ".final.neg.list.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
   print(paste0("Done performing differential expression for group ", group, " for each cell type"))
 }
 
