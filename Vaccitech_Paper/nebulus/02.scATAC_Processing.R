@@ -158,7 +158,7 @@ pal <- paletteDiscrete(values = HVL_proj_minus_clusters$Cell_type_voting)
 p1 <- ArchR::plotEmbedding(ArchRProj = HVL_proj_minus_clusters, colorBy = "cellColData", 
                            name = "Cell_type_voting", embedding = "UMAP", 
                            pal = pal, force = TRUE, keepAxis = TRUE) + 
-  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type, Reclustered)\n", 
                           sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
                                                          legend.text = ggplot2::element_text(size = 10))
 ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters_HVL.png"), 
@@ -174,7 +174,16 @@ HVL_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(HVL_proj_minus_
 HVL_proj_minus_clusters <- addPeakMatrix(HVL_proj_minus_clusters)
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = HVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "HVL"), load = FALSE)
 # load ArchR project: HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
+
+# Save peak metadata
+HVL_peaks <- getPeakSet(HVL_proj_minus_clusters)
+HVL_peaks_df <- as.data.frame(HVL_peaks@seqnames)
+HVL_peaks_df <- cbind(HVL_peaks_df, as.data.frame(HVL_peaks@ranges))
+HVL_peaks_df <- cbind(HVL_peaks_df, as.data.frame(HVL_peaks@elementMetadata))
+write.table(x = HVL_peaks_df, file = paste0(ATAC_output_dir, "HVL_peaks_info.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
 # TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
+# Find DASs
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir, sample_metadata_for_SPEEDI_df)

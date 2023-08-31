@@ -1,6 +1,12 @@
 library(data.table)
 library(DESeq2)
 library(MetaIntegrator)
+library(openxlsx)
+library(org.Hs.eg.db)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(ChIPseeker)
+
+set.seed(2000)
 
 base_dir <- "~/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
@@ -15,29 +21,28 @@ setwd("../")
 onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 sc_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs/")
-#sc_magical_dir <- paste0(sc_magical_dir, "scRNA_pseudobulk/")
 multiome_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Multiome/RNA/HVL/DEGs/")
-#multiome_pseudobulk_dir <- paste0(multiome_magical_dir, "scRNA_pseudobulk/")
-set.seed(2000)
+mintchip_dir <- paste0(onedrive_dir, "Influenza Analysis/MintChIP/")
+sc_peak_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/ATAC/HVL/")
 
 # Tables containing results for single cell and multiome RNA-seq processing
 # Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
 sc_pseudobulk_gene_table <- read.table(paste0(sc_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-#sc_magical_gene_table <- read.table(paste0(sc_magical_dir, "D28_D1_MAGICAL.txt"), sep = "\t", header = TRUE)
-
 multiome_pseudobulk_gene_table <- read.table(paste0(multiome_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-#multiome_magical_gene_table <- read.table(paste0(multiome_magical_dir, "D28_D1_MAGICAL_14_sample_multiome.txt"), sep = "\t", header = TRUE)
+
+# Peak related tables
+mintchip_table <- read.xlsx(xlsxFile = paste0(mintchip_dir, "MultiMarkerBestSignatureAnnotations_All3000.xlsx"), sheet = 1)
+sc_peaks <- read.table(paste0(sc_peak_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
+sc_motifs <- read.table(paste0(sc_peak_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
+sc_das_lenient <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_lenient_final.tsv"), sep = "\t", header = TRUE)
+sc_das_stricter <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_stricter_final.tsv"), sep = "\t", header = TRUE)
+sc_das_strictest <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_strictest_final.tsv"), sep = "\t", header = TRUE)
 
 # Grab gene lists from result tables and report number of genes
 sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (scRNA): ", length(sc_pseudobulk_genes)))
-#sc_magical_genes <- unique(sc_magical_gene_table$Gene_symbol)
-#print(paste0("Number of genes that pass MAGICAL (scRNA): ", length(sc_magical_genes)))
-
 multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
-#multiome_magical_genes <- unique(multiome_magical_gene_table$Gene_symbol)
-#print(paste0("Number of genes that pass MAGICAL (multiome): ", length(multiome_magical_genes)))
 
 # Next, let's test our gene lists on the actual bulk RNA-seq data! (Should I add extra samples for subjects that have them? How to label as HVL or LVL?)
 # First, let's remove the 0 PCR sample from low because it's questionable
