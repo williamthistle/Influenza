@@ -204,7 +204,7 @@ create_magical_cell_type_pseudobulk_files(hvl_sc_obj, hvl_pseudobulk_rna_dir)
 ### ETC ###
 
 # Find markers for each cluster
-run_differential_expression_cluster(sc_obj, RNA_output_dir)
+run_differential_expression_cluster(hvl_sc_obj, RNA_output_dir)
 
 # Run differential expression for each cell type within each group of interest
 #differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/alg_4/")

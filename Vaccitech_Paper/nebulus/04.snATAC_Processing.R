@@ -124,7 +124,29 @@ ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
 
-cluster_info <- get_cluster_info(atac_proj)
+idxPass <- which(atac_proj$viral_load %in% c("high"))
+cellsPass <- atac_proj$cellNames[idxPass]
+HVL_atac_proj <- atac_proj[cellsPass, ]
+
+HVL_atac_proj <- MajorityVote_ATAC(proj = HVL_atac_proj)
+
+num_cells <- length(HVL_atac_proj$cellNames)
+num_samples <- length(unique(HVL_atac_proj$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
+
+pal <- paletteDiscrete(values = HVL_atac_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = HVL_atac_proj, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "HVL_Final_ATAC_UMAP_by_Majority_Vote_Cell_Type.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
+
+cluster_info <- get_cluster_info(HVL_atac_proj)
 
 idxPass <- which(atac_proj$seurat_clusters %in% c("2","3","4","6","7","13","15","18","19","20","23"))
 cellsPass <- atac_proj$cellNames[-idxPass]

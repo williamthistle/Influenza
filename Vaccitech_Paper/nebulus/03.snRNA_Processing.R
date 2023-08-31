@@ -186,6 +186,7 @@ cellsPass <- names(sc_obj_subset$orig.ident[idxPass])
 hvl_sc_obj <- subset(x = sc_obj_subset, subset = cell_name %in% cellsPass)
 
 hvl_sc_obj <- MajorityVote_RNA(hvl_sc_obj)
+hvl_sc_obj <- combine_cell_types_magical(hvl_sc_obj)
 
 print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
@@ -205,6 +206,9 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Day.png",
 print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
+
+
+run_differential_expression_cluster(hvl_sc_obj, RNA_output_dir)
 
 HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id/")
 if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}

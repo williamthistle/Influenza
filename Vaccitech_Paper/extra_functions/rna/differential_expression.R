@@ -20,7 +20,7 @@ run_differential_expression_cluster <- function(sc_obj, marker_dir) {
     .packages = c("Seurat", "base")
   ) %dopar% {
     cluster_id <- cluster_ids[[i]]
-    cluster.markers <- FindMarkers(sc_obj, ident.1 = cluster_id, assay = "SCT", recorrect_umi = FALSE)
+    cluster.markers <- FindMarkers(sc_obj, test.use="LR", latent.vars = 'subject_id', ident.1 = cluster_id, assay = "SCT", recorrect_umi = FALSE)
     write.table(cluster.markers, paste0(marker_dir, "markers_", cluster_id, ".txt"), quote = FALSE, sep = "\t")
     return(i)
   }
@@ -116,7 +116,7 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
       current_de = FindMarkers(cells_subset, test.use="LR", latent.vars = 'subject_id', ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0.1, min.pct = 0.1, assay = "SCT", recorrect_umi = FALSE)
       current_de <- current_de[current_de$p_val_adj < 0.05,]
       cell_type_for_file_name <- sub(" ", "_", current_cell_type)
-      write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+      write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc.tsv"), quote = FALSE, sep = "\t")
       # Run pseudobulk
       Seurat::DefaultAssay(cells_subset) <- "RNA"
       pseudobulk_counts <- SPEEDI::create_pseudobulk_counts(cells_subset, log_flag = FALSE)
@@ -130,7 +130,7 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
       pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
       pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
       pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
-      write.table(pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+      write.table(pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk.tsv"), quote = FALSE, sep = "\t")
       final_genes <- intersect(rownames(current_de), rownames(pseudobulk_analysis_results))
       # Record information about remaining genes in final_current_de
       for(current_gene in final_genes) {
