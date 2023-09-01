@@ -18,32 +18,39 @@ mintchip_table_extended$start <- mintchip_table_extended$start - 200
 mintchip_table_extended$end <- mintchip_table_extended$end + 200
 
 # OVERLAPPING PEAKS
-overlapping_peaks <- sc_peaks_lenient_subset
-overlapping_peaks <- overlapping_peaks[0,]
-
+overlap_ranges <- data.frame()
 for(current_chr in unique(sc_peaks_lenient_subset_extended$chr)) {
   sc_peaks_lenient_subset_extended_chr_subset <- sc_peaks_lenient_subset_extended[sc_peaks_lenient_subset_extended$chr == current_chr,]
   mintchip_table_extended_subset <- mintchip_table_extended[mintchip_table_extended$seqnames == current_chr,]
   
-  starts_sc_peaks_lenient_subset_extended_chr_subset <- matrix(sc_peaks_lenient_subset_extended_chr_subset$start, nrow = nrow(sc_peaks_lenient_subset_extended_chr_subset), ncol = 1)
-  ends_sc_peaks_lenient_subset_extended_chr_subset <- matrix(sc_peaks_lenient_subset_extended_chr_subset$end, nrow = nrow(sc_peaks_lenient_subset_extended_chr_subset), ncol = 1)
+  # Iterate through each pair of ranges and check for overlaps
+  for (i in 1:nrow(sc_peaks_lenient_subset_extended_chr_subset)) {
+    for (j in 1:nrow(mintchip_table_extended_subset)) {
+      if (sc_peaks_lenient_subset_extended_chr_subset$start[i] <= mintchip_table_extended_subset$end[j] && mintchip_table_extended_subset$start[j] <= sc_peaks_lenient_subset_extended_chr_subset$end[i]) {
+        overlap_ranges <- rbind(overlap_ranges, c(current_chr, sc_peaks_lenient_subset_extended_chr_subset$Cell_Type[i], sc_peaks_lenient_subset_extended_chr_subset$start[i], sc_peaks_lenient_subset_extended_chr_subset$end[i], mintchip_table_extended_subset$start[j], mintchip_table_extended_subset$end[j]))
+      }
+    }
+  }
   
-  starts_mintchip_table_extended_subset <- matrix(mintchip_table_extended_subset$start, nrow = nrow(mintchip_table_extended_subset), ncol = 1)
-  ends_mintchip_table_extended_subset <- matrix(mintchip_table_extended_subset$end, nrow = nrow(mintchip_table_extended_subset), ncol = 1)
-  
-  # Create logical matrix for overlaps using matrix operations
-  overlap_matrix <- outer(starts_sc_peaks_lenient_subset_extended_chr_subset, ends_mintchip_table_extended_subset, "<=") & outer(ends_sc_peaks_lenient_subset_extended_chr_subset, starts_mintchip_table_extended_subset, ">=")
-  
-  # Convert the matrix to a data frame for better readability
-  overlap_df <- data.frame(sc_peaks_lenient_subset_extended_chr_subset_row = rep(1:nrow(sc_peaks_lenient_subset_extended_chr_subset), each = nrow(mintchip_table_extended_subset)),
-                           mintchip_table_extended_subset_row = rep(1:nrow(mintchip_table_extended_subset), times = nrow(sc_peaks_lenient_subset_extended_chr_subset)),
-                           overlap = as.logical(overlap_matrix))
-  print(c)
-  overlap_df <- overlap_df[overlap_df$overlap == TRUE,]
-  print(overlap_df)
+  # Rename columns of the overlap_ranges data frame
+  if(nrow(overlap_ranges) > 0) {
+    colnames(overlap_ranges) <- c("chr", "Cell_Type", "ATAC_peaks_start", "ATAC_peaks_end", "mintchip_peaks_start", "mintchip_peaks_end")
+  }
 }
 
+# Find associated motifs with peaks
+# In motif file, chromosome is written like "10" versus "chr10"
+current_chr <- substr(overlap_ranges$chr, 4, 6)
+current_peak_start <- as.numeric(overlap_ranges$ATAC_peaks_start) + 250
+current_peak_end <- as.numeric(overlap_ranges$ATAC_peaks_end) - 250
+associated_motifs <- sc_motifs[sc_motifs$chr %in% current_chr & sc_motifs$point1 %in% current_peak_start & sc_motifs$point2 %in% current_peak_end,]
+zero_columns <- colSums(associated_motifs) == 0
+associated_motifs <- associated_motifs[, !zero_columns]
 
+desired_sum <- 14
+columns_with_desired_sum <- colSums(associated_motifs) == desired_sum
+desired_columns <- names(associated_motifs)[columns_with_desired_sum]
+print(desired_columns)
 
 
 # OVERLAPPING GENES
@@ -52,6 +59,8 @@ mintchip_validated_genes <- sc_peaks_lenient_subset[sc_peaks_lenient_subset$near
 mintchip_validated_genes_pos <- mintchip_validated_genes[mintchip_validated_genes$sc_log2FC > 0,]
 mintchip_validated_genes_neg <- mintchip_validated_genes[mintchip_validated_genes$sc_log2FC < 0,]
 # What about HB within cell types?
+# CD14 Mono
+mintchip_validated_genes_cd14 <- mintchip_validated_genes[mintchip_validated_genes$Cell_Type == "CD14_Mono",]
 
 # OVERLAPPING PEAKS
 
