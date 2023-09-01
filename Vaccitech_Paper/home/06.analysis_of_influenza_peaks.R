@@ -2,62 +2,62 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-# Tables containing results for single cell and multiome RNA-seq processing
-# Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
-# Note that LR includes latent variable subject in differential expression analysis
-single_cell_pseudobulk_pass_peak_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_peaks_passing_pseudobulk_unadjusted.txt"), sep = "\t", header = TRUE)
-#single_cell_pseudobulk_pass_peak_FDR_table <- read.table(paste0(single_cell_magical_dir, "D28_D1_MAGICAL_peaks_passing_pseudobulk_FDR.txt"), sep = "\t", header = TRUE)
-cell_types <- unique(single_cell_pseudobulk_pass_peak_table$cell_type)
-#cell_types_FDR <- unique(single_cell_pseudobulk_pass_peak_FDR_table$cell_type)
-txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+# Subset sc_peaks to only have the lenient DAS
+colnames(sc_peaks)[colnames(sc_peaks) == "value"] <- "chr"
+sc_peaks_lenient_subset <- merge(sc_peaks, sc_das_lenient, by = c("chr", "idx"))[, names(sc_peaks)]
+colnames(sc_peaks_lenient_subset)[colnames(sc_peaks_lenient_subset) == "start.x"] <- "start"
+colnames(sc_peaks_lenient_subset)[colnames(sc_peaks_lenient_subset) == "end.x"] <- "end"
+sc_peaks_lenient_subset <- sc_peaks_lenient_subset[, -which(names(sc_peaks_lenient_subset) %in% c("width", "score", "replicateScoreQuantile", "Reproducibility", "names", "GroupReplicate", "groupScoreQuantile", "N", "start.y", "end.y"))]
 
-cell_type_peak_annotations <- list()
-#cell_type_peak_annotations_FDR <- list()
-index <- 1
+sc_peaks_lenient_subset_extended <- sc_peaks_lenient_subset
+sc_peaks_lenient_subset_extended$start <- sc_peaks_lenient_subset_extended$start - 250
+sc_peaks_lenient_subset_extended$end <- sc_peaks_lenient_subset_extended$end + 250
 
-for(cell_type in cell_types) {
-  cell_type_pseudobulk_pass_peak_table <- single_cell_pseudobulk_pass_peak_table[single_cell_pseudobulk_pass_peak_table$cell_type == cell_type,]
-  chipseeker_input_peaks <- cell_type_pseudobulk_pass_peak_table[,c(2,3,4)]
+mintchip_table_extended <- mintchip_table
+mintchip_table_extended$start <- mintchip_table_extended$start - 200
+mintchip_table_extended$end <- mintchip_table_extended$end + 200
+
+# OVERLAPPING PEAKS
+overlapping_peaks <- sc_peaks_lenient_subset
+overlapping_peaks <- overlapping_peaks[0,]
+
+for(current_chr in unique(sc_peaks_lenient_subset_extended$chr)) {
+  sc_peaks_lenient_subset_extended_chr_subset <- sc_peaks_lenient_subset_extended[sc_peaks_lenient_subset_extended$chr == current_chr,]
+  mintchip_table_extended_subset <- mintchip_table_extended[mintchip_table_extended$seqnames == current_chr,]
   
-  chipseeker_input_peaks$chr[chipseeker_input_peaks$chr == "23"] <- "X"
-  chipseeker_input_peaks$chr <- paste0('chr', chipseeker_input_peaks$chr)
-  chipseeker_input_peaks$length <- chipseeker_input_peaks$end - chipseeker_input_peaks$start
+  starts_sc_peaks_lenient_subset_extended_chr_subset <- matrix(sc_peaks_lenient_subset_extended_chr_subset$start, nrow = nrow(sc_peaks_lenient_subset_extended_chr_subset), ncol = 1)
+  ends_sc_peaks_lenient_subset_extended_chr_subset <- matrix(sc_peaks_lenient_subset_extended_chr_subset$end, nrow = nrow(sc_peaks_lenient_subset_extended_chr_subset), ncol = 1)
   
-  chipseeker_output <- annotatePeak(makeGRangesFromDataFrame(chipseeker_input_peaks), TxDb = txdb, annoDb = "org.Hs.eg.db")
-  chipseeker_output_df <- as.data.frame(chipseeker_output)
-  cell_type_peak_annotations[[index]] <- chipseeker_output_df
-  index <- index + 1
+  starts_mintchip_table_extended_subset <- matrix(mintchip_table_extended_subset$start, nrow = nrow(mintchip_table_extended_subset), ncol = 1)
+  ends_mintchip_table_extended_subset <- matrix(mintchip_table_extended_subset$end, nrow = nrow(mintchip_table_extended_subset), ncol = 1)
+  
+  # Create logical matrix for overlaps using matrix operations
+  overlap_matrix <- outer(starts_sc_peaks_lenient_subset_extended_chr_subset, ends_mintchip_table_extended_subset, "<=") & outer(ends_sc_peaks_lenient_subset_extended_chr_subset, starts_mintchip_table_extended_subset, ">=")
+  
+  # Convert the matrix to a data frame for better readability
+  overlap_df <- data.frame(sc_peaks_lenient_subset_extended_chr_subset_row = rep(1:nrow(sc_peaks_lenient_subset_extended_chr_subset), each = nrow(mintchip_table_extended_subset)),
+                           mintchip_table_extended_subset_row = rep(1:nrow(mintchip_table_extended_subset), times = nrow(sc_peaks_lenient_subset_extended_chr_subset)),
+                           overlap = as.logical(overlap_matrix))
+  print(c)
+  overlap_df <- overlap_df[overlap_df$overlap == TRUE,]
+  print(overlap_df)
 }
 
-index <- 1
 
-#for(cell_type in cell_types_FDR) {
-#  cell_type_pseudobulk_pass_peak_table_FDR <- single_cell_pseudobulk_pass_peak_FDR_table[single_cell_pseudobulk_pass_peak_FDR_table$cell_type == cell_type,]
-#  chipseeker_input_peaks_FDR <- cell_type_pseudobulk_pass_peak_table_FDR[,c(2,3,4)]
-  
-#  chipseeker_input_peaks_FDR$chr[chipseeker_input_peaks_FDR$chr == "23"] <- "X"
-#  chipseeker_input_peaks_FDR$chr <- paste0('chr', chipseeker_input_peaks_FDR$chr)
-#  chipseeker_input_peaks_FDR$length <- chipseeker_input_peaks_FDR$end - chipseeker_input_peaks_FDR$start
-  
-#  chipseeker_output_FDR <- annotatePeak(makeGRangesFromDataFrame(chipseeker_input_peaks_FDR), TxDb = txdb, annoDb = "org.Hs.eg.db")
-#  chipseeker_output_df_FDR <- as.data.frame(chipseeker_output_FDR)
-#  cell_type_peak_annotations_FDR[[index]] <- chipseeker_output_df_FDR
-#  index <- index + 1
-#}
 
-# Figure out why NA is there
-mint_cell_type_peak_annotations <- list()
-index <- 1
-total_curated_peaks <- 0
-total_genes <- c()
-for(cell_type in cell_types) {
-  mint_cell_type_peak_annotations[[index]] <- cell_type_peak_annotations[[index]][cell_type_peak_annotations[[index]]$SYMBOL %in% mintchip_gene_table$SYMBOL,]
-  print(cell_type)
-  print(nrow(mint_cell_type_peak_annotations[[index]]))
-  total_curated_peaks <- total_curated_peaks + nrow(mint_cell_type_peak_annotations[[index]])
-  total_genes <- c(total_genes, mint_cell_type_peak_annotations[[index]]$SYMBOL)
-  index <- index + 1
-}
+
+# OVERLAPPING GENES
+mintchip_validated_genes <- sc_peaks_lenient_subset[sc_peaks_lenient_subset$nearestGene %in% mintchip_table$SYMBOL,]
+# Run pos and neg genes through HumanBase - really good groupings
+mintchip_validated_genes_pos <- mintchip_validated_genes[mintchip_validated_genes$sc_log2FC > 0,]
+mintchip_validated_genes_neg <- mintchip_validated_genes[mintchip_validated_genes$sc_log2FC < 0,]
+# What about HB within cell types?
+
+# OVERLAPPING PEAKS
+
+
+
+
 
 index <- 1
 for(mint_cell_type_peak_annotation in mint_cell_type_peak_annotations) {
