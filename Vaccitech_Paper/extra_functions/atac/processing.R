@@ -429,6 +429,7 @@ create_peak_motif_matches_file <- function(proj, analysis_dir, peak_txt_file) {
   cols <- sapply(peak_motif_txt_file, is.logical)
   peak_motif_txt_file[,cols] <- lapply(peak_motif_txt_file[,cols], as.numeric)
   write.table(peak_motif_txt_file, file = paste0(analysis_dir, "peak_motif_matches.txt"), quote = FALSE, sep = "\t", row.names = FALSE)
+  return(proj)
 }
 
 # Create pseudobulk count files for each cell type

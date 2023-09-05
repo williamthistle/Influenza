@@ -182,19 +182,20 @@ HVL_peaks_df <- cbind(HVL_peaks_df, as.data.frame(HVL_peaks@ranges))
 HVL_peaks_df <- cbind(HVL_peaks_df, as.data.frame(HVL_peaks@elementMetadata))
 write.table(x = HVL_peaks_df, file = paste0(ATAC_output_dir, "HVL_peaks_info.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
+# Create Peaks.txt file
+peak_txt_file <- create_peaks_file(HVL_proj_minus_clusters, ATAC_output_dir)
+# Create peak_motif_matches.txt file
+proj <- create_peak_motif_matches_file(HVL_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
+# Create pseudobulk counts for peaks for each cell type
+pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
+if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
+create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
 # TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
 # Find DASs
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir, sample_metadata_for_SPEEDI_df)
-# Create Peaks.txt file
-peak_txt_file <- create_peaks_file(HVL_proj_minus_clusters, ATAC_output_dir)
-# Create peak_motif_matches.txt file
-create_peak_motif_matches_file(HVL_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
-# Create pseudobulk counts for peaks for each cell type
-pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
-if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
-create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
+
 
 ### ETC ###
 # Print distributions for each cell type and create cell type proportions file for MAGICAL

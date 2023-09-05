@@ -26,9 +26,11 @@ mintchip_dir <- paste0(onedrive_dir, "Influenza Analysis/MintChIP/")
 sc_peak_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/ATAC/HVL/")
 
 # Tables containing results for single cell and multiome RNA-seq processing
-# Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering
+# Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering (remove platelets)
 sc_pseudobulk_gene_table <- read.table(paste0(sc_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_gene_table <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Cell_Type != "Platelet",]
 multiome_pseudobulk_gene_table <- read.table(paste0(multiome_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+multiome_pseudobulk_gene_table <- multiome_pseudobulk_gene_table[multiome_pseudobulk_gene_table$Cell_Type != "Platelet",]
 
 # Peak related tables
 mintchip_table <- read.xlsx(xlsxFile = paste0(mintchip_dir, "MultiMarkerBestSignatureAnnotations_All3000.xlsx"), sheet = 1)
