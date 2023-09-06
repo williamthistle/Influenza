@@ -172,8 +172,6 @@ HVL_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(HVL_proj_minus_
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
 HVL_proj_minus_clusters <- addPeakMatrix(HVL_proj_minus_clusters)
-# save ArchR project: ArchR::saveArchRProject(ArchRProj = HVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "HVL"), load = FALSE)
-# load ArchR project: HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
 
 # Save peak metadata
 HVL_peaks <- getPeakSet(HVL_proj_minus_clusters)
@@ -185,7 +183,9 @@ write.table(x = HVL_peaks_df, file = paste0(ATAC_output_dir, "HVL_peaks_info.txt
 # Create Peaks.txt file
 peak_txt_file <- create_peaks_file(HVL_proj_minus_clusters, ATAC_output_dir)
 # Create peak_motif_matches.txt file
-proj <- create_peak_motif_matches_file(HVL_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
+HVL_proj_minus_clusters <- create_peak_motif_matches_file(HVL_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
+# save ArchR project: ArchR::saveArchRProject(ArchRProj = HVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "HVL"), load = FALSE)
+# load ArchR project: HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
 # Create pseudobulk counts for peaks for each cell type
 pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
 if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}

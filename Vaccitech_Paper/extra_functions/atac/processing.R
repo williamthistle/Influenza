@@ -378,6 +378,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
         }
       }
     }
+    marker_D28_D1[rowData(marker_D28_D1)$seqnames %in% final_lenient_de$chr & rowData(marker_D28_D1)$idx %in% final_lenient_de$idx & rowData(marker_D28_D1)$start %in% final_lenient_de$start & rowData(marker_D28_D1)$end %in% final_lenient_de$end & assays(marker_D28_D1)$Pval$D28 %in% final_lenient_de$sc_pval,]
   }
   # Write final lenient table
   write.table(final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
