@@ -36,7 +36,11 @@ multiome_pseudobulk_gene_table <- multiome_pseudobulk_gene_table[multiome_pseudo
 mintchip_table <- read.xlsx(xlsxFile = paste0(mintchip_dir, "MultiMarkerBestSignatureAnnotations_All3000.xlsx"), sheet = 1)
 sc_peaks <- read.table(paste0(sc_peak_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
 sc_motifs <- read.table(paste0(sc_peak_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
+sc_motifs$chr <- paste0("chr", sc_motifs$chr)
 sc_das_lenient <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_lenient_final.tsv"), sep = "\t", header = TRUE)
+sc_motif_lenient_subset <- sc_motifs[sc_motifs$chr %in% sc_das_lenient$chr & sc_motifs$point1 %in% sc_das_lenient$start & sc_motifs$point2 %in% sc_das_lenient$end,]
+sc_motif_lenient_subset$chr <- as.numeric(substr(sc_motif_lenient_subset$chr, 4, 6))
+sc_motifs$chr <- as.numeric(substr(sc_motifs$chr, 4, 6))
 sc_das_stricter <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_stricter_final.tsv"), sep = "\t", header = TRUE)
 sc_das_strictest <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_strictest_final.tsv"), sep = "\t", header = TRUE)
 

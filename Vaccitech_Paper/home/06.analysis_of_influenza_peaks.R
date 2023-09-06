@@ -38,7 +38,7 @@ for(current_chr in unique(sc_peaks_lenient_subset_extended$chr)) {
   }
 }
 
-# Find associated motifs with peaks
+# Find associated motifs with peaks - we use sc_motif_lenient_subset (all pseudobulk passing peaks as opposed to ALL peaks)
 # In motif file, chromosome is written like "10" versus "chr10"
 current_chr <- substr(overlap_ranges$chr, 4, 6)
 current_peak_start <- as.numeric(overlap_ranges$ATAC_peaks_start) + 250
@@ -48,19 +48,18 @@ zero_columns <- colSums(associated_motifs) == 0
 associated_motifs <- associated_motifs[, !zero_columns]
 
 associated_motif_counts <- colSums(associated_motifs)[4:ncol(associated_motifs)]
-total_motif_counts <- colSums(sc_motifs)[4:ncol(sc_motifs)]
+total_motif_counts <- colSums(sc_motif_lenient_subset)[4:ncol(sc_motif_lenient_subset)]
 
 # Within overlapping peaks
 enriched_motif_p_values <- c()
-for(current_motif in colnames(sc_motifs)) {
+for(current_motif in colnames(associated_motifs)[4:ncol(associated_motifs)]) {
   current_motif_associated <- associated_motif_counts[names(associated_motif_counts) == current_motif]
   current_motif_total <- total_motif_counts[names(total_motif_counts) == current_motif]
-  p_value <- phyper(current_motif_associated - 1, current_motif_total, nrow(sc_motifs) - current_motif_total, nrow(associated_motifs), lower.tail = FALSE)
+  p_value <- phyper(current_motif_associated - 1, current_motif_total, nrow(sc_motif_lenient_subset) - current_motif_total, nrow(associated_motifs), lower.tail = FALSE)
   enriched_motif_p_values <- c(enriched_motif_p_values, p_value)
 }
 
 enriched_motif_p_values <- sort(enriched_motif_p_values)
-head(enriched_motif_p_values, n = 15)
 
 # OVERLAPPING GENES
 mintchip_validated_genes <- sc_peaks_lenient_subset[sc_peaks_lenient_subset$nearestGene %in% mintchip_table$SYMBOL,]
