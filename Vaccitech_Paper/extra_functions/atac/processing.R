@@ -378,7 +378,31 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
         }
       }
     }
-    marker_D28_D1[rowData(marker_D28_D1)$seqnames %in% final_lenient_de$chr & rowData(marker_D28_D1)$idx %in% final_lenient_de$idx & rowData(marker_D28_D1)$start %in% final_lenient_de$start & rowData(marker_D28_D1)$end %in% final_lenient_de$end & assays(marker_D28_D1)$Pval$D28 %in% final_lenient_de$sc_pval,]
+    marker_D28_D1_subset <- marker_D28_D1[rowData(marker_D28_D1)$seqnames %in% final_lenient_de$chr & rowData(marker_D28_D1)$idx %in% final_lenient_de$idx & rowData(marker_D28_D1)$start %in% final_lenient_de$start & rowData(marker_D28_D1)$end %in% final_lenient_de$end & assays(marker_D28_D1)$Pval$D28 %in% final_lenient_de$sc_pval,]
+    motifsUp <- peakAnnoEnrichment(
+      seMarker = marker_D28_D1,
+      ArchRProj = atac_proj,
+      peakAnnotation = "Motif",
+      cutOff = "Pval < 0.05 & Log2FC > 0.1"
+    )
+    df <- data.frame(TF = rownames(motifsUp), mlog10Padj = assay(motifsUp)[,1])
+    df <- df[order(df$mlog10Padj, decreasing = TRUE),]
+    df$rank <- seq_len(nrow(df))
+    ggUp <- ggplot(df, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+      geom_point(size = 1) +
+      ggrepel::geom_label_repel(
+        data = df[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
+        size = 1.5,
+        nudge_x = 2,
+        color = "black"
+      ) + theme_ArchR() + 
+      ylab("-log10(P-adj) Motif Enrichment") + 
+      xlab("Rank Sorted TFs Enriched") +
+      scale_color_gradientn(colors = paletteContinuous(set = "comet"))
+    
+    ggplot2::ggsave(filename = paste0(ATAC_output_dir, "CD14_Mono_TF_Enrichment.png"), 
+                    plot = ggUp, device = "png", width = 4, height = 4, 
+                    units = "in")
   }
   # Write final lenient table
   write.table(final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
