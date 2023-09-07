@@ -300,7 +300,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
                                    pseudobulk_pval = character())  
   final_strictest_de <- data.frame(Cell_Type = character(), chr = character(), start = character(), end = character(), idx = character(),
                                  sc_log2FC = character(), sc_pval = character(), sc_FDR = character(), pseudobulk_log2FC = character(),
-                                 pseudobulk_pval = character())  
+                                 pseudobulk_pval = character())
+  all_peaks <- getPeakSet(atac_proj)
   for (cell_type in unique(atac_proj$Cell_type_voting)) {
     print(cell_type)
     # Grab cells associated with cell type
@@ -326,10 +327,10 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     marker_de$mean_BGD <- assays(marker_D28_D1)$MeanBGD[,1]
     marker_de$pval <- assays(marker_D28_D1)$Pval[,1]
     marker_de$FDR <- assays(marker_D28_D1)$FDR[,1]
-    cell_type <- sub(" ", "_", cell_type)
-    write.table(marker_de, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_sc.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    cell_type_for_file_name <- sub(" ", "_", cell_type)
+    write.table(marker_de, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     # Perform pseudobulk correction
-    pseudobulk_counts <- read.table(paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), sep = "\t", header = TRUE, check.names = FALSE)
+    pseudobulk_counts <- read.table(paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type_for_file_name, ".txt"), sep = "\t", header = TRUE, check.names = FALSE)
     sample_metadata <- cells_subset$Sample
     for(j in 1:nrow(metadata_df)) {
       sample_metadata <- gsub(rownames(metadata_df)[j], metadata_df[j,1], sample_metadata)
@@ -346,9 +347,9 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
-    write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     # Most lenient uses pval < 0.05 for sc peaks
-    marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.3 | marker_de$log2FC > 0.3,]
+    marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
     marker_de_lenient <- marker_de_passing_fc[marker_de_passing_fc$pval < 0.05,]
     for(current_pseudobulk_peak_row_index in 1:nrow(pseudobulk_analysis_results)) {
       current_pseudobulk_row <- pseudobulk_analysis_results[current_pseudobulk_peak_row_index,]
@@ -379,20 +380,35 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
         }
       }
     }
-    marker_D28_D1_subset <- marker_D28_D1[rowData(marker_D28_D1)$seqnames %in% final_lenient_de$chr & rowData(marker_D28_D1)$idx %in% final_lenient_de$idx & rowData(marker_D28_D1)$start %in% final_lenient_de$start & rowData(marker_D28_D1)$end %in% final_lenient_de$end & assays(marker_D28_D1)$Pval$D28 %in% final_lenient_de$sc_pval,]
-    motifsUp <- peakAnnoEnrichment(
+    cell_type_subset_de <- final_lenient_de[final_lenient_de$Cell_Type == cell_type,]
+    pos_cell_type_subset_de <- cell_type_subset_de[cell_type_subset_de$sc_log2FC > 0,]
+    neg_cell_type_subset_de <- cell_type_subset_de[cell_type_subset_de$sc_log2FC < 0,]
+    pos_peak_indices <- c()
+    neg_peak_indices <- c()
+    # POSITIVE
+    # Find indices of peaks that overlap with cell type peaks
+    for(current_row_idx in 1:nrow(pos_cell_type_subset_de)) {
+      current_row <- pos_cell_type_subset_de[current_row_idx,]
+      current_idx <- which(seqnames(all_peaks) == current_row$chr & all_peaks$idx == current_row$idx)
+      pos_peak_indices <- c(pos_peak_indices, current_idx)
+    }
+    # Provide those indices as "idx" for use in peakAnnoEnrichment
+    motifsUp <- peakAnnoEnrichment_mine(
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
-      cutOff = "Pval < 0.05 & Log2FC > 0.1"
+      cutOff = "Pval < 0.05 & Log2FC > 0.1", # NOT USED
+      idx = pos_peak_indices
     )
-    df <- data.frame(TF = rownames(motifsUp), mlog10Padj = assay(motifsUp)[,1])
-    df <- df[order(df$mlog10Padj, decreasing = TRUE),]
-    df$rank <- seq_len(nrow(df))
-    ggUp <- ggplot(df, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+    df_up <- data.frame(TF = rownames(motifsUp), mlog10Padj = assay(motifsUp)[,1])
+    df_up <- df_up[order(df_up$mlog10Padj, decreasing = TRUE),]
+    df_up$p_adj <- 10 ** -df_up$mlog10Padj
+    df_up$rank <- seq_len(nrow(df_up))
+    write.table(df_up, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_up.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    ggUp <- ggplot(df_up, aes(rank, mlog10Padj, color = mlog10Padj)) + 
       geom_point(size = 1) +
       ggrepel::geom_label_repel(
-        data = df[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
+        data = df_up[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
         size = 1.5,
         nudge_x = 2,
         color = "black"
@@ -400,8 +416,41 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       ylab("-log10(P-adj) Motif Enrichment") + 
       xlab("Rank Sorted TFs Enriched") +
       scale_color_gradientn(colors = paletteContinuous(set = "comet"))
-    
-    ggplot2::ggsave(filename = paste0(ATAC_output_dir, "CD14_Mono_TF_Enrichment.png"), 
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up.png"), 
+                    plot = ggUp, device = "png", width = 4, height = 4, 
+                    units = "in")
+    # NEGATIVE
+    # Find indices of peaks that overlap with cell type peaks
+    for(current_row_idx in 1:nrow(neg_cell_type_subset_de)) {
+      current_row <- neg_cell_type_subset_de[current_row_idx,]
+      current_idx <- which(seqnames(all_peaks) == current_row$chr & all_peaks$idx == current_row$idx)
+      neg_peak_indices <- c(neg_peak_indices, current_idx)
+    }
+    # Provide those indices as "idx" for use in peakAnnoEnrichment
+    motifsDown <- peakAnnoEnrichment_mine(
+      seMarker = marker_D28_D1,
+      ArchRProj = atac_proj,
+      peakAnnotation = "Motif",
+      cutOff = "Pval < 0.05 & Log2FC > 0.1", # NOT USED
+      idx = neg_peak_indices
+    )
+    df_down <- data.frame(TF = rownames(motifsDown), mlog10Padj = assay(motifsDown)[,1])
+    df_down <- df_down[order(df_down$mlog10Padj, decreasing = TRUE),]
+    df_down$p_adj <- 10 ** -df_down$mlog10Padj
+    df_down$rank <- seq_len(nrow(df_down))
+    write.table(df_down, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_down.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    ggUp <- ggplot(df_down, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+      geom_point(size = 1) +
+      ggrepel::geom_label_repel(
+        data = df_down[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
+        size = 1.5,
+        nudge_x = 2,
+        color = "black"
+      ) + theme_ArchR() + 
+      ylab("-log10(P-adj) Motif Enrichment") + 
+      xlab("Rank Sorted TFs Enriched") +
+      scale_color_gradientn(colors = paletteContinuous(set = "comet"))
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_down.png"), 
                     plot = ggUp, device = "png", width = 4, height = 4, 
                     units = "in")
   }
@@ -479,4 +528,102 @@ create_pseudobulk_atac <- function(proj, pseudo_bulk_dir) {
     cell_type <- sub(" ", "_", Cell_types[i])
     write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), quote = FALSE, sep = "\t")
   }
+}
+
+peakAnnoEnrichment_mine <- function(seMarker = NULL, ArchRProj = NULL, peakAnnotation = NULL, 
+                                    matches = NULL, cutOff = "FDR <= 0.1 & Log2FC >= 0.5", background = "all", idx = NULL, 
+                                    logFile = createLogFile("peakAnnoEnrichment")) {
+  ArchR:::.validInput(input = seMarker, name = "seMarker", valid = c("SummarizedExperiment"))
+  ArchR:::.validInput(input = ArchRProj, name = "ArchRProj", valid = c("ArchRProj"))
+  ArchR:::.validInput(input = peakAnnotation, name = "peakAnnotation", 
+                      valid = c("character", "null"))
+  ArchR:::.validInput(input = matches, name = "matches", valid = c("SummarizedExperiment", 
+                                                                   "null"))
+  ArchR:::.validInput(input = cutOff, name = "cutOff", valid = c("character"))
+  ArchR:::.validInput(input = background, name = "background", valid = c("character"))
+  ArchR:::.validInput(input = logFile, name = "logFile", valid = c("character"))
+  tstart <- Sys.time()
+  ArchR:::.startLogging(logFile = logFile)
+  ArchR:::.logThis(mget(names(formals()), sys.frame(sys.nframe())), 
+                   "peakAnnoEnrichment Input-Parameters", logFile = logFile)
+  if (metadata(seMarker)$Params$useMatrix != "PeakMatrix") {
+    stop("Only markers identified from PeakMatrix can be used!")
+  }
+  if (is.null(matches)) {
+    matches <- ArchR::getMatches(ArchRProj, peakAnnotation)
+  }
+  r1 <- SummarizedExperiment::rowRanges(matches)
+  pr1 <- paste(seqnames(r1), start(r1), end(r1), sep = "_")
+  mcols(r1) <- NULL
+  r2 <- ArchR::getPeakSet(ArchRProj)
+  pr2 <- paste(seqnames(r2), start(r2), end(r2), sep = "_")
+  mcols(r2) <- NULL
+  r3 <- GRanges(rowData(seMarker)$seqnames, IRanges(rowData(seMarker)$start, 
+                                                    rowData(seMarker)$end))
+  pr3 <- paste(seqnames(r3), start(r3), end(r3), sep = "_")
+  mcols(r3) <- NULL
+  ArchR:::.logThis(r1, "Peaks-Matches", logFile = logFile)
+  ArchR:::.logThis(r2, "Peaks-ArchRProj", logFile = logFile)
+  ArchR:::.logThis(r3, "Peaks-SeMarker", logFile = logFile)
+  ArchR:::.logThis(pr1, "Peaks-Pasted-Matches", logFile = logFile)
+  ArchR:::.logThis(pr2, "Peaks-Pasted-ArchRProj", logFile = logFile)
+  ArchR:::.logThis(pr3, "Peaks-Pasted-SeMarker", logFile = logFile)
+  if (length(which(pr1 %ni% pr2)) != 0) {
+    stop("Peaks from matches do not match peakSet in ArchRProj!")
+  }
+  if (length(which(pr2 %ni% pr3)) != 0) {
+    stop("Peaks from seMarker do not match peakSet in ArchRProj!")
+  }
+  rownames(matches) <- pr1
+  matches <- matches[pr3, ]
+  assayNames <- names(SummarizedExperiment::assays(seMarker))
+  for (an in assayNames) {
+    eval(parse(text = paste0(an, " <- ", "SummarizedExperiment::assays(seMarker)[['", 
+                             an, "']]")))
+  }
+  passMat <- eval(parse(text = cutOff))
+  passMat[is.na(passMat)] <- FALSE
+  for (an in assayNames) {
+    eval(parse(text = paste0("rm(", an, ")")))
+  }
+  if (tolower(background) %in% c("backgroundpeaks", "bgdpeaks", 
+                                 "background", "bgd")) {
+    method <- "bgd"
+    bgdPeaks <- SummarizedExperiment::assay(getBgdPeaks(ArchRProj))
+  }
+  else {
+    method <- "all"
+  }
+  enrichList <- lapply(seq_len(ncol(seMarker)), function(x) {
+    ArchR:::.logDiffTime(sprintf("Computing Enrichments %s of %s", 
+                                 x, ncol(seMarker)), t1 = tstart, verbose = TRUE, 
+                         logFile = logFile)
+    if(is.null(idx)) {
+      idx <- which(passMat[, x])
+    } else {
+      names(idx) <- idx
+    }
+    print(idx)
+    print(length(idx))
+    if (method == "bgd") {
+      ArchR:::.computeEnrichment(matches, idx, c(idx, as.vector(bgdPeaks[idx, 
+      ])))
+    }
+    else {
+      ArchR:::.computeEnrichment(matches, idx, seq_len(nrow(matches)))
+    }
+  }) %>% SimpleList
+  names(enrichList) <- colnames(seMarker)
+  assays <- lapply(seq_len(ncol(enrichList[[1]])), function(x) {
+    d <- lapply(seq_along(enrichList), function(y) {
+      enrichList[[y]][colnames(matches), x, drop = FALSE]
+    }) %>% Reduce("cbind", .)
+    colnames(d) <- names(enrichList)
+    d
+  }) %>% SimpleList
+  names(assays) <- colnames(enrichList[[1]])
+  assays <- rev(assays)
+  out <- SummarizedExperiment::SummarizedExperiment(assays = assays)
+  ArchR:::.endLogging(logFile = logFile)
+  out
 }
