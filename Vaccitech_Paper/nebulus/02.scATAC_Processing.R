@@ -187,10 +187,9 @@ HVL_proj_minus_clusters <- create_peak_motif_matches_file(HVL_proj_minus_cluster
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = HVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "HVL"), load = FALSE)
 # load ArchR project: HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
 # Create pseudobulk counts for peaks for each cell type
-pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
-if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
-create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
-# TODO: Make it NK_MAGICAL instead of NK? So it's synced with DEGs
+# pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
+# if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
+# create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
 # Find DASs
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
