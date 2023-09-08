@@ -191,7 +191,14 @@ HVL_proj_minus_clusters <- create_peak_motif_matches_file(HVL_proj_minus_cluster
 # if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
 # create_pseudobulk_atac(HVL_proj_minus_clusters, pseudo_bulk_dir)
 # Find DASs
-differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/")
+sample_metadata <- HVL_proj_minus_clusters$Sample
+for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
+  sample_metadata <- gsub(rownames(sample_metadata_for_SPEEDI_df)[j], sample_metadata_for_SPEEDI_df[j,1], sample_metadata)
+}
+HVL_proj_minus_clusters <- addCellColData(ArchRProj = HVL_proj_minus_clusters, data = sample_metadata, cells = HVL_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
+
+
+differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/motifs_without_tss_enrichment_bias/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir, sample_metadata_for_SPEEDI_df)
 
