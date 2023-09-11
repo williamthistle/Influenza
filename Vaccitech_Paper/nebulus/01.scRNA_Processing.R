@@ -191,7 +191,7 @@ hvl_sc_obj <- combine_cell_types_magical(hvl_sc_obj)
 # save(hvl_sc_obj, file = paste0(RNA_output_dir, analysis_name, ".hvl.new.batch.inference.final.RNA.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.hvl.new.batch.inference.final.RNA.rds"))
 
-HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id/")
+HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id_logfc_01/")
 if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
 run_differential_expression_controlling_for_subject_id(hvl_sc_obj, HVL_differential_genes_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(hvl_sc_obj$predicted_celltype_majority_vote))
 HVL_differential_genes_MAGICAL_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id_MAGICAL/")
