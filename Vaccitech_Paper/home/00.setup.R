@@ -5,6 +5,7 @@ library(openxlsx)
 library(org.Hs.eg.db)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(ChIPseeker)
+library(DiffBind)
 
 set.seed(2000)
 
