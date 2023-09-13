@@ -11,6 +11,8 @@ for (i in 1:8) {
 }
 colnames(dbObj.count$class) <- mintchip_metadata$Aliquot
 dbObj.count$samples$SampleID <- mintchip_metadata$Aliquot
+dbObj.count$samples$ControlID <- paste0(dbObj.count$samples$SampleID, "_C")
+dbObj.count$class[7,] <- paste0(dbObj.count$samples$SampleID, "_C")
 colnames(dbObj.count$called) <- mintchip_metadata$Aliquot
 colnames(dbObj.count$binding) <- c("CHR", "START", "END", mintchip_metadata$Aliquot)
 # Use tissue field for subject ID as proxy (maybe should use replicate?)
@@ -28,6 +30,9 @@ dbObj.count_full_subj <- dba(dbObj.count, mask = dbObj.count$masks$full_subject)
 # Finish subsetting
 dbObj.count_full_subj$samples <- dbObj.count_full_subj$samples[dbObj.count_full_subj$samples$SampleID %in% aliquot_subset,]
 rownames(dbObj.count_full_subj$samples) <- NULL
+
+
+
 
 dbObj.norm <- dba.normalize(dbObj.count,normalize=DBA_NORM_NATIVE,
                          method=DBA_DESEQ2,
