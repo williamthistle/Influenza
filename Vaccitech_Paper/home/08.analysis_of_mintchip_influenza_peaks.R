@@ -10,18 +10,28 @@ for (i in 1:8) {
   names(dbObj.count$masks[[i]]) <- mintchip_metadata$Aliquot
 }
 colnames(dbObj.count$class) <- mintchip_metadata$Aliquot
-orig_row_names <- rownames(dbObj.count$class)
-dbObj.count$class <- rbind(dbObj.count$class, mintchip_metadata$Subject)
-rownames(dbObj.count$class) <- c(orig_row_names, "SubjectID")
 dbObj.count$samples$SampleID <- mintchip_metadata$Aliquot
 colnames(dbObj.count$called) <- mintchip_metadata$Aliquot
 colnames(dbObj.count$binding) <- c("CHR", "START", "END", mintchip_metadata$Aliquot)
-dbObj.count$samples$SubjectID <- mintchip_metadata$Subject
+# Use tissue field for subject ID as proxy (maybe should use replicate?)
+dbObj.count$class[2,] <- mintchip_metadata$Subject
+dbObj.count$samples$Tissue <- mintchip_metadata$Subject
+# Grab subjects that have matching pre- and post-exposure and subset DiffBind obj to these subjects
+subject_subset <- table(mintchip_metadata$Subject) == 2
+subject_subset <- names(subject_subset[subject_subset])
+aliquot_subset <- mintchip_metadata[mintchip_metadata$Subject %in% subject_subset,]$Aliquot
+all_aliquots <- dbObj.count$samples$SampleID
+full_subject_aliquot_flag <- all_aliquots %in% aliquot_subset
+dbObj.count$masks$full_subject <- full_subject_aliquot_flag
+names(dbObj.count$masks$full_subject) <- all_aliquots
+dbObj.count_full_subj <- dba(dbObj.count, mask = dbObj.count$masks$full_subject)
+# Finish subsetting
+dbObj.count_full_subj$samples <- dbObj.count_full_subj$samples[dbObj.count_full_subj$samples$SampleID %in% aliquot_subset,]
+rownames(dbObj.count_full_subj$samples) <- NULL
 
-
-
-dbObj.norm=dba.normalize(dbObj.count,normalize=DBA_NORM_LIB,
+dbObj.norm <- dba.normalize(dbObj.count,normalize=DBA_NORM_NATIVE,
                          method=DBA_DESEQ2,
-                         library=DBA_LIBSIZE_FULL)
+                         background=TRUE)
 
-dbObj.norm <- dba.contrast(dbObj.norm,design="~SubjectID+Condition")
+dbObj.norm <- dba.contrast(dbObj.norm,design="~Tissue+Condition")
+dbObj.norm <- dba.analyze(dbObj.norm)
