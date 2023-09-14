@@ -6,8 +6,9 @@ library(org.Hs.eg.db)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(ChIPseeker)
 library(DiffBind)
+library(SPEEDI)
 
-set.seed(2000)
+set.seed(get_speedi_seed())
 
 base_dir <- "~/GitHub/Influenza/"
 source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))

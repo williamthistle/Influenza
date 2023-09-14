@@ -278,7 +278,7 @@ pseudo_bulk_replicates_and_call_peaks <- function(proj) {
     ArchRProj = proj, 
     groupBy = "Cell_type_voting", 
     pathToMacs2 = pathToMacs2,
-    cutOff= 0.05,
+    cutOff = 0.05,
     force = TRUE
   )
   return(proj)
@@ -412,7 +412,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
         size = 1.5,
         nudge_x = 2,
         color = "black"
-      ) + theme_ArchR() + 
+      # ) + theme_ArchR() + 
       ylab("-log10(P-adj) Motif Enrichment") + 
       xlab("Rank Sorted TFs Enriched") +
       scale_color_gradientn(colors = paletteContinuous(set = "comet"))

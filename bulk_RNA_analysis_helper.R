@@ -92,6 +92,12 @@ setup_bulk_analysis=function() {
   viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == TRUE, "HIGH")
   viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == "FALSE", "LOW")
   both_placebo_metadata$viral_load <<- viral_load_for_metadata
+  # Remove questionable low viral load individual
+  removed_low_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id == "f18c54d93cef4a4e",])
+  placebo_metadata <<- placebo_metadata[!(placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
+  placebo_counts <<- placebo_counts[,!(colnames(placebo_counts) %in% removed_low_viral_aliquots)]
+  low_placebo_metadata <<- low_placebo_metadata[!(low_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
+  low_placebo_counts <<- low_placebo_counts[,!(colnames(low_placebo_counts) %in% removed_low_viral_aliquots)]
   # Currently not filtering sex associated genes
   #sex_associated_genes <<- find_sex_associated_genes(paste0(data_dir, "sex_associated_genes/"))
 }
