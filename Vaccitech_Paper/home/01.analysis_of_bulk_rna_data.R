@@ -1,14 +1,6 @@
-library(DESeq2)
-library(data.table)
-library(pheatmap)
-library(SPEEDI)
-
-set.seed(get_speedi_seed())
-
-##### SETUP #####
-base_dir <- "~/GitHub/Influenza/"
-source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-setup_bulk_analysis()
+# Setup environment
+base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
+source(paste0(base_dir, "00.setup.R"))
 
 #### PERIOD 1 HIGH VIRAL LOAD ####
 # We expect ~0 DEGs because placebo was used (no actual vaccination)

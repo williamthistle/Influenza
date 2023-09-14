@@ -7,15 +7,18 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(ChIPseeker)
 library(DiffBind)
 library(SPEEDI)
+library(pheatmap)
 
 set.seed(get_speedi_seed())
 
-base_dir <- "~/GitHub/Influenza/"
-source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-source(paste0(base_dir, "pseudobulk_analysis_helper.R"))
-source(paste0(base_dir, "Data Compendium/Compendium_Functions.R"))
-setup_bulk_analysis()
-sample_metadata <- read.table(paste0(base_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
+base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
+data_dir <- "~/local_data_files/"
+source(paste0(base_dir, "extra_functions/bulk_RNA_analysis_helper.R"))
+source(paste0(base_dir, "extra_functions/Compendium_Functions.R"))
+source(paste0(base_dir, "extra_functions/humanbase_functions.R"))
+source(paste0(base_dir, "extra_functions/pseudobulk_analysis_helper.R"))
+setup_bulk_analysis(base_dir = base_dir, data_dir = data_dir)
+sample_metadata <- read.table(paste0(base_dir, "metadata/all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
 possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
 onedrive_dir <- "~"
 setwd(onedrive_dir)
@@ -55,13 +58,6 @@ print(paste0("Number of genes that pass pseudobulk (scRNA): ", length(sc_pseudob
 multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
 
-# Next, let's test our gene lists on the actual bulk RNA-seq data! (Should I add extra samples for subjects that have them? How to label as HVL or LVL?)
-# First, let's remove the 0 PCR sample from low because it's questionable
-removed_low_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id == "f18c54d93cef4a4e",])
-placebo_metadata <- placebo_metadata[!(placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
-placebo_counts <- placebo_counts[,!(colnames(placebo_counts) %in% removed_low_viral_aliquots)]
-low_placebo_metadata <- low_placebo_metadata[!(low_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
-low_placebo_counts <- low_placebo_counts[,!(colnames(low_placebo_counts) %in% removed_low_viral_aliquots)]
 # Next, we can select bulk RNA-seq associated with the specific subjects that we used for single-cell / multiome
 sc_aliquots <- c("91910a04711aa3dd","3731a6247ae23831","2232300b0e3a3d06","76ea83ff9293871a","5fdfdbaeb3c8eee8","981520e7e138d460","bb3d7b309cb5fc58","8338411dc3e181e9","da4fe21a89c8f7f4","41d248a6ec3b87e2","e3e01c75894ef461","4534496c580cb408") # 12 samples - 6 paired
 sc_subjects <- as.character(unique(all_metadata[all_metadata$aliquot_id %in% sc_aliquots,]$subject_id))

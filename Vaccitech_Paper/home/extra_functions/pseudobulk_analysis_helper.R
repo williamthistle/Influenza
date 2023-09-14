@@ -109,12 +109,48 @@ create_metaintegrator_obj <- function(token, counts, metadata = NULL, case_time_
   return(internal_data_list)
 }
 
-add_auc_row <- function(auc_df, auc_names, filtering_assay, filtering_method, discovery_assay, discovery_dataset, discovery_auc_df, auc_col_name) {
-  current_row <- data.frame(filtering_assay, filtering_method, discovery_assay, discovery_dataset, nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]),
-                            nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,]), 
-                            nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]) + nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,]),
-                            nrow(discovery_auc_df), (nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] > 0.7,]) + 
-                                                              nrow(discovery_auc_df[discovery_auc_df[[auc_col_name]] < 0.3,])) / nrow(discovery_auc_df))
+add_auc_row <- function(auc_df, auc_names, filtering_assay, filtering_method, discovery_assay, discovery_dataset, discovery_auc_obj, auc_col_name) {
+  current_row <- data.frame(filtering_assay, filtering_method, discovery_assay, discovery_dataset, length(discovery_auc_obj[[3]]),
+                            length(discovery_auc_obj[[4]]), 
+                            length(discovery_auc_obj[[2]]),
+                            nrow(discovery_auc_obj[[1]]), length(discovery_auc_obj[[2]]) / nrow(discovery_auc_obj[[1]]))
   names(current_row) <- auc_names
   auc_df <- rbind(auc_df, current_row)
+}
+
+find_aucs_of_interest <- function(gene_table, metaintegrator_obj, source) {
+  gene_list <- NULL
+  if("Gene_symbol" %in% colnames(gene_table)) {
+    colnames(gene_table)[1] <- "Cell_Type"
+    colnames(gene_table)[2] <- "Gene_Name"
+    colnames(gene_table)[7] <- "sc_log2FC"
+  }
+  gene_list <- unique(gene_table$Gene_Name)
+  all_aucs <- na.omit(test_individual_genes_on_datasets(gene_list, metaintegrator_obj, source))
+  cell_type_df <- data.frame(Gene_Name = character(), Cell_Type = character(), stringsAsFactors = FALSE)
+  gene_table_subset <- gene_table[gene_table$Gene_Name %in% all_aucs$gene_name,]
+  for(gene_name in unique(gene_table_subset$Gene_Name)) {
+    gene_subset <- gene_table_subset[gene_table_subset$Gene_Name %in% gene_name,]
+    cell_types <- paste(gene_subset$Cell_Type, collapse = ",")
+    current_row <- data.frame(unique(gene_subset$Gene_Name), cell_types)
+    names(current_row) <- c("Gene_Name", "Cell_Type")
+    cell_type_df <- rbind(cell_type_df, current_row)
+  }
+  all_aucs$gene_name <- all_aucs$gene_name[order(match(all_aucs$gene_name,cell_type_df$Gene_Name))]
+  all_aucs$cell_type <- cell_type_df$Cell_Type
+  # Only use genes that have AUC that matches fold change direction (pos FC = pos AUC, neg FC = neg AUC)
+  # for further analysis.
+  curated_gene_list <- c()
+  for(current_gene in all_aucs$gene_name) {
+    associated_fc <- gene_table[gene_table$Gene_Name == current_gene,]$sc_log2FC
+    associated_auc <- all_aucs[all_aucs$gene_name == current_gene,]$gene_auc
+    if((all(associated_fc < 0) & all(associated_auc < 0.5)) | (all(associated_fc > 0) & all(associated_auc > 0.5))) {
+      curated_gene_list <- c(curated_gene_list, current_gene)
+    }
+  }
+  curated_all_aucs <- all_aucs[all_aucs$gene_name %in% curated_gene_list,]
+  curated_gene_list <- curated_all_aucs[curated_all_aucs$gene_auc < 0.3 | curated_all_aucs$gene_auc > 0.7,]$gene_name
+  high_genes <- curated_all_aucs[curated_all_aucs$gene_auc > 0.7,]$gene_name
+  low_genes <- curated_all_aucs[curated_all_aucs$gene_auc < 0.3,]$gene_name
+  return(list(all_aucs, curated_gene_list, high_genes, low_genes))
 }
