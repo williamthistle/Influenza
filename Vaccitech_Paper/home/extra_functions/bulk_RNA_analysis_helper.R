@@ -1,5 +1,3 @@
-library(pheatmap)
-
 # Method to set up bulk analysis
 setup_bulk_analysis=function(base_dir, data_dir) {
   # Read in count and metadata files
