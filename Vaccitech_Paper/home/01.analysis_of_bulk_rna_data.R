@@ -44,7 +44,7 @@ high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_se
 high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                          "2_D5", "2_D_minus_1", data_dir, "high")
 raw_high_placebo_period_2_D5_vs_D_minus_1_results <- high_placebo_period_2_D5_vs_D_minus_1_results[[5]]
-collected_fmd_high_placebo_period_2_D5_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D5_vs_D_minus_1_results)
+collected_fmd_high_placebo_period_2_D5_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D5_vs_D_minus_1_results, c(0.585, 1, 2))
 
 # 2 D8 vs 2 D minus 1 - 1940/269/59/8/3314 DEGs
 high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,

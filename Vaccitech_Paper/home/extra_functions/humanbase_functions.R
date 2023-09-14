@@ -75,8 +75,7 @@ assign_cell_types_to_humanbase_results <- function(humanbase_file_path, gene_tab
   return(list(overall_module_data, individual_go_term_data))
 }
 
-run_fmd_on_flu_data <- function(gene_table) {
-  log_fc_thresholds <- c(0.1, 0.3, 0.585, 1, 2)
+run_fmd_on_flu_data <- function(gene_table, log_fc_thresholds = c(0.1, 0.3, 0.585, 1, 2)) {
   fmd_results <- list()
   for(log_fc_threshold in log_fc_thresholds) {
     curated_gene_table <- gene_table[gene_table$log2FoldChange > log_fc_threshold,]
