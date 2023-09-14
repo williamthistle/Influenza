@@ -46,15 +46,24 @@ setup_bulk_analysis=function(base_dir, data_dir) {
   kept_aliquots <<- vaccinated_metadata$aliquot_id
   vaccinated_counts <<- gene_counts[kept_aliquots]
   # Sort columns in gene_counts and rows for each so they're in same order (for DESeq2)
-  colnames(gene_counts) <<- sort(colnames(gene_counts))
+  # ALL 
+  sorted_col_names <<- sort(colnames(gene_counts))
+  gene_counts <<- gene_counts[, sorted_col_names] 
   rownames(bulk_metadata) <<- bulk_metadata$aliquot_id
-  rownames(bulk_metadata) <<- sort(rownames(bulk_metadata))
-  colnames(placebo_counts) <<- sort(colnames(placebo_counts))
+  sorted_row_names <<- sort(rownames(bulk_metadata))
+  bulk_metadata <<- bulk_metadata[sorted_row_names,]
+  # PLACEBO
+  sorted_col_names <<- sort(colnames(placebo_counts))
+  placebo_counts <<- placebo_counts[, sorted_col_names]
   rownames(placebo_metadata) <<- placebo_metadata$aliquot_id
-  rownames(placebo_metadata) <<- sort(rownames(placebo_metadata))
-  colnames(vaccinated_counts) <<- sort(colnames(vaccinated_counts))
+  sorted_row_names <<- sort(rownames(placebo_metadata))
+  placebo_metadata <<- placebo_metadata[sorted_row_names,]
+  # VACCINATED
+  sorted_col_names <<- sort(colnames(vaccinated_counts))
+  vaccinated_counts <<- vaccinated_counts[, sorted_col_names]
   rownames(vaccinated_metadata) <<- vaccinated_metadata$aliquot_id
-  rownames(vaccinated_metadata) <<- sort(rownames(vaccinated_metadata))
+  sorted_row_names <<- sort(rownames(vaccinated_metadata))
+  vaccinated_metadata <<- vaccinated_metadata[sorted_row_names,]
   # Drop aliquot ID column (it's stored in rownames)
   bulk_metadata <<- subset(bulk_metadata, select = -c(aliquot_id))
   placebo_metadata <<- subset(placebo_metadata, select = -c(aliquot_id))

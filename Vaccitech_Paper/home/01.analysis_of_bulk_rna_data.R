@@ -29,6 +29,7 @@ low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_se
 # 609/1/0/0/2154 DEGs found - seems weird that so many are found
 # Could there be something that happened shortly before infection that made subjects more susceptible to getting sick?
 # Could it be a single patient (or two) messing everything up?
+# It seems like we're getting virus signal even before challenge? Seems very weird!
 high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                 "2_D_minus_1", "2_D_minus_2", data_dir, "high")
 # 2 D2 vs 2 D minus 1 - 299/0/0/0/1384 DEGs
@@ -87,7 +88,7 @@ pheatmap(high_placebo_period_2_LRT_analysis_200_mat, breaks=seq(from=-high_place
          cluster_col=FALSE, fontsize_col=14, show_rownames = FALSE, cluster_row = FALSE, filename = paste0(data_dir, "high_placebo_period_2_LRT_analysis_top_200_genes.png"))
 #### PERIOD 2 LOW VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
-# 0/0/0/0 DEGs found
+# 0/0/0/0/0 DEGs found
 low_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                                "2_D_minus_1", "2_D_minus_2", data_dir, "low")
 # 2 D2 vs 2 D minus 1 - 1/1/1/1/2 DEGs
