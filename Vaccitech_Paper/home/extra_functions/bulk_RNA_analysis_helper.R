@@ -10,7 +10,7 @@ setup_bulk_analysis=function(base_dir, data_dir) {
   viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
   viral_load_primary <<- viral_load_primary[viral_load_primary$TRT01A == "PLACEBO",]
   viral_load_primary$AVAL <<- as.numeric(viral_load_primary$AVAL)
-  # Organize by viral load (high to low).
+  # Organize by viral load (high to low)
   viral_load_primary <<- viral_load_primary[order(viral_load_primary$AVAL, decreasing = TRUE),]
   # Take gene_id column from gene_counts and use contents as the rownames of gene_counts
   gene.row.names <<- as.character(gene_counts$gene_id)

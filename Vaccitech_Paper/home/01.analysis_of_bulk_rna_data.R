@@ -30,6 +30,8 @@ low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_se
 # Could there be something that happened shortly before infection that made subjects more susceptible to getting sick?
 # Could it be a single patient (or two) messing everything up?
 # It seems like we're getting virus signal even before challenge? Seems very weird!
+# Is it just inflammation from getting blood drawn?
+# Why does this signal exist for HVL and not LVL?
 high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                 "2_D_minus_1", "2_D_minus_2", data_dir, "high")
 # 2 D2 vs 2 D minus 1 - 299/0/0/0/1384 DEGs
