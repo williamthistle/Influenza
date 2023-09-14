@@ -33,6 +33,10 @@ low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_se
 # If so, why would this signal exist for HVL and not LVL?
 high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                 "2_D_minus_1", "2_D_minus_2", data_dir, "high")
+raw_high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- high_placebo_period_2_D_minus_1_vs_D_minus_2_results[[5]]
+collected_fmd_high_placebo_period_2_D_minus_1_vs_D_minus_2 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D_minus_1_vs_D_minus_2_results)
+
+
 # 2 D2 vs 2 D minus 1 - 299/0/0/0/1384 DEGs
 high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                          "2_D2", "2_D_minus_1", data_dir, "high")
