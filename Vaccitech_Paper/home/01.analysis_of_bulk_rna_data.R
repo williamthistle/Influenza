@@ -26,7 +26,7 @@ low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_se
                                                                           "1_D28", "1_D_minus_1", data_dir, "low")
 #### PERIOD 2 HIGH VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
-# 609/1/0/0 DEGs found - seems weird that 609 are found, even with a low logFC threshold
+# 609/1/0/0/2154 DEGs found - seems weird that so many are found
 # Could there be something that happened shortly before infection that made subjects more susceptible to getting sick?
 # Could it be a single patient (or two) messing everything up?
 high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
