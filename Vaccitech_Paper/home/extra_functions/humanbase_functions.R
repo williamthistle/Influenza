@@ -79,15 +79,19 @@ run_fmd_on_flu_data <- function(gene_table, log_fc_thresholds = c(0.1, 0.3, 0.58
   fmd_results <- list()
   for(log_fc_threshold in log_fc_thresholds) {
     curated_gene_table <- gene_table[gene_table$log2FoldChange > log_fc_threshold,]
-    current_fmd_result <- SPEEDI::RunFMD_RNA(rownames(curated_gene_table), "blood")
-    fmd_result_name <- paste0("log2_", log_fc_threshold)
-    fmd_results[[fmd_result_name]] <- current_fmd_result
+    if(nrow(curated_gene_table) > 0) {
+      current_fmd_result <- SPEEDI::RunFMD_RNA(rownames(curated_gene_table), "blood")
+      fmd_result_name <- paste0("log2_", log_fc_threshold)
+      fmd_results[[fmd_result_name]] <- current_fmd_result
+    }
   }
   for(log_fc_threshold in log_fc_thresholds) {
     curated_gene_table <- gene_table[gene_table$log2FoldChange < -log_fc_threshold,]
-    current_fmd_result <- SPEEDI::RunFMD_RNA(rownames(curated_gene_table), "blood")
-    fmd_result_name <- paste0("log2_-", log_fc_threshold)
-    fmd_results[[fmd_result_name]] <- current_fmd_result
+    if(nrow(curated_gene_table) > 0) {
+      current_fmd_result <- SPEEDI::RunFMD_RNA(rownames(curated_gene_table), "blood")
+      fmd_result_name <- paste0("log2_-", log_fc_threshold)
+      fmd_results[[fmd_result_name]] <- current_fmd_result
+    }
   }
   return(fmd_results)
 }

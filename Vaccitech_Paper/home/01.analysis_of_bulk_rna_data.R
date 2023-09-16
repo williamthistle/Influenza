@@ -34,24 +34,36 @@ low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_se
 high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                 "2_D_minus_1", "2_D_minus_2", data_dir, "high")
 raw_high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- high_placebo_period_2_D_minus_1_vs_D_minus_2_results[[5]]
+# 0.585 is good, and -0.585 is good
 collected_fmd_high_placebo_period_2_D_minus_1_vs_D_minus_2 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D_minus_1_vs_D_minus_2_results)
-
 
 # 2 D2 vs 2 D minus 1 - 299/0/0/0/1384 DEGs
 high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                          "2_D2", "2_D_minus_1", data_dir, "high")
+raw_high_placebo_period_2_D2_vs_D_minus_1_results <- high_placebo_period_2_D2_vs_D_minus_1_results[[5]]
+# 0.585 is good, and -0.585 is good
+collected_fmd_high_placebo_period_2_D2_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D2_vs_D_minus_1_results)
+
 # 2 D5 vs 2 D minus 1 - 3432/600/228/51/5276 DEGs
 high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                          "2_D5", "2_D_minus_1", data_dir, "high")
 raw_high_placebo_period_2_D5_vs_D_minus_1_results <- high_placebo_period_2_D5_vs_D_minus_1_results[[5]]
+# 0.585 or 1 is good, and -0.585 or -1 is good 
 collected_fmd_high_placebo_period_2_D5_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D5_vs_D_minus_1_results, c(0.585, 1, 2))
 
 # 2 D8 vs 2 D minus 1 - 1940/269/59/8/3314 DEGs
 high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                          "2_D8", "2_D_minus_1", data_dir, "high")
+raw_high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[5]]
+# ???
+collected_fmd_high_placebo_period_2_D8_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D8_vs_D_minus_1_results, c(0.585, 1, 2))
 # 2 D28 vs 2 D minus 1 - 34/2/0/0/1394 DEGs
 high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                           "2_D28", "2_D_minus_1", data_dir, "high")
+raw_high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[5]]
+# 0.3 is good, and -0.3 is good
+collected_fmd_high_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D28_vs_D_minus_1_results)
+
 # Find length of intersection between D5 (1 FC) and D8 (1 FC)
 length(intersect(rownames(high_placebo_period_2_D5_vs_D_minus_1_results[[3]]), rownames(high_placebo_period_2_D8_vs_D_minus_1_results[[3]])))
 # Find length of intersection between D5 (2 FC) and D8 (2 FC)
@@ -111,6 +123,11 @@ low_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_ser
 # 2 D28 vs 2 D minus 1 - 51/0/0/0/647 DEGs
 low_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
                                                                          "2_D28", "2_D_minus_1", data_dir, "low")
+raw_low_placebo_period_2_D28_vs_D_minus_1_results <- low_placebo_period_2_D28_vs_D_minus_1_results[[5]]
+# 0.3 is good, and -0.3 is good
+collected_fmd_low_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(raw_low_placebo_period_2_D28_vs_D_minus_1_results)
+
+
 # LRT test
 # 0 DEGs found (note that LRT doesn't have a fold change threshold)
 low_placebo_period_2_LRT_metadata <- low_placebo_metadata[low_placebo_metadata$time_point == "2_D28" | low_placebo_metadata$time_point == "2_D8" | 
