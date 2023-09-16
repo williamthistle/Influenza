@@ -1,6 +1,7 @@
 # Setup environment
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
+load(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
 
 #### PERIOD 1 HIGH VIRAL LOAD ####
 # We expect ~0 DEGs because placebo was used (no actual vaccination)
