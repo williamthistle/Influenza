@@ -242,32 +242,110 @@ plot_lrt_heatmap <- function(gene_list, LRT_analysis, heatmap_threshold, output_
            cluster_col=FALSE, fontsize = 30, width = 16, height = 12, filename = output_path, cex = 0.7)
 }
 
-
-
-
-# Method to find sex associated genes - not currently used
-find_sex_associated_genes=function(sex_associated_dir, padj_threshold = 0.05, log2fc_threshold = 0.1) {
-  sex_associated_gene_files <- list.files(sex_associated_dir, pattern = ".csv")
-  sex_associated_genes <- c()
-  number_of_studies <- length(sex_associated_gene_files)
-  for (sex_associated_gene_file in sex_associated_gene_files) {
-    print(sex_associated_gene_file)
-    sex_associated_gene_file_contents <- read.csv(paste0(sex_associated_dir, sex_associated_gene_file))
-    row.names <- as.character(sex_associated_gene_file_contents$X)
-    sex_associated_gene_file_contents <- sex_associated_gene_file_contents[,2:ncol(sex_associated_gene_file_contents)]
-    sex_associated_gene_file_contents <- as.data.frame(sex_associated_gene_file_contents)
-    rownames(sex_associated_gene_file_contents) <- row.names
-    sex_associated_gene_file_contents <- subset(sex_associated_gene_file_contents, padj < padj_threshold & 
-                                                  abs(log2FoldChange) > log2fc_threshold)
-    for (entry in rownames(sex_associated_gene_file_contents)) {
-      if(entry %in% genemap$ensembl_gene_id) {
-        sex_associated_genes <- c(sex_associated_genes, unique(genemap[genemap$ensembl_gene_id == entry,]$hgnc_symbol))
-      } else{
-        print(entry)
-      }
-    }
+find_degs_across_time_points_for_gene_list <- function(D2_df, D5_df, D8_df, D28_df, overall_df, gene_list) {
+  D2_0.1 <- D2_df[D2_df$log2FoldChange > 0.1,]
+  D2_0.3 <- D2_df[D2_df$log2FoldChange > 0.3,]
+  D2_0.585 <- D2_df[D2_df$log2FoldChange > 0.585,]
+  D2_1 <- D2_df[D2_df$log2FoldChange > 1,]
+  D2_2 <- D2_df[D2_df$log2FoldChange > 2,]
+    
+  D5_0.1 <- D5_df[D5_df$log2FoldChange > 0.1,]
+  D5_0.3 <- D5_df[D5_df$log2FoldChange > 0.3,]
+  D5_0.585 <- D5_df[D5_df$log2FoldChange > 0.585,]
+  D5_1 <- D5_df[D5_df$log2FoldChange > 1,]
+  D5_2 <- D5_df[D5_df$log2FoldChange > 2,]
+    
+  D8_0.1 <- D8_df[D8_df$log2FoldChange > 0.1,]
+  D8_0.3 <- D8_df[D8_df$log2FoldChange > 0.3,]
+  D8_0.585 <- D8_df[D8_df$log2FoldChange > 0.585,]
+  D8_1 <- D8_df[D8_df$log2FoldChange > 1,]
+  D8_2 <- D8_df[D8_df$log2FoldChange > 2,]
+    
+  D28_0.1 <- D28_df[D28_df$log2FoldChange > 0.1,]
+  D28_0.3 <- D28_df[D28_df$log2FoldChange > 0.3,]
+  D28_0.585 <- D28_df[D28_df$log2FoldChange > 0.585,]
+  D28_1 <- D28_df[D28_df$log2FoldChange > 1,]
+  D28_2 <- D28_df[D28_df$log2FoldChange > 2,]
+    
+  D2_negative_0.1 <- D2_df[D2_df$log2FoldChange < -0.1,]
+  D2_negative_0.3 <- D2_df[D2_df$log2FoldChange < -0.3,]
+  D2_negative_0.585 <- D2_df[D2_df$log2FoldChange < -0.585,]
+  D2_negative_1 <- D2_df[D2_df$log2FoldChange < -1,]
+  D2_negative_2 <- D2_df[D2_df$log2FoldChange < -2,]
+    
+  D5_negative_0.1 <- D5_df[D5_df$log2FoldChange < -0.1,]
+  D5_negative_0.3 <- D5_df[D5_df$log2FoldChange < -0.3,]
+  D5_negative_0.585 <- D5_df[D5_df$log2FoldChange < -0.585,]
+  D5_negative_1 <- D5_df[D5_df$log2FoldChange < -1,]
+  D5_negative_2 <- D5_df[D5_df$log2FoldChange < -2,]
+    
+  D8_negative_0.1 <- D8_df[D8_df$log2FoldChange < -0.1,]
+  D8_negative_0.3 <- D8_df[D8_df$log2FoldChange < -0.3,]
+  D8_negative_0.585 <- D8_df[D8_df$log2FoldChange < -0.585,]
+  D8_negative_1 <- D8_df[D8_df$log2FoldChange < -1,]
+  D8_negative_2 <- D8_df[D8_df$log2FoldChange < -2,]
+    
+  D28_negative_0.1 <- D28_df[D28_df$log2FoldChange < -0.1,]
+  D28_negative_0.3 <- D28_df[D28_df$log2FoldChange < -0.3,]
+  D28_negative_0.585 <- D28_df[D28_df$log2FoldChange < -0.585,]
+  D28_negative_1 <- D28_df[D28_df$log2FoldChange < -1,]
+  D28_negative_2 <- D28_df[D28_df$log2FoldChange < -2,]
+  
+  for(gene in gene_list) {
+    gene_vector <- c(gene)
+    # D2 pos
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_0.1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_0.3))
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_0.585))
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_2))
+    # D5 pos
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_0.1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_0.3))
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_0.585))
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_2))
+    # D8 pos
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_0.1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_0.3))
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_0.585))
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_2))
+    # D28 pos
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_0.1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_0.3))
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_0.585))
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_2))
+    # D2 neg
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_0.1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_0.3))
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_0.585))
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_2))
+    # D5 neg
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_0.1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_0.3))
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_0.585))
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_2))
+    # D8 neg
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_0.1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_0.3))
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_0.585))
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_2))
+    # D28 neg
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_0.1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_0.3))
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_0.585))
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_1))
+    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_2))
+    gene_vector <- as.data.frame(t(gene_vector))
+    names(gene_vector) <- c("gene", "D2_0.1", "D2_0.3", "D2_0.585", "D2_1", "D2_2", "D5_0.1", "D5_0.3", "D5_0.585", "D5_1", "D5_2", "D8_0.1", "D8_0.3", "D8_0.585", "D8_1", "D8_2", "D28_0.1", "D28_0.3", "D28_0.585", "D28_1", "D28_2",
+                            "D2_negative_0.1", "D2_negative_0.3", "D2_negative_0.585", "D2_negative_1", "D2_negative_2", "D5_negative_0.1", "D5_negative_0.3", "D5_negative_0.585", "D5_negative_1", "D5_negative_2",
+                            "D8_negative_0.1", "D8_negative_0.3", "D8_negative_0.585", "D8_negative_1", "D8_negative_2", "D28_negative_0.1", "D28_negative_0.3", "D28_negative_0.585", "D28_negative_1", "D28_negative_2")
+    overall_df <- rbind(overall_df, gene_vector)
   }
-  # Remove repeated genes and the "" entries (no HGNC symbol)
-  #sex_associated_genes <- unique(sex_associated_genes[sex_associated_genes != ""])
-  return(sex_associated_genes)
+  return(overall_df)
 }

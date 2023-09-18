@@ -35,6 +35,7 @@ sc_peak_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis
 mintchip_metadata <- read.table(paste0(mintchip_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
 # Tables containing results for single cell and multiome RNA-seq processing
 # Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering (remove platelets)
+# TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
 sc_pseudobulk_gene_table <- read.table(paste0(sc_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 sc_pseudobulk_gene_table <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Cell_Type != "Platelet",]
 multiome_pseudobulk_gene_table <- read.table(paste0(multiome_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
@@ -55,6 +56,13 @@ sc_das_strictest <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_stric
 # Grab gene lists from result tables and report number of genes
 sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (scRNA): ", length(sc_pseudobulk_genes)))
+
+pos_sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$sc_log2FC > 0,]$Gene_Name)
+print(paste0("Number of positive genes that pass pseudobulk (scRNA): ", length(pos_sc_pseudobulk_genes)))
+
+neg_sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$sc_log2FC < 0,]$Gene_Name)
+print(paste0("Number of negative genes that pass pseudobulk (scRNA): ", length(neg_sc_pseudobulk_genes)))
+
 multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
 
