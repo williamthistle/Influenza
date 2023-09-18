@@ -74,7 +74,7 @@ low_neg_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_
 # Validation threshold: genes that pass 0.2 FC (or -0.2 FC) for D28 bulk
 # 28 genes
 high_passing_pos_genes <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
-# 87 genes
+# 86 genes
 high_passing_neg_genes <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
 # 14 genes
 low_passing_pos_genes <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
@@ -103,9 +103,35 @@ low_passing_neg_genes_0.585 <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_n
 
 # Subset dataframes to passing genes
 high_passing_pos_gene_df <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$gene %in% high_passing_pos_genes,]
-high_passing_neg_gene_df <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$gene %in% high_passing_neg_genes,]$gene
-low_passing_pos_gene_df <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$gene %in% low_passing_pos_genes,]$gene
-low_passing_neg_gene_df <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$gene %in% low_passing_neg_genes,]$gene
+high_passing_neg_gene_df <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$gene %in% high_passing_neg_genes,]
+low_passing_pos_gene_df <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$gene %in% low_passing_pos_genes,]
+low_passing_neg_gene_df <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$gene %in% low_passing_neg_genes,]
+
+### HIGH DOWNSTREAM ANALYSIS ###
+# Positive Genes that pass D5/D8/D28 (no genes pass all 4 time points)
+d5_d8_d28_high_passing_pos_gene_df <- high_passing_pos_gene_df[high_passing_pos_gene_df$D5_0.2 == TRUE & high_passing_pos_gene_df$D8_0.2 == TRUE & high_passing_pos_gene_df$D28_0.2 == TRUE,]
+# Positive genes that pass D8/D28 (still just IL10RA)
+d8_d28_high_passing_pos_gene_df <- high_passing_pos_gene_df[high_passing_pos_gene_df$D8_0.2 == TRUE & high_passing_pos_gene_df$D28_0.2 == TRUE,]
+# Positive genes that pass D5/D28 (prevalent during acute phase and then upregulated again a month later?)
+d5_d28_high_passing_pos_gene_df <- high_passing_pos_gene_df[high_passing_pos_gene_df$D5_0.2 == TRUE & high_passing_pos_gene_df$D28_0.2 == TRUE,]
+
+# Negative Genes that pass D2/D5/D8/D28
+# 23 genes
+d2_d5_d8_d28_high_passing_neg_gene_df <- high_passing_neg_gene_df[high_passing_neg_gene_df$D2_negative_0.2 == TRUE & high_passing_neg_gene_df$D5_negative_0.2 == TRUE & high_passing_neg_gene_df$D8_negative_0.2 == TRUE & high_passing_neg_gene_df$D28_negative_0.2 == TRUE,]
+# Negative Genes that pass D5/D8/D28
+# 30 genes
+d5_d8_d28_high_passing_neg_gene_df <- high_passing_neg_gene_df[high_passing_neg_gene_df$D5_negative_0.2 == TRUE & high_passing_neg_gene_df$D8_negative_0.2 == TRUE & high_passing_neg_gene_df$D28_negative_0.2 == TRUE,]
+# Positive genes that pass D8/D28
+# 35 genes
+d8_d28_high_passing_neg_gene_df <- high_passing_neg_gene_df[high_passing_neg_gene_df$D8_negative_0.2 == TRUE & high_passing_neg_gene_df$D28_negative_0.2 == TRUE,]
+# Positive genes that pass D5/D28 (prevalent during acute phase and then downregulated again a month later?)
+# 37 genes
+d5_d28_high_passing_neg_gene_df <- high_passing_neg_gene_df[high_passing_neg_gene_df$D5_negative_0.2 == TRUE & high_passing_neg_gene_df$D28_negative_0.2 == TRUE,]
+
+
+
+### LOW DOWNSTREAM ANALYSIS ###
+# No positive genes found for D2/D5/D8, so looking at multiple time points doesn't make sense
 
 
 
