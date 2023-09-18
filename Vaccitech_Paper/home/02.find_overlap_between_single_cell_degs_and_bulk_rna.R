@@ -71,6 +71,29 @@ low_neg_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_
                                                                                            raw_low_placebo_period_2_D28_vs_D_minus_1_results,
                                                                                           low_neg_pseudobulk_sc_genes_bulk_passing_df, neg_sc_pseudobulk_genes)
 
+# Validation threshold: genes that pass 0.1 FC (or -0.1 FC) for D28 bulk
+high_passing_pos_genes <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.1 == TRUE,]$gene
+high_passing_neg_genes <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.1 == TRUE,]$gene
+low_passing_pos_genes <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.1 == TRUE,]$gene
+low_passing_neg_genes <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.1 == TRUE,]$gene
+
+# This is a pretty low threshold, so let's go up to 0.3 FC / 0.585 FC
+# Honestly, we may just use 0.1 FC for IL10RA since it's an interesting gene biologically and has consistent signal across days
+high_passing_pos_genes_0.3 <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.3 == TRUE,]$gene
+high_passing_neg_genes_0.3 <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.3 == TRUE,]$gene
+low_passing_pos_genes_0.3 <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.3 == TRUE,]$gene
+low_passing_neg_genes_0.3 <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.3 == TRUE,]$gene
+
+high_passing_pos_genes_0.585 <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.585 == TRUE,]$gene
+high_passing_neg_genes_0.585 <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.585 == TRUE,]$gene
+low_passing_pos_genes_0.585 <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.585 == TRUE,]$gene
+low_passing_neg_genes_0.585 <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.585 == TRUE,]$gene
+
+
+
+
+
+
 
 # FLAGGED GENES - those genes which have negative FC in SC data but positive FC in bulk data (or vice versa)
 flagged_high_pos_genes <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.1 == TRUE,]$gene
