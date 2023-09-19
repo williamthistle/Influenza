@@ -354,37 +354,23 @@ find_degs_across_time_points_for_gene_list <- function(D2_df, D5_df, D8_df, D28_
   return(overall_df)
 }
 
-fill_in_special_notes_pos <- function(gene_df, viral_load = "HVL") {
+fill_in_special_notes <- function(gene_df, viral_load = "HVL") {
   special_notes_vec <- c()
   for(gene in gene_df$gene) {
     specific_gene_df <- gene_df[gene_df$gene == gene,]
     specific_special_notes <- ""
-    specific_special_notes <- add_day_fc_info_pos(specific_special_notes, specific_gene_df, "D2", viral_load)
-    specific_special_notes <- add_day_fc_info_pos(specific_special_notes, specific_gene_df, "D5", viral_load)
-    specific_special_notes <- add_day_fc_info_pos(specific_special_notes, specific_gene_df, "D8", viral_load)
-    specific_special_notes <- add_day_fc_info_pos(specific_special_notes, specific_gene_df, "D28", viral_load)
+    specific_special_notes <- add_day_fc_info(specific_special_notes, specific_gene_df, "D2", viral_load)
+    specific_special_notes <- add_day_fc_info(specific_special_notes, specific_gene_df, "D5", viral_load)
+    specific_special_notes <- add_day_fc_info(specific_special_notes, specific_gene_df, "D8", viral_load)
+    specific_special_notes <- add_day_fc_info(specific_special_notes, specific_gene_df, "D28", viral_load)
     special_notes_vec <- c(special_notes_vec, specific_special_notes)
   }
   gene_df$special_notes <- special_notes_vec
   return(gene_df)
 }
 
-fill_in_special_notes_neg <- function(gene_df, viral_load = "HVL") {
-  special_notes_vec <- c()
-  for(gene in gene_df$gene) {
-    specific_gene_df <- gene_df[gene_df$gene == gene,]
-    specific_special_notes <- ""
-    specific_special_notes <- add_day_fc_info_neg(specific_special_notes, specific_gene_df, "D2", viral_load)
-    specific_special_notes <- add_day_fc_info_neg(specific_special_notes, specific_gene_df, "D5", viral_load)
-    specific_special_notes <- add_day_fc_info_neg(specific_special_notes, specific_gene_df, "D8", viral_load)
-    specific_special_notes <- add_day_fc_info_neg(specific_special_notes, specific_gene_df, "D28", viral_load)
-    special_notes_vec <- c(special_notes_vec, specific_special_notes)
-  }
-  gene_df$special_notes <- special_notes_vec
-  return(gene_df)
-}
-
-add_day_fc_info_pos <- function(special_notes, gene_df, day, viral_load = "HVL") {
+add_day_fc_info <- function(special_notes, gene_df, day, viral_load = "HVL") {
+  # Positive FC
   if(gene_df[[paste0(day, "_2")]]) {
     special_notes <- paste0(special_notes, "FC > 2 for ", day, " for ", viral_load, ". ")
   } else if(gene_df[[paste0(day, "_1")]]) {
@@ -394,10 +380,7 @@ add_day_fc_info_pos <- function(special_notes, gene_df, day, viral_load = "HVL")
   } else if(gene_df[[paste0(day, "_0.2")]]) {
     special_notes <- paste0(special_notes, "FC > 0.2 for ", day, " for ", viral_load, ". ")
   }
-  return(special_notes)
-}
-
-add_day_fc_info_neg <- function(special_notes, gene_df, day, viral_load = "HVL") {
+  # Negative FC
   if(gene_df[[paste0(day, "_negative_2")]]) {
     special_notes <- paste0(special_notes, "FC < -2 for ", day, " for ", viral_load, ". ")
   } else if(gene_df[[paste0(day, "_negative_1")]]) {

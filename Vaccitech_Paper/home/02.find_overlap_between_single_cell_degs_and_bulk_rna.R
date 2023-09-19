@@ -60,12 +60,12 @@ high_neg_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for
 # Validation threshold: genes that pass 0.2 FC (or -0.2 FC) for D28 bulk
 # 28 genes
 high_passing_pos_gene_df <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]
-high_passing_pos_gene_df <- fill_in_special_notes_pos(high_passing_pos_gene_df)
+high_passing_pos_gene_df <- fill_in_special_notes(high_passing_pos_gene_df)
 write.table(high_passing_pos_gene_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_pos_genes <- high_passing_pos_gene_df$gene
 # 86 genes
 high_passing_neg_gene_df <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]
-high_passing_neg_gene_df <- fill_in_special_notes_neg(high_passing_neg_gene_df)
+high_passing_neg_gene_df <- fill_in_special_notes(high_passing_neg_gene_df)
 write.table(high_passing_neg_gene_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_neg_genes <- high_passing_neg_gene_df$gene
 
