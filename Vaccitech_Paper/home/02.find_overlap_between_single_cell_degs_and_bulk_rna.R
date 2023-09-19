@@ -7,8 +7,8 @@ load(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
 
 # Data frame that captures which sc pseudobulk genes pass different logFC thresholds for different bulk differential expression analyses
 # The basic idea is, for each day (D2, D5, D8, D28), we look at whether the gene passes the threshold for:
-# log2FC 0.1, log2FC 0.3, log2FC 0.585, log2FC 1, logFC 2
-# log2FC -0.1, log2FC -0.3, log2FC -0.585, log2FC -1, logFC -2
+# log2FC 0.2, log2FC 0.3, log2FC 0.585, log2FC 1, logFC 2
+# log2FC -0.2, log2FC -0.3, log2FC -0.585, log2FC -1, logFC -2
 high_pos_pseudobulk_sc_genes_bulk_passing_df <- data.frame(gene = character(), cell_types = character(), D2_0.2 = logical(), D2_0.3 = logical(), D2_0.585 = logical(), D2_1 = logical(), D2_2 = logical(),
                                                   D5_0.2 = logical(), D5_0.3 = logical(), D5_0.585 = logical(), D5_1 = logical(), D5_2 = logical(),
                                                   D8_0.2 = logical(), D8_0.3 = logical(), D8_0.585 = logical(), D8_1 = logical(), D8_2 = logical(),
