@@ -44,9 +44,6 @@ low_neg_pseudobulk_sc_genes_bulk_passing_df <- data.frame(gene = character(), D2
                                                            D8_negative_0.2 = logical(), D8_negative_0.3 = logical(), D8_negative_0.585 = logical(), D8_negative_1 = logical(), D8_negative_2 = logical(),
                                                            D28_negative_0.2 = logical(), D28_negative_0.3 = logical(), D28_negative_0.585 = logical(), D28_negative_1 = logical(), D28_negative_2 = logical())
 
-
-
-
 high_pos_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_high_placebo_period_2_D2_vs_D_minus_1_results,
                                                                                   raw_high_placebo_period_2_D5_vs_D_minus_1_results,
                                                                                   raw_high_placebo_period_2_D8_vs_D_minus_1_results,
@@ -59,46 +56,48 @@ high_neg_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for
                                                                                       raw_high_placebo_period_2_D28_vs_D_minus_1_results,
                                                                                       high_neg_pseudobulk_sc_genes_bulk_passing_df, neg_sc_pseudobulk_genes)
 
-low_pos_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
-                                                                                           raw_low_placebo_period_2_D5_vs_D_minus_1_results,
-                                                                                           raw_low_placebo_period_2_D8_vs_D_minus_1_results,
-                                                                                           raw_low_placebo_period_2_D28_vs_D_minus_1_results,
-                                                                                          low_pos_pseudobulk_sc_genes_bulk_passing_df, pos_sc_pseudobulk_genes)
-
-low_neg_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
-                                                                                           raw_low_placebo_period_2_D5_vs_D_minus_1_results,
-                                                                                           raw_low_placebo_period_2_D8_vs_D_minus_1_results,
-                                                                                           raw_low_placebo_period_2_D28_vs_D_minus_1_results,
-                                                                                          low_neg_pseudobulk_sc_genes_bulk_passing_df, neg_sc_pseudobulk_genes)
-
 # Validation threshold: genes that pass 0.2 FC (or -0.2 FC) for D28 bulk
 # 28 genes
 high_passing_pos_genes <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
 # 86 genes
 high_passing_neg_genes <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
-# 14 genes
+
+# Check these validated genes on low viral load individuals
+low_pos_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
+                                                                                          raw_low_placebo_period_2_D5_vs_D_minus_1_results,
+                                                                                          raw_low_placebo_period_2_D8_vs_D_minus_1_results,
+                                                                                          raw_low_placebo_period_2_D28_vs_D_minus_1_results,
+                                                                                          low_pos_pseudobulk_sc_genes_bulk_passing_df, high_passing_pos_genes)
+
+low_neg_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
+                                                                                          raw_low_placebo_period_2_D5_vs_D_minus_1_results,
+                                                                                          raw_low_placebo_period_2_D8_vs_D_minus_1_results,
+                                                                                          raw_low_placebo_period_2_D28_vs_D_minus_1_results,
+                                                                                          low_neg_pseudobulk_sc_genes_bulk_passing_df, high_passing_neg_genes)
+
+# Validation threshold: genes that pass 0.2 FC (or -0.2 FC) for D28 bulk
+# 6 genes
 low_passing_pos_genes <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
-# 27 genes
+# 16 genes
 low_passing_neg_genes <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
 
 # This is a pretty low threshold, so let's go up to 0.3 FC / 0.585 FC
-# Honestly, we may just use 0.1 FC for IL10RA since it's an interesting gene biologically and has consistent signal across days
 # 22 genes
 high_passing_pos_genes_0.3 <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.3 == TRUE,]$gene
 # 65 genes
 high_passing_neg_genes_0.3 <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.3 == TRUE,]$gene
-# 13 genes
+# 5 genes
 low_passing_pos_genes_0.3 <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.3 == TRUE,]$gene
-# 27 genes
+# 16 genes
 low_passing_neg_genes_0.3 <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.3 == TRUE,]$gene
 
 # 3 genes
 high_passing_pos_genes_0.585 <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.585 == TRUE,]$gene
 # 2 genes
 high_passing_neg_genes_0.585 <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.585 == TRUE,]$gene
-# 4 genes
-low_passing_pos_genes_0.585 <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.585 == TRUE,]$gene
 # 2 genes
+low_passing_pos_genes_0.585 <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.585 == TRUE,]$gene
+# 1 gene
 low_passing_neg_genes_0.585 <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.585 == TRUE,]$gene
 
 # Subset dataframes to passing genes
@@ -149,7 +148,6 @@ flagged_high_neg_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Ge
 flagged_low_pos_genes <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
 flagged_low_pos_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_low_pos_genes,]
 
-# ANXA1 is both negative and positive in SC data - maybe interesting?
 flagged_low_neg_genes <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
 flagged_low_neg_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_low_neg_genes,]
 
