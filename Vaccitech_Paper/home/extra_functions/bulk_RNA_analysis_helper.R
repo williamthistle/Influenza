@@ -243,112 +243,38 @@ plot_lrt_heatmap <- function(gene_list, LRT_analysis, heatmap_threshold, output_
 }
 
 find_degs_across_time_points_for_gene_list <- function(D2_df, D5_df, D8_df, D28_df, overall_df, gene_df) {
-  D2_0.2 <- D2_df[D2_df$log2FoldChange > 0.2,]
-  D2_0.3 <- D2_df[D2_df$log2FoldChange > 0.3,]
-  D2_0.585 <- D2_df[D2_df$log2FoldChange > 0.585,]
-  D2_1 <- D2_df[D2_df$log2FoldChange > 1,]
-  D2_2 <- D2_df[D2_df$log2FoldChange > 2,]
-    
-  D5_0.2 <- D5_df[D5_df$log2FoldChange > 0.2,]
-  D5_0.3 <- D5_df[D5_df$log2FoldChange > 0.3,]
-  D5_0.585 <- D5_df[D5_df$log2FoldChange > 0.585,]
-  D5_1 <- D5_df[D5_df$log2FoldChange > 1,]
-  D5_2 <- D5_df[D5_df$log2FoldChange > 2,]
-    
-  D8_0.2 <- D8_df[D8_df$log2FoldChange > 0.2,]
-  D8_0.3 <- D8_df[D8_df$log2FoldChange > 0.3,]
-  D8_0.585 <- D8_df[D8_df$log2FoldChange > 0.585,]
-  D8_1 <- D8_df[D8_df$log2FoldChange > 1,]
-  D8_2 <- D8_df[D8_df$log2FoldChange > 2,]
-    
-  D28_0.2 <- D28_df[D28_df$log2FoldChange > 0.2,]
-  D28_0.3 <- D28_df[D28_df$log2FoldChange > 0.3,]
-  D28_0.585 <- D28_df[D28_df$log2FoldChange > 0.585,]
-  D28_1 <- D28_df[D28_df$log2FoldChange > 1,]
-  D28_2 <- D28_df[D28_df$log2FoldChange > 2,]
-    
-  D2_negative_0.2 <- D2_df[D2_df$log2FoldChange < -0.2,]
-  D2_negative_0.3 <- D2_df[D2_df$log2FoldChange < -0.3,]
-  D2_negative_0.585 <- D2_df[D2_df$log2FoldChange < -0.585,]
-  D2_negative_1 <- D2_df[D2_df$log2FoldChange < -1,]
-  D2_negative_2 <- D2_df[D2_df$log2FoldChange < -2,]
-    
-  D5_negative_0.2 <- D5_df[D5_df$log2FoldChange < -0.2,]
-  D5_negative_0.3 <- D5_df[D5_df$log2FoldChange < -0.3,]
-  D5_negative_0.585 <- D5_df[D5_df$log2FoldChange < -0.585,]
-  D5_negative_1 <- D5_df[D5_df$log2FoldChange < -1,]
-  D5_negative_2 <- D5_df[D5_df$log2FoldChange < -2,]
-    
-  D8_negative_0.2 <- D8_df[D8_df$log2FoldChange < -0.2,]
-  D8_negative_0.3 <- D8_df[D8_df$log2FoldChange < -0.3,]
-  D8_negative_0.585 <- D8_df[D8_df$log2FoldChange < -0.585,]
-  D8_negative_1 <- D8_df[D8_df$log2FoldChange < -1,]
-  D8_negative_2 <- D8_df[D8_df$log2FoldChange < -2,]
-    
-  D28_negative_0.2 <- D28_df[D28_df$log2FoldChange < -0.2,]
-  D28_negative_0.3 <- D28_df[D28_df$log2FoldChange < -0.3,]
-  D28_negative_0.585 <- D28_df[D28_df$log2FoldChange < -0.585,]
-  D28_negative_1 <- D28_df[D28_df$log2FoldChange < -1,]
-  D28_negative_2 <- D28_df[D28_df$log2FoldChange < -2,]
-  
   for(gene in unique(gene_df$Gene_Name)) {
     gene_vector <- c(gene)
     specific_gene_df <- gene_df[gene_df$Gene_Name == gene,]
     cell_types <- specific_gene_df$Cell_Type
     cell_types <- paste0(cell_types, collapse = ", ")
     gene_vector <- c(gene_vector, cell_types)
-    # D2 pos
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_0.2))
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_0.3))
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_0.585))
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_1))
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_2))
-    # D5 pos
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_0.2))
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_0.3))
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_0.585))
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_1))
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_2))
-    # D8 pos
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_0.2))
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_0.3))
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_0.585))
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_1))
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_2))
-    # D28 pos
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_0.2))
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_0.3))
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_0.585))
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_1))
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_2))
-    # D2 neg
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_0.2))
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_0.3))
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_0.585))
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_1))
-    gene_vector <- c(gene_vector, gene %in% rownames(D2_negative_2))
-    # D5 neg
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_0.2))
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_0.3))
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_0.585))
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_1))
-    gene_vector <- c(gene_vector, gene %in% rownames(D5_negative_2))
-    # D8 neg
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_0.2))
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_0.3))
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_0.585))
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_1))
-    gene_vector <- c(gene_vector, gene %in% rownames(D8_negative_2))
-    # D28 neg
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_0.2))
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_0.3))
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_0.585))
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_1))
-    gene_vector <- c(gene_vector, gene %in% rownames(D28_negative_2))
+    # D2
+    if(gene %in% rownames(D2_df)) {
+      gene_vector <- c(gene_vector, D2_df[rownames(D2_df) == gene,]$log2FoldChange)
+    } else {
+      gene_vector <- c(gene_vector, 0)
+    }
+    # D5
+    if(gene %in% rownames(D5_df)) {
+      gene_vector <- c(gene_vector, D5_df[rownames(D5_df) == gene,]$log2FoldChange)
+    } else {
+      gene_vector <- c(gene_vector, 0)
+    }
+    # D8
+    if(gene %in% rownames(D8_df)) {
+      gene_vector <- c(gene_vector, D8_df[rownames(D8_df) == gene,]$log2FoldChange)
+    } else {
+      gene_vector <- c(gene_vector, 0)
+    }
+    # D28
+    if(gene %in% rownames(D28_df)) {
+      gene_vector <- c(gene_vector, D28_df[rownames(D28_df) == gene,]$log2FoldChange)
+    } else {
+      gene_vector <- c(gene_vector, 0)
+    }
     gene_vector <- as.data.frame(t(gene_vector))
-    names(gene_vector) <- c("gene", "cell_types", "D2_0.2", "D2_0.3", "D2_0.585", "D2_1", "D2_2", "D5_0.2", "D5_0.3", "D5_0.585", "D5_1", "D5_2", "D8_0.2", "D8_0.3", "D8_0.585", "D8_1", "D8_2", "D28_0.2", "D28_0.3", "D28_0.585", "D28_1", "D28_2",
-                            "D2_negative_0.2", "D2_negative_0.3", "D2_negative_0.585", "D2_negative_1", "D2_negative_2", "D5_negative_0.2", "D5_negative_0.3", "D5_negative_0.585", "D5_negative_1", "D5_negative_2",
-                            "D8_negative_0.2", "D8_negative_0.3", "D8_negative_0.585", "D8_negative_1", "D8_negative_2", "D28_negative_0.2", "D28_negative_0.3", "D28_negative_0.585", "D28_negative_1", "D28_negative_2")
+    names(gene_vector) <- c("gene", "cell_types", "D2_fc", "D5_fc", "D8_fc", "D28_fc")
     overall_df <- rbind(overall_df, gene_vector)
   }
   return(overall_df)
