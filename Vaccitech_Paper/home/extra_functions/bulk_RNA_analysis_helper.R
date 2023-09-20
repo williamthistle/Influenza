@@ -297,24 +297,24 @@ fill_in_special_notes <- function(gene_df, viral_load = "HVL") {
 
 add_day_fc_info <- function(special_notes, gene_df, day, viral_load = "HVL") {
   # Positive FC
-  if(gene_df[[paste0(day, "_2")]]) {
+  if(gene_df[[paste0(day, "_fc")]] > 2) {
     special_notes <- paste0(special_notes, "FC > 2 for ", day, " for ", viral_load, ". ")
-  } else if(gene_df[[paste0(day, "_1")]]) {
+  } else if(gene_df[[paste0(day, "_fc")]] > 1) {
     special_notes <- paste0(special_notes, "FC > 1 for ", day, " for ", viral_load, ". ")
-  } else if(gene_df[[paste0(day, "_0.585")]]) {
+  } else if(gene_df[[paste0(day, "_fc")]] > 0.585) {
     special_notes <- paste0(special_notes, "FC > 0.585 for ", day, " for ", viral_load, ". ")
-  } else if(gene_df[[paste0(day, "_0.2")]]) {
-    special_notes <- paste0(special_notes, "FC > 0.2 for ", day, " for ", viral_load, ". ")
+  } else if(gene_df[[paste0(day, "_fc")]] > 0) {
+    special_notes <- paste0(special_notes, "Positive FC (< 0.585) for ", day, " for ", viral_load, ". ")
   }
   # Negative FC
-  if(gene_df[[paste0(day, "_negative_2")]]) {
+  if(gene_df[[paste0(day, "_fc")]] < -2) {
     special_notes <- paste0(special_notes, "FC < -2 for ", day, " for ", viral_load, ". ")
-  } else if(gene_df[[paste0(day, "_negative_1")]]) {
+  } else if(gene_df[[paste0(day, "_fc")]] < -1) {
     special_notes <- paste0(special_notes, "FC < -1 for ", day, " for ", viral_load, ". ")
-  } else if(gene_df[[paste0(day, "_negative_0.585")]]) {
+  } else if(gene_df[[paste0(day, "_fc")]] < -0.585) {
     special_notes <- paste0(special_notes, "FC < -0.585 for ", day, " for ", viral_load, ". ")
-  } else if(gene_df[[paste0(day, "_negative_0.2")]]) {
-    special_notes <- paste0(special_notes, "FC < -0.2 for ", day, " for ", viral_load, ". ")
+  } else if(gene_df[[paste0(day, "_fc")]] < 0) {
+    special_notes <- paste0(special_notes, "Negative FC (< -0.585) for ", day, " for ", viral_load, ". ")
   }
   return(special_notes)
 }
