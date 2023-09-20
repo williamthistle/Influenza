@@ -251,25 +251,25 @@ find_degs_across_time_points_for_gene_list <- function(D2_df, D5_df, D8_df, D28_
     gene_vector <- c(gene_vector, cell_types)
     # D2
     if(gene %in% rownames(D2_df)) {
-      gene_vector <- c(gene_vector, D2_df[rownames(D2_df) == gene,]$log2FoldChange)
+      gene_vector <- c(gene_vector, as.numeric(D2_df[rownames(D2_df) == gene,]$log2FoldChange))
     } else {
       gene_vector <- c(gene_vector, 0)
     }
     # D5
     if(gene %in% rownames(D5_df)) {
-      gene_vector <- c(gene_vector, D5_df[rownames(D5_df) == gene,]$log2FoldChange)
+      gene_vector <- c(gene_vector, as.numeric(D5_df[rownames(D5_df) == gene,]$log2FoldChange))
     } else {
       gene_vector <- c(gene_vector, 0)
     }
     # D8
     if(gene %in% rownames(D8_df)) {
-      gene_vector <- c(gene_vector, D8_df[rownames(D8_df) == gene,]$log2FoldChange)
+      gene_vector <- c(gene_vector, as.numeric(D8_df[rownames(D8_df) == gene,]$log2FoldChange))
     } else {
       gene_vector <- c(gene_vector, 0)
     }
     # D28
     if(gene %in% rownames(D28_df)) {
-      gene_vector <- c(gene_vector, D28_df[rownames(D28_df) == gene,]$log2FoldChange)
+      gene_vector <- c(gene_vector, as.numeric(D28_df[rownames(D28_df) == gene,]$log2FoldChange))
     } else {
       gene_vector <- c(gene_vector, 0)
     }
@@ -277,6 +277,10 @@ find_degs_across_time_points_for_gene_list <- function(D2_df, D5_df, D8_df, D28_
     names(gene_vector) <- c("gene", "cell_types", "D2_fc", "D5_fc", "D8_fc", "D28_fc")
     overall_df <- rbind(overall_df, gene_vector)
   }
+  overall_df$D2_fc <- as.numeric(overall_df$D2_fc) 
+  overall_df$D5_fc <- as.numeric(overall_df$D5_fc) 
+  overall_df$D8_fc <- as.numeric(overall_df$D8_fc) 
+  overall_df$D28_fc <- as.numeric(overall_df$D28_fc) 
   return(overall_df)
 }
 
@@ -304,7 +308,7 @@ add_day_fc_info <- function(special_notes, gene_df, day, viral_load = "HVL") {
   } else if(gene_df[[paste0(day, "_fc")]] > 0.585) {
     special_notes <- paste0(special_notes, "FC > 0.585 for ", day, " for ", viral_load, ". ")
   } else if(gene_df[[paste0(day, "_fc")]] > 0) {
-    special_notes <- paste0(special_notes, "Positive FC (< 0.585) for ", day, " for ", viral_load, ". ")
+    special_notes <- paste0(special_notes, "FC > 0 for ", day, " for ", viral_load, ". ")
   }
   # Negative FC
   if(gene_df[[paste0(day, "_fc")]] < -2) {
@@ -314,7 +318,7 @@ add_day_fc_info <- function(special_notes, gene_df, day, viral_load = "HVL") {
   } else if(gene_df[[paste0(day, "_fc")]] < -0.585) {
     special_notes <- paste0(special_notes, "FC < -0.585 for ", day, " for ", viral_load, ". ")
   } else if(gene_df[[paste0(day, "_fc")]] < 0) {
-    special_notes <- paste0(special_notes, "Negative FC (< -0.585) for ", day, " for ", viral_load, ". ")
+    special_notes <- paste0(special_notes, "FC < 0 for ", day, " for ", viral_load, ". ")
   }
   return(special_notes)
 }

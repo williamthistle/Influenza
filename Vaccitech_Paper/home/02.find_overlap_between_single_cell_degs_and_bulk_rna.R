@@ -36,16 +36,14 @@ high_neg_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for
                                                                                       high_neg_pseudobulk_sc_genes_bulk_passing_df, sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$sc_log2FC < 0,])
 high_neg_pseudobulk_sc_genes_bulk_passing_df <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_fc < 0,]
 
-# Validation threshold: genes that pass 0.2 FC (or -0.2 FC) for D28 bulk
-# 28 genes
-high_passing_pos_gene_df <- fill_in_special_notes(high_pos_pseudobulk_sc_genes_bulk_passing_df)
-write.table(high_passing_pos_gene_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-high_passing_pos_genes <- high_passing_pos_gene_df$gene
-# 92 genes
-high_passing_neg_gene_df <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]
-high_passing_neg_gene_df <- fill_in_special_notes(high_passing_neg_gene_df)
-write.table(high_passing_neg_gene_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-high_passing_neg_genes <- high_passing_neg_gene_df$gene
+# pos: 28 genes
+high_pos_pseudobulk_sc_genes_bulk_passing_df <- fill_in_special_notes(high_pos_pseudobulk_sc_genes_bulk_passing_df)
+write.table(high_pos_pseudobulk_sc_genes_bulk_passing_df <- fill_in_special_notes(high_pos_pseudobulk_sc_genes_bulk_passing_df), file = paste0(onedrive_dir, "Influenza Analysis/high_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+high_passing_pos_genes <- high_pos_pseudobulk_sc_genes_bulk_passing_df$gene
+# neg: 92 genes
+high_neg_pseudobulk_sc_genes_bulk_passing_df <- fill_in_special_notes(high_neg_pseudobulk_sc_genes_bulk_passing_df)
+write.table(high_neg_pseudobulk_sc_genes_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+high_passing_neg_genes <- high_neg_pseudobulk_sc_genes_bulk_passing_df$gene
 
 # Check these validated genes on low viral load individuals
 low_pos_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
@@ -53,20 +51,17 @@ low_pos_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_
                                                                                           raw_low_placebo_period_2_D8_vs_D_minus_1_results,
                                                                                           raw_low_placebo_period_2_D28_vs_D_minus_1_results,
                                                                                           low_pos_pseudobulk_sc_genes_bulk_passing_df, sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% high_passing_pos_genes,])
-
 low_neg_pseudobulk_sc_genes_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
                                                                                           raw_low_placebo_period_2_D5_vs_D_minus_1_results,
                                                                                           raw_low_placebo_period_2_D8_vs_D_minus_1_results,
                                                                                           raw_low_placebo_period_2_D28_vs_D_minus_1_results,
                                                                                           low_neg_pseudobulk_sc_genes_bulk_passing_df, sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% high_passing_neg_genes,])
-
-# Genes that pass 0.2 FC (or -0.2 FC) for D28 bulk (low)
-# 6 genes
-low_pos_pseudobulk_sc_genes_bulk_passing_df <- fill_in_special_notes_pos(low_pos_pseudobulk_sc_genes_bulk_passing_df, viral_load = "LVL")
+# pos: 6 genes
+low_pos_pseudobulk_sc_genes_bulk_passing_df <- fill_in_special_notes(low_pos_pseudobulk_sc_genes_bulk_passing_df, viral_load = "LVL")
 write.table(low_pos_pseudobulk_sc_genes_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/low_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 low_passing_pos_genes <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
-# 16 genes
-low_neg_pseudobulk_sc_genes_bulk_passing_df <- fill_in_special_notes_neg(low_neg_pseudobulk_sc_genes_bulk_passing_df, viral_load = "LVL")
+# neg: 19 genes
+low_neg_pseudobulk_sc_genes_bulk_passing_df <- fill_in_special_notes(low_neg_pseudobulk_sc_genes_bulk_passing_df, viral_load = "LVL")
 write.table(low_neg_pseudobulk_sc_genes_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/low_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 low_passing_neg_genes <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
 
