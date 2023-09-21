@@ -68,17 +68,18 @@ low_passing_neg_genes <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pse
 
 
 # FLAGGED GENES - those genes which have negative FC in SC data but positive FC in bulk data (or vice versa)
-flagged_high_pos_genes <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
-flagged_high_pos_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_high_pos_genes,]
+# Not relevant with new formatting, but can maybe replicate it with small changes
+#flagged_high_pos_genes <- high_pos_pseudobulk_sc_genes_bulk_passing_df[high_pos_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
+#flagged_high_pos_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_high_pos_genes,]
 
-flagged_high_neg_genes <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
-flagged_high_neg_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_high_neg_genes,]
+#flagged_high_neg_genes <- high_neg_pseudobulk_sc_genes_bulk_passing_df[high_neg_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
+#flagged_high_neg_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_high_neg_genes,]
 
-flagged_low_pos_genes <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
-flagged_low_pos_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_low_pos_genes,]
+#flagged_low_pos_genes <- low_pos_pseudobulk_sc_genes_bulk_passing_df[low_pos_pseudobulk_sc_genes_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
+#flagged_low_pos_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_low_pos_genes,]
 
-flagged_low_neg_genes <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
-flagged_low_neg_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_low_neg_genes,]
+#flagged_low_neg_genes <- low_neg_pseudobulk_sc_genes_bulk_passing_df[low_neg_pseudobulk_sc_genes_bulk_passing_df$D28_0.2 == TRUE,]$gene
+#flagged_low_neg_gene_df <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Gene_Name %in% flagged_low_neg_genes,]
 
 
 
