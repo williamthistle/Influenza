@@ -487,7 +487,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
-      cutOff = "Pval < 0.05 & Log2FC > 0.1", # NOT USED
+      cutOff = "Pval < 0.05 & Log2FC < -0.1", # NOT USED
       idx = neg_peak_indices
     )
     df_down <- data.frame(TF = rownames(motifsDown), mlog10Padj = assay(motifsDown)[,1])
