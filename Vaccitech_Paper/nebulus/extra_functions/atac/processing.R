@@ -346,7 +346,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results <- DESeq2::results(pseudobulk_analysis, name=pseudobulk_analysis_results_contrast)
     pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
-    pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
+    # pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
     write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t")
     # Most lenient uses pval < 0.05 for sc peaks
     marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
@@ -370,7 +370,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
         current_row <- data.frame(cell_type, chr, start, end, peak_index, sc_log2FC, sc_pval, sc_FDR, pseudobulk_log2FC, pseudobulk_pval)
         names(current_row) <- c("Cell_Type", "chr", "start", "end", "idx", "sc_log2FC", "sc_pval", "sc_FDR", "pseudobulk_log2FC", "pseudobulk_pval")
         final_lenient_de <- rbind(final_lenient_de, current_row)
-        # stricter uses p-value < 0.01 (more stringent than 0.05)
+        # stricter uses p-value < 0.01 (more stringent than p-value < 0.05)
         if(sc_pval < 0.01) {
           final_stricter_de <- rbind(final_stricter_de, current_row)
         }
@@ -392,7 +392,35 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       current_idx <- which(seqnames(all_peaks) == current_row$chr & all_peaks$idx == current_row$idx)
       pos_peak_indices <- c(pos_peak_indices, current_idx)
     }
-    # Provide those indices as "idx" for use in peakAnnoEnrichment
+    # 1) Use all positive peaks (no pseudobulk adjustment) for motif enrichment
+    # Because we don't have too many peaks, including more noise may be worth it
+    motifsUp_all_positive <- peakAnnoEnrichment_mine(
+      seMarker = marker_D28_D1,
+      ArchRProj = atac_proj,
+      peakAnnotation = "Motif",
+      cutOff = "Pval < 0.05 & Log2FC > 0.1"
+    )
+    df_up_all_positive <- data.frame(TF = rownames(motifsUp_all_positive), mlog10Padj = assay(motifsUp_all_positive)[,1])
+    df_up_all_positive <- df_up_all_positive[order(df_up_all_positive$mlog10Padj, decreasing = TRUE),]
+    df_up_all_positive$p_adj <- 10 ** -df_up_all_positive$mlog10Padj
+    df_up_all_positive$rank <- seq_len(nrow(df_up_all_positive))
+    write.table(df_up_all_positive, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_up_all_positive.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    ggUp <- ggplot(df_up_all_positive, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+      geom_point(size = 1) +
+      ggrepel::geom_label_repel(
+        data = df_up_all_positive[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
+        size = 1.5,
+        nudge_x = 2,
+        color = "black"
+      ) + theme_ArchR() + 
+      ylab("-log10(P-adj) Motif Enrichment") + 
+      xlab("Rank Sorted TFs Enriched") +
+      scale_color_gradientn(colors = paletteContinuous(set = "comet"))
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up_all_positive.png"), 
+                    plot = ggUp, device = "png", width = 4, height = 4, 
+                    units = "in")
+    # 2) Use positive peaks with pseudobulk correction
+    # Better approach if we have more samples, but maybe not the best fit here
     motifsUp <- peakAnnoEnrichment_mine(
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
@@ -404,7 +432,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     df_up <- df_up[order(df_up$mlog10Padj, decreasing = TRUE),]
     df_up$p_adj <- 10 ** -df_up$mlog10Padj
     df_up$rank <- seq_len(nrow(df_up))
-    write.table(df_up, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_up.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    write.table(df_up, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_up_pseudobulk_corrected.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     ggUp <- ggplot(df_up, aes(rank, mlog10Padj, color = mlog10Padj)) + 
       geom_point(size = 1) +
       ggrepel::geom_label_repel(
@@ -412,11 +440,11 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
         size = 1.5,
         nudge_x = 2,
         color = "black"
-      # ) + theme_ArchR() + 
+      ) + theme_ArchR() + 
       ylab("-log10(P-adj) Motif Enrichment") + 
       xlab("Rank Sorted TFs Enriched") +
       scale_color_gradientn(colors = paletteContinuous(set = "comet"))
-    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up.png"), 
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up_pseudobulk_corrected.png"), 
                     plot = ggUp, device = "png", width = 4, height = 4, 
                     units = "in")
     # NEGATIVE
@@ -426,6 +454,34 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       current_idx <- which(seqnames(all_peaks) == current_row$chr & all_peaks$idx == current_row$idx)
       neg_peak_indices <- c(neg_peak_indices, current_idx)
     }
+    # Same as positive - two different analyses
+    # 1) All negative peaks
+    motifsDown_all_negative <- peakAnnoEnrichment_mine(
+      seMarker = marker_D28_D1,
+      ArchRProj = atac_proj,
+      peakAnnotation = "Motif",
+      cutOff = "Pval < 0.05 & Log2FC < -0.1"
+    )
+    df_down_all_negative <- data.frame(TF = rownames(motifsDown_all_negative), mlog10Padj = assay(motifsDown_all_negative)[,1])
+    df_down_all_negative <- df_down_all_negative[order(df_down_all_negative$mlog10Padj, decreasing = TRUE),]
+    df_down_all_negative$p_adj <- 10 ** -df_down_all_negative$mlog10Padj
+    df_down_all_negative$rank <- seq_len(nrow(df_down_all_negative))
+    write.table(df_down_all_negative, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_down_all_negative.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    ggUp <- ggplot(df_down_all_negative, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+      geom_point(size = 1) +
+      ggrepel::geom_label_repel(
+        data = df_down_all_negative[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
+        size = 1.5,
+        nudge_x = 2,
+        color = "black"
+      ) + theme_ArchR() + 
+      ylab("-log10(P-adj) Motif Enrichment") + 
+      xlab("Rank Sorted TFs Enriched") +
+      scale_color_gradientn(colors = paletteContinuous(set = "comet"))
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_down_all_negative.png"), 
+                    plot = ggUp, device = "png", width = 4, height = 4, 
+                    units = "in")
+    # 2) Negative peaks after pseudobulk correction
     # Provide those indices as "idx" for use in peakAnnoEnrichment
     motifsDown <- peakAnnoEnrichment_mine(
       seMarker = marker_D28_D1,
@@ -438,7 +494,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     df_down <- df_down[order(df_down$mlog10Padj, decreasing = TRUE),]
     df_down$p_adj <- 10 ** -df_down$mlog10Padj
     df_down$rank <- seq_len(nrow(df_down))
-    write.table(df_down, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_down.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    write.table(df_down, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_down_pseudobulk_corrected.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     ggUp <- ggplot(df_down, aes(rank, mlog10Padj, color = mlog10Padj)) + 
       geom_point(size = 1) +
       ggrepel::geom_label_repel(
@@ -450,7 +506,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       ylab("-log10(P-adj) Motif Enrichment") + 
       xlab("Rank Sorted TFs Enriched") +
       scale_color_gradientn(colors = paletteContinuous(set = "comet"))
-    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_down.png"), 
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_down_pseudobulk_corrected.png"), 
                     plot = ggUp, device = "png", width = 4, height = 4, 
                     units = "in")
   }
