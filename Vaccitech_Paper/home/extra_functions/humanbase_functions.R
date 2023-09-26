@@ -75,6 +75,29 @@ assign_cell_types_to_humanbase_results <- function(humanbase_file_path, gene_tab
   return(list(overall_module_data, individual_go_term_data))
 }
 
+assign_cell_types_to_pathway_results <- function(pathway_info, gene_table) {
+  individual_pathway_term_cell_types <- c()
+  for(current_genes in pathway_info$Genes) {
+    current_genes <- strsplit(current_genes, ";")[[1]]
+    current_cell_types <- gene_table[gene_table$Gene_Name %in% current_genes,]$Cell_Type
+    current_cell_type_summary <- sort(table(current_cell_types), decreasing = TRUE)
+    formatted_elements <- character(length(current_cell_type_summary))
+    
+    # Loop through the named vector and format each element
+    for (i in 1:length(current_cell_type_summary)) {
+      formatted_elements[i] <- paste0(names(current_cell_type_summary)[i], " (", current_cell_type_summary[i], ")")
+    }
+    
+    # Combine the formatted elements into a single string
+    final_cell_type_str <- paste(formatted_elements, collapse = ", ")
+    individual_pathway_term_cell_types <- c(individual_pathway_term_cell_types, final_cell_type_str)
+  }
+  pathway_info$Cell_Types <- individual_pathway_term_cell_types
+  
+  # Return parsed info with cell types
+  return(pathway_info)
+}
+
 run_fmd_on_flu_data <- function(gene_table, log_fc_thresholds = c(0.1, 0.3, 0.585, 1, 2)) {
   fmd_results <- list()
   for(log_fc_threshold in log_fc_thresholds) {
@@ -95,3 +118,4 @@ run_fmd_on_flu_data <- function(gene_table, log_fc_thresholds = c(0.1, 0.3, 0.58
   }
   return(fmd_results)
 }
+
