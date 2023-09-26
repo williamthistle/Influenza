@@ -10,6 +10,7 @@ library(SPEEDI)
 library(pheatmap)
 
 set.seed(get_speedi_seed())
+options(max.print=1000000)
 
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 data_dir <- "~/local_data_files/"

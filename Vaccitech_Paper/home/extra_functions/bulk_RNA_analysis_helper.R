@@ -72,8 +72,36 @@ setup_bulk_analysis=function(base_dir, data_dir) {
   vaccinated_counts <<- round(vaccinated_counts)
   # Grab the main 23 subjects (13 high viral load, 10 low viral load) that have all 10 time points
   placebo_full_time_series_metadata <<- placebo_metadata[placebo_metadata$subject_id 
-                                                        %in% names(table(placebo_metadata$subject_id)
-                                                                   [table(placebo_metadata$subject_id) == 10]),]
+                                                         %in% names(table(placebo_metadata$subject_id)
+                                                                    [table(placebo_metadata$subject_id) == 10]),]
+  # Grab the 14 vaccinated subjects (7 high T cell response, 7 low T cell response) that have all 10 time points
+  vaccinated_full_time_series_metadata <<- vaccinated_metadata[vaccinated_metadata$subject_id 
+                                                               %in% names(table(vaccinated_metadata$subject_id)
+                                                                          [table(vaccinated_metadata$subject_id) == 10]),]
+  ### VACCINATED ###
+  immunogenicity_data <<- read.table(paste0(base_dir, "metadata/Immunogenicity_Data.tsv"), sep = "\t", header = TRUE)
+  immunogenicity_data <<- immunogenicity_data[immunogenicity_data$SUBJID %in% vaccinated_full_time_series_metadata$subject_id,]
+  immunogenicity_data <<- immunogenicity_data[,c(1,105,106,115,116)]
+  immunogenicity_data <<- immunogenicity_data[order(immunogenicity_data$Vaccination.Day8_IFNg_NP.Background_SFC.10.6.cells, decreasing = TRUE),]
+  high_t_cell_response_subjects <<- immunogenicity_data$SUBJID[1:7]
+  low_t_cell_response_subjects <<- immunogenicity_data$SUBJID[8:14]
+  # Grab high t cell response vaccinated counts and metadata
+  high_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% high_t_cell_response_subjects,])
+  high_vaccinated_counts <<- vaccinated_counts[,high_vaccinated_aliquots]
+  high_vaccinated_metadata <<- vaccinated_metadata[high_vaccinated_aliquots,]
+  # Grab low viral load placebo counts and metadata
+  low_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% low_t_cell_response_subjects,])
+  low_vaccinated_counts <<- vaccinated_counts[,low_vaccinated_aliquots]
+  low_vaccinated_metadata <<- vaccinated_metadata[low_vaccinated_aliquots,]
+  # Grab combination of high and low viral load placebo counts and metadata
+  both_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% high_t_cell_response_subjects | vaccinated_metadata$subject_id %in% low_t_cell_response_subjects,])
+  both_vaccinated_counts <<- vaccinated_counts[,both_vaccinated_aliquots]
+  both_vaccinated_metadata <<- vaccinated_metadata[both_vaccinated_aliquots,]
+  t_cell_for_metadata <<- both_vaccinated_metadata$subject_id %in% high_t_cell_response_subjects
+  t_cell_for_metadata <<- replace(t_cell_for_metadata, t_cell_for_metadata == TRUE, "HIGH")
+  t_cell_for_metadata <<- replace(t_cell_for_metadata, t_cell_for_metadata == "FALSE", "LOW")
+  both_vaccinated_metadata$t_cell_response <<- t_cell_for_metadata
+  ### PLACEBO ###
   # Grab subject IDs for main 23 subjects
   placebo_full_time_series_subjects <<- unique(placebo_full_time_series_metadata$subject_id)
   # Reorder subject IDs according to viral load (high to low)
@@ -101,6 +129,8 @@ setup_bulk_analysis=function(base_dir, data_dir) {
   removed_low_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id == "f18c54d93cef4a4e",])
   placebo_metadata <<- placebo_metadata[!(placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
   placebo_counts <<- placebo_counts[,!(colnames(placebo_counts) %in% removed_low_viral_aliquots)]
+  both_placebo_metadata <<-  both_placebo_metadata[!(both_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
+  both_placebo_counts <<- both_placebo_counts[,!(colnames(both_placebo_counts) %in% removed_low_viral_aliquots)]
   low_placebo_metadata <<- low_placebo_metadata[!(low_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
   low_placebo_counts <<- low_placebo_counts[,!(colnames(low_placebo_counts) %in% removed_low_viral_aliquots)]
 }
@@ -207,7 +237,16 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
   } else {
     write.table(rownames(current_analysis_results_4), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
-  return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2, current_analysis_results_4))
+  # Grab results with alpha = 0.05 and no lfcThreshold
+  current_analysis_results_none <- results(current_analysis, contrast = c("viral_load", test_cond, baseline_cond), alpha = 0.05)
+  current_analysis_results_none <- current_analysis_results_none[order(current_analysis_results_none$padj),]
+  current_analysis_results_none <- subset(current_analysis_results_none, padj < 0.05)
+  if(is.na(output_name_prefix)) {
+    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  } else {
+    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  }
+  return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2, current_analysis_results_4, current_analysis_results_none))
 }
 
 run_deseq2_LRT <- function(counts, metadata) {
