@@ -26,11 +26,16 @@ setwd(onedrive_dir)
 setwd("../")
 onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
+# Load bulk RNA-seq analysis results
+load(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
+# Set other dirs
 sc_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs/")
 sc_humanbase_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/HumanBase/")
 multiome_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Multiome/RNA/HVL/DEGs/")
 mintchip_dir <- paste0(onedrive_dir, "Influenza Analysis/MintChIP/")
 sc_peak_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/ATAC/HVL/")
+
+
 
 # Read in Mint-ChIP metadata
 mintchip_metadata <- read.table(paste0(mintchip_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
