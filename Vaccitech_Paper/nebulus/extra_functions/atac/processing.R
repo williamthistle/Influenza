@@ -346,7 +346,6 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results <- DESeq2::results(pseudobulk_analysis, name=pseudobulk_analysis_results_contrast)
     pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
-    # pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < -0.3 | pseudobulk_analysis_results$log2FoldChange > 0.3,]
     write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t")
     # Most lenient uses pval < 0.05 for sc peaks
     marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
@@ -585,6 +584,24 @@ create_pseudobulk_atac <- function(proj, pseudo_bulk_dir) {
     write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), quote = FALSE, sep = "\t")
   }
 }
+
+# Create pseudobulk count files (sample level)
+create_pseudobulk_atac_sample <- function(proj) {
+  sample.names <- unique(proj$Sample)
+  peaks <- getPeakSet(proj)
+  peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE, binarize = FALSE, threads = getArchRThreads(), logFile = createLogFile("getMatrixFromProject"))
+  pseudo_bulk <- matrix(nrow = length(peaks), ncol = length(sample.names), 0)
+  colnames(pseudo_bulk)<- sample.names
+  rownames(pseudo_bulk) <- paste0(as.character(peaks@seqnames), "_", peaks@elementMetadata$idx)
+  for (s in c(1:length(sample.names))){
+    idxMatch <- which(str_detect(as.character(peak_count$Sample),sample.names[s]))
+    if (length(idxMatch)>1){
+      pseudo_bulk[,s] = Matrix::rowSums(peak_count@assays@data$PeakMatrix[,idxMatch])
+    }
+  }
+  return(pseudo_bulk)
+}
+  
 
 peakAnnoEnrichment_mine <- function(seMarker = NULL, ArchRProj = NULL, peakAnnotation = NULL, 
                                     matches = NULL, cutOff = "FDR <= 0.1 & Log2FC >= 0.5", background = "all", idx = NULL, 

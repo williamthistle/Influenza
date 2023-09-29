@@ -198,9 +198,22 @@ for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
 HVL_proj_minus_clusters <- addCellColData(ArchRProj = HVL_proj_minus_clusters, data = sample_metadata, cells = HVL_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
 
 
-differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/motifs_p_0_01/")
+differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/motifs_only_pseudo_lrt/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir, sample_metadata_for_SPEEDI_df)
+
+sample_pseudobulk_peak_counts <- create_pseudobulk_atac_sample(HVL_proj_minus_clusters)
+pseudobulk_metadata <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$subject_id %in% HVL_proj_minus_clusters$subject_id,]
+pseudobulk_metadata$aliquots <- rownames(pseudobulk_metadata)
+pseudobulk_metadata <- pseudobulk_metadata[match(colnames(sample_pseudobulk_peak_counts), pseudobulk_metadata$aliquots),]
+pseudobulk_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = sample_pseudobulk_peak_counts, colData = pseudobulk_metadata, design = stats::formula(paste("~ subject_id + time_point")))
+pseudobulk_analysis <- DESeq2::DESeq(pseudobulk_analysis)
+pseudobulk_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(pseudobulk_analysis), n=1)
+print(pseudobulk_analysis_results_contrast)
+pseudobulk_analysis_results <- DESeq2::results(pseudobulk_analysis, name=pseudobulk_analysis_results_contrast)
+pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
+# 4505 DASs 
+pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
 
 
 ### ETC ###
