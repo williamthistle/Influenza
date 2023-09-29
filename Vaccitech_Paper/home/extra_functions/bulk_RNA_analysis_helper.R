@@ -361,3 +361,61 @@ add_day_fc_info <- function(special_notes, gene_df, day) {
   }
   return(special_notes)
 }
+
+find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table, cell_types, pos_bulk_genes = NULL, neg_bulk_genes = NULL) {
+  overlapping_motif_df <- data.frame(tf = character(), cell_types = character(), found_in_bulk = logical())
+  for(cell_type in cell_types) {
+    print(cell_type)
+    if(file.exists(paste0(peak_dir, cell_type, "_D28_D1_motif_up_all_positive.tsv"))) {
+      # Up-regulated enriched TFs
+      current_motifs_up <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_up_all_positive.tsv"), sep = "\t", header = TRUE)
+      current_motifs_up <- current_motifs_up[current_motifs_up$p_adj < 0.05,]
+      current_tfs_up <- current_motifs_up$TF
+      # Cut off _ID so we can match with gene names from RNA
+      current_tfs_up <- sub("_.*", "", current_tfs_up)
+      # Down-regulated enriched TFs
+      current_motifs_down <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_down_all_negative.tsv"), sep = "\t", header = TRUE)
+      current_motifs_down <- current_motifs_down[current_motifs_down$p_adj < 0.05,]
+      current_tfs_down <- current_motifs_down$TF
+      # Cut off _ID so we can match with gene names from RNA
+      current_tfs_down <- sub("_.*", "", current_tfs_down)
+      cell_type_in_df <- sub("_", " ", cell_type)
+      cell_type_sc_gene_table <- sc_gene_table[sc_gene_table$Cell_Type == cell_type_in_df,]
+      overlapping_pos_tfs <- intersect(current_tfs_up, cell_type_sc_gene_table[cell_type_sc_gene_table$sc_log2FC > 0,]$Gene_Name)
+      overlapping_neg_tfs <- intersect(current_tfs_down, cell_type_sc_gene_table[cell_type_sc_gene_table$sc_log2FC < 0,]$Gene_Name)
+      for(pos_tf in overlapping_pos_tfs) {
+        if(pos_tf %in% overlapping_motif_df$tf) {
+          current_cell_types <- overlapping_motif_df[overlapping_motif_df$tf == pos_tf,]$cell_types
+          current_cell_types <- paste0(current_cell_types, ", ", cell_type_in_df, " (Up)")
+          overlapping_motif_df[overlapping_motif_df$tf == pos_tf,]$cell_types <- current_cell_types
+        } else {
+          found_in_bulk <- FALSE
+          if(pos_tf %in% pos_bulk_genes) {
+            found_in_bulk <- TRUE
+          }
+          motif_vector <- c(pos_tf, paste0(cell_type_in_df, " (Up)"), found_in_bulk)
+          motif_vector <- as.data.frame(t(motif_vector))
+          names(motif_vector) <- c("tf", "cell_types", "found_in_bulk")
+          overlapping_motif_df <- rbind(overlapping_motif_df, motif_vector)
+        }
+      }
+      for(neg_tf in overlapping_neg_tfs) {
+        if(neg_tf %in% overlapping_motif_df$tf) {
+          current_cell_types <- overlapping_motif_df[overlapping_motif_df$tf == neg_tf,]$cell_types
+          current_cell_types <- paste0(current_cell_types, ", ", cell_type_in_df, " (Down)")
+          overlapping_motif_df[overlapping_motif_df$tf == neg_tf,]$cell_types <- current_cell_types
+        } else {
+          found_in_bulk <- FALSE
+          if(neg_tf %in% neg_bulk_genes) {
+            found_in_bulk <- TRUE
+          }
+          motif_vector <- c(neg_tf, paste0(cell_type_in_df, " (Down)"), found_in_bulk)
+          motif_vector <- as.data.frame(t(motif_vector))
+          names(motif_vector) <- c("tf", "cell_types", "found_in_bulk")
+          overlapping_motif_df <- rbind(overlapping_motif_df, motif_vector)
+        }
+      }
+    }
+  }
+  return(overlapping_motif_df)
+}

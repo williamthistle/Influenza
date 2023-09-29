@@ -20,7 +20,7 @@ source(paste0(base_dir, "extra_functions/humanbase_functions.R"))
 source(paste0(base_dir, "extra_functions/pseudobulk_analysis_helper.R"))
 setup_bulk_analysis(base_dir = base_dir, data_dir = data_dir)
 sample_metadata <- read.table(paste0(base_dir, "metadata/all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
-possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT")
+possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "NK_CD56bright", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT", "B", "B_naive", "B_memory")
 onedrive_dir <- "~"
 setwd(onedrive_dir)
 setwd("../")
@@ -30,6 +30,7 @@ onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 load(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
 # Set other dirs
 sc_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs/")
+sc_pseudobulk_dir_magical <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs_with_ATAC_cell_types/")
 sc_humanbase_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/HumanBase/")
 multiome_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Multiome/RNA/HVL/DEGs/")
 mintchip_dir <- paste0(onedrive_dir, "Influenza Analysis/MintChIP/")
@@ -44,6 +45,9 @@ mintchip_metadata <- read.table(paste0(mintchip_dir, "mintchip_metadata.tsv"), s
 # TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
 sc_pseudobulk_gene_table <- read.table(paste0(sc_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 sc_pseudobulk_gene_table <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Cell_Type != "Platelet",]
+sc_pseudobulk_gene_table_magical <- read.table(paste0(sc_pseudobulk_dir_magical, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_gene_table_magical <- sc_pseudobulk_gene_table_magical[sc_pseudobulk_gene_table_magical$Cell_Type != "Platelet",]
+sc_pseudobulk_gene_table_magical[sc_pseudobulk_gene_table_magical$Cell_Type == "NK_MAGICAL",]$Cell_Type <- "NK"
 multiome_pseudobulk_gene_table <- read.table(paste0(multiome_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 multiome_pseudobulk_gene_table <- multiome_pseudobulk_gene_table[multiome_pseudobulk_gene_table$Cell_Type != "Platelet",]
 
