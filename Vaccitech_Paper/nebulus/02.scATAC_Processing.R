@@ -198,7 +198,7 @@ for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
 HVL_proj_minus_clusters <- addCellColData(ArchRProj = HVL_proj_minus_clusters, data = sample_metadata, cells = HVL_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
 
 
-differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/motifs_only_pseudo_lrt/")
+differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/motifs_only_pseudo_updated/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir, sample_metadata_for_SPEEDI_df)
 

@@ -328,7 +328,10 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     marker_de$pval <- assays(marker_D28_D1)$Pval[,1]
     marker_de$FDR <- assays(marker_D28_D1)$FDR[,1]
     cell_type_for_file_name <- sub(" ", "_", cell_type)
-    write.table(marker_de, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    write.table(marker_de, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc_without_filtering.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
+    marker_de_lenient <- marker_de_passing_fc[marker_de_passing_fc$pval < 0.05,]
+    write.table(marker_de_lenient, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     # Perform pseudobulk correction
     pseudobulk_counts <- read.table(paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type_for_file_name, ".txt"), sep = "\t", header = TRUE, check.names = FALSE)
     sample_metadata <- cells_subset$Sample
@@ -348,13 +351,19 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
     write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t")
     # Most lenient uses pval < 0.05 for sc peaks
-    marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
-    marker_de_lenient <- marker_de_passing_fc[marker_de_passing_fc$pval < 0.05,]
+    # PSEUDOBULK TEST
+    pos_pseudobulk_de <- data.frame(Cell_Type = character(), chr = character(), idx = character()) 
     for(current_pseudobulk_peak_row_index in 1:nrow(pseudobulk_analysis_results)) {
       current_pseudobulk_row <- pseudobulk_analysis_results[current_pseudobulk_peak_row_index,]
       chr_peak_index_combo <- rownames(current_pseudobulk_row)
       chr <- strsplit(chr_peak_index_combo, "_")[[1]][1]
       peak_index <- strsplit(chr_peak_index_combo, "_")[[1]][2]
+      # PSEUDOBULK TEST
+      if(current_pseudobulk_row$log2FoldChange > 0) {
+        current_row <- data.frame(cell_type, chr, peak_index)
+        names(current_row) <- c("Cell_Type", "chr", "idx")
+        pos_pseudobulk_de <- rbind(pos_pseudobulk_de, current_row)
+      }
       # Check for overlap between pseudo and lenient
       marker_de_subset_lenient <- marker_de_lenient[marker_de_lenient$chr == chr,]
       marker_de_subset_lenient <- marker_de_subset_lenient[marker_de_subset_lenient$idx == peak_index,]
@@ -386,8 +395,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     neg_peak_indices <- c()
     # POSITIVE
     # Find indices of peaks that overlap with cell type peaks
-    for(current_row_idx in 1:nrow(pos_cell_type_subset_de)) {
-      current_row <- pos_cell_type_subset_de[current_row_idx,]
+    for(current_row_idx in 1:nrow(pos_pseudobulk_de)) {
+      current_row <- pos_pseudobulk_de[current_row_idx,]
       current_idx <- which(seqnames(all_peaks) == current_row$chr & all_peaks$idx == current_row$idx)
       pos_peak_indices <- c(pos_peak_indices, current_idx)
     }
@@ -420,6 +429,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
                     units = "in")
     # 2) Use positive peaks with pseudobulk correction
     # Better approach if we have more samples, but maybe not the best fit here
+    print(length(pos_peak_indices))
     motifsUp <- peakAnnoEnrichment_mine(
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
