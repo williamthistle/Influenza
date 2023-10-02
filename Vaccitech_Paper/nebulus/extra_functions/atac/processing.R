@@ -301,7 +301,6 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
   final_strictest_de <- data.frame(Cell_Type = character(), chr = character(), start = character(), end = character(), idx = character(),
                                  sc_log2FC = character(), sc_pval = character(), sc_FDR = character(), pseudobulk_log2FC = character(),
                                  pseudobulk_pval = character())
-  all_peaks <- getPeakSet(atac_proj)
   for (cell_type in unique(atac_proj$Cell_type_voting)) {
     print(cell_type)
     # Grab cells associated with cell type
@@ -395,11 +394,12 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     neg_peak_indices <- c()
     # POSITIVE
     # Find indices of peaks that overlap with cell type peaks
-    for(current_row_idx in 1:nrow(pos_pseudobulk_de)) {
-      current_row <- pos_pseudobulk_de[current_row_idx,]
-      current_idx <- which(seqnames(all_peaks) == current_row$chr & all_peaks$idx == current_row$idx)
+    for(current_row_idx in 1:nrow(pos_cell_type_subset_de)) {
+      current_row <- pos_cell_type_subset_de[current_row_idx,]
+      current_idx <- which(marker_de$chr == current_row$chr & marker_de$idx == current_row$idx)
       pos_peak_indices <- c(pos_peak_indices, current_idx)
     }
+    pos_peak_indices <- sort(pos_peak_indices)
     # 1) Use all positive peaks (no pseudobulk adjustment) for motif enrichment
     # Because we don't have too many peaks, including more noise may be worth it
     motifsUp_all_positive <- peakAnnoEnrichment_mine(
@@ -460,7 +460,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     # Find indices of peaks that overlap with cell type peaks
     for(current_row_idx in 1:nrow(neg_cell_type_subset_de)) {
       current_row <- neg_cell_type_subset_de[current_row_idx,]
-      current_idx <- which(seqnames(all_peaks) == current_row$chr & all_peaks$idx == current_row$idx)
+      current_idx <- which(marker_de$chr == current_row$chr & marker_de$idx == current_row$idx)
       neg_peak_indices <- c(neg_peak_indices, current_idx)
     }
     # Same as positive - two different analyses
