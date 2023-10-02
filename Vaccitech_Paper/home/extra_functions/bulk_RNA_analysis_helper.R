@@ -366,15 +366,15 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
   overlapping_motif_df <- data.frame(tf = character(), cell_types = character(), found_in_bulk = logical())
   for(cell_type in cell_types) {
     print(cell_type)
-    if(file.exists(paste0(peak_dir, cell_type, "_D28_D1_motif_up_all_positive.tsv"))) {
+    if(file.exists(paste0(peak_dir, cell_type, "_D28_D1_motif_up_pseudobulk_corrected.tsv"))) {
       # Up-regulated enriched TFs
-      current_motifs_up <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_up_all_positive.tsv"), sep = "\t", header = TRUE)
+      current_motifs_up <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_up_pseudobulk_corrected.tsv"), sep = "\t", header = TRUE)
       current_motifs_up <- current_motifs_up[current_motifs_up$p_adj < 0.05,]
       current_tfs_up <- current_motifs_up$TF
       # Cut off _ID so we can match with gene names from RNA
       current_tfs_up <- sub("_.*", "", current_tfs_up)
       # Down-regulated enriched TFs
-      current_motifs_down <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_down_all_negative.tsv"), sep = "\t", header = TRUE)
+      current_motifs_down <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_down_pseudobulk_corrected.tsv"), sep = "\t", header = TRUE)
       current_motifs_down <- current_motifs_down[current_motifs_down$p_adj < 0.05,]
       current_tfs_down <- current_motifs_down$TF
       # Cut off _ID so we can match with gene names from RNA

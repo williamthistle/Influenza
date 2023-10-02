@@ -28,6 +28,12 @@ onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 # Load bulk RNA-seq analysis results
 load(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
+# Reload one drive dir
+onedrive_dir <- "~"
+setwd(onedrive_dir)
+setwd("../")
+onedrive_dir <- getwd()
+onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 # Set other dirs
 sc_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs/")
 sc_pseudobulk_dir_magical <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs_with_ATAC_cell_types/")
