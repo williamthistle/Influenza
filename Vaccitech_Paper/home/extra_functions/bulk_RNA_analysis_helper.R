@@ -379,20 +379,26 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
       current_tfs_down <- current_motifs_down$TF
       # Cut off _ID so we can match with gene names from RNA
       current_tfs_down <- sub("_.*", "", current_tfs_down)
+      # Grab genes from SC table for current cell type
       cell_type_in_df <- sub("_", " ", cell_type)
       cell_type_sc_gene_table <- sc_gene_table[sc_gene_table$Cell_Type == cell_type_in_df,]
+      # Grab overlap between pos SC genes and upregulated TF motifs
       overlapping_pos_tfs <- intersect(current_tfs_up, cell_type_sc_gene_table[cell_type_sc_gene_table$sc_log2FC > 0,]$Gene_Name)
+      # Grab overlap between neg SC genes and downregulated TF motifs
       overlapping_neg_tfs <- intersect(current_tfs_down, cell_type_sc_gene_table[cell_type_sc_gene_table$sc_log2FC < 0,]$Gene_Name)
       for(pos_tf in overlapping_pos_tfs) {
+        # If the TF is already present in our DF, then just add the new cell type to cell_types
         if(pos_tf %in% overlapping_motif_df$tf) {
           current_cell_types <- overlapping_motif_df[overlapping_motif_df$tf == pos_tf,]$cell_types
           current_cell_types <- paste0(current_cell_types, ", ", cell_type_in_df, " (Up)")
           overlapping_motif_df[overlapping_motif_df$tf == pos_tf,]$cell_types <- current_cell_types
         } else {
+          # If the tf was found in the bulk data, note that
           found_in_bulk <- FALSE
           if(pos_tf %in% pos_bulk_genes) {
             found_in_bulk <- TRUE
           }
+          # Add tf to df (and mark it as up)
           motif_vector <- c(pos_tf, paste0(cell_type_in_df, " (Up)"), found_in_bulk)
           motif_vector <- as.data.frame(t(motif_vector))
           names(motif_vector) <- c("tf", "cell_types", "found_in_bulk")
@@ -400,15 +406,18 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
         }
       }
       for(neg_tf in overlapping_neg_tfs) {
+        # If the TF is already present in our DF, then just add the new cell type to cell_types
         if(neg_tf %in% overlapping_motif_df$tf) {
           current_cell_types <- overlapping_motif_df[overlapping_motif_df$tf == neg_tf,]$cell_types
           current_cell_types <- paste0(current_cell_types, ", ", cell_type_in_df, " (Down)")
           overlapping_motif_df[overlapping_motif_df$tf == neg_tf,]$cell_types <- current_cell_types
         } else {
+          # If the tf was found in the bulk data, note that
           found_in_bulk <- FALSE
           if(neg_tf %in% neg_bulk_genes) {
             found_in_bulk <- TRUE
           }
+          # Add tf to df (and mark it as down)
           motif_vector <- c(neg_tf, paste0(cell_type_in_df, " (Down)"), found_in_bulk)
           motif_vector <- as.data.frame(t(motif_vector))
           names(motif_vector) <- c("tf", "cell_types", "found_in_bulk")
