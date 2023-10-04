@@ -37,63 +37,55 @@ setwd("../")
 onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 # Set other dirs
-sc_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs/")
-sc_pseudobulk_dir_magical <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs_with_ATAC_cell_types/")
+sc_deg_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs/")
+sc_deg_combined_cell_types_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/DEGs_with_ATAC_cell_types/")
+sc_magical_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/MAGICAL/HVL/")
 sc_humanbase_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/HumanBase/")
-multiome_pseudobulk_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Multiome/RNA/HVL/DEGs/")
+sc_das_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/ATAC/HVL/")
 mintchip_dir <- paste0(onedrive_dir, "Influenza Analysis/MintChIP/")
-sc_peak_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/ATAC/HVL/")
-
-
 
 # Read in Mint-ChIP metadata
 mintchip_metadata <- read.table(paste0(mintchip_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
-# Tables containing results for single cell and multiome RNA-seq processing
-# Includes genes that passed pseudobulk filtering and genes that passed MAGICAL filtering (remove platelets)
+# Tables containing DEG results for single cell RNA-seq processing
+# Includes genes that passed pseudobulk filtering (remove platelets)
 # TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
-sc_pseudobulk_gene_table <- read.table(paste0(sc_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-sc_pseudobulk_gene_table <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Cell_Type != "Platelet",]
-innate_sc_pseudobulk_gene_table <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Cell_Type %in% innate_cell_types,]
+sc_pseudobulk_deg_table <- read.table(paste0(sc_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type != "Platelet",]
+sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(sc_deg_combined_cell_types_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type != "Platelet",]
+innate_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% innate_cell_types,]
 
-sc_pseudobulk_gene_table_magical <- read.table(paste0(sc_pseudobulk_dir_magical, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-sc_pseudobulk_gene_table_magical <- sc_pseudobulk_gene_table_magical[sc_pseudobulk_gene_table_magical$Cell_Type != "Platelet",]
-sc_pseudobulk_gene_table_magical[sc_pseudobulk_gene_table_magical$Cell_Type == "NK_MAGICAL",]$Cell_Type <- "NK"
-multiome_pseudobulk_gene_table <- read.table(paste0(multiome_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-multiome_pseudobulk_gene_table <- multiome_pseudobulk_gene_table[multiome_pseudobulk_gene_table$Cell_Type != "Platelet",]
 
 # Peak related tables
 mintchip_table <- read.xlsx(xlsxFile = paste0(mintchip_dir, "MultiMarkerBestSignatureAnnotations_All3000.xlsx"), sheet = 1)
-sc_peaks <- read.table(paste0(sc_peak_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
-sc_motifs <- read.table(paste0(sc_peak_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
+sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
+sc_motifs <- read.table(paste0(sc_das_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
 sc_motifs$chr <- paste0("chr", sc_motifs$chr)
-sc_das_lenient <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_lenient_final.tsv"), sep = "\t", header = TRUE)
+sc_das_lenient <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_lenient_final.tsv"), sep = "\t", header = TRUE)
 sc_motif_lenient_subset <- sc_motifs[sc_motifs$chr %in% sc_das_lenient$chr & sc_motifs$point1 %in% sc_das_lenient$start & sc_motifs$point2 %in% sc_das_lenient$end,]
 sc_motif_lenient_subset$chr <- as.numeric(substr(sc_motif_lenient_subset$chr, 4, 6))
 sc_motifs$chr <- as.numeric(substr(sc_motifs$chr, 4, 6))
-sc_das_stricter <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_stricter_final.tsv"), sep = "\t", header = TRUE)
-sc_das_strictest <- read.table(paste0(sc_peak_dir, "diff_peaks/D28_D1_diff_strictest_final.tsv"), sep = "\t", header = TRUE)
+sc_das_stricter <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_stricter_final.tsv"), sep = "\t", header = TRUE)
+sc_das_strictest <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_strictest_final.tsv"), sep = "\t", header = TRUE)
 
 # Grab gene lists from result tables and report number of genes
-sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table$Gene_Name)
-print(paste0("Number of genes that pass pseudobulk (scRNA): ", length(sc_pseudobulk_genes)))
+sc_pseudobulk_degs <- unique(sc_pseudobulk_deg_table$Gene_Name)
+print(paste0("Number of DEGs that pass pseudobulk (scRNA): ", length(sc_pseudobulk_degs)))
 
-pos_sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$sc_log2FC > 0,]$Gene_Name)
-print(paste0("Number of positive genes that pass pseudobulk (scRNA): ", length(pos_sc_pseudobulk_genes)))
+pos_sc_pseudobulk_degs <- unique(sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$sc_log2FC > 0,]$Gene_Name)
+print(paste0("Number of positive DEGs that pass pseudobulk (scRNA): ", length(pos_sc_pseudobulk_degs)))
 
-neg_sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$sc_log2FC < 0,]$Gene_Name)
-print(paste0("Number of negative genes that pass pseudobulk (scRNA): ", length(neg_sc_pseudobulk_genes)))
+neg_sc_pseudobulk_degs <- unique(sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$sc_log2FC < 0,]$Gene_Name)
+print(paste0("Number of negative DEGs that pass pseudobulk (scRNA): ", length(neg_sc_pseudobulk_degs)))
 
-innate_sc_pseudobulk_genes <- unique(innate_sc_pseudobulk_gene_table$Gene_Name)
-print(paste0("Number of genes that pass pseudobulk in innate cell types (scRNA): ", length(innate_sc_pseudobulk_genes)))
+innate_sc_pseudobulk_degs <- unique(innate_sc_pseudobulk_deg_table$Gene_Name)
+print(paste0("Number of DEGs that pass pseudobulk in innate cell types (scRNA): ", length(innate_sc_pseudobulk_degs)))
 
-pos_innate_sc_pseudobulk_genes <- unique(innate_sc_pseudobulk_gene_table[innate_sc_pseudobulk_gene_table$sc_log2FC > 0,]$Gene_Name)
-print(paste0("Number of positive genes that pass pseudobulk in innate cell types (scRNA): ", length(pos_innate_sc_pseudobulk_genes)))
+pos_innate_sc_pseudobulk_degs <- unique(innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$sc_log2FC > 0,]$Gene_Name)
+print(paste0("Number of upregulated DEGs that pass pseudobulk in innate cell types (scRNA): ", length(pos_innate_sc_pseudobulk_degs)))
 
-neg_innate_sc_pseudobulk_genes <- unique(innate_sc_pseudobulk_gene_table[innate_sc_pseudobulk_gene_table$sc_log2FC < 0,]$Gene_Name)
-print(paste0("Number of negative genes that pass pseudobulk in innate cell types (scRNA): ", length(neg_innate_sc_pseudobulk_genes)))
-
-multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$Gene_Name)
-print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
+neg_innate_sc_pseudobulk_degs <- unique(innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$sc_log2FC < 0,]$Gene_Name)
+print(paste0("Number of downregulated DEGs that pass pseudobulk in innate cell types (scRNA): ", length(neg_innate_sc_pseudobulk_degs)))
 
 # Next, we can select bulk RNA-seq associated with the specific subjects that we used for single-cell / multiome
 sc_aliquots <- c("91910a04711aa3dd","3731a6247ae23831","2232300b0e3a3d06","76ea83ff9293871a","5fdfdbaeb3c8eee8","981520e7e138d460","bb3d7b309cb5fc58","8338411dc3e181e9","da4fe21a89c8f7f4","41d248a6ec3b87e2","e3e01c75894ef461","4534496c580cb408") # 12 samples - 6 paired
