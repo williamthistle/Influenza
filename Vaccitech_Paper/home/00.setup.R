@@ -9,6 +9,14 @@ library(DiffBind)
 library(SPEEDI)
 library(pheatmap)
 
+# Load bulk RNA-seq analysis results
+onedrive_dir <- "~"
+setwd(onedrive_dir)
+setwd("../")
+onedrive_dir <- getwd()
+onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
+load(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
+
 set.seed(get_speedi_seed())
 options(max.print=1000000)
 
@@ -21,13 +29,7 @@ source(paste0(base_dir, "extra_functions/pseudobulk_analysis_helper.R"))
 setup_bulk_analysis(base_dir = base_dir, data_dir = data_dir)
 sample_metadata <- read.table(paste0(base_dir, "metadata/all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
 possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "NK_CD56bright", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT", "B", "B_naive", "B_memory")
-onedrive_dir <- "~"
-setwd(onedrive_dir)
-setwd("../")
-onedrive_dir <- getwd()
-onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
-# Load bulk RNA-seq analysis results
-load(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
+innate_cell_types <- c("CD16_Mono","CD14_Mono","cDC","pDC","NK","NK_CD56bright")
 # Reload one drive dir
 onedrive_dir <- "~"
 setwd(onedrive_dir)
@@ -51,6 +53,8 @@ mintchip_metadata <- read.table(paste0(mintchip_dir, "mintchip_metadata.tsv"), s
 # TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
 sc_pseudobulk_gene_table <- read.table(paste0(sc_pseudobulk_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 sc_pseudobulk_gene_table <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Cell_Type != "Platelet",]
+innate_sc_pseudobulk_gene_table <- sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$Cell_Type %in% innate_cell_types,]
+
 sc_pseudobulk_gene_table_magical <- read.table(paste0(sc_pseudobulk_dir_magical, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 sc_pseudobulk_gene_table_magical <- sc_pseudobulk_gene_table_magical[sc_pseudobulk_gene_table_magical$Cell_Type != "Platelet",]
 sc_pseudobulk_gene_table_magical[sc_pseudobulk_gene_table_magical$Cell_Type == "NK_MAGICAL",]$Cell_Type <- "NK"
@@ -78,6 +82,15 @@ print(paste0("Number of positive genes that pass pseudobulk (scRNA): ", length(p
 
 neg_sc_pseudobulk_genes <- unique(sc_pseudobulk_gene_table[sc_pseudobulk_gene_table$sc_log2FC < 0,]$Gene_Name)
 print(paste0("Number of negative genes that pass pseudobulk (scRNA): ", length(neg_sc_pseudobulk_genes)))
+
+innate_sc_pseudobulk_genes <- unique(innate_sc_pseudobulk_gene_table$Gene_Name)
+print(paste0("Number of genes that pass pseudobulk in innate cell types (scRNA): ", length(innate_sc_pseudobulk_genes)))
+
+pos_innate_sc_pseudobulk_genes <- unique(innate_sc_pseudobulk_gene_table[innate_sc_pseudobulk_gene_table$sc_log2FC > 0,]$Gene_Name)
+print(paste0("Number of positive genes that pass pseudobulk in innate cell types (scRNA): ", length(pos_innate_sc_pseudobulk_genes)))
+
+neg_innate_sc_pseudobulk_genes <- unique(innate_sc_pseudobulk_gene_table[innate_sc_pseudobulk_gene_table$sc_log2FC < 0,]$Gene_Name)
+print(paste0("Number of negative genes that pass pseudobulk in innate cell types (scRNA): ", length(neg_innate_sc_pseudobulk_genes)))
 
 multiome_pseudobulk_genes <- unique(multiome_pseudobulk_gene_table$Gene_Name)
 print(paste0("Number of genes that pass pseudobulk (multiome): ", length(multiome_pseudobulk_genes)))
