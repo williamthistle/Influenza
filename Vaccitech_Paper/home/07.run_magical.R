@@ -2,39 +2,46 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-# Assign cell types to upregulated genes from scRNA-seq (blood network)
-HB_all_upregulated_genes_blood <- assign_cell_types_to_humanbase_results(paste0(sc_humanbase_dir, "HB_all_upregulated_genes_blood.tsv"), sc_pseudobulk_gene_table)
-HB_all_upregulated_genes_blood_modules <- HB_all_upregulated_genes_blood[[1]]
-HB_all_upregulated_genes_blood_go_terms <- HB_all_upregulated_genes_blood[[2]]
+# STEP 1: SET UP MAGICAL INPUT FILES BASED ON RNA / ATAC DATA
 
-output_file <- paste0(sc_humanbase_dir, "HB_all_upregulated_genes_blood_with_cell_types.tsv")
-cat(paste0("# GENES ASSOCIATED WITH EACH MODULE \n"), file=output_file)
-utils::write.table(HB_all_upregulated_genes_blood_modules, file = output_file, append=TRUE, sep = "\t", quote = FALSE, row.names = FALSE)
-cat(paste0("# GENES ASSOCIATED WITH EACH GO TERM WITHIN EACH MODULE \n"), file=output_file, append = TRUE)
-utils::write.table(HB_all_upregulated_genes_blood_go_terms, file = output_file, append=TRUE, sep = "\t", quote = FALSE, row.names = FALSE)
-
-# Assign cell types to downregulated genes from scRNA-seq (blood network)
-HB_all_downregulated_genes_blood <- assign_cell_types_to_humanbase_results(paste0(sc_humanbase_dir, "HB_all_downregulated_genes_blood.tsv"), sc_pseudobulk_gene_table)
-HB_all_downregulated_genes_blood_modules <- HB_all_downregulated_genes_blood[[1]]
-HB_all_downregulated_genes_blood_go_terms <- HB_all_downregulated_genes_blood[[2]]
-
-output_file <- paste0(sc_humanbase_dir, "HB_all_downregulated_genes_blood_with_cell_types.tsv")
-cat(paste0("# GENES ASSOCIATED WITH EACH MODULE \n"), file=output_file)
-utils::write.table(HB_all_downregulated_genes_blood_modules, file = output_file, append=TRUE, sep = "\t", quote = FALSE, row.names = FALSE)
-cat(paste0("# GENES ASSOCIATED WITH EACH GO TERM WITHIN EACH MODULE \n"), file=output_file, append = TRUE)
-utils::write.table(HB_all_downregulated_genes_blood_go_terms, file = output_file, append=TRUE, sep = "\t", quote = FALSE, row.names = FALSE)
-
-# Assign cell types to genes in pathway analyses (from Natalie's script)
-up_modules <- c("M1", "M2", "M3", "M4", "M5")
-down_modules <- c("M1", "M2", "M3", "M4", "M5", "M6")
-for(module in up_modules) {
-  module_pathway_info <- read.table(paste0(sc_humanbase_dir, "HB_all_upregulated_genes_blood_", module, "_gsea_info_output.tsv"), sep = "\t", header = TRUE)
-  module_pathway_info_with_cell_types <- assign_cell_types_to_pathway_results(module_pathway_info, sc_pseudobulk_gene_table)
-  write.table(module_pathway_info_with_cell_types, paste0(sc_humanbase_dir, "HB_all_upregulated_genes_blood_", module, "_gsea_info_output_with_cell_types.tsv"), sep = "\t", quote = FALSE)
+# a) Cell type candidate genes.txt
+cell_type_candidate_gene_dir <- paste0(sc_magical_dir, "Candidate_Genes/")
+for(cell_type in unique(sc_pseudobulk_deg_combined_cell_types_table$Cell_Type)) {
+  write.table(sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == cell_type,]$Gene_Name,
+              file = paste0(cell_type_candidate_gene_dir, sub(" ", "_", cell_type), "_Candidate_Genes.txt"), sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = FALSE)
 }
 
-for(module in down_modules) {
-  module_pathway_info <- read.table(paste0(sc_humanbase_dir, "HB_all_downregulated_genes_blood_", module, "_gsea_info_output.tsv"), sep = "\t", header = TRUE)
-  module_pathway_info_with_cell_types <- assign_cell_types_to_pathway_results(module_pathway_info, sc_pseudobulk_gene_table)
-  write.table(module_pathway_info_with_cell_types, paste0(sc_humanbase_dir, "HB_all_downregulated_genes_blood_", module, "_gsea_info_output_with_cell_types.tsv"), sep = "\t", quote = FALSE)
+# b) Cell type candidate peaks.txt
+cell_type_candidate_peak_dir <- paste0(sc_magical_dir, "Candidate_Peaks/")
+for(cell_type in unique(sc_das_lenient$Cell_Type)) {
+  cell_type_sc_das_lenient <- sc_das_lenient[sc_das_lenient$Cell_Type == cell_type,]
+  cell_type_sc_das_lenient <- cell_type_sc_das_lenient[,c("chr", "start", "end")]
+  write.table(cell_type_sc_das_lenient,
+              file = paste0(cell_type_candidate_peak_dir, sub(" ", "_", cell_type), "_Candidate_Peaks.txt"), sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = FALSE)
 }
+
+# c) Cell type scATAC cell meta.txt
+cell_type_scATAC_cell_metadata_dir <- paste0(sc_magical_dir, "scATAC_Cell_Metadata/")
+for(cell_type in unique(atac_cell_metadata$cell_type)) {
+  cell_type_atac_cell_metadata <- atac_cell_metadata[atac_cell_metadata$cell_type == cell_type,]
+  write.table(cell_type_atac_cell_metadata,
+              file = paste0(cell_type_scATAC_cell_metadata_dir, sub(" ", "_", cell_type), "_scATAC_Cell_Metadata.txt"), sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = FALSE)
+}
+
+# d) Cell type scATAC read count.txt
+
+
+# e) Cell type scRNA cell meta.txt
+# f) Cell type scRNA read count.txt
+# g) hg38_Refseq.txt
+hg38_ref_seq <- paste0(sc_magical_dir, "hg38_Refseq.txt")
+# h) Motif mapping prior.txt
+# i) Motifs.txt
+motifs <- paste0(sc_magical_dir, "Motifs.txt")
+# j) RaoGM12878_40kb_TopDomTADs_filtered_hg38.txt
+tads <- paste0(sc_magical_dir, "RaoGM12878_40kb_TopDomTADs_filtered_hg38.txt")
+# k) scATAC peaks.txt
+# l) scRNA genes.txt

@@ -53,8 +53,8 @@ sc_pseudobulk_deg_table <- read.table(paste0(sc_deg_dir, "D28-vs-D_minus_1-degs-
 sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type != "Platelet",]
 sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(sc_deg_combined_cell_types_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type != "Platelet",]
+sc_pseudobulk_deg_combined_cell_types_table$Cell_Type[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == "NK_MAGICAL"] <- "NK"
 innate_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% innate_cell_types,]
-
 
 # Peak related tables
 mintchip_table <- read.xlsx(xlsxFile = paste0(mintchip_dir, "MultiMarkerBestSignatureAnnotations_All3000.xlsx"), sheet = 1)
@@ -67,6 +67,7 @@ sc_motif_lenient_subset$chr <- as.numeric(substr(sc_motif_lenient_subset$chr, 4,
 sc_motifs$chr <- as.numeric(substr(sc_motifs$chr, 4, 6))
 sc_das_stricter <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_stricter_final.tsv"), sep = "\t", header = TRUE)
 sc_das_strictest <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_strictest_final.tsv"), sep = "\t", header = TRUE)
+atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
 
 # Grab gene lists from result tables and report number of genes
 sc_pseudobulk_degs <- unique(sc_pseudobulk_deg_table$Gene_Name)

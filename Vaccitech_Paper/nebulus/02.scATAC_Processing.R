@@ -197,6 +197,44 @@ for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
 }
 HVL_proj_minus_clusters <- addCellColData(ArchRProj = HVL_proj_minus_clusters, data = sample_metadata, cells = HVL_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
 
+# Get cell metadata
+HVL_proj_metadata_df <- data.frame(cell_index = seq(length(HVL_proj_minus_clusters$cellNames)), 
+                                   cell_barcode = length(HVL_proj_minus_clusters$cellNames), 
+                                   cell_type = length(HVL_proj_minus_clusters$cellNames), 
+                                   sample = length(HVL_proj_minus_clusters$cellNames), 
+                                   condition = length(HVL_proj_minus_clusters$cellNames))
+HVL_proj_metadata_df$cell_barcode <- HVL_proj_minus_clusters$cellNames
+HVL_proj_metadata_df$cell_type <- HVL_proj_minus_clusters$Cell_type_voting
+HVL_proj_metadata_df$sample <- HVL_proj_minus_clusters$Sample
+HVL_proj_metadata_df$condition <- HVL_proj_minus_clusters$time_point
+write.table(HVL_proj_metadata_df, file = paste0(ATAC_output_dir, "HVL_cell_metadata.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+cell_name_to_index_mapping <- data.frame(cell_name = HVL_proj_minus_clusters$cellNames, cell_index = HVL_proj_minus_clusters$cell_index)
+# Get cell peak counts per cell type
+HVL_proj_minus_clusters <- addCellColData(ArchRProj = HVL_proj_minus_clusters, data = seq(length(HVL_proj_minus_clusters$cellNames)), 
+                                          cells = HVL_proj_minus_clusters$cellNames, name = "cell_index", force = TRUE)
+hvl_peak_matrix <- getMatrixFromProject(ArchRProj = HVL_proj_minus_clusters, useMatrix = "PeakMatrix", useSeqnames = NULL,
+                                verbose = TRUE,binarize = FALSE,threads = getArchRThreads(), logFile = createLogFile("getMatrixFromProject"))
+for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
+  # Grab cells associated with cell type
+  idxPass <- which(HVL_proj_minus_clusters$Cell_type_voting %in% cell_type)
+  cellsPass <- HVL_proj_minus_clusters$cellNames[idxPass]
+  hvl_peak_matrix_subset <- hvl_peak_matrix[,cellsPass]
+  hvl_peak_matrix_subset_content <- t(assay(hvl_peak_matrix_subset))
+  cell_type_atac_peak_count_df <- data.frame(peak_index = numeric(), cell_index = numeric(), peak_count = numeric())
+  for(current_row_index in 1:nrow(hvl_peak_matrix_subset_content)) {
+    current_row <- hvl_peak_matrix_subset_content[current_row_index,]
+    current_cell_name <- rownames(hvl_peak_matrix_subset_content)[current_row_index]
+    current_cell_index <- cell_name_to_index_mapping[cell_name_to_index_mapping$cell_name == current_cell_name,]$cell_index
+    current_peak_indices <- which(current_row != 0)
+    current_peak_count <- current_row[which(current_row != 0)]
+    current_cell_index <- rep(current_cell_index, length(current_peak_indices))
+    subset_df <- data.frame(peak_index = current_peak_indices, cell_index = current_cell_index, peak_count = current_peak_count)
+    cell_type_atac_peak_count_df <- rbind(cell_type_atac_peak_count_df, subset_df)
+  }
+  write.table(cell_type_atac_peak_count_df, file = paste0(ATAC_output_dir, sub(" ", "_", cell_type),  "_peak_counts.tsv"), sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+}
+
 
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/corrected_peak_indices/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
