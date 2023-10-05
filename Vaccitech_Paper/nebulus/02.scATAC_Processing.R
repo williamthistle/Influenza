@@ -222,10 +222,7 @@ for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
                                      sample = HVL_proj_cell_type_subset$Sample, 
                                      condition = HVL_proj_cell_type_subset$time_point)
   write.table(HVL_proj_metadata_df, file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_HVL_ATAC_cell_metadata.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-  # 2) Peak set
-  current_peaks <- getPeakSet(HVL_proj_cell_type_subset)
-  write.table(current_peaks[,1], file = paste0(MAGICAL_candidate_peaks_dir, cell_type_for_file_name, "_HVL_ATAC_peaks.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
-  # 3) ATAC assay cell count
+  # 2) ATAC assay cell count
   HVL_peak_matrix_cell_type_subset <- getMatrixFromProject(ArchRProj = HVL_proj_cell_type_subset, useMatrix = "PeakMatrix", useSeqnames = NULL,
                                                 verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),
                                                 logFile = createLogFile("getMatrixFromProject"))
@@ -235,14 +232,20 @@ for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
   write.table(summary(final_peak_matrix), 
               file = paste0(MAGICAL_peak_counts_dir, cell_type_for_file_name, "_HVL_ATAC_read_count.tsv"),
               quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
-  HVL_proj_cell_type_subset <- addMotifAnnotations(ArchRProj = HVL_proj_cell_type_subset, motifSet = "cisbp", name = "Motif",
-                                                   force = TRUE)
-  # A Motif-Matches-In-Peaks.rds file will be created under the Annotations folder
-  peak_motif_mapping <- readRDS(file = paste0(ATAC_output_dir, "HVL/Annotations/Motif-Matches-In-Peaks.rds"))
-  write.table(lapply(summary(peak_motif_mapping@assays@data@listData$matches), as.numeric), 
-              file=paste0(MAGICAL_motif_mapping_prior_dir, cell_type_for_file_name, "_motif_mapping_prior.tsv"),
-              quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
 }
+
+# 2) Peak set
+current_peaks <- getPeakSet(HVL_proj_minus_clusters)
+write.table(current_peaks[,1], file = paste0(MAGICAL_candidate_peaks_dir, "HVL_ATAC_peaks.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
+
+HVL_proj_minus_clusters <- addMotifAnnotations(ArchRProj = HVL_proj_minus_clusters, motifSet = "cisbp", name = "Motif",
+                                                 force = TRUE)
+# A Motif-Matches-In-Peaks.rds file will be created under the Annotations folder
+peak_motif_mapping <- readRDS(file = paste0(ATAC_output_dir, "HVL/Annotations/Motif-Matches-In-Peaks.rds"))
+write.table(lapply(summary(peak_motif_mapping@assays@data@listData$matches), as.numeric), 
+            file=paste0(MAGICAL_motif_mapping_prior_dir, "HVL_ATAC_motif_mapping_prior.tsv"),
+            quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
+
 
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/corrected_peak_indices/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
