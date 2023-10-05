@@ -191,6 +191,47 @@ hvl_sc_obj <- combine_cell_types_magical(hvl_sc_obj)
 # save(hvl_sc_obj, file = paste0(RNA_output_dir, analysis_name, ".hvl.new.batch.inference.final.RNA.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.hvl.new.batch.inference.final.RNA.rds"))
 
+# Get cell metadata
+hvl_metadata_df <- data.frame(cell_index = seq(length(hvl_sc_obj$cell_name)), 
+                                   cell_barcode = hvl_sc_obj$cell_name, 
+                                   cell_type = hvl_sc_obj$magical_cell_types, 
+                                   sample = hvl_sc_obj$sample, 
+                                   condition = hvl_sc_obj$time_point)
+write.table(hvl_metadata_df, file = paste0(RNA_output_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+hvl_sc_obj$cell_index <- seq(length(hvl_sc_obj$cell_name))
+cell_name_to_index_mapping <- data.frame(cell_name = hvl_sc_obj$cell_name, cell_index = hvl_sc_obj$cell_index)
+
+
+
+hvl_peak_matrix <- getMatrixFromProject(ArchRProj = HVL_proj_minus_clusters, useMatrix = "PeakMatrix", useSeqnames = NULL,
+                                        verbose = TRUE,binarize = FALSE,threads = getArchRThreads(), logFile = createLogFile("getMatrixFromProject"))
+for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
+  print(cell_type)
+  # Grab cells associated with cell type
+  idxPass <- which(HVL_proj_minus_clusters$Cell_type_voting %in% cell_type)
+  cellsPass <- HVL_proj_minus_clusters$cellNames[idxPass]
+  hvl_peak_matrix_subset <- hvl_peak_matrix[,cellsPass]
+  hvl_peak_matrix_subset_content <- t(assay(hvl_peak_matrix_subset))
+  row_names <- rownames(hvl_peak_matrix_subset_content)
+  cell_indices <- cell_name_to_index_mapping$cell_index[match(row_names, cell_name_to_index_mapping$cell_name)]
+  start_time <- Sys.time()
+  subset_df_list <- lapply(1:nrow(hvl_peak_matrix_subset_content), function(current_row_index) {
+    current_row <- hvl_peak_matrix_subset_content[current_row_index,]
+    current_cell_name <- row_names[current_row_index]
+    current_cell_index <- cell_indices[current_row_index]
+    current_peak_indices <- which(current_row != 0)
+    current_peak_count <- current_row[current_peak_indices]
+    current_cell_index <- rep(current_cell_index, length(current_peak_indices))
+    data.frame(peak_index = current_peak_indices, cell_index = current_cell_index, peak_count = current_peak_count)
+  })
+  # Combine the list of data frames into a single data frame
+  cell_type_atac_peak_count_df <- do.call(rbind, subset_df_list)
+  end_time <- Sys.time()
+  print(end_time - start_time)
+  write.table(cell_type_atac_peak_count_df, file = paste0(ATAC_output_dir, sub(" ", "_", cell_type),  "_peak_counts.tsv"), sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+}
+
 HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id/")
 if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
 run_differential_expression_controlling_for_subject_id(hvl_sc_obj, HVL_differential_genes_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(hvl_sc_obj$predicted_celltype_majority_vote))

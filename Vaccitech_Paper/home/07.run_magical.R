@@ -35,7 +35,16 @@ for(cell_type in unique(atac_cell_metadata$cell_type)) {
 
 
 # e) Cell type scRNA cell meta.txt
+cell_type_scRNA_cell_metadata_dir <- paste0(sc_magical_dir, "scRNA_Cell_Metadata/")
+for(cell_type in unique(rna_cell_metadata$cell_type)) {
+  cell_type_rna_cell_metadata <- rna_cell_metadata[rna_cell_metadata$cell_type == cell_type,]
+  write.table(cell_type_rna_cell_metadata,
+              file = paste0(cell_type_scRNA_cell_metadata_dir, sub(" ", "_", cell_type), "_scRNA_Cell_Metadata.txt"), sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = FALSE)
+}
+
 # f) Cell type scRNA read count.txt
+
 # g) hg38_Refseq.txt
 hg38_ref_seq <- paste0(sc_magical_dir, "hg38_Refseq.txt")
 # h) Motif mapping prior.txt

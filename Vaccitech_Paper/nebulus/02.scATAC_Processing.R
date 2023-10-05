@@ -197,44 +197,52 @@ for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
 }
 HVL_proj_minus_clusters <- addCellColData(ArchRProj = HVL_proj_minus_clusters, data = sample_metadata, cells = HVL_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
 
-# Get cell metadata
-HVL_proj_metadata_df <- data.frame(cell_index = seq(length(HVL_proj_minus_clusters$cellNames)), 
-                                   cell_barcode = length(HVL_proj_minus_clusters$cellNames), 
-                                   cell_type = length(HVL_proj_minus_clusters$cellNames), 
-                                   sample = length(HVL_proj_minus_clusters$cellNames), 
-                                   condition = length(HVL_proj_minus_clusters$cellNames))
-HVL_proj_metadata_df$cell_barcode <- HVL_proj_minus_clusters$cellNames
-HVL_proj_metadata_df$cell_type <- HVL_proj_minus_clusters$Cell_type_voting
-HVL_proj_metadata_df$sample <- HVL_proj_minus_clusters$Sample
-HVL_proj_metadata_df$condition <- HVL_proj_minus_clusters$time_point
-write.table(HVL_proj_metadata_df, file = paste0(ATAC_output_dir, "HVL_cell_metadata.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-
-cell_name_to_index_mapping <- data.frame(cell_name = HVL_proj_minus_clusters$cellNames, cell_index = HVL_proj_minus_clusters$cell_index)
-# Get cell peak counts per cell type
-HVL_proj_minus_clusters <- addCellColData(ArchRProj = HVL_proj_minus_clusters, data = seq(length(HVL_proj_minus_clusters$cellNames)), 
-                                          cells = HVL_proj_minus_clusters$cellNames, name = "cell_index", force = TRUE)
-hvl_peak_matrix <- getMatrixFromProject(ArchRProj = HVL_proj_minus_clusters, useMatrix = "PeakMatrix", useSeqnames = NULL,
-                                verbose = TRUE,binarize = FALSE,threads = getArchRThreads(), logFile = createLogFile("getMatrixFromProject"))
+MAGICAL_file_dir <- paste0(ATAC_output_dir, "MAGICAL/")
+if (!dir.exists(MAGICAL_file_dir)) {dir.create(MAGICAL_file_dir)}
+MAGICAL_cell_metadata_dir <- paste0(MAGICAL_file_dir, "scATAC_Cell_Metadata/")
+if (!dir.exists(MAGICAL_cell_metadata_dir)) {dir.create(MAGICAL_cell_metadata_dir)}
+MAGICAL_peak_counts_dir <- paste0(MAGICAL_file_dir, "scATAC_Read_Counts/")
+if (!dir.exists(MAGICAL_peak_counts_dir)) {dir.create(MAGICAL_peak_counts_dir)}
+MAGICAL_candidate_peaks_dir <- paste0(MAGICAL_file_dir, "Candidate_Peaks/")
+if (!dir.exists(MAGICAL_candidate_peaks_dir)) {dir.create(MAGICAL_candidate_peaks_dir)}
+MAGICAL_motif_mapping_prior_dir <- paste0(MAGICAL_file_dir, "Motif_Mapping_Prior/")
+if (!dir.exists(MAGICAL_motif_mapping_prior_dir)) {dir.create(MAGICAL_motif_mapping_prior_dir)}
 for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
+  print(cell_type)
+  cell_type_for_file_name <- sub(" ", "_", cell_type)
   # Grab cells associated with cell type
   idxPass <- which(HVL_proj_minus_clusters$Cell_type_voting %in% cell_type)
   cellsPass <- HVL_proj_minus_clusters$cellNames[idxPass]
-  hvl_peak_matrix_subset <- hvl_peak_matrix[,cellsPass]
-  hvl_peak_matrix_subset_content <- t(assay(hvl_peak_matrix_subset))
-  cell_type_atac_peak_count_df <- data.frame(peak_index = numeric(), cell_index = numeric(), peak_count = numeric())
-  for(current_row_index in 1:nrow(hvl_peak_matrix_subset_content)) {
-    current_row <- hvl_peak_matrix_subset_content[current_row_index,]
-    current_cell_name <- rownames(hvl_peak_matrix_subset_content)[current_row_index]
-    current_cell_index <- cell_name_to_index_mapping[cell_name_to_index_mapping$cell_name == current_cell_name,]$cell_index
-    current_peak_indices <- which(current_row != 0)
-    current_peak_count <- current_row[which(current_row != 0)]
-    current_cell_index <- rep(current_cell_index, length(current_peak_indices))
-    subset_df <- data.frame(peak_index = current_peak_indices, cell_index = current_cell_index, peak_count = current_peak_count)
-    cell_type_atac_peak_count_df <- rbind(cell_type_atac_peak_count_df, subset_df)
-  }
-  write.table(cell_type_atac_peak_count_df, file = paste0(ATAC_output_dir, sub(" ", "_", cell_type),  "_peak_counts.tsv"), sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+  # Subset ArchR project and peak matrix to associated cells
+  HVL_proj_cell_type_subset <- HVL_proj_minus_clusters[cellsPass,]
+  # 1) Cell metadata
+  HVL_proj_metadata_df <- data.frame(cell_index = seq(length(HVL_proj_cell_type_subset$cellNames)), 
+                                     cell_barcode = HVL_proj_cell_type_subset$cellNames, 
+                                     cell_type = HVL_proj_cell_type_subset$Cell_type_voting, 
+                                     sample = HVL_proj_cell_type_subset$Sample, 
+                                     condition = HVL_proj_cell_type_subset$time_point)
+  write.table(HVL_proj_metadata_df, file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_HVL_ATAC_cell_metadata.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  # 2) Peak set
+  current_peaks <- getPeakSet(HVL_proj_cell_type_subset)
+  write.table(current_peaks[,1], file = paste0(MAGICAL_candidate_peaks_dir, cell_type_for_file_name, "_HVL_ATAC_peaks.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
+  # 3) ATAC assay cell count
+  HVL_peak_matrix_cell_type_subset <- getMatrixFromProject(ArchRProj = HVL_proj_cell_type_subset, useMatrix = "PeakMatrix", useSeqnames = NULL,
+                                                verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),
+                                                logFile = createLogFile("getMatrixFromProject"))
+  
+  final_peak_matrix <- HVL_peak_matrix_cell_type_subset@assays@data@listData$PeakMatrix
+  final_peak_matrix <- final_peak_matrix[, HVL_proj_cell_type_subset$cellNames]
+  write.table(summary(final_peak_matrix), 
+              file = paste0(MAGICAL_peak_counts_dir, cell_type_for_file_name, "_HVL_ATAC_read_count.tsv"),
+              quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
+  HVL_proj_cell_type_subset <- addMotifAnnotations(ArchRProj = HVL_proj_cell_type_subset, motifSet = "cisbp", name = "Motif",
+                                                   force = TRUE)
+  # A Motif-Matches-In-Peaks.rds file will be created under the Annotations folder
+  peak_motif_mapping <- readRDS(file = paste0(ATAC_output_dir, "HVL/Annotations/Motif-Matches-In-Peaks.rds"))
+  write.table(lapply(summary(peak_motif_mapping@assays@data@listData$matches), as.numeric), 
+              file=paste0(MAGICAL_motif_mapping_prior_dir, cell_type_for_file_name, "_motif_mapping_prior.tsv"),
+              quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
 }
-
 
 differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/corrected_peak_indices/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
