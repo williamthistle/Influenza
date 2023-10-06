@@ -203,9 +203,9 @@ MAGICAL_cell_metadata_dir <- paste0(MAGICAL_file_dir, "scATAC_Cell_Metadata/")
 if (!dir.exists(MAGICAL_cell_metadata_dir)) {dir.create(MAGICAL_cell_metadata_dir)}
 MAGICAL_peak_counts_dir <- paste0(MAGICAL_file_dir, "scATAC_Read_Counts/")
 if (!dir.exists(MAGICAL_peak_counts_dir)) {dir.create(MAGICAL_peak_counts_dir)}
-MAGICAL_candidate_peaks_dir <- paste0(MAGICAL_file_dir, "Candidate_Peaks/")
+MAGICAL_candidate_peaks_dir <- paste0(MAGICAL_file_dir, "scATAC_Peak_Coordinates/")
 if (!dir.exists(MAGICAL_candidate_peaks_dir)) {dir.create(MAGICAL_candidate_peaks_dir)}
-MAGICAL_motif_mapping_prior_dir <- paste0(MAGICAL_file_dir, "Motif_Mapping_Prior/")
+MAGICAL_motif_mapping_prior_dir <- paste0(MAGICAL_file_dir, "scATAC_Motif_Mapping_Prior/")
 if (!dir.exists(MAGICAL_motif_mapping_prior_dir)) {dir.create(MAGICAL_motif_mapping_prior_dir)}
 for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
   print(cell_type)
@@ -221,7 +221,7 @@ for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
                                      cell_type = HVL_proj_cell_type_subset$Cell_type_voting, 
                                      sample = HVL_proj_cell_type_subset$Sample, 
                                      condition = HVL_proj_cell_type_subset$time_point)
-  write.table(HVL_proj_metadata_df, file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_HVL_ATAC_cell_metadata.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(HVL_proj_metadata_df, file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_HVL_ATAC_cell_metadata.tsv"), sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
   # 2) ATAC assay cell count
   HVL_peak_matrix_cell_type_subset <- getMatrixFromProject(ArchRProj = HVL_proj_cell_type_subset, useMatrix = "PeakMatrix", useSeqnames = NULL,
                                                 verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),
@@ -236,7 +236,7 @@ for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
 
 # 2) Peak set
 current_peaks <- getPeakSet(HVL_proj_minus_clusters)
-write.table(current_peaks[,1], file = paste0(MAGICAL_candidate_peaks_dir, "HVL_ATAC_peaks.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
+write.table(current_peaks[,1], file = paste0(MAGICAL_candidate_peaks_dir, "HVL_ATAC_peak_coordinates.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
 
 HVL_proj_minus_clusters <- addMotifAnnotations(ArchRProj = HVL_proj_minus_clusters, motifSet = "cisbp", name = "Motif",
                                                  force = TRUE)
