@@ -58,15 +58,17 @@ possible_ATAC_types <- unlist(strsplit(possible_ATAC_types, "_Candidate_Peaks.tx
 cell_types <- intersect(possible_RNA_types, possible_ATAC_types)
 
 # STEP 3: RUN MAGICAL
+set.seed(get_speedi_seed())
 for(cell_type in cell_types) {
+  print(cell_type)
   current_candidate_genes <- paste0(cell_type_candidate_gene_dir, cell_type, "_Candidate_Genes.txt")
   current_candidate_peaks <- paste0(cell_type_candidate_peak_dir, cell_type, "_Candidate_Peaks.txt")
   
   current_scRNA_cell_metadata <- paste0(cell_type_scRNA_cell_metadata_dir, cell_type, "_HVL_RNA_cell_metadata.tsv")
   current_scATAC_cell_metadata <- paste0(cell_type_scATAC_cell_metadata_dir, cell_type, "_HVL_ATAC_cell_metadata.tsv")
 
-  current_scRNA_read_counts <- paste0(cell_type_scRNA_read_counts_dir, cell_type, "_HVL_RNA_read_counts.tsv")
-  current_scATAC_read_counts <- paste0(cell_type_scATAC_read_counts_dir, cell_type, "_HVL_ATAC_read_count.tsv")
+  current_scRNA_read_counts <- paste0(cell_type_scRNA_read_counts_dir, cell_type, "_HVL_RNA_read_counts.rds")
+  current_scATAC_read_counts <- paste0(cell_type_scATAC_read_counts_dir, cell_type, "_HVL_ATAC_read_counts.rds")
   
   # Check that files exist
   # file.exists(c(hg38_ref_seq, peak_coordinates, gene_list, motifs, motif_prior, tads, current_candidate_genes, current_candidate_peaks, 
@@ -83,43 +85,6 @@ for(cell_type in cell_types) {
   
   circuits_linkage_posterior <- MAGICAL_estimation(loaded_data, candidate_circuits, initial_model, iteration_num = 1000)
   
-  MAGICAL_circuits_output(Output_file_path = paste0(magical_output_dir, cell_type, "_MAGICAL_selected_regulatory_circuits.txt"), 
+  MAGICAL_circuits_output(Output_file_path = paste0(magical_output_dir, cell_type, "_MAGICAL_selected_regulatory_circuits_6.txt"), 
                                                     candidate_circuits, circuits_linkage_posterior)
-  
 }
-
-
-
-
-
-# c) Cell type scATAC cell meta.txt
-for(cell_type in unique(atac_cell_metadata$cell_type)) {
-  cell_type_atac_cell_metadata <- atac_cell_metadata[atac_cell_metadata$cell_type == cell_type,]
-  write.table(cell_type_atac_cell_metadata,
-              file = paste0(cell_type_scATAC_cell_metadata_dir, sub(" ", "_", cell_type), "_scATAC_Cell_Metadata.txt"), sep = "\t", quote = FALSE,
-              row.names = FALSE, col.names = FALSE)
-}
-
-# d) Cell type scATAC read count.txt
-
-
-# e) Cell type scRNA cell meta.txt
-
-for(cell_type in unique(rna_cell_metadata$cell_type)) {
-  cell_type_rna_cell_metadata <- rna_cell_metadata[rna_cell_metadata$cell_type == cell_type,]
-  write.table(cell_type_rna_cell_metadata,
-              file = paste0(cell_type_scRNA_cell_metadata_dir, sub(" ", "_", cell_type), "_scRNA_Cell_Metadata.txt"), sep = "\t", quote = FALSE,
-              row.names = FALSE, col.names = FALSE)
-}
-
-# f) Cell type scRNA read count.txt
-
-# g) hg38_Refseq.txt
-
-# h) Motif mapping prior.txt
-# i) Motifs.txt
-
-# j) RaoGM12878_40kb_TopDomTADs_filtered_hg38.txt
-
-# k) scATAC peaks.txt
-# l) scRNA genes.txt

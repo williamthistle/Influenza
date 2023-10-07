@@ -216,9 +216,9 @@ for(cell_type in unique(hvl_sc_obj$magical_cell_types)) {
   #RNA assay cell read counts
   cell_index=which(hvl_sc_obj$magical_cell_types==cell_type)
   cell_type_scRNA_counts = as(hvl_sc_obj@assays$RNA@counts[, cell_index], "dgTMatrix")
-  write.table(summary(cell_type_scRNA_counts), file= paste0(MAGICAL_read_counts_dir, cell_type_for_file_name, "_HVL_RNA_read_counts.tsv"),
-              quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = '\t')
+  saveRDS(cell_type_scRNA_counts, file= paste0(MAGICAL_read_counts_dir, cell_type_for_file_name, "_HVL_RNA_read_counts.rds"))
   
+  # Cell metadata
   cell_type_scRNA_meta = hvl_sc_obj@meta.data[cell_index,]
   write.table(data.frame(rownames(cell_type_scRNA_meta), cell_type_scRNA_meta$magical_cell_types, cell_type_scRNA_meta$sample, cell_type_scRNA_meta$time_point),
               file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_HVL_RNA_cell_metadata.tsv"),

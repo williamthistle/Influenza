@@ -18,7 +18,7 @@ onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 load(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
 
 set.seed(get_speedi_seed())
-options(max.print=1000000)
+options(max.print=10000)
 
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 data_dir <- "~/local_data_files/"

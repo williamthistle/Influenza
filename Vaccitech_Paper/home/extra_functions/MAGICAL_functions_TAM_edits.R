@@ -29,7 +29,11 @@ Data_loading <- function(Candidate_Gene_file_path, Candidate_Peak_file_path,
   scRNA_cells<-read.table(scRNA_cellmeta_file_path, sep='\t', comment.char = "")
   colnames(scRNA_cells) = c("cell_index", "cell_barcode", "cell_type", "subject_ID", "condition")
   
+  #scRNA_read_count_table<-read.table(scRNA_readcount_file_path, sep='\t')
+  #scRNA_read_count_matrix <- sparseMatrix(i = scRNA_read_count_table[,1], j=scRNA_read_count_table[,2], x=scRNA_read_count_table[,3],
+  #                                        dimnames=list(levels(scRNA_read_count_table[,1]), levels(scRNA_read_count_table[,2])), repr = "T")
   scRNA_read_count_matrix <- readRDS(scRNA_readcount_file_path)
+  #rm(scRNA_read_count_table)
   
   Group_conditions = unique(scRNA_cells$condition)
   print(paste('We detected', length(Group_conditions), 'conditions from the meta file', sep = ' '))
@@ -62,8 +66,11 @@ Data_loading <- function(Candidate_Gene_file_path, Candidate_Peak_file_path,
   scATAC_cells <- read.table(scATAC_cellmeta_file_path, sep ="\t", comment.char = "")
   colnames(scATAC_cells) = c("cell_index", "cell_barcode", "cell_type", 'subject_ID')
   
+  #scATAC_read_count_table <- read.table(scATAC_readcount_file_path, sep ="\t")
+  #scATAC_read_count_matrix <- sparseMatrix(i = scATAC_read_count_table[,1], j=scATAC_read_count_table[,2], x=scATAC_read_count_table[,3],
+  #                                         dimnames=list(levels(scATAC_read_count_table[,1]), levels(scATAC_read_count_table[,2])), repr = "T")
+  #rm(scATAC_read_count_table)
   scATAC_read_count_matrix <- readRDS(scATAC_readcount_file_path)
-  
   scATAC_samples = unique(scATAC_cells$subject_ID)
   print(paste('The input scATACseq data includes',length(scATAC_Peaks$Peak_index), 'Peaks and', length(scATAC_cells$cell_barcode), 'cells from', length(scATAC_samples), 'samples', sep = ' '))
   cat('\n')
@@ -161,7 +168,6 @@ Candidate_circuits_construction_with_TAD <- function(loaded_data, TAD_file_path)
   Candidate_Peaks <- Candidate_Peaks[Peak_index,]
   Candidate_TF_Peak_Binding <- Candidate_TF_Peak_Binding[Peak_index,]
   
-  
   # extract Gene TSS
   Gene_symbols<-intersect(intersect(Candidate_Genes$Gene_symbols, Refseq$Gene_symbols), scRNA_Genes$Gene_symbols)
   Gene_chr=character(length(Gene_symbols))
@@ -215,13 +221,18 @@ Candidate_circuits_construction_with_TAD <- function(loaded_data, TAD_file_path)
   #pseudobulk ATAC data is calculated for model initialization
   ATAC_count=matrix(0,nrow=nrow(scATAC_read_count_matrix), ncol=length(Common_samples))
   for (s in 1:length(Common_samples)){
-    ATAC_count[,s]=rowSums(scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])])
+    if (is.numeric(scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])])){
+        ATAC_count[,s]= scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])]
+    }
+    else{
+        ATAC_count[,s]=rowSums(scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])])
+    }
   }
+  #for (s in 1:length(Common_samples)){
+  # # #ATAC_count[,s]=rowSums(scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])])
+  #}
   colnames(ATAC_count)<-Common_samples
-  print(nrow(ATAC_count))
-  print(length(scATAC_Peaks$Peak_index))
   rownames(ATAC_count)<-scATAC_Peaks$Peak_index
-
  
   total_ATAC_reads=5e6
   ATAC_scale_facter=total_ATAC_reads/(colSums(ATAC_count)+1)
@@ -236,11 +247,20 @@ Candidate_circuits_construction_with_TAD <- function(loaded_data, TAD_file_path)
   #pseudobulk RNA data is calculated for model initialization
   RNA_count=matrix(0,nrow=nrow(scRNA_read_count_matrix), ncol=length(Common_samples))
   for (s in 1:length(Common_samples)){
-    RNA_count[,s]=rowSums(scRNA_read_count_matrix[,which(scRNA_cells$subject_ID==Common_samples[s])])
+    if (is.numeric(scRNA_read_count_matrix[,which(scRNA_cells$subject_ID==Common_samples[s])])){
+      RNA_count[,s]=scRNA_read_count_matrix[,which(scRNA_cells$subject_ID==Common_samples[s])]
+    }
+    else{
+      RNA_count[,s]=rowSums(scRNA_read_count_matrix[,which(scRNA_cells$subject_ID==Common_samples[s])])
+    }
   }
+  #for (s in 1:length(Common_samples)){
+  #  RNA_count[,s]=rowSums(scRNA_read_count_matrix[,which(scRNA_cells$subject_ID==Common_samples[s])])
+  #}
   colnames(RNA_count)<-Common_samples
+  print(nrow(RNA_count))
+  print(length(scRNA_Genes$Gene_symbols))
   rownames(RNA_count)<-scRNA_Genes$Gene_symbols
-  
   total_RNA_reads=5e6
   RNA_scale_facter=total_RNA_reads/(colSums(RNA_count)+1)
   RNA_count=sweep(RNA_count, 2, RNA_scale_facter, "*")
@@ -249,7 +269,6 @@ Candidate_circuits_construction_with_TAD <- function(loaded_data, TAD_file_path)
   index=match(Candidate_Genes$Gene_symbols, scRNA_Genes$Gene_symbols)
   Candidate_Gene_log2Count=RNA_log2[index,]
   Candidate_Gene_log2Count=sweep(Candidate_Gene_log2Count, 1, rowMeans(Candidate_Gene_log2Count), '-')
-  
   
   # TFs that are not expressed in the current data are not considered
   selected_TFs=intersect(Candidate_TFs$name, scRNA_Genes$Gene_symbols)
@@ -492,7 +511,7 @@ MAGICAL_initialization <- function(loaded_data, Candidate_circuits){
   # TF activity prior: TF RNA expression
   T_prior <- Candidate_TF_log2Count
   T_mean <- Candidate_TF_log2Count
-  T_var = matrix(0, nrow=M, ncol=S)
+  T_var = matrix(1, nrow=M, ncol=S)
   for (m in 1:M){
     T_var[m,] <- var(Candidate_TF_log2Count[m,])
   }
@@ -508,6 +527,7 @@ MAGICAL_initialization <- function(loaded_data, Candidate_circuits){
     B_prior[TF_Peak_index[b,1], TF_Peak_index[b,2]] = mdl$coefficients[2,1]
     B_prob[TF_Peak_index[b,1], TF_Peak_index[b,2]] = 1-mdl$coefficients[2,4]
   }
+  
   B_mean = B_prior
   
   B_var = matrix(0.5, nrow=1, ncol=M)
@@ -518,8 +538,10 @@ MAGICAL_initialization <- function(loaded_data, Candidate_circuits){
     }else{
       B_var[m]=0.5
     }
+          
   }
-
+  
+  
   # Peak-Gene looping prior
   L_prior=as.matrix(Candidate_Peak_Gene_looping)
   L_prob=as.matrix(Candidate_Peak_Gene_looping)
@@ -574,13 +596,13 @@ TF_activity_T_sampling <- function(A, A_sample, ATAC_Cell_Sample_vector, R, R_sa
           aa=-3
         }
         
-        TFA$T_sample[m,s]=aa*sqrt(abs(variance_T[s]))+mean_T[s]
+        TFA$T_sample[m,s]=aa*sqrt(variance_T[s])+mean_T[s]
         
         ATAC_cell_index=which(ATAC_Cell_Sample_vector==s)
-        TFA$T_A[m,ATAC_cell_index]=rnorm(length(ATAC_cell_index))*sqrt(abs(variance_T[s]))+TFA$T_sample[m,s]
+        TFA$T_A[m,ATAC_cell_index]=rnorm(length(ATAC_cell_index))*sqrt(variance_T[s])+TFA$T_sample[m,s]
         
         RNA_cell_index=which(RNA_Cell_Sample_vector==s)
-        TFA$T_R[m,RNA_cell_index]=rnorm(length(RNA_cell_index))*sqrt(abs(variance_T[s]))+TFA$T_sample[m,s]
+        TFA$T_R[m,RNA_cell_index]=rnorm(length(RNA_cell_index))*sqrt(variance_T[s])+TFA$T_sample[m,s]
       }
     }
   }
@@ -609,11 +631,11 @@ TF_peak_binding_B_sampling <- function(A, A_sample, ATAC_Cell_Sample_vector, TFA
     mean_B=((A_sample-B%*%TFA$T_sample+B[,m]%*%t(TFA$T_sample[m,]))%*%TFA$T_sample[m,]*B_prior_var[m]/S+B_prior_mean[,m]*sigma_A_noise)/temp_var
     vairance_B=B_prior_var[m]*sigma_A_noise/temp_var
     
-    bb = rnorm(P)
-    bb[which(bb-3 > 0)] = 3
-    bb[which(bb+3 < 0)] = -3
+    bb=rnorm(P)
+    bb[which(bb-3>0)]=3
+    bb[which(bb+3<0)]=-3
     
-    B[,m]=(bb*sqrt(abs(vairance_B))+mean_B)*B_state[,m]
+    B[,m]=(bb*sqrt(vairance_B)+mean_B)*B_state[,m]
   }
   
   return(B)
@@ -685,22 +707,18 @@ TF_peak_binary_binding_B_state_sampling <-function(A, A_sample, ATAC_Cell_Sample
         
         P1=post_b1/(post_b1+post_b0)
         
-        threshold_c = runif(1)
+        threshold_c=runif(1)
         
         if (is.na(P1) || is.nan(P1)){
           P1=0.5
         }
         
-        if (P1 < threshold_c){
-          
+        if (P1<threshold_c){
           B[f,m] = 0
           B_state[f,m] = 0
-          
         }else{
-          
           B[f,m] = B[f,m]
           B_state[f,m] = 1
-          
         }
       } 
       
@@ -709,16 +727,14 @@ TF_peak_binary_binding_B_state_sampling <-function(A, A_sample, ATAC_Cell_Sample
         vairance_B = B_prior_var[m]*sigma_A_noise/temp_var
         
         bb=rnorm(1)
-        
-        if (bb-3 > 0){
+        if (bb-3>0){
           bb=3
         }
-        
-        if (bb+3 < 0){
+        if (bb+3<0){
           bb=-3
         }
         
-        B_temp = bb*sqrt(abs(vairance_B))+mean_B
+        B_temp = bb*sqrt(vairance_B)+mean_B
         
         post_b1 = exp(-(bb^2)/2)*(B_prior_prob[f,m]+0.25)+1e-6
         
@@ -732,16 +748,16 @@ TF_peak_binary_binding_B_state_sampling <-function(A, A_sample, ATAC_Cell_Sample
           P1=0.5
         }
         
-        if (P1 < threshold_c){
+        if (P1>=threshold_c){
+          
+          B[f,m] = B_temp
+          B_state[f,m] = 1
+          
+        }else{
           
           B[f,m] = 0
           B_state[f,m] = 0
           
-        } else {
-          
-          B[f,m] = B_temp
-          B_state[f,m] = 1          
-  
         }
       }
     }
@@ -787,22 +803,18 @@ Peak_gene_binary_looping_L_state_samping <- function(R, R_sample, RNA_Cell_Sampl
         
         P1=post_l1/(post_l1+post_l0)
         
-        threshold_c=runif(1)
+        threshold_l=runif(1)
         
         if (is.na(P1) || is.nan(P1)){
           P1=0.5
         }
         
-        if (P1 < threshold_c){
-          
+        if (P1<threshold_l){
           L[f,g] = 0
           L_state[f,g] = 0
-          
         }else{
-          
           L[f,g] = L[f,g]
           L_state[f,g] = 1
-          
         }
       }
       
@@ -811,38 +823,37 @@ Peak_gene_binary_looping_L_state_samping <- function(R, R_sample, RNA_Cell_Sampl
         mean_L=(sum((R_sample[g,]-temp)*A_estimate[f,])*L_prior_var/S+L_prior_mean[f,g]*sigma_R_noise)/temp_var
         vairance_L=L_prior_var*sigma_R_noise/temp_var
         
-        ll = rnorm(1)
-        
-        if (ll-3 > 0){
-          ll = 3
+        ll=rnorm(1)
+        if (ll-3>0){
+          ll=3
         }
-        if (ll+3 < 0){
-          ll = -3
+        if (ll+3<0){
+          ll=-3
         }
         
-        L_temp = ll*sqrt(abs(vairance_L))+mean_L
+        L_temp = ll*sqrt(vairance_L)+mean_L
         
         post_l1 = exp(-ll^2/2)*(L_prior_prob[f,g]+0.1)+1e-6
         
         post_l0 = exp(-(mean_L)^2/(2*vairance_L))*(1-L_prior_prob[f,g]+0.1)+1e-6
         
-        P1 = post_l1/(post_l1+post_l0)
+        P1=post_l1/(post_l1+post_l0)
         
-        threshold_c=runif(1)
+        threshold_l=runif(1)
         
         if (is.na(P1) || is.nan(P1)){
           P1=0.5
         }
         
-        if (P1<threshold_c){
-          
-          L[f,g] = 0
-          L_state[f,g] = 0          
-          
-        }else{
+        if (P1>=threshold_l){
           
           L[f,g] = L_temp
           L_state[f,g] = 1
+          
+        }else{
+          
+          L[f,g] = 0
+          L_state[f,g] = 0
           
         }
       }
@@ -914,7 +925,7 @@ MAGICAL_estimation <- function(loaded_data, Candidate_circuits, Initial_model, i
   for (s in 1:S){
     for (m in 1:M){
       index=which(ATAC_Cell_Sample_vector==s)
-      T_A[m,index]=rnorm(length(index), mean=T_prior_mean[m,s], sd=sqrt(abs(T_prior_var[m,s])))
+      T_A[m,index]=rnorm(length(index), mean=T_prior_mean[m,s], sd=sqrt(T_prior_var[m,s]))
     }
   }#initial values of the hidden TF activity of ATAC cells for each sample
   
@@ -922,7 +933,7 @@ MAGICAL_estimation <- function(loaded_data, Candidate_circuits, Initial_model, i
   for (s in 1:S){
     for (m in 1:M){
       index=which(RNA_Cell_Sample_vector==s)
-      T_R[m,index]=rnorm(length(index), mean=T_prior_mean[m,s], sd=sqrt(abs(T_prior_var[m,s])))
+      T_R[m,index]=rnorm(length(index), mean=T_prior_mean[m,s], sd=sqrt(T_prior_var[m,s]))
     }
   }#initial values of the hidden TF activity of RNA cells for each sample
   
@@ -1057,3 +1068,4 @@ MAGICAL_circuits_output<- function(Output_file_path, Candidate_circuits, Circuit
   }   
   print(paste('MAGICAL selected regulatory circuits with', length(which(TF_vector>1)), 'TFs,', length(unique(Peak_Gene_index[circuit_flag>0,1])), 'peaks, and',  length(unique(Peak_Gene_index[circuit_flag>0,2])), 'genes', sep=' '))
 }
+

@@ -229,9 +229,7 @@ for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
   
   final_peak_matrix <- HVL_peak_matrix_cell_type_subset@assays@data@listData$PeakMatrix
   final_peak_matrix <- final_peak_matrix[, HVL_proj_cell_type_subset$cellNames]
-  write.table(summary(final_peak_matrix), 
-              file = paste0(MAGICAL_peak_counts_dir, cell_type_for_file_name, "_HVL_ATAC_read_count.tsv"),
-              quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
+  saveRDS(final_peak_matrix, file= paste0(MAGICAL_peak_counts_dir, cell_type_for_file_name, "_HVL_ATAC_read_counts.rds"))
 }
 
 # 2) Peak set
