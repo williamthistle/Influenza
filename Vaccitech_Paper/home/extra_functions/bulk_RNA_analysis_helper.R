@@ -286,7 +286,7 @@ find_degs_across_time_points_for_gene_list <- function(D2_df, D5_df, D8_df, D28_
     gene_vector <- c(gene)
     specific_gene_df <- gene_df[gene_df$Gene_Name == gene,]
     cell_types <- specific_gene_df$Cell_Type
-    cell_types <- paste0(cell_types, collapse = ", ")
+    cell_types <- paste0(cell_types, collapse = ",")
     gene_vector <- c(gene_vector, cell_types)
     # D2
     if(gene %in% rownames(D2_df)) {
@@ -409,7 +409,7 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
         # If the TF is already present in our DF, then just add the new cell type to cell_types
         if(neg_tf %in% overlapping_motif_df$tf) {
           current_cell_types <- overlapping_motif_df[overlapping_motif_df$tf == neg_tf,]$cell_types
-          current_cell_types <- paste0(current_cell_types, ", ", cell_type_in_df, " (Down)")
+          current_cell_types <- paste0(current_cell_types, ",", cell_type_in_df, " (Down)")
           overlapping_motif_df[overlapping_motif_df$tf == neg_tf,]$cell_types <- current_cell_types
         } else {
           # If the tf was found in the bulk data, note that
@@ -431,52 +431,129 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
 
 fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
                                             pos_bulk_genes, neg_bulk_genes) {
+  # FC for circuit gene from SC data (positive or negative?)
   gene_fcs <- c()
+  # FC for circuit site from SC (pseudobulk) data (positive or negative?)
   site_fcs <- c()
-  other_magical_cell_types <- c()
+  # Cell types where a circuit was found with the same gene
+  magical_cell_types <- c()
+  # Cell types where the gene was found to be a DEG (combined cell types used as input for MAGICAL)
+  combined_single_cell_types <- c()
+  # Cell types where the gene was found to be a DEG (more granular cell types from the original DEG analysis)
   original_single_cell_types <- c()
-  pos_bulk_boolean <- c()
-  neg_bulk_boolean <- c()
+  # Was the gene found to be a DEG in bulk data?
+  # If yes, note that its FC direction always matches the single cell FC direction 
+  bulk_boolean <- c()
   for(current_circuit_index in 1:nrow(overall_magical_df)) {
     current_circuit <- overall_magical_df[current_circuit_index,]
     cell_type <- current_circuit$Cell_Type
     cell_type_in_df <- sub("_", " ", cell_type)
+    current_gene <- current_circuit$Gene_symbol
+    # Capture gene FC
     gene_fc <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Gene_Name == current_circuit$Gene_symbol,]
     gene_fc <- gene_fc[gene_fc$Cell_Type == cell_type_in_df,]$sc_log2FC
     gene_fcs <- c(gene_fcs, gene_fc)
+    # Capture site FC
     site_fc <- read.table(paste0(sc_das_dir, "diff_peaks/", sub(" ", "_", cell_type), "_D28_D1_diff_pseudo_filtered.tsv"), sep = "\t",
                                                       header = TRUE)
     site_fc <- site_fc[site_fc$chr == current_circuit$Peak_chr & site_fc$start == current_circuit$Peak_start & site_fc$end == current_circuit$Peak_end,]
     site_fc <- site_fc$log2FoldChange
     site_fcs <- c(site_fcs, site_fc)
-    current_gene <- current_circuit$Gene_symbol
-    gene_cell_types <- overall_magical_df[overall_magical_df$Gene_symbol == current_gene,]$Cell_Type
-    if(length(gene_cell_types) > 1) {
-      gene_cell_types <- gene_cell_types[-which(gene_cell_types %in% cell_type)]
-      gene_cell_types <- paste(gene_cell_types, collapse = ", ")
-      other_magical_cell_types <- c(other_magical_cell_types, gene_cell_types)
-    } else {
-      other_magical_cell_types <- c(other_magical_cell_types, "N/A")
-    }
+    # Capture cell types from MAGICAL circuits for current gene
+    magical_gene_cell_types <- overall_magical_df[overall_magical_df$Gene_symbol == current_gene,]$Cell_Type
+    magical_gene_cell_types <- sort(unique(magical_gene_cell_types))
+    magical_gene_cell_types <- paste(magical_gene_cell_types, collapse = ",")
+    magical_cell_types <- c(magical_cell_types, magical_gene_cell_types)
+    # Capture cell types from DEGs for combined SC cell types
+    combined_gene_cell_types <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Gene_Name == current_gene,]$Cell_Type
+    combined_gene_cell_types <- sort(combined_gene_cell_types)
+    combined_gene_cell_types <- paste(combined_gene_cell_types, collapse = ",")
+    combined_single_cell_types <- c(combined_single_cell_types, combined_gene_cell_types)
+    # Capture cell types from DEGS for original more granular SC cell types
     original_gene_cell_types <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Gene_Name == current_gene,]$Cell_Type
-    original_gene_cell_types <- paste(original_gene_cell_types, collapse = ", ")
+    original_gene_cell_types <- sort(original_gene_cell_types)
+    original_gene_cell_types <- paste(original_gene_cell_types, collapse = ",")
     original_single_cell_types <- c(original_single_cell_types, original_gene_cell_types)
-    if(current_gene %in% pos_bulk_genes) {
-      pos_bulk_boolean <- c(pos_bulk_boolean, TRUE)
+    # Capture whether gene was found in bulk RNA-seq data
+    if(current_gene %in% pos_bulk_genes | current_gene %in% neg_bulk_genes) {
+      bulk_boolean <- c(bulk_boolean, TRUE)
     } else {
-      pos_bulk_boolean <- c(pos_bulk_boolean, FALSE)
-    }
-    if(current_gene %in% neg_bulk_genes) {
-      neg_bulk_boolean <- c(neg_bulk_boolean, TRUE)
-    } else {
-      neg_bulk_boolean <- c(neg_bulk_boolean, FALSE)
+      bulk_boolean <- c(bulk_boolean, FALSE)
     }
   }
   overall_magical_df$gene_fc <- gene_fcs
   overall_magical_df$site_fc <- site_fcs
-  overall_magical_df$pos_bulk <- pos_bulk_boolean
-  overall_magical_df$neg_bulk <- neg_bulk_boolean
-  overall_magical_df$other_magical_cell_types <- other_magical_cell_types
-  overall_magical_df$sc_deg_cell_types <- original_single_cell_types
+  overall_magical_df$bulk <- bulk_boolean
+  overall_magical_df$magical_cell_types <- magical_cell_types
+  overall_magical_df$combined_single_cell_types <- combined_single_cell_types
+  overall_magical_df$original_single_cell_types <- original_single_cell_types
   return(overall_magical_df)
+}
+
+fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magical_tf_df) {
+  # TF 
+  tf <- c()
+  # Total Circuit Count
+  total_circuit_count <- c()
+  # Circuit Cell Types (Count)
+  circuit_cell_types <- c()
+  # Bound_Genes (Cell Type)
+  bound_genes <- c()
+  # Found_as_Circuit_Genes (Cell Type)
+  found_as_circuit_genes <- c()
+  # Found_as_DEGs_in_Combined_Cell_Types (Cell Type and Direction)
+  found_as_DEGs_in_combined_cell_types <- c()
+  # Found_as_DEGs_in_Original_SC_Cell_Types (Cell Type and Direction)
+  found_as_DEGs_in_original_sc_cell_types <- c()
+  # Found_as_DEGs_in_Bulk (Direction)
+  found_as_DEGs_in_bulk <- c()
+  # Pseudobulk_Motif_Enrichment (Cell Type and Direction)
+  pseudobulk_motif_enrichment <- c()
+  # Grab all TFs found in MAGICAL circuits
+  for(current_circuit_index in 1:nrow(overall_magical_df)) {
+    current_circuit <- overall_magical_df[current_circuit_index,]
+    current_tfs <- current_circuit$TFs.binding.prob.
+    current_tfs <- unlist(strsplit(current_tfs, ","))
+    current_tfs <- current_tfs[c(TRUE, FALSE)]
+    tf <- c(tf, current_tfs)
+  }
+  # Sort TFs by name and find total count
+  tf_summary <- table(tf)
+  tf <- names(tf_summary)
+  total_circuit_count <- unname(tf_summary)
+  for(current_tf in tf) {
+    # Find cell types for circuits that have current TF
+    tf_rows <- overall_magical_df[grepl(current_tf, overall_magical_df$TFs.binding.prob.),]
+    current_circuit_cell_types <- sort(unique(tf_rows$Cell_Type))
+    current_circuit_cell_types <- paste0(current_circuit_cell_types, collapse = ",")
+    circuit_cell_types <- c(circuit_cell_types, current_circuit_cell_types)
+    # Find genes that are bound by current TF in MAGICAL circuits (and record cell types for each gene)
+    current_bound_genes <- sort(unique(tf_rows$Gene_symbol))
+    current_bound_genes <- paste0(current_bound_genes, collapse = ",")
+    bound_genes <- c(bound_genes, current_bound_genes)
+    # If the current TF is also found as a circuit gene, record that info (gene name and cell type)
+    # If the current TF is not found as a circuit gene, just write N/A
+    found_as_circuit_genes_tf <- overall_magical_df[overall_magical_df$Gene_symbol == current_tf,]
+    if(nrow(found_as_circuit_genes_tf) > 0) {
+      current_found_as_circuit_gene_cell_types <- found_as_circuit_genes_tf$Cell_Type
+      current_found_as_circuit_gene_cell_types <- unique(current_found_as_circuit_gene_cell_types)
+      current_found_as_circuit_gene_cell_types <- paste(current_found_as_circuit_gene_cell_types, collapse = ",")
+      found_as_circuit_genes <- c(found_as_circuit_genes, current_found_as_circuit_gene_cell_types)
+    } else {
+      found_as_circuit_genes <- c(found_as_circuit_genes, "N/A")
+    }
+    # If the current TF is found as a DEG in the combined cell type data (input for MAGICAL), record that info (gene name and cell type)
+    # If the current TF is not found as a circuit gene, just write N/A
+    found_as_combined_deg_tf <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Gene_Name == current_tf,]
+    if(nrow(found_as_combined_deg_tf) > 0) {
+      current_combined_deg_genes <- found_as_combined_deg_tf$Gene_Name
+      current_combined_deg_cell_types <- found_as_combined_deg_tf$Cell_Type
+      current_deg_gene_info <- paste(current_combined_deg_genes, " (", current_combined_deg_cell_types, ")", sep = "")
+      current_deg_gene_info <- unique(current_deg_gene_info)
+      current_deg_gene_info <- paste(current_deg_gene_info, collapse = ",")
+      found_as_DEGs_in_combined_cell_types <- c(found_as_DEGs_in_combined_cell_types, current_deg_gene_info)
+    } else {
+      found_as_DEGs_in_combined_cell_types <- c(found_as_DEGs_in_combined_cell_types, "N/A")
+    }
+  }
 }

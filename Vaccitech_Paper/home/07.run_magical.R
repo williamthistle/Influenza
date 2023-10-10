@@ -121,3 +121,16 @@ overall_magical_df <- fill_in_info_for_magical_output(overall_magical_df, sc_das
 write.table(overall_magical_df,
             file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", quote = FALSE,
             row.names = FALSE)
+
+# For TFs associated with the current circuit, were any found to be genes in a MAGICAL circuit?
+# For TFs associated with the current circuit, were any found to be DEGs in the combined cell types used as input for MAGICAL?
+# For TFs associated with the current circuit, were any found to be DEGs in the more granular cell types from the original DEG analysis?
+# For TFs associated with the current circuit, were any found to be DEGs in the bulk data?
+# For TFs associated with the current circuit, were any found to be significant in motif enrichment analysis for the scATAC-seq data?
+overall_magical_tf_df <- data.frame(tf = character(), total_circuit_count = numeric(), circuit_cell_types = character(),
+                                    bound_genes = character(), found_as_circuit_genes = character(),
+                                    found_as_DEGs_in_combined_cell_types <- character(),
+                                    found_as_DEGs_in_original_sc_cell_types <- character(),
+                                    found_as_DEGs_in_bulk <- character(),
+                                    pseudobulk_motif_enrichment <- character())
+overall_magical_tf_df <- fill_in_info_for_magical_tf_output(overall_magical_df, overall_magical_tf_df)
