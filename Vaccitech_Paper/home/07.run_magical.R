@@ -113,6 +113,7 @@ for(cell_type in rest_of_cell_types) {
 overall_magical_df <- overall_magical_df[,c(9,1,2,3,4,5,6,7,8)]
 
 # TODO: Add TF enrichment from pseudobulk data. Which TFs found to be binding in MAGICAL were also found to be enriched in motif enrichment analysis?
+# TODO: Add info about each site - what kind of site is it? Maybe closest gene too?
 overall_magical_df <- fill_in_info_for_magical_output(overall_magical_df, sc_das_dir, 
                                                                 sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
                                                       high_pos_pseudobulk_sc_genes_bulk_passing_df$gene, 
