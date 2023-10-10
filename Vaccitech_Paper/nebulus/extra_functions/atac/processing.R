@@ -301,6 +301,10 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
   final_strictest_de <- data.frame(Cell_Type = character(), chr = character(), start = character(), end = character(), idx = character(),
                                  sc_log2FC = character(), sc_pval = character(), sc_FDR = character(), pseudobulk_log2FC = character(),
                                  pseudobulk_pval = character())
+  current_peaks <- getPeakSet(HVL_proj_minus_clusters)
+  all_chr <- as.data.frame(current_peaks@seqnames)
+  all_coord <- as.data.frame(current_peaks@ranges)
+  peak_info <- cbind(all_chr, all_coord)
   for (cell_type in unique(atac_proj$Cell_type_voting)) {
     print(cell_type)
     # Grab cells associated with cell type
@@ -327,10 +331,10 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     marker_de$pval <- assays(marker_D28_D1)$Pval[,1]
     marker_de$FDR <- assays(marker_D28_D1)$FDR[,1]
     cell_type_for_file_name <- sub(" ", "_", cell_type)
-    write.table(marker_de, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc_without_filtering.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    write.table(marker_de, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc_unfiltered.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
     marker_de_lenient <- marker_de_passing_fc[marker_de_passing_fc$pval < 0.05,]
-    write.table(marker_de_lenient, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    write.table(marker_de_lenient, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc_filtered.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     # Perform pseudobulk correction
     pseudobulk_counts <- read.table(paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type_for_file_name, ".txt"), sep = "\t", header = TRUE, check.names = FALSE)
     sample_metadata <- cells_subset$Sample
@@ -346,22 +350,30 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(pseudobulk_analysis), n=1)
     print(pseudobulk_analysis_results_contrast)
     pseudobulk_analysis_results <- DESeq2::results(pseudobulk_analysis, name=pseudobulk_analysis_results_contrast)
+    pseudobulk_analysis_results$chr <- peak_info$value
+    pseudobulk_analysis_results$start <- peak_info$start
+    pseudobulk_analysis_results$end <- peak_info$end
+    pseudobulk_analysis_results <- pseudobulk_analysis_results[,c('chr','start','end','baseMean', "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")]
+    write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo_unfiltered.tsv"), quote = FALSE, sep = "\t")
     pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
     pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
-    write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo.tsv"), quote = FALSE, sep = "\t")
+    write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo_filtered.tsv"), quote = FALSE, sep = "\t")
     # Most lenient uses pval < 0.05 for sc peaks
     # PSEUDOBULK TEST
-    pos_pseudobulk_de <- data.frame(Cell_Type = character(), chr = character(), idx = character()) 
+    pos_pseudobulk_de <- data.frame(Cell_Type = character(), chr = character(), idx = character())
+    neg_pseudobulk_de <- data.frame(Cell_Type = character(), chr = character(), idx = character())
     for(current_pseudobulk_peak_row_index in 1:nrow(pseudobulk_analysis_results)) {
       current_pseudobulk_row <- pseudobulk_analysis_results[current_pseudobulk_peak_row_index,]
       chr_peak_index_combo <- rownames(current_pseudobulk_row)
       chr <- strsplit(chr_peak_index_combo, "_")[[1]][1]
       peak_index <- strsplit(chr_peak_index_combo, "_")[[1]][2]
       # PSEUDOBULK TEST
+      current_row <- data.frame(cell_type, chr, peak_index)
+      names(current_row) <- c("Cell_Type", "chr", "idx")
       if(current_pseudobulk_row$log2FoldChange > 0) {
-        current_row <- data.frame(cell_type, chr, peak_index)
-        names(current_row) <- c("Cell_Type", "chr", "idx")
         pos_pseudobulk_de <- rbind(pos_pseudobulk_de, current_row)
+      } else {
+        neg_pseudobulk_de <- rbind(neg_pseudobulk_de, current_row)
       }
       # Check for overlap between pseudo and lenient
       marker_de_subset_lenient <- marker_de_lenient[marker_de_lenient$chr == chr,]
@@ -390,17 +402,9 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     cell_type_subset_de <- final_lenient_de[final_lenient_de$Cell_Type == cell_type,]
     pos_cell_type_subset_de <- cell_type_subset_de[cell_type_subset_de$sc_log2FC > 0,]
     neg_cell_type_subset_de <- cell_type_subset_de[cell_type_subset_de$sc_log2FC < 0,]
-    pos_peak_indices <- c()
     neg_peak_indices <- c()
     # POSITIVE
-    # Find indices of peaks that overlap with cell type peaks
-    for(current_row_idx in 1:nrow(pos_cell_type_subset_de)) {
-      current_row <- pos_cell_type_subset_de[current_row_idx,]
-      current_idx <- which(marker_de$chr == current_row$chr & marker_de$idx == current_row$idx)
-      pos_peak_indices <- c(pos_peak_indices, current_idx)
-    }
-    pos_peak_indices <- sort(pos_peak_indices)
-    # 1) Use all positive peaks (no pseudobulk adjustment) for motif enrichment
+    # STEP 1: Use all positive peaks (no pseudobulk adjustment) for motif enrichment
     # Because we don't have too many peaks, including more noise may be worth it
     motifsUp_all_positive <- peakAnnoEnrichment_mine(
       seMarker = marker_D28_D1,
@@ -427,21 +431,28 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up_all_positive.png"), 
                     plot = ggUp, device = "png", width = 4, height = 4, 
                     units = "in")
-    # 2) Use positive peaks with pseudobulk correction
-    # Better approach if we have more samples, but maybe not the best fit here
+    # STEP 2: Use positive peaks with pseudobulk correction
+    # Maybe the best middle ground? Get to use subject ID in model
+    pos_peak_indices <- c()
+    # Find indices of peaks that overlap with cell type peaks
+    for(current_row_idx in 1:nrow(pos_pseudobulk_de)) {
+      current_row <- pos_pseudobulk_de[current_row_idx,]
+      current_idx <- which(marker_de$chr == current_row$chr & marker_de$idx == current_row$idx)
+      pos_peak_indices <- c(pos_peak_indices, current_idx)
+    }
+    pos_peak_indices <- sort(pos_peak_indices)
     print(length(pos_peak_indices))
     motifsUp <- peakAnnoEnrichment_mine(
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
-      cutOff = "Pval < 0.05 & Log2FC > 0.1", # NOT USED
       idx = pos_peak_indices
     )
     df_up <- data.frame(TF = rownames(motifsUp), mlog10Padj = assay(motifsUp)[,1])
     df_up <- df_up[order(df_up$mlog10Padj, decreasing = TRUE),]
     df_up$p_adj <- 10 ** -df_up$mlog10Padj
     df_up$rank <- seq_len(nrow(df_up))
-    write.table(df_up, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_up_pseudobulk_corrected.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    write.table(df_up, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_up_pseudobulk_only.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     ggUp <- ggplot(df_up, aes(rank, mlog10Padj, color = mlog10Padj)) + 
       geom_point(size = 1) +
       ggrepel::geom_label_repel(
@@ -453,33 +464,35 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       ylab("-log10(P-adj) Motif Enrichment") + 
       xlab("Rank Sorted TFs Enriched") +
       scale_color_gradientn(colors = paletteContinuous(set = "comet"))
-    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up_pseudobulk_corrected.png"), 
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up_pseudobulk_only.png"), 
                     plot = ggUp, device = "png", width = 4, height = 4, 
                     units = "in")
-    # NEGATIVE
+    # STEP 3: Use positive peaks with overlapping SC and pseudobulk
+    # Better approach if we have more samples, but maybe not the best fit here
+    pos_peak_indices <- c()
     # Find indices of peaks that overlap with cell type peaks
-    for(current_row_idx in 1:nrow(neg_cell_type_subset_de)) {
-      current_row <- neg_cell_type_subset_de[current_row_idx,]
+    for(current_row_idx in 1:nrow(pos_cell_type_subset_de)) {
+      current_row <- pos_cell_type_subset_de[current_row_idx,]
       current_idx <- which(marker_de$chr == current_row$chr & marker_de$idx == current_row$idx)
-      neg_peak_indices <- c(neg_peak_indices, current_idx)
+      pos_peak_indices <- c(pos_peak_indices, current_idx)
     }
-    # Same as positive - two different analyses
-    # 1) All negative peaks
-    motifsDown_all_negative <- peakAnnoEnrichment_mine(
+    pos_peak_indices <- sort(pos_peak_indices)
+    print(length(pos_peak_indices))
+    motifsUp <- peakAnnoEnrichment_mine(
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
-      cutOff = "Pval < 0.05 & Log2FC < -0.1"
+      idx = pos_peak_indices
     )
-    df_down_all_negative <- data.frame(TF = rownames(motifsDown_all_negative), mlog10Padj = assay(motifsDown_all_negative)[,1])
-    df_down_all_negative <- df_down_all_negative[order(df_down_all_negative$mlog10Padj, decreasing = TRUE),]
-    df_down_all_negative$p_adj <- 10 ** -df_down_all_negative$mlog10Padj
-    df_down_all_negative$rank <- seq_len(nrow(df_down_all_negative))
-    write.table(df_down_all_negative, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_down_all_negative.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
-    ggUp <- ggplot(df_down_all_negative, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+    df_up <- data.frame(TF = rownames(motifsUp), mlog10Padj = assay(motifsUp)[,1])
+    df_up <- df_up[order(df_up$mlog10Padj, decreasing = TRUE),]
+    df_up$p_adj <- 10 ** -df_up$mlog10Padj
+    df_up$rank <- seq_len(nrow(df_up))
+    write.table(df_up, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_up_sc_pseudobulk_overlap.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    ggUp <- ggplot(df_up, aes(rank, mlog10Padj, color = mlog10Padj)) + 
       geom_point(size = 1) +
       ggrepel::geom_label_repel(
-        data = df_down_all_negative[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
+        data = df_up[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
         size = 1.5,
         nudge_x = 2,
         color = "black"
@@ -487,24 +500,60 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       ylab("-log10(P-adj) Motif Enrichment") + 
       xlab("Rank Sorted TFs Enriched") +
       scale_color_gradientn(colors = paletteContinuous(set = "comet"))
-    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_down_all_negative.png"), 
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up_sc_pseudobulk_overlap.png"), 
+                    plot = ggUp, device = "png", width = 4, height = 4, 
+                    units = "in")    
+    # NEGATIVE
+    # STEP 1: Use all negative peaks (no pseudobulk adjustment) for motif enrichment
+    # Because we don't have too many peaks, including more noise may be worth it
+    motifsUp_all_negative <- peakAnnoEnrichment_mine(
+      seMarker = marker_D28_D1,
+      ArchRProj = atac_proj,
+      peakAnnotation = "Motif",
+      cutOff = "Pval < 0.05 & Log2FC < -0.1"
+    )
+    df_up_all_negative <- data.frame(TF = rownames(motifsUp_all_negative), mlog10Padj = assay(motifsUp_all_negative)[,1])
+    df_up_all_negative <- df_up_all_negative[order(df_up_all_negative$mlog10Padj, decreasing = TRUE),]
+    df_up_all_negative$p_adj <- 10 ** -df_up_all_negative$mlog10Padj
+    df_up_all_negative$rank <- seq_len(nrow(df_up_all_negative))
+    write.table(df_up_all_negative, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_up_all_negative.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    ggUp <- ggplot(df_up_all_negative, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+      geom_point(size = 1) +
+      ggrepel::geom_label_repel(
+        data = df_up_all_negative[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
+        size = 1.5,
+        nudge_x = 2,
+        color = "black"
+      ) + theme_ArchR() + 
+      ylab("-log10(P-adj) Motif Enrichment") + 
+      xlab("Rank Sorted TFs Enriched") +
+      scale_color_gradientn(colors = paletteContinuous(set = "comet"))
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_up_all_negative.png"), 
                     plot = ggUp, device = "png", width = 4, height = 4, 
                     units = "in")
-    # 2) Negative peaks after pseudobulk correction
-    # Provide those indices as "idx" for use in peakAnnoEnrichment
+    # STEP 2: Use negative peaks with pseudobulk correction
+    # Maybe the best middle ground? Get to use subject ID in model
+    neg_peak_indices <- c()
+    # Find indices of peaks that overlap with cell type peaks
+    for(current_row_idx in 1:nrow(neg_pseudobulk_de)) {
+      current_row <- neg_pseudobulk_de[current_row_idx,]
+      current_idx <- which(marker_de$chr == current_row$chr & marker_de$idx == current_row$idx)
+      neg_peak_indices <- c(neg_peak_indices, current_idx)
+    }
+    neg_peak_indices <- sort(neg_peak_indices)
+    print(length(neg_peak_indices))
     motifsDown <- peakAnnoEnrichment_mine(
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
-      cutOff = "Pval < 0.05 & Log2FC < -0.1", # NOT USED
       idx = neg_peak_indices
     )
     df_down <- data.frame(TF = rownames(motifsDown), mlog10Padj = assay(motifsDown)[,1])
     df_down <- df_down[order(df_down$mlog10Padj, decreasing = TRUE),]
     df_down$p_adj <- 10 ** -df_down$mlog10Padj
     df_down$rank <- seq_len(nrow(df_down))
-    write.table(df_down, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_down_pseudobulk_corrected.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
-    ggUp <- ggplot(df_down, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+    write.table(df_down, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_down_pseudobulk_only.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    ggdown <- ggplot(df_down, aes(rank, mlog10Padj, color = mlog10Padj)) + 
       geom_point(size = 1) +
       ggrepel::geom_label_repel(
         data = df_down[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
@@ -515,9 +564,45 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       ylab("-log10(P-adj) Motif Enrichment") + 
       xlab("Rank Sorted TFs Enriched") +
       scale_color_gradientn(colors = paletteContinuous(set = "comet"))
-    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_down_pseudobulk_corrected.png"), 
-                    plot = ggUp, device = "png", width = 4, height = 4, 
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_down_pseudobulk_only.png"), 
+                    plot = ggdown, device = "png", width = 4, height = 4, 
                     units = "in")
+    # STEP 3: Use negative peaks with overlapping SC and pseudobulk
+    # Better approach if we have more samples, but maybe not the best fit here
+    neg_peak_indices <- c()
+    # Find indices of peaks that overlap with cell type peaks
+    for(current_row_idx in 1:nrow(neg_cell_type_subset_de)) {
+      current_row <- neg_cell_type_subset_de[current_row_idx,]
+      current_idx <- which(marker_de$chr == current_row$chr & marker_de$idx == current_row$idx)
+      neg_peak_indices <- c(neg_peak_indices, current_idx)
+    }
+    neg_peak_indices <- sort(neg_peak_indices)
+    print(length(neg_peak_indices))
+    motifsDown <- peakAnnoEnrichment_mine(
+      seMarker = marker_D28_D1,
+      ArchRProj = atac_proj,
+      peakAnnotation = "Motif",
+      idx = neg_peak_indices
+    )
+    df_down <- data.frame(TF = rownames(motifsDown), mlog10Padj = assay(motifsDown)[,1])
+    df_down <- df_down[order(df_down$mlog10Padj, decreasing = TRUE),]
+    df_down$p_adj <- 10 ** -df_down$mlog10Padj
+    df_down$rank <- seq_len(nrow(df_down))
+    write.table(df_down, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_motif_down_sc_pseudobulk_overlap.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+    ggdown <- ggplot(df_down, aes(rank, mlog10Padj, color = mlog10Padj)) + 
+      geom_point(size = 1) +
+      ggrepel::geom_label_repel(
+        data = df_down[rev(seq_len(30)), ], aes(x = rank, y = mlog10Padj, label = TF), 
+        size = 1.5,
+        nudge_x = 2,
+        color = "black"
+      ) + theme_ArchR() + 
+      ylab("-log10(P-adj) Motif Enrichment") + 
+      xlab("Rank Sorted TFs Enriched") +
+      scale_color_gradientn(colors = paletteContinuous(set = "comet"))
+    ggplot2::ggsave(filename = paste0(differential_peaks_dir, cell_type_for_file_name, "_D28_D1_motif_down_sc_pseudobulk_overlap.png"), 
+                    plot = ggdown, device = "png", width = 4, height = 4, 
+                    units = "in")    
   }
   # Write final lenient table
   write.table(final_lenient_de, paste0(differential_peaks_dir, "D28_D1_diff_lenient_final.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)

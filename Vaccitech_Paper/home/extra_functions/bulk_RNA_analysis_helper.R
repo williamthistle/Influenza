@@ -428,3 +428,55 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
   }
   return(overlapping_motif_df)
 }
+
+fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
+                                            pos_bulk_genes, neg_bulk_genes) {
+  gene_fcs <- c()
+  site_fcs <- c()
+  other_magical_cell_types <- c()
+  original_single_cell_types <- c()
+  pos_bulk_boolean <- c()
+  neg_bulk_boolean <- c()
+  for(current_circuit_index in 1:nrow(overall_magical_df)) {
+    current_circuit <- overall_magical_df[current_circuit_index,]
+    cell_type <- current_circuit$Cell_Type
+    cell_type_in_df <- sub("_", " ", cell_type)
+    gene_fc <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Gene_Name == current_circuit$Gene_symbol,]
+    gene_fc <- gene_fc[gene_fc$Cell_Type == cell_type_in_df,]$sc_log2FC
+    gene_fcs <- c(gene_fcs, gene_fc)
+    site_fc <- read.table(paste0(sc_das_dir, "diff_peaks/", sub(" ", "_", cell_type), "_D28_D1_diff_pseudo_filtered.tsv"), sep = "\t",
+                                                      header = TRUE)
+    site_fc <- site_fc[site_fc$chr == current_circuit$Peak_chr & site_fc$start == current_circuit$Peak_start & site_fc$end == current_circuit$Peak_end,]
+    site_fc <- site_fc$log2FoldChange
+    site_fcs <- c(site_fcs, site_fc)
+    current_gene <- current_circuit$Gene_symbol
+    gene_cell_types <- overall_magical_df[overall_magical_df$Gene_symbol == current_gene,]$Cell_Type
+    if(length(gene_cell_types) > 1) {
+      gene_cell_types <- gene_cell_types[-which(gene_cell_types %in% cell_type)]
+      gene_cell_types <- paste(gene_cell_types, collapse = ", ")
+      other_magical_cell_types <- c(other_magical_cell_types, gene_cell_types)
+    } else {
+      other_magical_cell_types <- c(other_magical_cell_types, "N/A")
+    }
+    original_gene_cell_types <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Gene_Name == current_gene,]$Cell_Type
+    original_gene_cell_types <- paste(original_gene_cell_types, collapse = ", ")
+    original_single_cell_types <- c(original_single_cell_types, original_gene_cell_types)
+    if(current_gene %in% pos_bulk_genes) {
+      pos_bulk_boolean <- c(pos_bulk_boolean, TRUE)
+    } else {
+      pos_bulk_boolean <- c(pos_bulk_boolean, FALSE)
+    }
+    if(current_gene %in% neg_bulk_genes) {
+      neg_bulk_boolean <- c(neg_bulk_boolean, TRUE)
+    } else {
+      neg_bulk_boolean <- c(neg_bulk_boolean, FALSE)
+    }
+  }
+  overall_magical_df$gene_fc <- gene_fcs
+  overall_magical_df$site_fc <- site_fcs
+  overall_magical_df$pos_bulk <- pos_bulk_boolean
+  overall_magical_df$neg_bulk <- neg_bulk_boolean
+  overall_magical_df$other_magical_cell_types <- other_magical_cell_types
+  overall_magical_df$sc_deg_cell_types <- original_single_cell_types
+  return(overall_magical_df)
+}

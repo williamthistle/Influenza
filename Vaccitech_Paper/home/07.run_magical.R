@@ -7,8 +7,10 @@ source(paste0(base_dir, "extra_functions/MAGICAL_functions.R"))
 # STEP 0: Set up directories and global files
 cell_type_candidate_gene_dir <- paste0(sc_magical_dir, "Candidate_Genes/")
 if (!dir.exists(cell_type_candidate_gene_dir)) {dir.create(cell_type_candidate_gene_dir, recursive = TRUE)}
-cell_type_candidate_peak_dir <- paste0(sc_magical_dir, "Candidate_Peaks/")
-if (!dir.exists(cell_type_candidate_peak_dir)) {dir.create(cell_type_candidate_peak_dir, recursive = TRUE)}
+cell_type_candidate_peak_overlap_dir <- paste0(sc_magical_dir, "Candidate_Peaks/Overlap_SC_Pseudo/")
+if (!dir.exists(cell_type_candidate_peak_overlap_dir)) {dir.create(cell_type_candidate_peak_overlap_dir, recursive = TRUE)}
+cell_type_candidate_peak_pseudo_dir <- paste0(sc_magical_dir, "Candidate_Peaks/Pseudo/")
+if (!dir.exists(cell_type_candidate_peak_pseudo_dir)) {dir.create(cell_type_candidate_peak_pseudo_dir, recursive = TRUE)}
 cell_type_scATAC_cell_metadata_dir <- paste0(sc_magical_dir, "scATAC_Cell_Metadata/")
 if (!dir.exists(cell_type_scATAC_cell_metadata_dir)) {dir.create(cell_type_scATAC_cell_metadata_dir, recursive = TRUE)}
 cell_type_scRNA_cell_metadata_dir <- paste0(sc_magical_dir, "scRNA_Cell_Metadata/")
@@ -38,13 +40,22 @@ for(cell_type in unique(sc_pseudobulk_deg_combined_cell_types_table$Cell_Type)) 
               row.names = FALSE, col.names = FALSE)
 }
 
-# b) Cell type candidate peaks.txt
-
+# b) Cell type candidate peaks.txt (overlap)
 for(cell_type in unique(sc_das_lenient$Cell_Type)) {
   cell_type_sc_das_lenient <- sc_das_lenient[sc_das_lenient$Cell_Type == cell_type,]
   cell_type_sc_das_lenient <- cell_type_sc_das_lenient[,c("chr", "start", "end")]
   write.table(cell_type_sc_das_lenient,
-              file = paste0(cell_type_candidate_peak_dir, sub(" ", "_", cell_type), "_Candidate_Peaks.txt"), sep = "\t", quote = FALSE,
+              file = paste0(cell_type_candidate_peak_overlap_dir, sub(" ", "_", cell_type), "_Candidate_Peaks.txt"), sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = FALSE)
+}
+
+# c) Cell type candidate peaks.txt (pseudo)
+for(cell_type in unique(sc_das_lenient$Cell_Type)) {
+  current_pseudobulk_das <- read.table(paste0(sc_das_dir, "diff_peaks/", sub(" ", "_", cell_type), "_D28_D1_diff_pseudo_filtered.tsv"), sep = "\t",
+                                       header = TRUE)
+  current_pseudobulk_das <- current_pseudobulk_das[,c("chr", "start", "end")]
+  write.table(current_pseudobulk_das,
+              file = paste0(cell_type_candidate_peak_pseudo_dir, sub(" ", "_", cell_type), "_Candidate_Peaks.txt"), sep = "\t", quote = FALSE,
               row.names = FALSE, col.names = FALSE)
 }
 
@@ -52,7 +63,7 @@ for(cell_type in unique(sc_das_lenient$Cell_Type)) {
 possible_RNA_types <- list.files(path = cell_type_candidate_gene_dir)
 possible_RNA_types <- unlist(strsplit(possible_RNA_types, "_Candidate_Genes.txt"))
 
-possible_ATAC_types <- list.files(path = cell_type_candidate_peak_dir)
+possible_ATAC_types <- list.files(path = cell_type_candidate_peak_pseudo_dir)
 possible_ATAC_types <- unlist(strsplit(possible_ATAC_types, "_Candidate_Peaks.txt"))
 
 cell_types <- intersect(possible_RNA_types, possible_ATAC_types)
@@ -62,7 +73,7 @@ set.seed(get_speedi_seed())
 for(cell_type in cell_types) {
   print(cell_type)
   current_candidate_genes <- paste0(cell_type_candidate_gene_dir, cell_type, "_Candidate_Genes.txt")
-  current_candidate_peaks <- paste0(cell_type_candidate_peak_dir, cell_type, "_Candidate_Peaks.txt")
+  current_candidate_peaks <- paste0(cell_type_candidate_peak_pseudo_dir, cell_type, "_Candidate_Peaks.txt")
   
   current_scRNA_cell_metadata <- paste0(cell_type_scRNA_cell_metadata_dir, cell_type, "_HVL_RNA_cell_metadata.tsv")
   current_scATAC_cell_metadata <- paste0(cell_type_scATAC_cell_metadata_dir, cell_type, "_HVL_ATAC_cell_metadata.tsv")
@@ -85,6 +96,27 @@ for(cell_type in cell_types) {
   
   circuits_linkage_posterior <- MAGICAL_estimation(loaded_data, candidate_circuits, initial_model, iteration_num = 1000)
   
-  MAGICAL_circuits_output(Output_file_path = paste0(magical_output_dir, cell_type, "_MAGICAL_selected_regulatory_circuits_6.txt"), 
+  MAGICAL_circuits_output(Output_file_path = paste0(magical_output_dir, cell_type, "_MAGICAL_selected_regulatory_circuits.txt"), 
                                                     candidate_circuits, circuits_linkage_posterior)
 }
+
+# Create overall MAGICAL circuit file
+cell_type <- cell_types[1]
+overall_magical_df <- read.table(paste0(magical_output_dir, cell_type, "_MAGICAL_selected_regulatory_circuits.txt"), sep = "\t", header = TRUE)
+overall_magical_df$Cell_Type <- cell_type
+rest_of_cell_types <- cell_types[c(-1)]
+for(cell_type in rest_of_cell_types) {
+  current_magical_df <- read.table(paste0(magical_output_dir, cell_type, "_MAGICAL_selected_regulatory_circuits.txt"), sep = "\t", header = TRUE)
+  current_magical_df$Cell_Type <- cell_type
+  overall_magical_df <- rbind(overall_magical_df, current_magical_df)
+}
+overall_magical_df <- overall_magical_df[,c(9,1,2,3,4,5,6,7,8)]
+
+# TODO: Add TF enrichment from pseudobulk data. Which TFs found to be binding in MAGICAL were also found to be enriched in motif enrichment analysis?
+overall_magical_df <- fill_in_info_for_magical_output(overall_magical_df, sc_das_dir, 
+                                                                sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
+                                                      high_pos_pseudobulk_sc_genes_bulk_passing_df$gene, 
+                                                      high_neg_pseudobulk_sc_genes_bulk_passing_df$gene)
+write.table(overall_magical_df,
+            file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", quote = FALSE,
+            row.names = FALSE)

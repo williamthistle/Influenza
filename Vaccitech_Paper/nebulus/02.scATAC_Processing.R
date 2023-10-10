@@ -234,7 +234,7 @@ for(cell_type in unique(HVL_proj_minus_clusters$Cell_type_voting)) {
 
 # 2) Peak set
 current_peaks <- getPeakSet(HVL_proj_minus_clusters)
-write.table(current_peaks[,1], file = paste0(MAGICAL_candidate_peaks_dir, "HVL_ATAC_peak_coordinates.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
+write.table(current_peaks[,1:13], file = paste0(MAGICAL_candidate_peaks_dir, "HVL_ATAC_peak_coordinates.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
 
 HVL_proj_minus_clusters <- addMotifAnnotations(ArchRProj = HVL_proj_minus_clusters, motifSet = "cisbp", name = "Motif",
                                                  force = TRUE)
