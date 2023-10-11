@@ -430,7 +430,7 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
 }
 
 fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
-                                            pos_bulk_genes, neg_bulk_genes) {
+                                            pos_bulk_genes, neg_bulk_genes, sc_peaks) {
   # FC for circuit gene from SC data (positive or negative?)
   gene_fcs <- c()
   # FC for circuit site from SC (pseudobulk) data (positive or negative?)
@@ -444,6 +444,9 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   # Was the gene found to be a DEG in bulk data?
   # If yes, note that its FC direction always matches the single cell FC direction 
   bulk_boolean <- c()
+  # What kind of peak is the site?
+  nearest_gene_to_site <- c()
+  site_type <- c()
   for(current_circuit_index in 1:nrow(overall_magical_df)) {
     current_circuit <- overall_magical_df[current_circuit_index,]
     cell_type <- current_circuit$Cell_Type
@@ -480,9 +483,14 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     } else {
       bulk_boolean <- c(bulk_boolean, FALSE)
     }
+    current_peak_info <- sc_peaks[sc_peaks$value == current_circuit$Peak_chr & sc_peaks$start == current_circuit$Peak_start & sc_peaks$end == current_circuit$Peak_end,]
+    site_type <- c(site_type, current_peak_info$peakType)
+    nearest_gene_to_site <- c(nearest_gene_to_site, current_peak_info$nearestGene)
   }
   overall_magical_df$gene_fc <- gene_fcs
   overall_magical_df$site_fc <- site_fcs
+  overall_magical_df$site_type <- site_type
+  overall_magical_df$nearest_gene_to_site <- nearest_gene_to_site
   overall_magical_df$bulk <- bulk_boolean
   overall_magical_df$magical_cell_types <- magical_cell_types
   overall_magical_df$combined_single_cell_types <- combined_single_cell_types
@@ -490,7 +498,7 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   return(overall_magical_df)
 }
 
-fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magical_tf_df, overall_pseudobulk_motif_enrichment_df) {
+fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseudobulk_motif_enrichment_df) {
   # TF 
   tf <- c()
   # Total Circuit Count
@@ -520,7 +528,7 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magic
   # Sort TFs by name and find total count
   tf_summary <- table(tf)
   tf <- names(tf_summary)
-  total_circuit_count <- unname(tf_summary)
+  total_circuit_count <- as.numeric(unname(tf_summary))
   # All bulk passing genes
   passing_bulk_genes <- c(high_passing_pos_genes, high_passing_neg_genes)
   for(current_tf in tf) {
@@ -592,5 +600,12 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magic
       pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, "N/A")
     }
   }
-  
+  print(total_circuit_count)
+  overall_magical_tf_df <- data.frame(tf = tf, total_circuit_count = total_circuit_count, circuit_cell_types = circuit_cell_types,
+                                      bound_genes = bound_genes, found_as_circuit_genes = found_as_circuit_genes,
+                                      found_as_DEGs_in_combined_cell_types = found_as_DEGs_in_combined_cell_types,
+                                      found_as_DEGs_in_original_cell_types = found_as_DEGs_in_original_cell_types,
+                                      found_as_DEGs_in_bulk = found_as_DEGs_in_bulk,
+                                      pseudobulk_motif_enrichment = pseudobulk_motif_enrichment)
+  return(overall_magical_tf_df)
 }

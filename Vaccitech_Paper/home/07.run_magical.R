@@ -137,12 +137,11 @@ overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df
 overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df[,c(5,6,1,2,3,4)]
 overall_pseudobulk_motif_enrichment_df$TF <- sub("_.*", "", overall_pseudobulk_motif_enrichment_df$TF)
 
-# TODO: Add TF enrichment from pseudobulk data. Which TFs found to be binding in MAGICAL were also found to be enriched in motif enrichment analysis?
-# TODO: Add info about each site - what kind of site is it? Maybe closest gene too?
+# TODO: Add N/A if not found in original sc cell types
 overall_magical_df <- fill_in_info_for_magical_output(overall_magical_df, sc_das_dir, 
                                                                 sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
                                                       high_pos_pseudobulk_sc_genes_bulk_passing_df$gene, 
-                                                      high_neg_pseudobulk_sc_genes_bulk_passing_df$gene)
+                                                      high_neg_pseudobulk_sc_genes_bulk_passing_df$gene, sc_peaks)
 write.table(overall_magical_df,
             file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", quote = FALSE,
             row.names = FALSE)
@@ -152,10 +151,7 @@ write.table(overall_magical_df,
 # For TFs associated with the current circuit, were any found to be DEGs in the more granular cell types from the original DEG analysis?
 # For TFs associated with the current circuit, were any found to be DEGs in the bulk data?
 # For TFs associated with the current circuit, were any found to be significant in motif enrichment analysis for the scATAC-seq data?
-overall_magical_tf_df <- data.frame(tf = character(), total_circuit_count = numeric(), circuit_cell_types = character(),
-                                    bound_genes = character(), found_as_circuit_genes = character(),
-                                    found_as_DEGs_in_combined_cell_types <- character(),
-                                    found_as_DEGs_in_original_sc_cell_types <- character(),
-                                    found_as_DEGs_in_bulk <- character(),
-                                    pseudobulk_motif_enrichment <- character())
-overall_magical_tf_df <- fill_in_info_for_magical_tf_output(overall_magical_df, overall_magical_tf_df, overall_pseudobulk_motif_enrichment_df)
+overall_magical_tf_df <- fill_in_info_for_magical_tf_output(overall_magical_df, overall_pseudobulk_motif_enrichment_df)
+write.table(overall_magical_tf_df,
+            file = paste0(magical_output_dir, "MAGICAL_overall_output_tf.tsv"), sep = "\t", quote = FALSE,
+            row.names = FALSE)
