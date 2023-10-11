@@ -445,8 +445,9 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   # If yes, note that its FC direction always matches the single cell FC direction 
   bulk_boolean <- c()
   # What kind of peak is the site?
-  nearest_gene_to_site <- c()
+  # What is the closest gene to the site?
   site_type <- c()
+  nearest_gene_to_site <- c()
   for(current_circuit_index in 1:nrow(overall_magical_df)) {
     current_circuit <- overall_magical_df[current_circuit_index,]
     cell_type <- current_circuit$Cell_Type
@@ -474,9 +475,13 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     combined_single_cell_types <- c(combined_single_cell_types, combined_gene_cell_types)
     # Capture cell types from DEGS for original more granular SC cell types
     original_gene_cell_types <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Gene_Name == current_gene,]$Cell_Type
-    original_gene_cell_types <- sort(original_gene_cell_types)
-    original_gene_cell_types <- paste(original_gene_cell_types, collapse = ",")
-    original_single_cell_types <- c(original_single_cell_types, original_gene_cell_types)
+    if(length(original_gene_cell_types) > 0) {
+      original_gene_cell_types <- sort(original_gene_cell_types)
+      original_gene_cell_types <- paste(original_gene_cell_types, collapse = ",")
+      original_single_cell_types <- c(original_single_cell_types, original_gene_cell_types)
+    } else {
+      original_single_cell_types <- c(original_single_cell_types, "N/A")
+    }
     # Capture whether gene was found in bulk RNA-seq data
     if(current_gene %in% pos_bulk_genes | current_gene %in% neg_bulk_genes) {
       bulk_boolean <- c(bulk_boolean, TRUE)
@@ -600,7 +605,6 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
       pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, "N/A")
     }
   }
-  print(total_circuit_count)
   overall_magical_tf_df <- data.frame(tf = tf, total_circuit_count = total_circuit_count, circuit_cell_types = circuit_cell_types,
                                       bound_genes = bound_genes, found_as_circuit_genes = found_as_circuit_genes,
                                       found_as_DEGs_in_combined_cell_types = found_as_DEGs_in_combined_cell_types,

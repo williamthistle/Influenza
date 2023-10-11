@@ -124,7 +124,7 @@ cluster_info <- get_cluster_info(atac_proj)
 
 # Remove messy clusters
 # C4 looks like unintegrated cells but it comes from LVL so it won't be relevant for our HVL analysis
-idxPass <- which(atac_proj$seurat_clusters %in% c("4", "7", "13", "16", "20", "24", "28", "29"))
+idxPass <- which(atac_proj$seurat_clusters %in% c("4", "7", "10", "13", "15", "16", "18", "20", "24", "26", "28", "29"))
 cellsPass <- atac_proj$cellNames[-idxPass]
 atac_proj_minus_clusters <- atac_proj[cellsPass, ]
 
@@ -184,7 +184,7 @@ write.table(x = HVL_peaks_df, file = paste0(ATAC_output_dir, "HVL_peaks_info.txt
 peak_txt_file <- create_peaks_file(HVL_proj_minus_clusters, ATAC_output_dir)
 # Create peak_motif_matches.txt file
 HVL_proj_minus_clusters <- create_peak_motif_matches_file(HVL_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
-# save ArchR project: ArchR::saveArchRProject(ArchRProj = HVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "HVL"), load = FALSE)
+# save ArchR project: ArchR::saveArchRProject(ArchRProj = HVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "HVL"), load = FALSE, overwrite = TRUE)
 # load ArchR project: HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
 # Create pseudobulk counts for peaks for each cell type
 # pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
@@ -245,7 +245,7 @@ write.table(lapply(summary(peak_motif_mapping@assays@data@listData$matches), as.
             quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
 
 
-differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/corrected_peak_indices/")
+differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/new_peaks_with_fewer_tnaive/")
 if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 calculate_daps_for_each_cell_type(HVL_proj_minus_clusters, differential_peaks_dir, sample_metadata_for_SPEEDI_df)
 
