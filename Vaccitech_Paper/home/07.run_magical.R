@@ -137,7 +137,6 @@ overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df
 overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df[,c(5,6,1,2,3,4)]
 overall_pseudobulk_motif_enrichment_df$TF <- sub("_.*", "", overall_pseudobulk_motif_enrichment_df$TF)
 
-# TODO: Add N/A if not found in original sc cell types
 overall_magical_df <- fill_in_info_for_magical_output(overall_magical_df, sc_das_dir, 
                                                                 sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
                                                       high_pos_pseudobulk_sc_genes_bulk_passing_df$gene, 

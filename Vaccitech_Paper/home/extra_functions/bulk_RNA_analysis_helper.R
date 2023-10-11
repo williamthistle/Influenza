@@ -431,6 +431,8 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
 
 fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
                                             pos_bulk_genes, neg_bulk_genes, sc_peaks) {
+  # Distance between relevant gene TSS and peak 
+  dist_between_gene_tss_and_peak <- c()
   # FC for circuit gene from SC data (positive or negative?)
   gene_fcs <- c()
   # FC for circuit site from SC (pseudobulk) data (positive or negative?)
@@ -453,6 +455,12 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     cell_type <- current_circuit$Cell_Type
     cell_type_in_df <- sub("_", " ", cell_type)
     current_gene <- current_circuit$Gene_symbol
+    # Capture distance between gene TSS and peak
+    gene_tss <- current_circuit$Gene_TSS
+    peak_start <- current_circuit$Peak_start
+    peak_end <- current_circuit$Peak_end
+    peak_mid <- (peak_start + peak_end) / 2
+    dist_between_gene_tss_and_peak <- c(dist_between_gene_tss_and_peak, abs(gene_tss - peak_mid))
     # Capture gene FC
     gene_fc <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Gene_Name == current_circuit$Gene_symbol,]
     gene_fc <- gene_fc[gene_fc$Cell_Type == cell_type_in_df,]$sc_log2FC
@@ -492,6 +500,7 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     site_type <- c(site_type, current_peak_info$peakType)
     nearest_gene_to_site <- c(nearest_gene_to_site, current_peak_info$nearestGene)
   }
+  overall_magical_df$dist_between_gene_tss_and_peak <- dist_between_gene_tss_and_peak
   overall_magical_df$gene_fc <- gene_fcs
   overall_magical_df$site_fc <- site_fcs
   overall_magical_df$site_type <- site_type
