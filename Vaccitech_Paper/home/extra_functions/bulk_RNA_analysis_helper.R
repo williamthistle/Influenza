@@ -450,6 +450,7 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   # What is the closest gene to the site?
   site_type <- c()
   nearest_gene_to_site <- c()
+  dist_to_nearest_gene_tss <- c()
   for(current_circuit_index in 1:nrow(overall_magical_df)) {
     current_circuit <- overall_magical_df[current_circuit_index,]
     cell_type <- current_circuit$Cell_Type
@@ -499,12 +500,14 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     current_peak_info <- sc_peaks[sc_peaks$value == current_circuit$Peak_chr & sc_peaks$start == current_circuit$Peak_start & sc_peaks$end == current_circuit$Peak_end,]
     site_type <- c(site_type, current_peak_info$peakType)
     nearest_gene_to_site <- c(nearest_gene_to_site, current_peak_info$nearestGene)
+    dist_to_nearest_gene_tss <- c(dist_to_nearest_gene_tss, current_peak_info$distToTSS)
   }
   overall_magical_df$dist_between_gene_tss_and_peak <- dist_between_gene_tss_and_peak
   overall_magical_df$gene_fc <- gene_fcs
   overall_magical_df$site_fc <- site_fcs
-  overall_magical_df$site_type <- site_type
   overall_magical_df$nearest_gene_to_site <- nearest_gene_to_site
+  overall_magical_df$dist_to_nearest_gene_tss <- dist_to_nearest_gene_tss
+  overall_magical_df$site_type_for_nearest_gene <- site_type
   overall_magical_df$bulk <- bulk_boolean
   overall_magical_df$magical_cell_types <- magical_cell_types
   overall_magical_df$combined_single_cell_types <- combined_single_cell_types
