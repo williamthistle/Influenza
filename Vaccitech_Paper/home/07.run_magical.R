@@ -100,7 +100,7 @@ for(cell_type in cell_types) {
                                                     candidate_circuits, circuits_linkage_posterior)
 }
 
-# Create overall MAGICAL circuit file
+# Create overall MAGICAL circuit table
 cell_type <- cell_types[1]
 overall_magical_df <- read.table(paste0(magical_output_dir, cell_type, "_MAGICAL_selected_regulatory_circuits.txt"), sep = "\t", header = TRUE)
 overall_magical_df$Cell_Type <- cell_type
@@ -111,6 +111,31 @@ for(cell_type in rest_of_cell_types) {
   overall_magical_df <- rbind(overall_magical_df, current_magical_df)
 }
 overall_magical_df <- overall_magical_df[,c(9,1,2,3,4,5,6,7,8)]
+
+# Create overall pseudobulk motif enrichment table
+cell_type <- cell_types[1]
+overall_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_up_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
+overall_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
+overall_pseudobulk_motif_enrichment_df$Direction <- "Pos"
+current_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_down_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
+current_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
+current_pseudobulk_motif_enrichment_df$Direction <- "Neg"
+rest_of_cell_types <- cell_types[c(-1)]
+for(cell_type in rest_of_cell_types) {
+  for(direction in c("up", "down")) {
+    current_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_", direction, "_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
+    current_df$Cell_Type <- cell_type
+    if(direction == "up") {
+      current_df$Direction <- "Up"
+    } else {
+      current_df$Direction <- "Down"
+    }
+    overall_pseudobulk_motif_enrichment_df <- rbind(overall_pseudobulk_motif_enrichment_df, current_df)
+  }
+}
+overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df[overall_pseudobulk_motif_enrichment_df$p_adj < 0.05,]
+overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df[,c(5,6,1,2,3,4)]
+overall_pseudobulk_motif_enrichment_df$TF <- sub("_.*", "", overall_pseudobulk_motif_enrichment_df$TF)
 
 # TODO: Add TF enrichment from pseudobulk data. Which TFs found to be binding in MAGICAL were also found to be enriched in motif enrichment analysis?
 # TODO: Add info about each site - what kind of site is it? Maybe closest gene too?
@@ -133,4 +158,4 @@ overall_magical_tf_df <- data.frame(tf = character(), total_circuit_count = nume
                                     found_as_DEGs_in_original_sc_cell_types <- character(),
                                     found_as_DEGs_in_bulk <- character(),
                                     pseudobulk_motif_enrichment <- character())
-overall_magical_tf_df <- fill_in_info_for_magical_tf_output(overall_magical_df, overall_magical_tf_df)
+overall_magical_tf_df <- fill_in_info_for_magical_tf_output(overall_magical_df, overall_magical_tf_df, overall_pseudobulk_motif_enrichment_df)

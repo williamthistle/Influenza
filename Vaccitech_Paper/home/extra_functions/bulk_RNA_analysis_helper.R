@@ -490,7 +490,7 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   return(overall_magical_df)
 }
 
-fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magical_tf_df) {
+fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magical_tf_df, overall_pseudobulk_motif_enrichment_df) {
   # TF 
   tf <- c()
   # Total Circuit Count
@@ -504,7 +504,7 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magic
   # Found_as_DEGs_in_Combined_Cell_Types (Cell Type and Direction)
   found_as_DEGs_in_combined_cell_types <- c()
   # Found_as_DEGs_in_Original_SC_Cell_Types (Cell Type and Direction)
-  found_as_DEGs_in_original_sc_cell_types <- c()
+  found_as_DEGs_in_original_cell_types <- c()
   # Found_as_DEGs_in_Bulk (Direction)
   found_as_DEGs_in_bulk <- c()
   # Pseudobulk_Motif_Enrichment (Cell Type and Direction)
@@ -521,6 +521,8 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magic
   tf_summary <- table(tf)
   tf <- names(tf_summary)
   total_circuit_count <- unname(tf_summary)
+  # All bulk passing genes
+  passing_bulk_genes <- c(high_passing_pos_genes, high_passing_neg_genes)
   for(current_tf in tf) {
     # Find cell types for circuits that have current TF
     tf_rows <- overall_magical_df[grepl(current_tf, overall_magical_df$TFs.binding.prob.),]
@@ -542,18 +544,53 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_magic
     } else {
       found_as_circuit_genes <- c(found_as_circuit_genes, "N/A")
     }
-    # If the current TF is found as a DEG in the combined cell type data (input for MAGICAL), record that info (gene name and cell type)
-    # If the current TF is not found as a circuit gene, just write N/A
+    # If the current TF is found as a DEG in the combined cell type data (input for MAGICAL), record that info (cell type and FC direction)
+    # If the current TF is not found, just write N/A
     found_as_combined_deg_tf <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Gene_Name == current_tf,]
     if(nrow(found_as_combined_deg_tf) > 0) {
-      current_combined_deg_genes <- found_as_combined_deg_tf$Gene_Name
       current_combined_deg_cell_types <- found_as_combined_deg_tf$Cell_Type
-      current_deg_gene_info <- paste(current_combined_deg_genes, " (", current_combined_deg_cell_types, ")", sep = "")
-      current_deg_gene_info <- unique(current_deg_gene_info)
+      current_combined_deg_fcs <- found_as_combined_deg_tf$sc_log2FC
+      current_combined_deg_fcs <- ifelse(current_combined_deg_fcs > 0, "Pos", "Neg")
+      current_deg_gene_info <- paste(current_combined_deg_cell_types, " (", current_combined_deg_fcs, ")", sep = "")
       current_deg_gene_info <- paste(current_deg_gene_info, collapse = ",")
       found_as_DEGs_in_combined_cell_types <- c(found_as_DEGs_in_combined_cell_types, current_deg_gene_info)
     } else {
       found_as_DEGs_in_combined_cell_types <- c(found_as_DEGs_in_combined_cell_types, "N/A")
     }
+    # If the current TF is found as a DEG in the original sc data, record that info (cell type and FC direction)
+    # If the current TF is not found, just write N/A
+    found_as_original_deg_tf <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Gene_Name == current_tf,]
+    if(nrow(found_as_original_deg_tf) > 0) {
+      current_original_deg_cell_types <- found_as_original_deg_tf$Cell_Type
+      current_original_deg_fcs <- found_as_original_deg_tf$sc_log2FC
+      current_original_deg_fcs <- ifelse(current_original_deg_fcs > 0, "Pos", "Neg")
+      current_deg_gene_info <- paste(current_original_deg_cell_types, " (", current_original_deg_fcs, ")", sep = "")
+      current_deg_gene_info <- paste(current_deg_gene_info, collapse = ",")
+      found_as_DEGs_in_original_cell_types <- c(found_as_DEGs_in_original_cell_types, current_deg_gene_info)
+    } else {
+      found_as_DEGs_in_original_cell_types <- c(found_as_DEGs_in_original_cell_types, "N/A")
+    }
+    # If the current TF is found as a DEG in the bulk data, record that info (FC direction)
+    # If the current TF is not found, just write N/A
+    if(current_tf %in% high_passing_pos_genes) {
+      found_as_DEGs_in_bulk <- c(found_as_DEGs_in_bulk, "Pos")
+    } else if(current_tf %in% high_passing_neg_genes) {
+      found_as_DEGs_in_bulk <- c(found_as_DEGs_in_bulk, "Neg")
+    } else {
+      found_as_DEGs_in_bulk <- c(found_as_DEGs_in_bulk, "N/A")
+    }
+    # If the current TF is found as enriched in the pseudobulk motif analysis, record that info (cell type and direction)
+    # If the current TF is not found, just write N/A
+    current_pseudobulk_motif_enrichment_tf <- overall_pseudobulk_motif_enrichment_df[overall_pseudobulk_motif_enrichment_df$TF == current_tf,]
+    if(nrow(current_pseudobulk_motif_enrichment_tf) > 0) {
+      current_pseudobulk_motif_enrichment_cell_types <- current_pseudobulk_motif_enrichment_tf$Cell_Type
+      current_pseudobulk_motif_enrichment_directions <- current_pseudobulk_motif_enrichment_tf$Direction
+      current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_cell_types, " (", current_pseudobulk_motif_enrichment_directions, ")", sep = "")
+      current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_info, collapse = ",")
+      pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, current_pseudobulk_motif_enrichment_info)
+    } else {
+      pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, "N/A")
+    }
   }
+  
 }

@@ -22,7 +22,7 @@ high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- find_degs_across_time_points_for_
                                                                                   raw_high_placebo_period_2_D5_vs_D_minus_1_results,
                                                                                   raw_high_placebo_period_2_D8_vs_D_minus_1_results,
                                                                                   raw_high_placebo_period_2_D28_vs_D_minus_1_results,
-                                                                                  high_pos_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$sc_log2FC > 0,])
+                                                                                  high_pos_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$sc_log2FC > 0,])
 
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df[high_pos_pseudobulk_sc_DEGs_bulk_passing_df$D28_fc > 0,]
 
@@ -30,7 +30,7 @@ high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- find_degs_across_time_points_for_
                                                                                       raw_high_placebo_period_2_D5_vs_D_minus_1_results,
                                                                                       raw_high_placebo_period_2_D8_vs_D_minus_1_results,
                                                                                       raw_high_placebo_period_2_D28_vs_D_minus_1_results,
-                                                                                      high_neg_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$sc_log2FC < 0,])
+                                                                                      high_neg_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$sc_log2FC < 0,])
 high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df[high_neg_pseudobulk_sc_DEGs_bulk_passing_df$D28_fc < 0,]
 
 # pos: 28 genes
@@ -41,6 +41,8 @@ high_passing_pos_genes <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df$gene
 high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_neg_pseudobulk_sc_DEGs_bulk_passing_df)
 write.table(high_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_neg_genes <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df$gene
+
+passing_bulk_genes <- c(high_passing_pos_genes, high_passing_neg_genes)
 
 # Check these validated genes on low viral load individuals
 low_pos_pseudobulk_sc_DEGs_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
