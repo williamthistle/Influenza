@@ -262,6 +262,23 @@ pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudob
 # 4505 DASs 
 pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
 
+# Create hg38 refseq file
+hg38_refseq <- ArchR::getGeneAnnotation(HVL_proj_minus_clusters)
+hg38_refseq <- hg38_refseq$genes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### ETC ###
 # Print distributions for each cell type and create cell type proportions file for MAGICAL
