@@ -120,17 +120,18 @@ overall_pseudobulk_motif_enrichment_df$Direction <- "Pos"
 current_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_down_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
 current_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
 current_pseudobulk_motif_enrichment_df$Direction <- "Neg"
+overall_pseudobulk_motif_enrichment_df <- rbind(overall_pseudobulk_motif_enrichment_df, current_pseudobulk_motif_enrichment_df)
 rest_of_cell_types <- cell_types[c(-1)]
 for(cell_type in rest_of_cell_types) {
   for(direction in c("up", "down")) {
-    current_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_", direction, "_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
-    current_df$Cell_Type <- cell_type
+    current_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_", direction, "_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
+    current_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
     if(direction == "up") {
-      current_df$Direction <- "Up"
+      current_pseudobulk_motif_enrichment_df$Direction <- "Up"
     } else {
-      current_df$Direction <- "Down"
+      current_pseudobulk_motif_enrichment_df$Direction <- "Down"
     }
-    overall_pseudobulk_motif_enrichment_df <- rbind(overall_pseudobulk_motif_enrichment_df, current_df)
+    overall_pseudobulk_motif_enrichment_df <- rbind(overall_pseudobulk_motif_enrichment_df, current_pseudobulk_motif_enrichment_df)
   }
 }
 overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df[overall_pseudobulk_motif_enrichment_df$p_adj < 0.05,]
@@ -140,7 +141,7 @@ overall_pseudobulk_motif_enrichment_df$TF <- sub("_.*", "", overall_pseudobulk_m
 overall_magical_df <- fill_in_info_for_magical_output(overall_magical_df, sc_das_dir, 
                                                                 sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
                                                       high_pos_pseudobulk_sc_genes_bulk_passing_df$gene, 
-                                                      high_neg_pseudobulk_sc_genes_bulk_passing_df$gene, sc_peaks)
+                                                      high_neg_pseudobulk_sc_genes_bulk_passing_df$gene, sc_peaks, overall_pseudobulk_motif_enrichment_df)
 write.table(overall_magical_df,
             file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", quote = FALSE,
             row.names = FALSE)
