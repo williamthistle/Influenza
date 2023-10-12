@@ -633,7 +633,8 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
     if(nrow(current_pseudobulk_motif_enrichment_tf) > 0) {
       current_pseudobulk_motif_enrichment_cell_types <- current_pseudobulk_motif_enrichment_tf$Cell_Type
       current_pseudobulk_motif_enrichment_directions <- current_pseudobulk_motif_enrichment_tf$Direction
-      current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_cell_types, " (", current_pseudobulk_motif_enrichment_directions, ")", sep = "")
+      current_pseudobulk_motif_enrichment_ranks <- current_pseudobulk_motif_enrichment_tf$rank
+      current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_cell_types, " (", current_pseudobulk_motif_enrichment_directions, "; Rank ", current_pseudobulk_motif_enrichment_ranks, ")", sep = "")
       current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_info, collapse = ",")
       pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, current_pseudobulk_motif_enrichment_info)
     } else {

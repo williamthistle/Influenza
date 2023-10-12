@@ -116,10 +116,10 @@ overall_magical_df <- overall_magical_df[,c(9,1,2,3,4,5,6,7,8)]
 cell_type <- cell_types[1]
 overall_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_up_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
 overall_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
-overall_pseudobulk_motif_enrichment_df$Direction <- "Pos"
+overall_pseudobulk_motif_enrichment_df$Direction <- "Up"
 current_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_down_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
 current_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
-current_pseudobulk_motif_enrichment_df$Direction <- "Neg"
+current_pseudobulk_motif_enrichment_df$Direction <- "Down"
 overall_pseudobulk_motif_enrichment_df <- rbind(overall_pseudobulk_motif_enrichment_df, current_pseudobulk_motif_enrichment_df)
 rest_of_cell_types <- cell_types[c(-1)]
 for(cell_type in rest_of_cell_types) {
