@@ -21,3 +21,5 @@ hostname <- system("hostname", intern = TRUE)
 if(hostname == "lumos.Princeton.EDU") {
   addArchRThreads(16)
 }
+
+addArchRGenome("hg38")

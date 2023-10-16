@@ -430,7 +430,7 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
 }
 
 fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
-                                            pos_bulk_genes, neg_bulk_genes, sc_peaks) {
+                                            pos_bulk_genes, neg_bulk_genes, sc_peaks, overall_pseudobulk_motif_enrichment_df) {
   # Distance between relevant gene TSS and peak 
   dist_between_gene_tss_and_peak <- c()
   # FC for circuit gene from SC data (positive or negative?)
@@ -450,12 +450,32 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   # What is the closest gene to the site?
   site_type <- c()
   nearest_gene_to_site <- c()
-  dist_to_nearest_gene_tss <- c()
+  #dist_to_nearest_gene_tss <- c()
+  #dist_to_nearest_gene_start <- c()
+  pseudobulk_motif_enrichment <- c()
   for(current_circuit_index in 1:nrow(overall_magical_df)) {
     current_circuit <- overall_magical_df[current_circuit_index,]
     cell_type <- current_circuit$Cell_Type
     cell_type_in_df <- sub("_", " ", cell_type)
     current_gene <- current_circuit$Gene_symbol
+    current_tfs <- current_circuit$TFs.binding.prob.
+    current_tfs <- unlist(strsplit(current_tfs, ","))
+    current_tfs <- current_tfs[c(TRUE, FALSE)]
+    all_pseudobulk_info <- ""
+    for(current_tf in current_tfs) {
+      pseudobulk_enrichment_subset_df <- overall_pseudobulk_motif_enrichment_df[overall_pseudobulk_motif_enrichment_df$TF == current_tf,]
+      pseudobulk_enrichment_subset_df <- pseudobulk_enrichment_subset_df[pseudobulk_enrichment_subset_df$Cell_Type == cell_type,]
+      if(nrow(pseudobulk_enrichment_subset_df) > 0) {
+        current_pseudobulk_info <- paste0(current_tf, ": ")
+        current_pseudobulk_tf_info <- paste(pseudobulk_enrichment_subset_df$Direction, " (Rank ", pseudobulk_enrichment_subset_df$rank, ")", sep = "")
+        current_pseudobulk_tf_info <- paste(current_pseudobulk_tf_info, collapse = ",")
+        current_pseudobulk_info <- paste0(current_pseudobulk_info, current_pseudobulk_tf_info, ".")
+      } else {
+        current_pseudobulk_info <- paste0(current_tf, ": N/A.")
+      }
+      all_pseudobulk_info <- paste0(all_pseudobulk_info, current_pseudobulk_info)
+    }
+    pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, all_pseudobulk_info)
     # Capture distance between gene TSS and peak
     gene_tss <- current_circuit$Gene_TSS
     peak_start <- current_circuit$Peak_start
@@ -500,18 +520,21 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     current_peak_info <- sc_peaks[sc_peaks$value == current_circuit$Peak_chr & sc_peaks$start == current_circuit$Peak_start & sc_peaks$end == current_circuit$Peak_end,]
     site_type <- c(site_type, current_peak_info$peakType)
     nearest_gene_to_site <- c(nearest_gene_to_site, current_peak_info$nearestGene)
-    dist_to_nearest_gene_tss <- c(dist_to_nearest_gene_tss, current_peak_info$distToTSS)
+    #dist_to_nearest_gene_tss <- c(dist_to_nearest_gene_tss, current_peak_info$distToTSS)
+    #dist_to_nearest_gene_start <- c(dist_to_nearest_gene_start, current_peak_info$distToGeneStart)
   }
   overall_magical_df$dist_between_gene_tss_and_peak <- dist_between_gene_tss_and_peak
   overall_magical_df$gene_fc <- gene_fcs
   overall_magical_df$site_fc <- site_fcs
   overall_magical_df$nearest_gene_to_site <- nearest_gene_to_site
-  overall_magical_df$dist_to_nearest_gene_tss <- dist_to_nearest_gene_tss
+  #overall_magical_df$dist_to_nearest_gene_start <- dist_to_nearest_gene_start
+  #overall_magical_df$dist_to_nearest_gene_tss <- dist_to_nearest_gene_tss
   overall_magical_df$site_type_for_nearest_gene <- site_type
   overall_magical_df$bulk <- bulk_boolean
   overall_magical_df$magical_cell_types <- magical_cell_types
   overall_magical_df$combined_single_cell_types <- combined_single_cell_types
   overall_magical_df$original_single_cell_types <- original_single_cell_types
+  overall_magical_df$pseudobulk_motif_enrichment_for_tf <- pseudobulk_motif_enrichment
   return(overall_magical_df)
 }
 
@@ -610,7 +633,8 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
     if(nrow(current_pseudobulk_motif_enrichment_tf) > 0) {
       current_pseudobulk_motif_enrichment_cell_types <- current_pseudobulk_motif_enrichment_tf$Cell_Type
       current_pseudobulk_motif_enrichment_directions <- current_pseudobulk_motif_enrichment_tf$Direction
-      current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_cell_types, " (", current_pseudobulk_motif_enrichment_directions, ")", sep = "")
+      current_pseudobulk_motif_enrichment_ranks <- current_pseudobulk_motif_enrichment_tf$rank
+      current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_cell_types, " (", current_pseudobulk_motif_enrichment_directions, "; Rank ", current_pseudobulk_motif_enrichment_ranks, ")", sep = "")
       current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_info, collapse = ",")
       pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, current_pseudobulk_motif_enrichment_info)
     } else {
