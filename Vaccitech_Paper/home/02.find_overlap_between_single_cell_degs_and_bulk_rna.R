@@ -2,10 +2,7 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-# Data frame that captures which sc pseudobulk genes pass different logFC thresholds for different bulk differential expression analyses
-# The basic idea is, for each day (D2, D5, D8, D28), we look at whether the gene passes the threshold for:
-# log2FC 0.2, log2FC 0.3, log2FC 0.585, log2FC 1, logFC 2
-# log2FC -0.2, log2FC -0.3, log2FC -0.585, log2FC -1, logFC -2
+# Data frame that captures the fold changes for sc pseudobulk genes in various bulk differential expression analyses
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- data.frame(gene = character(), cell_types = character(), D2_fc = numeric(),
                                                   D5_fc = numeric(), D8_fc = numeric(), D28_fc = numeric())
 
