@@ -49,6 +49,7 @@ multiome_data_list <- paste0(base_dir, "multiome/multiome_data_list.txt")
 bulkRNA_data_list <- paste0(base_dir, "bulkRNA/bulkRNA_data_list.txt")
 mintchip_data_list <- paste0(base_dir, "mintchip/mintchip_data_list.txt")
 snme_data_list <- paste0(base_dir, "snME/snME_data_list.txt")
+bulk_methylation_metadata_file <- paste0(base_dir, "Bulk_Methylation_Sample_Metadata.csv")
 scRNA_qc_file <- paste0(base_dir, "ECHO_FLU_Vaccitech_PBMC_scrnaseq_coded_qc_report_WT.csv")
 multiome_qc_file <- paste0(base_dir, "Stanford_FLU_combined_qc_metric_coded_09015022_qc_data.csv")
 overall_metadata_file <- paste0(base_dir, "20220609_metadataECHO_Vaccitech_Coded.csv")
@@ -62,12 +63,13 @@ multiome_data <- multiome_data[1:length(multiome_data) - 1]
 bulkRNA_data <- read.table(bulkRNA_data_list)$V1
 mintchip_data <- read.table(mintchip_data_list)$V1
 snme_data <- read.table(snme_data_list)$V1
+bulk_methylation_data <- read.table(bulk_methylation_metadata_file, sep = ",", header = TRUE)$Sample.ID
 scRNA_qc <- read.csv(scRNA_qc_file)
 multiome_qc <- read.csv(multiome_qc_file)
 overall_metadata <- read.csv(overall_metadata_file)
 all_metadata_sheet_df <- data.frame(aliquot_id = character(), subject_id = character(), scRNA_seq = character(),
                                       scATAC_seq = character(), multiome = character(), bulkRNA_seq = character(),
-                                      mintchip = character(), snME = character(), has_metadata = character(), specimen_prep = character(), 
+                                      mintchip = character(), snME = character(), bulk_methylation = character(), has_metadata = character(), specimen_prep = character(), 
                                       treatment = character(), period = character(), time_point = character(), sex = character(), age = character(), 
                                       race = character(), passed_qc_scRNA_seq = character(), passed_qc_multiome = character(),
                                       viral_load = character())
@@ -85,7 +87,8 @@ for(scRNA_entry in scRNA_data) {
   }
   # Add presence of scRNA_seq data to current row
   current_row <- append(current_row, TRUE)
-  # Add FALSE for scATAC_seq, multiome, bulkRNA_seq, mintchip, and snME for now
+  # Add FALSE for scATAC_seq, multiome, bulkRNA_seq, mintchip, snME, and bulk methyl for now
+  current_row <- append(current_row, FALSE)
   current_row <- append(current_row, FALSE)
   current_row <- append(current_row, FALSE)
   current_row <- append(current_row, FALSE)
@@ -147,8 +150,9 @@ for(scATAC_entry in scATAC_data) {
     }
     # Add FALSE for scRNA_seq (would have caught it above)
     current_row <- append(current_row, FALSE)
-    # Add TRUE For scATAC_seq and FALSE for multiome, bulkRNA_seq, mintchip, and snME for now
+    # Add TRUE For scATAC_seq and FALSE for multiome, bulkRNA_seq, mintchip, snME, and bulk methyl for now
     current_row <- append(current_row, TRUE)
+    current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
@@ -210,8 +214,9 @@ for(multiome_entry in multiome_data) {
     current_row <- append(current_row, FALSE)
     # Add FALSE for scATAC_seq (would have caught it above)
     current_row <- append(current_row, FALSE)
-    # Add TRUE for multiome and FALSE for bulkRNA_seq, mintchip, and snME for now
+    # Add TRUE for multiome and FALSE for bulkRNA_seq, mintchip, snME, and bulk methyl for now
     current_row <- append(current_row, TRUE)
+    current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
@@ -276,8 +281,9 @@ for(bulkRNA_entry in bulkRNA_data) {
     current_row <- append(current_row, FALSE)
     # Add FALSE for multiome (would have caught it above)
     current_row <- append(current_row, FALSE)
-    # Add TRUE for bulkRNA_seq and FALSE for mintchip and snME for now
+    # Add TRUE for bulkRNA_seq and FALSE for mintchip, snME, and bulk methyl for now
     current_row <- append(current_row, TRUE)
+    current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
     if(nrow(current_sample) > 0) {
@@ -339,7 +345,8 @@ for(mintchip_entry in mintchip_data) {
     current_row <- append(current_row, FALSE)
     # Add TRUE for mintchip
     current_row <- append(current_row, TRUE)
-    # Add FALSE for snME for now
+    # Add FALSE for snME and bulk methyl for now
+    current_row <- append(current_row, FALSE)
     current_row <- append(current_row, FALSE)
     if(nrow(current_sample) > 0) {
       current_row <- append(current_row, TRUE)
@@ -401,6 +408,71 @@ for(snme_entry in snme_data) {
     # Add FALSE for mintchip (would have caught it above)
     current_row <- append(current_row, FALSE)
     # Add TRUE for snME
+    current_row <- append(current_row, TRUE)
+    # Add FALSE for bulk methyl for now
+    current_row <- append(current_row, FALSE)
+    if(nrow(current_sample) > 0) {
+      current_row <- append(current_row, TRUE)
+      current_row <- append(current_row, current_sample$specimen_prep)
+      current_row <- append(current_row, current_sample$TREATMENT)
+      current_row <- append(current_row, current_sample$Period)
+      current_row <- append(current_row, current_sample$Time_Point)
+      current_row <- append(current_row, current_sample$SEX)
+      current_row <- append(current_row, current_sample$AGE)
+      current_row <- append(current_row, current_sample$RACE)
+    } else {
+      current_row <- append(current_row, FALSE)
+      current_row <- append(current_row, "N/A")
+      current_row <- append(current_row, "N/A")
+      current_row <- append(current_row, "N/A")
+      current_row <- append(current_row, "N/A")
+      current_row <- append(current_row, "N/A")
+      current_row <- append(current_row, "N/A")
+      current_row <- append(current_row, "N/A")
+    }
+    # Add N/A for scRNA_seq QC and multiome QC
+    current_row <- append(current_row, "N/A")
+    current_row <- append(current_row, "N/A")
+    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
+      current_row <- append(current_row, "high")
+    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
+      current_row <- append(current_row, "low")
+    } else {
+      current_row <- append(current_row, "neither")
+    }
+    all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
+  }
+}
+
+# snME
+for(bulk_methylation_entry in bulk_methylation_data) {
+  # We've already captured info about this aliquot above
+  if(bulk_methylation_entry %in% all_metadata_sheet_df$aliquot_id) {
+    all_metadata_sheet_df[all_metadata_sheet_df$aliquot_id == bulk_methylation_entry,]$bulk_methylation <- TRUE
+  } else {
+    # Add aliquot ID to current row
+    current_row <- c()
+    current_row <- append(current_row, bulk_methylation_entry)
+    # Add subject ID to current row
+    current_sample <- overall_metadata[overall_metadata$X_aliquot_id == bulk_methylation_entry,]
+    if(nrow(current_sample) > 0) {
+      current_row <- append(current_row, current_sample$SUBJECT_ID)
+    } else {
+      current_row <- append(current_row, "N/A")
+    }
+    # Add FALSE for scRNA_seq (would have caught it above)
+    current_row <- append(current_row, FALSE)
+    # Add FALSE for scATAC_seq (would have caught it above)
+    current_row <- append(current_row, FALSE)
+    # Add FALSE for multiome (would have caught it above)
+    current_row <- append(current_row, FALSE)
+    # Add FALSE for bulkRNA_seq (would have caught it above)
+    current_row <- append(current_row, FALSE)
+    # Add FALSE for mintchip (would have caught it above)
+    current_row <- append(current_row, FALSE)
+    # Add FALSE for snME (would have caught it above)
+    current_row <- append(current_row, FALSE)
+    # Add TRUE for bulk methyl for now
     current_row <- append(current_row, TRUE)
     if(nrow(current_sample) > 0) {
       current_row <- append(current_row, TRUE)
