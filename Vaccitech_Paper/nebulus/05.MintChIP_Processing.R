@@ -108,7 +108,7 @@ for(current_data_file_path in mintchip_data_matrix_file_paths) {
                               method=DBA_DESEQ2,
                               background=TRUE)
   # Find DASs
-  dbObj.norm <- dba.contrast(dbObj.norm,design="~Condition")
+  dbObj.norm <- dba.contrast(dbObj.norm,design="~Tissue + Condition")
   dbObj.norm <- dba.analyze(dbObj.norm,bBlacklist = FALSE, bGreylist = FALSE)
   results_fc_0 <- dba.report(dbObj.norm, contrast = 1, fold = 0, bUsePval = TRUE)
   results_fc_0.1 <- dba.report(dbObj.norm, contrast = 1, fold = 0.1)
