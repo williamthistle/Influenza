@@ -2,6 +2,22 @@
 source("~/00.setup.R")
 home_dir <- "/Genomics/ogtr04/wat2/"
 
+# Random helper function
+set_chr_info <- function(differential_analysis_results) {
+  chr_loc_info <- strsplit(rownames(differential_analysis_results), "_")
+  chr <- sapply(chr_loc_info, function(x) x[1])
+  start <- sapply(chr_loc_info, function(x) x[2])
+  end <- sapply(chr_loc_info, function(x) x[3])
+  differential_analysis_results$chr <- chr
+  differential_analysis_results$start <- start
+  differential_analysis_results$end <- end
+  differential_analysis_results$coordinates <- paste0(chr, ":", start, "-", end)
+  new_col_order <- c("chr", "start", "end", "coordinates", "baseMean", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")
+  differential_analysis_results <- differential_analysis_results[new_col_order]
+  return(differential_analysis_results)
+}
+
+
 ################## SETUP ##################
 data_path <- paste0(home_dir, "mintchip/data")
 processed_data_path <- paste0(home_dir, "mintchip/processed_data/")
@@ -59,77 +75,85 @@ output_dir <- paste0(output_dir, analysis_name, "/")
 if (!dir.exists(output_dir)) {dir.create(output_dir)}
 setwd(output_dir)
 
-
-
-samples <- read.csv("~/H3K4me1_metadata.csv", header = TRUE)
-test <- dba(sampleSheet=samples)
-test <- dba.count(test)
-test$config$cores <- 32
-peaks <- test$peaks
-first_peaks <- peaks[[1]]
-peak_row_names <- paste0(first_peaks$Chr, "_", first_peaks$Start, "_", first_peaks$End)
-peak_col_names <- test$samples$SampleID
-
-# Create a matrix filled with zeroes using nrow and ncol
-numRows <- length(peak_row_names)
-numCols <- length(peak_col_names)
-zeroMatrix <- matrix(0, nrow = numRows, ncol = numCols)
-
-# Create a data frame with the zero matrix and set row and column names
-peak_counts <- data.frame(zeroMatrix)
-rownames(peak_counts) <- peak_row_names
-colnames(peak_counts) <- peak_col_names
-
-for(current_index in 1:length(peaks)) {
-  peak_counts[,current_index] <- peaks[[current_index]]$Reads
-}
-
-rownames(samples) <- samples$SampleID
-
-differential_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = peak_counts, colData = samples, design = stats::formula("~ Tissue + Condition"))
-differential_analysis <- DESeq2::DESeq(differential_analysis)
-differential_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(differential_analysis), n=1)
-print(differential_analysis_results_contrast)
-
-# LFC = 0
-differential_analysis_results_0 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast)
-differential_analysis_results_0 <- differential_analysis_results_0[rowSums(is.na(differential_analysis_results_0)) == 0, ] # Remove NAs
-differential_analysis_results_0_filtered <- differential_analysis_results_0[differential_analysis_results_0$pvalue < 0.05,]
-
-# LFC = 0.1
-differential_analysis_results_0.1 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.1)
-differential_analysis_results_0.1 <- differential_analysis_results_0.1[rowSums(is.na(differential_analysis_results_0.1)) == 0, ] # Remove NAs
-differential_analysis_results_0.1_filtered <- differential_analysis_results_0.1[differential_analysis_results_0.1$pvalue < 0.05,]
-
-# LFC = 0.585
-differential_analysis_results_0.585 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.585)
-differential_analysis_results_0.585 <- differential_analysis_results_0.585[rowSums(is.na(differential_analysis_results_0.585)) == 0, ] # Remove NAs
-differential_analysis_results_0.585_filtered <- differential_analysis_results_0.585[differential_analysis_results_0.585$pvalue < 0.05,]
-
-
-
-
-
-
-
-
-
-
-mintchip_data_matrix_file_paths <- list.files(processed_data_path, full.names = TRUE)
+# Markers from mintchip
+markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 DAS_matrices <- list()
-for(current_data_file_path in mintchip_data_matrix_file_paths) {
-  # Normalize data (using "safest" settings from DiffBind manual)
-  dbObj.norm <- dba.normalize(dbObj.count_full_subj,normalize=DBA_NORM_NATIVE,
-                              method=DBA_DESEQ2,
-                              background=TRUE)
-  # Find DASs
-  dbObj.norm <- dba.contrast(dbObj.norm,design="~ Tissue + Condition")
-  dbObj.norm <- dba.analyze(dbObj.norm,bBlacklist = FALSE, bGreylist = FALSE)
-  results_fc_0 <- dba.report(dbObj.norm, contrast = 1, fold = 0, bUsePval = TRUE)
-  results_fc_0.1 <- dba.report(dbObj.norm, contrast = 1, fold = 0.1)
-  results_fc_0.585 <- dba.report(dbObj.norm, contrast = 1, fold = 0.585)
-  results_fc_1 <- dba.report(dbObj.norm, contrast = 1, fold = 1)
-  results_fc_2 <- dba.report(dbObj.norm, contrast = 1, fold = 2)
-  DAS_matrices[[current_marker]] <- list(results_fc_0, results_fc_0.1, results_fc_0.585, 
-                                         results_fc_1, results_fc_2)
+for(marker in markers) {
+  samples <- read.table(paste0("~/", marker, "_metadata.tsv"), sep = "\t", header = TRUE)
+  current_peak_info <- DiffBind::dba(sampleSheet=samples)
+  current_peak_info <- DiffBind::dba.count(current_peak_info)
+  current_peak_info$config$cores <- 32
+  current_peaks <- current_peak_info$peaks
+  first_peaks <- current_peaks[[1]]
+  peak_row_names <- paste0(first_peaks$Chr, "_", first_peaks$Start, "_", first_peaks$End)
+  peak_col_names <- current_peak_info$samples$SampleID
+  
+  # Create a matrix filled with zeroes using nrow and ncol
+  numRows <- length(peak_row_names)
+  numCols <- length(peak_col_names)
+  zeroMatrix <- matrix(0, nrow = numRows, ncol = numCols)
+  
+  # Create a data frame with the zero matrix and set row and column names
+  peak_counts <- data.frame(zeroMatrix)
+  rownames(peak_counts) <- peak_row_names
+  colnames(peak_counts) <- peak_col_names
+  
+  for(current_index in 1:length(current_peaks)) {
+    peak_counts[,current_index] <- current_peaks[[current_index]]$Reads
+  }
+  
+  rownames(samples) <- samples$SampleID
+  
+  # Note that Tissue is actually subject ID
+  differential_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = peak_counts, colData = samples, design = stats::formula("~ Tissue + Condition"))
+  differential_analysis <- DESeq2::DESeq(differential_analysis)
+  differential_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(differential_analysis), n=1)
+  print(differential_analysis_results_contrast)
+  
+  # LFC = 0
+  differential_analysis_results_0 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast)
+  differential_analysis_results_0 <- set_chr_info(differential_analysis_results_0)
+  
+  write.table(differential_analysis_results_0, paste0(output_dir, marker, "_", "D28_D1_diff_unfiltered.tsv"), quote = FALSE, sep = "\t")
+  
+  differential_analysis_results_0 <- differential_analysis_results_0[rowSums(is.na(differential_analysis_results_0)) == 0, ] # Remove NAs
+  differential_analysis_results_0_filtered <- differential_analysis_results_0[differential_analysis_results_0$pvalue < 0.05,]
+  
+  write.table(differential_analysis_results_0_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered.tsv"), quote = FALSE, sep = "\t")
+  
+  # LFC = 0.1
+  differential_analysis_results_0.1 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.1)
+  differential_analysis_results_0.1 <- set_chr_info(differential_analysis_results_0.1)
+  differential_analysis_results_0.1 <- differential_analysis_results_0.1[rowSums(is.na(differential_analysis_results_0.1)) == 0, ] # Remove NAs
+  differential_analysis_results_0.1_filtered <- differential_analysis_results_0.1[differential_analysis_results_0.1$pvalue < 0.05,]
+  
+  write.table(differential_analysis_results_0.1_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.1.tsv"), quote = FALSE, sep = "\t")
+  
+  
+  # LFC = 0.585
+  differential_analysis_results_0.585 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.585)
+  differential_analysis_results_0.585 <- set_chr_info(differential_analysis_results_0.585)
+  differential_analysis_results_0.585 <- differential_analysis_results_0.585[rowSums(is.na(differential_analysis_results_0.585)) == 0, ] # Remove NAs
+  differential_analysis_results_0.585_filtered <- differential_analysis_results_0.585[differential_analysis_results_0.585$pvalue < 0.05,]
+  
+  write.table(differential_analysis_results_0.585_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.585.tsv"), quote = FALSE, sep = "\t")
+  
+  # LFC = 1
+  differential_analysis_results_1 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 1)
+  differential_analysis_results_1 <- set_chr_info(differential_analysis_results_1)
+  differential_analysis_results_1 <- differential_analysis_results_1[rowSums(is.na(differential_analysis_results_1)) == 0, ] # Remove NAs
+  differential_analysis_results_1_filtered <- differential_analysis_results_1[differential_analysis_results_1$pvalue < 0.05,]
+  
+  write.table(differential_analysis_results_1_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_1.tsv"), quote = FALSE, sep = "\t")
+  
+  # LFC = 2
+  differential_analysis_results_2 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 2)
+  differential_analysis_results_2 <- set_chr_info(differential_analysis_results_2)
+  differential_analysis_results_2 <- differential_analysis_results_2[rowSums(is.na(differential_analysis_results_2)) == 0, ] # Remove NAs
+  differential_analysis_results_2_filtered <- differential_analysis_results_2[differential_analysis_results_2$pvalue < 0.05,]
+  
+  write.table(differential_analysis_results_2_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_2.tsv"), quote = FALSE, sep = "\t")
+  DAS_matrices[[marker]] <- list(differential_analysis_results_0_filtered, differential_analysis_results_0.1_filtered, 
+                                 differential_analysis_results_0.585_filtered, differential_analysis_results_1_filtered, 
+                                 differential_analysis_results_2_filtered)
 }
