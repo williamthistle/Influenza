@@ -60,49 +60,64 @@ if (!dir.exists(output_dir)) {dir.create(output_dir)}
 setwd(output_dir)
 
 
+
+samples <- read.csv("~/H3K4me1_metadata.csv", header = TRUE)
+test <- dba(sampleSheet=samples)
+test <- dba.count(test)
+test$config$cores <- 32
+peaks <- test$peaks
+first_peaks <- peaks[[1]]
+peak_row_names <- paste0(first_peaks$Chr, "_", first_peaks$Start, "_", first_peaks$End)
+peak_col_names <- test$samples$SampleID
+
+# Create a matrix filled with zeroes using nrow and ncol
+numRows <- length(peak_row_names)
+numCols <- length(peak_col_names)
+zeroMatrix <- matrix(0, nrow = numRows, ncol = numCols)
+
+# Create a data frame with the zero matrix and set row and column names
+peak_counts <- data.frame(zeroMatrix)
+rownames(peak_counts) <- peak_row_names
+colnames(peak_counts) <- peak_col_names
+
+for(current_index in 1:length(peaks)) {
+  peak_counts[,current_index] <- peaks[[current_index]]$Reads
+}
+
+rownames(samples) <- samples$SampleID
+
+differential_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = peak_counts, colData = samples, design = stats::formula("~ Tissue + Condition"))
+differential_analysis <- DESeq2::DESeq(differential_analysis)
+differential_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(differential_analysis), n=1)
+print(differential_analysis_results_contrast)
+
+# LFC = 0
+differential_analysis_results_0 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast)
+differential_analysis_results_0 <- differential_analysis_results_0[rowSums(is.na(differential_analysis_results_0)) == 0, ] # Remove NAs
+differential_analysis_results_0_filtered <- differential_analysis_results_0[differential_analysis_results_0$pvalue < 0.05,]
+
+# LFC = 0.1
+differential_analysis_results_0.1 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.1)
+differential_analysis_results_0.1 <- differential_analysis_results_0.1[rowSums(is.na(differential_analysis_results_0.1)) == 0, ] # Remove NAs
+differential_analysis_results_0.1_filtered <- differential_analysis_results_0.1[differential_analysis_results_0.1$pvalue < 0.05,]
+
+# LFC = 0.585
+differential_analysis_results_0.585 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.585)
+differential_analysis_results_0.585 <- differential_analysis_results_0.585[rowSums(is.na(differential_analysis_results_0.585)) == 0, ] # Remove NAs
+differential_analysis_results_0.585_filtered <- differential_analysis_results_0.585[differential_analysis_results_0.585$pvalue < 0.05,]
+
+
+
+
+
+
+
+
+
+
 mintchip_data_matrix_file_paths <- list.files(processed_data_path, full.names = TRUE)
 DAS_matrices <- list()
 for(current_data_file_path in mintchip_data_matrix_file_paths) {
-  load(current_data_file_path)
-  current_marker <- unique(dbObj.count$samples$Factor)
-  # Rename sample IDs to aliquot IDs everywhere
-  dbObj.count$class[DBA_ID,] <- mintchip_metadata$Aliquot
-  for (i in 1:8) {
-    names(dbObj.count$masks[[i]]) <- mintchip_metadata$Aliquot
-  }
-  colnames(dbObj.count$class) <- mintchip_metadata$Aliquot
-  dbObj.count$samples$SampleID <- mintchip_metadata$Aliquot
-  dbObj.count$samples$ControlID <- paste0(dbObj.count$samples$SampleID, "_C")
-  dbObj.count$class[7,] <- paste0(dbObj.count$samples$SampleID, "_C")
-  colnames(dbObj.count$called) <- mintchip_metadata$Aliquot
-  colnames(dbObj.count$binding) <- c("CHR", "START", "END", mintchip_metadata$Aliquot)
-  # Use tissue field for our subject ID as proxy (maybe should use replicate field?)
-  dbObj.count$class[2,] <- mintchip_metadata$Subject
-  dbObj.count$samples$Tissue <- mintchip_metadata$Subject
-  # Update BAM file names
-  for(i in 1:length(dbObj.count$samples$bamReads)) {
-    current_bam_token <- strsplit(dbObj.count$samples$bamReads[i], "_")[[1]][2]
-    current_bam_token <- strsplit(current_bam_token, "\\.")[[1]][1]
-    bam_record <- mintchip_metadata[mintchip_metadata$oldBamToken == current_bam_token,]
-    new_bam_token <- bam_record$newBamToken
-    dbObj.count$samples$bamReads <- sub(current_bam_token, new_bam_token, dbObj.count$samples$bamReads)
-    dbObj.count$samples$Peaks <- sub(current_bam_token, new_bam_token, dbObj.count$samples$Peaks)
-  }
-  dbObj.count$samples$bamReads <- paste0(mintchip_metadata$bamDir, dbObj.count$samples$bamReads)
-  dbObj.count$samples$Peaks <- paste0(mintchip_metadata$bamDir, dbObj.count$samples$Peaks)
-  dbObj.count$class[10,] <- dbObj.count$samples$bamReads
-  # Grab subjects that have matching pre- and post-exposure and subset DiffBind obj to these subjects
-  subject_subset <- table(mintchip_metadata$Subject) == 2
-  subject_subset <- names(subject_subset[subject_subset])
-  aliquot_subset <- mintchip_metadata[mintchip_metadata$Subject %in% subject_subset,]$Aliquot
-  all_aliquots <- dbObj.count$samples$SampleID
-  full_subject_aliquot_flag <- all_aliquots %in% aliquot_subset
-  dbObj.count$masks$full_subject <- full_subject_aliquot_flag
-  names(dbObj.count$masks$full_subject) <- all_aliquots
-  dbObj.count_full_subj <- dba(dbObj.count, mask = dbObj.count$masks$full_subject)
-  # Finish subsetting
-  dbObj.count_full_subj$samples <- dbObj.count_full_subj$samples[dbObj.count_full_subj$samples$SampleID %in% aliquot_subset,]
-  rownames(dbObj.count_full_subj$samples) <- NULL
   # Normalize data (using "safest" settings from DiffBind manual)
   dbObj.norm <- dba.normalize(dbObj.count_full_subj,normalize=DBA_NORM_NATIVE,
                               method=DBA_DESEQ2,
