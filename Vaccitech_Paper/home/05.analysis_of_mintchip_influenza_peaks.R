@@ -10,6 +10,8 @@ txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 for(marker in mintchip_markers) {
   differential_analysis_results_0_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered.tsv"), sep = "\t", header = TRUE)
   differential_analysis_results_0.1_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.1.tsv"), sep = "\t", header = TRUE)
+  differential_analysis_results_0.2_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.2.tsv"), sep = "\t", header = TRUE)
+  differential_analysis_results_0.3_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.3.tsv"), sep = "\t", header = TRUE)
   differential_analysis_results_0.585_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.585.tsv"), sep = "\t", header = TRUE)
   differential_analysis_results_1_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_1.tsv"), sep = "\t", header = TRUE)
   differential_analysis_results_2_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_2.tsv"), sep = "\t", header = TRUE)
