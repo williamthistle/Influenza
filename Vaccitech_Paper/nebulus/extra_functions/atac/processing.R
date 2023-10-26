@@ -425,7 +425,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       peakAnnotation = "Motif",
       cutOff = "Pval < 0.05 & Log2FC > 0.1"
     )
-    df_up_all_positive <- data.frame(TF = rownames(motifsUp_all_positive), mlog10Padj = assay(motifsUp_all_positive)[,1])
+    df_up_all_positive <- data.frame(TF = rownames(motifsUp_all_positive), enrichment = assays(motifsUp_all_positive)$Enrichment$D28, 
+                                     mlog10Padj = assays(motifsUp_all_positive)$mlog10Padj$D28)
     df_up_all_positive <- df_up_all_positive[order(df_up_all_positive$mlog10Padj, decreasing = TRUE),]
     df_up_all_positive$p_adj <- 10 ** -df_up_all_positive$mlog10Padj
     df_up_all_positive$rank <- seq_len(nrow(df_up_all_positive))
@@ -452,7 +453,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       peakAnnotation = "Motif",
       cutOff = "Pval < 0.05 & Log2FC > 0"
     )
-    df_up <- data.frame(TF = rownames(motifsUp), mlog10Padj = assay(motifsUp)[,1])
+    df_up <- data.frame(TF = rownames(motifsUp), enrichment = assays(motifsUp)$Enrichment$D28, 
+                        mlog10Padj = assays(motifsUp)$mlog10Padj$D28)
     df_up <- df_up[order(df_up$mlog10Padj, decreasing = TRUE),]
     df_up$p_adj <- 10 ** -df_up$mlog10Padj
     df_up$rank <- seq_len(nrow(df_up))
@@ -488,7 +490,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       peakAnnotation = "Motif",
       idx = pos_peak_indices
     )
-    df_up <- data.frame(TF = rownames(motifsUp), mlog10Padj = assay(motifsUp)[,1])
+    df_up <- data.frame(TF = rownames(motifsUp), enrichment = assays(motifsUp)$Enrichment$D28, 
+                        mlog10Padj = assays(motifsUp)$mlog10Padj$D28)
     df_up <- df_up[order(df_up$mlog10Padj, decreasing = TRUE),]
     df_up$p_adj <- 10 ** -df_up$mlog10Padj
     df_up$rank <- seq_len(nrow(df_up))
@@ -516,7 +519,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       peakAnnotation = "Motif",
       cutOff = "Pval < 0.05 & Log2FC < -0.1"
     )
-    df_down_all_negative <- data.frame(TF = rownames(motifsDown_all_negative), mlog10Padj = assay(motifsDown_all_negative)[,1])
+    df_down_all_negative <- data.frame(TF = rownames(motifsDown_all_negative), enrichment = assays(motifsDown_all_negative)$Enrichment$D28, 
+                                       mlog10Padj = assays(motifsDown_all_negative)$mlog10Padj$D28)
     df_down_all_negative <- df_down_all_negative[order(df_down_all_negative$mlog10Padj, decreasing = TRUE),]
     df_down_all_negative$p_adj <- 10 ** -df_down_all_negative$mlog10Padj
     df_down_all_negative$rank <- seq_len(nrow(df_down_all_negative))
@@ -543,7 +547,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       peakAnnotation = "Motif",
       cutOff = "Pval < 0.05 & Log2FC < 0"
     )
-    df_down <- data.frame(TF = rownames(motifsDown), mlog10Padj = assay(motifsDown)[,1])
+    df_down <- data.frame(TF = rownames(df_down), enrichment = assays(df_down)$Enrichment$D28, 
+                          mlog10Padj = assays(df_down)$mlog10Padj$D28)
     df_down <- df_down[order(df_down$mlog10Padj, decreasing = TRUE),]
     df_down$p_adj <- 10 ** -df_down$mlog10Padj
     df_down$rank <- seq_len(nrow(df_down))
@@ -579,7 +584,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       peakAnnotation = "Motif",
       idx = neg_peak_indices
     )
-    df_down <- data.frame(TF = rownames(motifsDown), mlog10Padj = assay(motifsDown)[,1])
+    df_down <- data.frame(TF = rownames(df_down), enrichment = assays(df_down)$Enrichment$D28, 
+                          mlog10Padj = assays(df_down)$mlog10Padj$D28)
     df_down <- df_down[order(df_down$mlog10Padj, decreasing = TRUE),]
     df_down$p_adj <- 10 ** -df_down$mlog10Padj
     df_down$rank <- seq_len(nrow(df_down))
