@@ -2,50 +2,65 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-mintchip_data_matrix_file_paths <- list.files(paste0(mintchip_dir, "data/"), full.names = TRUE)
-DAS_matrices <- list()
-for(current_data_file_path in mintchip_data_matrix_file_paths) {
-  load(current_data_file_path)
-  current_marker <- unique(dbObj.count$samples$Factor)
-  # Rename sample IDs to aliquot IDs everywhere
-  dbObj.count$class[DBA_ID,] <- mintchip_metadata$Aliquot
-  for (i in 1:8) {
-    names(dbObj.count$masks[[i]]) <- mintchip_metadata$Aliquot
-  }
-  colnames(dbObj.count$class) <- mintchip_metadata$Aliquot
-  dbObj.count$samples$SampleID <- mintchip_metadata$Aliquot
-  dbObj.count$samples$ControlID <- paste0(dbObj.count$samples$SampleID, "_C")
-  dbObj.count$class[7,] <- paste0(dbObj.count$samples$SampleID, "_C")
-  colnames(dbObj.count$called) <- mintchip_metadata$Aliquot
-  colnames(dbObj.count$binding) <- c("CHR", "START", "END", mintchip_metadata$Aliquot)
-  # Use tissue field for our subject ID as proxy (maybe should use replicate field?)
-  dbObj.count$class[2,] <- mintchip_metadata$Subject
-  dbObj.count$samples$Tissue <- mintchip_metadata$Subject
-  # Grab subjects that have matching pre- and post-exposure and subset DiffBind obj to these subjects
-  subject_subset <- table(mintchip_metadata$Subject) == 2
-  subject_subset <- names(subject_subset[subject_subset])
-  aliquot_subset <- mintchip_metadata[mintchip_metadata$Subject %in% subject_subset,]$Aliquot
-  all_aliquots <- dbObj.count$samples$SampleID
-  full_subject_aliquot_flag <- all_aliquots %in% aliquot_subset
-  dbObj.count$masks$full_subject <- full_subject_aliquot_flag
-  names(dbObj.count$masks$full_subject) <- all_aliquots
-  dbObj.count_full_subj <- dba(dbObj.count, mask = dbObj.count$masks$full_subject)
-  # Finish subsetting
-  dbObj.count_full_subj$samples <- dbObj.count_full_subj$samples[dbObj.count_full_subj$samples$SampleID %in% aliquot_subset,]
-  rownames(dbObj.count_full_subj$samples) <- NULL
-  # Normalize data (using "safest" settings from DiffBind manual)
-  dbObj.norm <- dba.normalize(dbObj.count_full_subj,normalize=DBA_NORM_NATIVE,
-                              method=DBA_DESEQ2,
-                              background=TRUE)
-  # Find DASs
-  dbObj.norm <- dba.contrast(dbObj.norm,design="~Tissue+Condition")
-  dbObj.norm <- dba.analyze(dbObj.norm)
-  # Find results - contrast number is currently wrong most likely
-  results_fc_0 <- dba.report(dbObj.norm, contrast = 1, fold = 0)
-  results_fc_0.1 <- dba.report(dbObj.norm, contrast = 1, fold = 0.1)
-  results_fc_0.585 <- dba.report(dbObj.norm, contrast = 1, fold = 0.585)
-  results_fc_1 <- dba.report(dbObj.norm, contrast = 1, fold = 1)
-  results_fc_2 <- dba.report(dbObj.norm, contrast = 1, fold = 2)
-  DAS_matrices[[current_marker]] <- list(results_fc_0, results_fc_0.1, results_fc_0.585, 
-                                         results_fc_1, results_fc_2)
+mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
+mintchip_marker_das_list <- list()
+
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+for(marker in mintchip_markers) {
+  differential_analysis_results_0_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered.tsv"), sep = "\t", header = TRUE)
+  differential_analysis_results_0.1_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.1.tsv"), sep = "\t", header = TRUE)
+  differential_analysis_results_0.585_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.585.tsv"), sep = "\t", header = TRUE)
+  differential_analysis_results_1_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_1.tsv"), sep = "\t", header = TRUE)
+  differential_analysis_results_2_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_2.tsv"), sep = "\t", header = TRUE)
+  mintchip_marker_das_list[[marker]] <- list(differential_analysis_results_0_filtered, differential_analysis_results_0.1_filtered, 
+                                        differential_analysis_results_0.585_filtered, differential_analysis_results_1_filtered, 
+                                        differential_analysis_results_2_filtered)
 }
+
+pos_mintchip_marker_das_list_annotated <- list()
+neg_mintchip_marker_das_list_annotated <- list()
+
+for(marker in mintchip_markers) {
+  old_das <- mintchip_marker_das_list[[marker]]
+  current_pos_annotated_das <- list()
+  current_neg_annotated_das <- list()
+  index <- 1
+  for(current_das in old_das) {
+    if(nrow(current_das) > 0) {
+      pos_das <- current_das[current_das$log2FoldChange > 0,]
+      if(nrow(pos_das) > 0) {
+        pos_das <- pos_das[,c(1,2,3,4,6)]
+        pos_das$length <- pos_das$end - pos_das$start
+        pos_das <- annotatePeak(makeGRangesFromDataFrame(pos_das), TxDb = txdb, annoDb = "org.Hs.eg.db")
+        pos_das <- as.data.frame(pos_das)
+        current_pos_annotated_das[[index]] <- pos_das
+      } else {
+        current_pos_annotated_das[[index]] <- "EMPTY"
+      }
+      neg_das <- current_das[current_das$log2FoldChange < 0,]
+      if(nrow(neg_das) > 0) {
+        neg_das <- neg_das[,c(1,2,3,4,6)]
+        neg_das$length <- neg_das$end - neg_das$start
+        neg_das <- annotatePeak(makeGRangesFromDataFrame(neg_das), TxDb = txdb, annoDb = "org.Hs.eg.db")
+        neg_das <- as.data.frame(neg_das)
+        current_neg_annotated_das[[index]] <- neg_das
+      } else {
+        current_neg_annotated_das[[index]] <- "EMPTY"
+      }
+    } else {
+      current_pos_annotated_das[[index]] <- "EMPTY"
+      current_neg_annotated_das[[index]] <- "EMPTY"
+    }
+    index <- index + 1
+  }
+  pos_mintchip_marker_das_list_annotated[[marker]] <- current_pos_annotated_das
+  neg_mintchip_marker_das_list_annotated[[marker]] <- current_neg_annotated_das
+}
+
+
+
+  
+  
+
+

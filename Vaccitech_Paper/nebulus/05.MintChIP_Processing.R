@@ -2,7 +2,7 @@
 source("~/00.setup.R")
 home_dir <- "/Genomics/ogtr04/wat2/"
 
-# Random helper function
+# Helper function to set column to include chr and start/end coordinates in format for UCSC liftover
 set_chr_info <- function(differential_analysis_results) {
   chr_loc_info <- strsplit(rownames(differential_analysis_results), "_")
   chr <- sapply(chr_loc_info, function(x) x[1])
@@ -107,6 +107,7 @@ for(marker in markers) {
   # Note that Tissue is actually subject ID
   differential_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = peak_counts, colData = samples, design = stats::formula("~ Tissue + Condition"))
   differential_analysis <- DESeq2::DESeq(differential_analysis)
+  save(differential_analysis, file = paste0(output_dir, marker, "_", "D28_D1_diff_obj.rds"))
   differential_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(differential_analysis), n=1)
   print(differential_analysis_results_contrast)
   
@@ -129,6 +130,21 @@ for(marker in markers) {
   
   write.table(differential_analysis_results_0.1_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.1.tsv"), quote = FALSE, sep = "\t")
   
+  # LFC = 0.2
+  differential_analysis_results_0.2 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.2)
+  differential_analysis_results_0.2 <- set_chr_info(differential_analysis_results_0.2)
+  differential_analysis_results_0.2 <- differential_analysis_results_0.2[rowSums(is.na(differential_analysis_results_0.2)) == 0, ] # Remove NAs
+  differential_analysis_results_0.2_filtered <- differential_analysis_results_0.2[differential_analysis_results_0.2$pvalue < 0.05,]
+  
+  write.table(differential_analysis_results_0.2_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.2.tsv"), quote = FALSE, sep = "\t")
+  
+  # LFC = 0.3
+  differential_analysis_results_0.3 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.3)
+  differential_analysis_results_0.3 <- set_chr_info(differential_analysis_results_0.3)
+  differential_analysis_results_0.3 <- differential_analysis_results_0.3[rowSums(is.na(differential_analysis_results_0.3)) == 0, ] # Remove NAs
+  differential_analysis_results_0.3_filtered <- differential_analysis_results_0.3[differential_analysis_results_0.3$pvalue < 0.05,]
+  
+  write.table(differential_analysis_results_0.3_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.3.tsv"), quote = FALSE, sep = "\t")
   
   # LFC = 0.585
   differential_analysis_results_0.585 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.585)

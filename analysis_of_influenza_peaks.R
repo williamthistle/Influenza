@@ -6,8 +6,8 @@ library(ChIPseeker)
 
 # Set up 
 base_dir <- "~/GitHub/Influenza/"
-single_cell_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Placebo 4 Subject HVL (SPEEDI) - SCT/"
-multiome_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/14 Placebo Sample (Final)/"
+single_cell_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/Single Cell RNA-Seq/MAGICAL Analyses/Old/Placebo 4 Subject HVL (SPEEDI) - SCT/"
+# multiome_magical_dir <- "C:/Users/willi/OneDrive - Princeton University/Influenza Analysis/True Multiome/MAGICAL Analyses/Old/14 Placebo Sample (Final)/"
 old_wd <- getwd()
 setwd("~/")
 setwd("../OneDrive - Princeton University/Influenza Analysis/Data Compendium")

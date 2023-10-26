@@ -4,6 +4,7 @@ library(MetaIntegrator)
 library(openxlsx)
 library(org.Hs.eg.db)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(ChIPseeker)
 library(DiffBind)
 library(SPEEDI)
@@ -44,10 +45,11 @@ sc_deg_combined_cell_types_dir <- paste0(onedrive_dir, "Influenza Analysis/Vacci
 sc_magical_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/MAGICAL/HVL/")
 sc_humanbase_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/RNA/HVL/HumanBase/")
 sc_das_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/ATAC/HVL/")
-mintchip_dir <- paste0(onedrive_dir, "Influenza Analysis/MintChIP/")
+mintchip_metadata_dir <- paste0(onedrive_dir, "Influenza Analysis/MintChIP/")
+mintchip_das_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/MintChIP/differentially_accessible_sites/")
 
 # Read in Mint-ChIP metadata
-mintchip_metadata <- read.table(paste0(mintchip_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
+mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
 # Tables containing DEG results for single cell RNA-seq processing
 # Includes genes that passed pseudobulk filtering (remove platelets)
 # TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
@@ -60,7 +62,6 @@ innate_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_tabl
 rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
 
 # Peak related tables
-mintchip_table <- read.xlsx(xlsxFile = paste0(mintchip_dir, "MultiMarkerBestSignatureAnnotations_All3000.xlsx"), sheet = 1)
 sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
 sc_motifs <- read.table(paste0(sc_das_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
 sc_motifs$chr <- paste0("chr", sc_motifs$chr)
