@@ -16,7 +16,8 @@ for(marker in mintchip_markers) {
   differential_analysis_results_1_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_1.tsv"), sep = "\t", header = TRUE)
   differential_analysis_results_2_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_2.tsv"), sep = "\t", header = TRUE)
   mintchip_marker_das_list[[marker]] <- list(differential_analysis_results_0_filtered, differential_analysis_results_0.1_filtered, 
-                                        differential_analysis_results_0.585_filtered, differential_analysis_results_1_filtered, 
+                                             differential_analysis_results_0.2_filtered, differential_analysis_results_0.3_filtered,
+                                             differential_analysis_results_0.585_filtered, differential_analysis_results_1_filtered, 
                                         differential_analysis_results_2_filtered)
 }
 

@@ -79,6 +79,7 @@ setwd(output_dir)
 markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 DAS_matrices <- list()
 for(marker in markers) {
+  print(marker)
   samples <- read.table(paste0("~/", marker, "_metadata.tsv"), sep = "\t", header = TRUE)
   current_peak_info <- DiffBind::dba(sampleSheet=samples)
   current_peak_info <- DiffBind::dba.count(current_peak_info)
