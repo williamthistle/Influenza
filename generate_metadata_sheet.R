@@ -444,7 +444,7 @@ for(snme_entry in snme_data) {
   }
 }
 
-# snME
+# Bulk methylation
 for(bulk_methylation_entry in bulk_methylation_data) {
   # We've already captured info about this aliquot above
   if(bulk_methylation_entry %in% all_metadata_sheet_df$aliquot_id) {
@@ -514,14 +514,11 @@ for(bulk_methylation_entry in bulk_methylation_data) {
 # 3: 38-47
 # 4: 48-57
 all_metadata_sheet_df$age <- as.numeric(all_metadata_sheet_df$age)
+all_metadata_sheet_df$raw_age <- all_metadata_sheet_df$age
 all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 18 & all_metadata_sheet_df$age <= 27 & !is.na(all_metadata_sheet_df$age)] <- 1
 all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 28 & all_metadata_sheet_df$age <= 37 & !is.na(all_metadata_sheet_df$age)] <- 2
 all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 38 & all_metadata_sheet_df$age <= 47 & !is.na(all_metadata_sheet_df$age)] <- 3
 all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 48 & all_metadata_sheet_df$age <= 57 & !is.na(all_metadata_sheet_df$age)] <- 4
-
-
-
-
 
 # Write complete metadata DF to file
 all_metadata_sheet_df <- all_metadata_sheet_df[order(all_metadata_sheet_df$subject_id),]
