@@ -70,6 +70,7 @@ summarize_stats(bulk_methyl_placebo_metadata_for_table)
 # miRNA-seq is same as snME
 
 # Mint-ChIP
-bulk_methyl_placebo_metadata_for_table <- placebo_metadata_for_table[placebo_metadata_for_table$bulk_methylation == TRUE,]
-summarize_stats(bulk_methyl_placebo_metadata_for_table)
+mintchip_metadata_for_table <- mintchip_metadata[mintchip_metadata$Subject  %in% names(table(mintchip_metadata$Subject)[table(mintchip_metadata$Subject) == 2]),]
+mintchip_placebo_metadata_for_table <- placebo_metadata_for_table[placebo_metadata_for_table$aliquot_id %in% mintchip_metadata_for_table$Aliquot,]
+summarize_stats(mintchip_placebo_metadata_for_table)
 
