@@ -81,6 +81,8 @@ DAS_matrices <- list()
 for(marker in markers) {
   print(marker)
   samples <- read.table(paste0("~/", marker, "_metadata.tsv"), sep = "\t", header = TRUE)
+  # Remove subjects that only have one time point (not both)
+  samples <- samples[samples$Tissue  %in% names(table(samples$Tissue)[table(samples$Tissue) == 2]),]
   current_peak_info <- DiffBind::dba(sampleSheet=samples)
   current_peak_info <- DiffBind::dba.count(current_peak_info)
   current_peak_info$config$cores <- 32

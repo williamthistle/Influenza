@@ -2,6 +2,28 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+run_fmd_on_mintchip <- function(mintchip_marker_das_list_annotated) {
+  fmd_results <- list()
+  index_1 <- 1
+  for(marker in mintchip_marker_das_list_annotated) {
+    fmd_marker_results <- list()
+    index_2 <- 1
+    for(current_list_of_peaks in marker) {
+      if(length(current_list_of_peaks) > 1) {
+        current_fmd_result <- SPEEDI::RunFMD_RNA(unique(current_list_of_peaks$SYMBOL), "blood")
+      } else { 
+        current_fmd_result <- "EMPTY"
+      }
+      fmd_marker_results[[index_2]] <- current_fmd_result
+      index_2 <- index_2 + 1
+    }
+    fmd_results[[index_1]] <- fmd_marker_results
+    index_1 <- index_1 + 1
+  }
+  return(fmd_results)
+}
+
+
 mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 mintchip_marker_das_list <- list()
 
@@ -61,9 +83,8 @@ for(marker in mintchip_markers) {
   neg_mintchip_marker_das_list_annotated[[marker]] <- current_neg_annotated_das
 }
 
-
-
-  
+pos_fmd <- run_fmd_on_mintchip(pos_mintchip_marker_das_list_annotated)
+neg_fmd <- run_fmd_on_mintchip(neg_mintchip_marker_das_list_annotated)
   
 
 
