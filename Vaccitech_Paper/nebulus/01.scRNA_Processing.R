@@ -124,6 +124,7 @@ sc_obj <- MajorityVote_RNA(sc_obj)
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 #sc_obj <- combine_cell_types_magical(sc_obj)
 
+# May be 32, not sure
 messy_clusters <- c(33)
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
