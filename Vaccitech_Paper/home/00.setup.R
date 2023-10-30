@@ -32,7 +32,7 @@ setup_bulk_analysis(base_dir = base_dir, data_dir = data_dir)
 sample_metadata <- read.table(paste0(base_dir, "metadata/all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
 flu_tokens <- read.table(paste0(base_dir, "metadata/flu_data_tokens.tsv"), sep = "\t", header = TRUE)
 possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "NK_CD56bright", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT", "B", "B_naive", "B_memory")
-innate_cell_types <- c("CD16_Mono","CD14_Mono","cDC","pDC","NK","NK_CD56bright")
+innate_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright")
 # Reload one drive dir
 onedrive_dir <- "~"
 setwd(onedrive_dir)
