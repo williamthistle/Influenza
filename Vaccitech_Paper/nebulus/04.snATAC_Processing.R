@@ -189,8 +189,9 @@ p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData",
                            pal = pal, force = TRUE, keepAxis = TRUE) + 
   ggplot2::ggtitle(paste0("ATAC Data Integration\n(By RNA Transferred Cell Type)\n", 
                           sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
-                                                         legend.text = ggplot2::element_text(size = 10)) + scale_x_continuous(n.breaks=20) +
-  scale_y_continuous(n.breaks=20)
+                                                         legend.text = ggplot2::element_text(size = 10))
+# Can add these to get more axis ticks in command above
+#  + scale_x_continuous(n.breaks=20) + scale_y_continuous(n.breaks=20)
 ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_RNA_Label_Transferred.png"), 
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")

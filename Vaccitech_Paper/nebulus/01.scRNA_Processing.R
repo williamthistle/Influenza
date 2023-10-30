@@ -116,10 +116,7 @@ Cell_type_combined[idx] <- "Proliferating"
 idx <- grep("Treg", Cell_type_combined)
 Cell_type_combined[idx] <- "CD4 Memory"
 sc_obj$predicted.id <- Cell_type_combined
-#sc_obj <- MajorityVote_RNA(sc_obj)
-
-# Override our mystery cell type to indicate that it's special (was originally CD4 Naive)
-#sc_obj <- override_cluster_label(sc_obj, c(32), "Unknown")
+sc_obj <- MajorityVote_RNA(sc_obj)
 
 # Capture info about each cluster
 #cluster_info <- capture_cluster_info(sc_obj)
@@ -127,26 +124,31 @@ sc_obj$predicted.id <- Cell_type_combined
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 #sc_obj <- combine_cell_types_magical(sc_obj)
 
+messy_clusters <- c(33)
+idxPass <- which(Idents(sc_obj) %in% messy_clusters)
+cellsPass <- names(sc_obj$orig.ident[-idxPass])
+sc_obj_minus_clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
 # Print UMAPs for all subjects (HVL and LVL)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Cluster.png",
+print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Cluster.png",
                group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
+print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
                group_by_category = "predicted.id", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Viral_Load.png",
+print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Viral_Load.png",
                group_by_category = "viral_load", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Sample.png",
+print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Sample.png",
                group_by_category = "sample", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Day.png",
+print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Day.png",
                group_by_category = "time_point", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Sex.png",
+print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
