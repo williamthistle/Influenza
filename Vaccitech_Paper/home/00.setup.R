@@ -48,6 +48,8 @@ sc_humanbase_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Ana
 sc_das_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/Single Cell/ATAC/HVL/")
 mintchip_metadata_dir <- paste0(onedrive_dir, "Influenza Analysis/MintChIP/")
 mintchip_das_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/MintChIP/differentially_accessible_sites/")
+miRNA_dir <- paste0(onedrive_dir, "Influenza Analysis/Vaccitech Paper Analysis/Current Analyses/miRNA-Seq/")
+miRNA_metadata_dir <- paste0(onedrive_dir, "Influenza Analysis/miRNA/")
 
 # Read in Mint-ChIP metadata
 mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
@@ -73,6 +75,10 @@ sc_motifs$chr <- as.numeric(substr(sc_motifs$chr, 4, 6))
 sc_das_stricter <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_stricter_final.tsv"), sep = "\t", header = TRUE)
 sc_das_strictest <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_strictest_final.tsv"), sep = "\t", header = TRUE)
 atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
+
+# miRNA tables
+miRNA_raw_counts <- read.table(paste0(mirna_dir, "miRNA_raw_counts.csv"), sep =",", header = TRUE)
+miRNA_metadata_table <- read.table(paste0(miRNA_metadata_dir, "miRNA_metadata.tsv"), sep = "\t", header = TRUE)
 
 # Grab gene lists from result tables and report number of genes
 sc_pseudobulk_degs <- unique(sc_pseudobulk_deg_table$Gene_Name)
