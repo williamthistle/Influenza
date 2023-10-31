@@ -38,4 +38,7 @@ current_analysis_results_0.1 <- subset(current_analysis_results_0.1, padj < 0.05
 # Loaded genemap from Wayne's normalization script
 current_genes <- rownames(current_analysis_results_0)
 iim=match(current_genes, genemap$ensembl_gene_id)
-current_gene_symbols <- genemap[iim, "hgnc_symbol", drop=F]
+current_gene_symbols <- genemap[iim,  "hgnc_symbol", drop=F]
+current_gene_symbols$original_id <- current_genes
+
+# Don't think there's much here to analyze
