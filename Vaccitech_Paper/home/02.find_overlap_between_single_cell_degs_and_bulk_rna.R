@@ -3,6 +3,7 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 # Data frame that captures the fold changes for sc pseudobulk genes in various bulk differential expression analyses
+# NOTE: Recently updated to only include innate immune cells (supplemental can include adaptive)
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- data.frame(gene = character(), cell_types = character(), D2_fc = numeric(),
                                                   D5_fc = numeric(), D8_fc = numeric(), D28_fc = numeric())
 
@@ -19,7 +20,7 @@ high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- find_degs_across_time_points_for_
                                                                                   raw_high_placebo_period_2_D5_vs_D_minus_1_results,
                                                                                   raw_high_placebo_period_2_D8_vs_D_minus_1_results,
                                                                                   raw_high_placebo_period_2_D28_vs_D_minus_1_results,
-                                                                                  high_pos_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$sc_log2FC > 0,])
+                                                                                  high_pos_pseudobulk_sc_DEGs_bulk_passing_df, innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$sc_log2FC > 0,])
 
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df[high_pos_pseudobulk_sc_DEGs_bulk_passing_df$D28_fc > 0,]
 
@@ -27,10 +28,10 @@ high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- find_degs_across_time_points_for_
                                                                                       raw_high_placebo_period_2_D5_vs_D_minus_1_results,
                                                                                       raw_high_placebo_period_2_D8_vs_D_minus_1_results,
                                                                                       raw_high_placebo_period_2_D28_vs_D_minus_1_results,
-                                                                                      high_neg_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$sc_log2FC < 0,])
+                                                                                      high_neg_pseudobulk_sc_DEGs_bulk_passing_df, innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$sc_log2FC < 0,])
 high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df[high_neg_pseudobulk_sc_DEGs_bulk_passing_df$D28_fc < 0,]
 
-# pos: 28 genes
+# pos: 22 genes
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_pos_pseudobulk_sc_DEGs_bulk_passing_df)
 write.table(high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_pos_pseudobulk_sc_DEGs_bulk_passing_df), file = paste0(onedrive_dir, "Influenza Analysis/high_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_pos_genes <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df$gene
@@ -46,21 +47,21 @@ high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChangeSign <- ifelse(hi
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange <- abs(high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange)
 
 
-high_pos_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot, aes(x = Day, y = Gene, color = FoldChangeSign, size = FoldChange)) +
-  geom_point() +
+high_pos_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot, aes(x = Day, y = Gene, size = FoldChange)) +
+  geom_point(aes(color = "Green")) +
+  scale_color_manual(values = "#00BFC4", guide = "none") +
   theme_minimal() +
   labs(
     title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
-    size = "Fold Change (Absolute Value)",
-    color = "Fold Change Direction"
+    size = "Fold Change"
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
-ggsave(filename = paste0(onedrive_dir, "Influenza Analysis/high_passing_pos.tiff"), plot = high_pos_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', dpi=300)
+ggsave(filename = paste0(onedrive_dir, "Influenza Analysis/upregulated_genes_from_innate_across_infection.tiff"), plot = high_pos_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', dpi=300)
 
-# neg: 92 genes
+# neg: 73 genes
 high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_neg_pseudobulk_sc_DEGs_bulk_passing_df)
 write.table(high_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_neg_genes <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df$gene
@@ -76,11 +77,11 @@ high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChangeSign <- ifelse(hi
 high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange <- abs(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange)
 
 
-
 high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot, aes(x = Day, y = Gene, color = FoldChangeSign, size = FoldChange)) +
   geom_point() +
   theme_minimal() +
   labs(
+    title = "Fold Change of Downregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -88,7 +89,7 @@ high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_neg_pseud
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
-ggsave(filename = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg.tiff"), plot = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', width = 10, height = 15)
+ggsave(filename = paste0(onedrive_dir, "Influenza Analysis/downregulated_genes_from_innate_across_infection.tiff"), plot = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', width = 12, height = 15)
 
 
 
