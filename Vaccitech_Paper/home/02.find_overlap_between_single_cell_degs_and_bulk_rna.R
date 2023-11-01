@@ -48,8 +48,7 @@ high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange <- abs(high_pos_
 
 
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot, aes(x = Day, y = Gene, size = FoldChange)) +
-  geom_point(aes(color = "Green")) +
-  scale_color_manual(values = "#00BFC4", guide = "none") +
+  geom_point(color = "#00BFC4") +
   theme_minimal() +
   labs(
     title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
