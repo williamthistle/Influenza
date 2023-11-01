@@ -34,10 +34,70 @@ high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- high_neg_pseudobulk_sc_DEGs_bulk_
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_pos_pseudobulk_sc_DEGs_bulk_passing_df)
 write.table(high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_pos_pseudobulk_sc_DEGs_bulk_passing_df), file = paste0(onedrive_dir, "Influenza Analysis/high_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_pos_genes <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df$gene
+
+# Plot heatmap for genes and their FC
+high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df
+colnames(high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot) <- c("Gene", "Cell.Types", "Day.2", "Day.5", "Day.8", "Day.28", "Special.Notes")
+high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot %>%
+  pivot_longer(cols = starts_with("D"), names_to = "Day", values_to = "FoldChange")
+high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot %>% filter(FoldChange != 0)
+high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$Day <- factor(high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$Day, levels = c("Day.2","Day.5","Day.8","Day.28"))
+high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChangeSign <- ifelse(high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange > 0, "Positive", "Negative")
+high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange <- abs(high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange)
+
+
+high_pos_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_pos_pseudobulk_sc_DEGs_bulk_passing_df_for_plot, aes(x = Day, y = Gene, color = FoldChangeSign, size = FoldChange)) +
+  geom_point() +
+  theme_minimal() +
+  labs(
+    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    x = "Day (Post Exposure)",
+    y = "Gene",
+    size = "Fold Change (Absolute Value)",
+    color = "Fold Change Direction"
+  ) +
+  theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
+
+ggsave(filename = paste0(onedrive_dir, "Influenza Analysis/high_passing_pos.tiff"), plot = high_pos_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', dpi=300)
+
 # neg: 92 genes
 high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_neg_pseudobulk_sc_DEGs_bulk_passing_df)
 write.table(high_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_neg_genes <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df$gene
+
+# Plot heatmap for genes and their FC
+high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df
+colnames(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot) <- c("Gene", "Cell.Types", "Day.2", "Day.5", "Day.8", "Day.28", "Special.Notes")
+high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot %>%
+  pivot_longer(cols = starts_with("D"), names_to = "Day", values_to = "FoldChange")
+high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot %>% filter(FoldChange != 0)
+high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$Day <- factor(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$Day, levels = c("Day.2","Day.5","Day.8","Day.28"))
+high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChangeSign <- ifelse(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange > 0, "Positive", "Negative")
+high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange <- abs(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange)
+
+
+
+high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot, aes(x = Day, y = Gene, color = FoldChangeSign, size = FoldChange)) +
+  geom_point() +
+  theme_minimal() +
+  labs(
+    x = "Day (Post Exposure)",
+    y = "Gene",
+    size = "Fold Change (Absolute Value)",
+    color = "Fold Change Direction"
+  ) +
+  theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
+
+ggsave(filename = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg.tiff"), plot = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', width = 10, height = 15)
+
+
+
+
+
+
+
+
+
 
 passing_bulk_genes <- c(high_passing_pos_genes, high_passing_neg_genes)
 
