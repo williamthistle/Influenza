@@ -63,9 +63,9 @@ for(marker in mintchip_markers) {
         homer_df <- data.frame(peak_id = rownames(pos_das), chr = pos_das$chr, start = pos_das$start, end = pos_das$end, strand = "+")
         current_fc_threshold <- fc_thresholds[index]
         if(current_fc_threshold == "0") {
-          homer_file_path <- paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_homer_pos.tsv")
+          homer_file_path <- paste0(homer_dir, marker, "_D28_D1_diff_filtered_homer_pos.tsv")
         } else {
-          homer_file_path <- paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_", current_fc_threshold, "_homer_pos.tsv")
+          homer_file_path <- paste0(homer_dir, marker, "_D28_D1_diff_filtered_", current_fc_threshold, "_homer_pos.tsv")
         }
         write.table(homer_df, file = homer_file_path, quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
         # Annotate peaks and print to file
@@ -90,9 +90,9 @@ for(marker in mintchip_markers) {
         homer_df <- data.frame(peak_id = rownames(neg_das), chr = neg_das$chr, start = neg_das$start, end = neg_das$end, strand = "+")
         current_fc_threshold <- fc_thresholds[index]
         if(current_fc_threshold == "0") {
-          homer_file_path <- paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_homer_neg.tsv")
+          homer_file_path <- paste0(homer_dir, marker, "_D28_D1_diff_filtered_homer_neg.tsv")
         } else {
-          homer_file_path <- paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_", current_fc_threshold, "_homer_neg.tsv")
+          homer_file_path <- paste0(homer_dir, marker, "_D28_D1_diff_filtered_", current_fc_threshold, "_homer_neg.tsv")
         }
         write.table(homer_df, file = homer_file_path, quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
         # Annotate peaks and print to file
