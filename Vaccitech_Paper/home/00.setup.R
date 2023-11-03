@@ -50,9 +50,9 @@ sc_humanbase_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/scRNA-Seq/
 sc_das_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/snATAC-Seq/Results/HVL/")
 mintchip_metadata_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/MintChIP/Metadata/")
 mintchip_das_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/MintChIP/Results/differentially_accessible_sites/")
-miRNA_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/miRNA/")
+miRNA_data_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/miRNA/Data/")
 miRNA_metadata_dir <-paste0(onedrive_dir, "Influenza Analysis/Analyses/miRNA/Metadata/")
-totalRNA_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/Total_RNA/")
+totalRNA_data_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/Total_RNA/Data/")
 totalRNA_metadata_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/Total_RNA/Metadata/")
 
 # Read in Mint-ChIP metadata
@@ -81,11 +81,11 @@ sc_das_strictest <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_strict
 atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
 
 # miRNA tables
-miRNA_raw_counts <- read.table(paste0(miRNA_dir, "miRNA_raw_counts.csv"), sep =",", header = TRUE)
+miRNA_raw_counts <- read.table(paste0(miRNA_data_dir, "miRNA_raw_counts.csv"), sep =",", header = TRUE)
 miRNA_metadata_table <- read.table(paste0(miRNA_metadata_dir, "miRNA_metadata.tsv"), sep = "\t", header = TRUE)
 
 # totalRNA tables
-totalRNA_raw_counts <- read.table(paste0(totalRNA_dir, "STAREstCountFileT_Vaccitech_SampleNum_Corrected.csv"), sep =",", header = TRUE)
+totalRNA_raw_counts <- read.table(paste0(totalRNA_data_dir, "STAREstCountFileT_Vaccitech_SampleNum_Corrected.csv"), sep =",", header = TRUE)
 totalRNA_metadata_table <- read.table(paste0(totalRNA_metadata_dir, "totalRNA_metadata.tsv"), sep = "\t", header = TRUE)
 
 # Grab gene lists from result tables and report number of genes
