@@ -33,7 +33,7 @@ ggsave(filename = paste0(bulk_data_dir, "hvl_upregulated_sc_genes_found_in_bulk/
 
 # neg: 73 genes
 high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_neg_pseudobulk_sc_DEGs_bulk_passing_df)
-write.table(high_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(high_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Vaccitech_Paper/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_neg_genes <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df$gene
 
 # Plot heatmap for genes and their FC
@@ -59,7 +59,7 @@ high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_neg_pseud
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
-ggsave(filename = paste0(onedrive_dir, "Influenza Analysis/downregulated_genes_from_innate_across_infection.tiff"), plot = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', width = 12, height = 15)
+ggsave(filename = paste0(onedrive_dir, "Vaccitech_Paper/downregulated_genes_from_innate_across_infection.tiff"), plot = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', width = 12, height = 15)
 
 
 
@@ -85,11 +85,11 @@ low_neg_pseudobulk_sc_DEGs_bulk_passing_df <- find_degs_across_time_points_for_g
                                                                                           low_neg_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$Gene_Name %in% high_passing_neg_genes,])
 # pos: 6 genes
 low_pos_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(low_pos_pseudobulk_sc_DEGs_bulk_passing_df)
-write.table(low_pos_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/low_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(low_pos_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Vaccitech_Paper/low_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 low_passing_pos_genes <- low_pos_pseudobulk_sc_DEGs_bulk_passing_df[low_pos_pseudobulk_sc_DEGs_bulk_passing_df$D28_0.2 == TRUE,]$gene
 # neg: 19 genes
 low_neg_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(low_neg_pseudobulk_sc_DEGs_bulk_passing_df)
-write.table(low_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Influenza Analysis/low_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(low_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Vaccitech_Paper/low_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 low_passing_neg_genes <- low_neg_pseudobulk_sc_DEGs_bulk_passing_df[low_neg_pseudobulk_sc_DEGs_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
 
 

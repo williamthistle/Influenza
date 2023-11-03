@@ -139,7 +139,7 @@ raw_low_placebo_period_2_D28_vs_D_minus_1_results <- low_placebo_period_2_D28_vs
 # 0.3 is good, and -0.3 is good
 collected_fmd_low_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(raw_low_placebo_period_2_D28_vs_D_minus_1_results)
 
-save.image(paste0(onedrive_dir, "Influenza Analysis/bulk_RNA_analysis.RData"))
+save.image(paste0(onedrive_dir, "Vaccitech_Paper/bulk_RNA_analysis.RData"))
 
 
 
