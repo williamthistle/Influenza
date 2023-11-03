@@ -17,12 +17,15 @@ write.table(hvl_pos_sc_genes_in_bulk_0.05, file = paste0(bulk_data_dir, "hvl_upr
 high_passing_pos_genes <- unique(hvl_pos_sc_genes_in_bulk_0.05$Gene)
 
 hvl_pos_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_pos_sc_genes_in_bulk_0.05, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
+  geom_point() +
+  scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
     title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
-    size = "Fold Change"
+    size = "Fold Change (Absolute Value)",
+    color = "Fold Change Direction"
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
