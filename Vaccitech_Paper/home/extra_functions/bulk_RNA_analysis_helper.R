@@ -146,7 +146,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Run DESeq2
   current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   current_analysis <- DESeq(current_analysis)
-  # Grab results with alpha and lfcThreshold = 0.1
+  # Grab results with lfcThreshold = 0.1
   current_analysis_results <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.1)
   current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
   current_analysis_results <- subset(current_analysis_results, padj < alpha)
@@ -155,7 +155,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   } else {
     write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
-  # Grab results with alpha = 0.05 and lfcThreshold = 0.585 (1.5 fold increase)
+  # Grab results with lfcThreshold = 0.585 (1.5 fold increase)
   current_analysis_results_1.5 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.585)
   current_analysis_results_1.5 <- current_analysis_results_1.5[order(current_analysis_results_1.5$padj),]
   current_analysis_results_1.5 <- subset(current_analysis_results_1.5, padj < alpha)
@@ -164,7 +164,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   } else {
     write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)   
   }
-  # Grab results with alpha = 0.05 and lfcThreshold = 1
+  # Grab results with lfcThreshold = 1
   current_analysis_results_2 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 1)
   current_analysis_results_2 <- current_analysis_results_2[order(current_analysis_results_2$padj),]
   current_analysis_results_2 <- subset(current_analysis_results_2, padj < alpha)
@@ -173,7 +173,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   } else {
     write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
-  # Grab results with alpha = 0.05 and lfcThreshold = 2
+  # Grab results with lfcThreshold = 2
   current_analysis_results_4 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 2)
   current_analysis_results_4 <- current_analysis_results_4[order(current_analysis_results_4$padj),]
   current_analysis_results_4 <- subset(current_analysis_results_4, padj < alpha)
@@ -182,7 +182,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   } else {
     write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
-  # Grab results with alpha = 0.05 and no lfcThreshold set
+  # Grab results with no lfcThreshold set
   current_analysis_results_none <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha)
   current_analysis_results_none <- current_analysis_results_none[order(current_analysis_results_none$padj),]
   current_analysis_results_none <- subset(current_analysis_results_none, padj < alpha)
@@ -657,7 +657,7 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
 
 
 
-fill_in_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts, high_placebo_metadata, output_dir, sc_fc_direction) {
+fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts, high_placebo_metadata, output_dir, sc_fc_direction, alpha = 0.05) {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
   final_df <- data.frame(Gene = character(), Day = character(), Fold.Change.Abs = numeric(), 
                                          Fold.Change.Direction.Raw = character(), Fold.Change.Direction = character(), 
@@ -670,40 +670,48 @@ fill_in_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts, hi
   }
   
   # Find bulk RNA-seq validated genes
-  high_placebo_period_2_D28_vs_D_minus_1_results_0.05 <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                             "2_D28", "2_D_minus_1", data_dir, "high", alpha = 0.05)
-  raw_high_placebo_period_2_D28_vs_D_minus_1_results_0.05 <- high_placebo_period_2_D28_vs_D_minus_1_results_0.05[[5]]
-  filtered_0.05_sc_trained_immunity_genes <- intersect(possible_genes,
-                                                                   rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results_0.05))
-  
-  high_placebo_period_2_D28_vs_D_minus_1_results_0.1 <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                            "2_D28", "2_D_minus_1", data_dir, "high", alpha = 0.1)
-  raw_high_placebo_period_2_D28_vs_D_minus_1_results_0.1 <- high_placebo_period_2_D28_vs_D_minus_1_results_0.1[[5]]
-  filtered_0.1_sc_trained_immunity_genes <- intersect(possible_genes,
-                                                                  rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results_0.1))
+  high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                             "2_D28", "2_D_minus_1", data_dir, "high", alpha = alpha)
+  raw_high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[5]]
+  filtered_sc_trained_immunity_genes <- intersect(possible_genes,
+                                                                   rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results))
   
   # Verify that FC in bulk agrees with FC in SC (if not, discard)
-  final_filtered_0.05_sc_trained_immunity_genes <- c()
-  final_filtered_0.1_sc_trained_immunity_genes <- c()
+  final_filtered_sc_trained_immunity_genes <- c()
   
-  for(gene in filtered_0.05_sc_trained_immunity_genes) {
+  for(gene in filtered_sc_trained_immunity_genes) {
     sc_fc <- sc_gene_df[sc_gene_df$Gene_Name == gene,]$sc_log2FC
-    bulk_fc <- raw_high_placebo_period_2_D28_vs_D_minus_1_results_0.05[rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results_0.05) == gene,]$log2FoldChange
+    bulk_fc <- raw_high_placebo_period_2_D28_vs_D_minus_1_results[rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results) == gene,]$log2FoldChange
     if(all(sign(sc_fc) == sign(bulk_fc))) {
-      final_filtered_0.05_sc_trained_immunity_genes <- c(final_filtered_0.05_sc_trained_immunity_genes, gene)
+      final_filtered_sc_trained_immunity_genes <- c(final_filtered_sc_trained_immunity_genes, gene)
     }
   }
   
-  for(gene in filtered_0.1_sc_trained_immunity_genes) {
-    sc_fc <- sc_gene_df[sc_gene_df$Gene_Name == gene,]$sc_log2FC
-    bulk_fc <- raw_high_placebo_period_2_D28_vs_D_minus_1_results_0.1[rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results_0.1) == gene,]$log2FoldChange
-    if(all(sign(sc_fc) == sign(bulk_fc))) {
-      final_filtered_0.1_sc_trained_immunity_genes <- c(final_filtered_0.1_sc_trained_immunity_genes, gene)
-    }
-  }
+  # Compute results for D2 / D5 / D8 (with alpha parameter and without alpha parameter)
+  # WITH ALPHA SET
+  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
+  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered[[5]]
   
-  # Compute results for D2 / D5 / D8 (with alpha = 0.05)
+  high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
+  high_placebo_period_2_D5_vs_D_minus_1_results <- high_placebo_period_2_D5_vs_D_minus_1_results[[5]]
   
+  high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
+  high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[5]]
+  # WITHOUT ALPHA SET
+  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_", alpha, "/"), "high", alpha = 0.99999)
+  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered[[5]]
+  
+  high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_", alpha, "/"), "high", alpha = 0.99999)
+  high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered[[5]]
+  
+  high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_", alpha, "/"), "high", alpha = 0.99999)
+  high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered[[5]]
   
   
 

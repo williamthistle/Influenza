@@ -3,10 +3,10 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 # Different method for filling in HVL and LVL - very similar, though!
-hvl_pos_sc_genes_in_bulk <- fill_in_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
-                                                             paste0(bulk_data_dir, "hvl_upregulated_sc_genes_found_in_bulk") , "up")
-hvl_neg_sc_genes_in_bulk <- fill_in_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
-                                                             paste0(bulk_data_dir, "hvl_downregulated_sc_genes_found_in_bulk"), "down")
+hvl_pos_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+                                                             paste0(bulk_data_dir, "hvl_upregulated_sc_genes_found_in_bulk") , "up", alpha = 0.05)
+hvl_neg_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+                                                             paste0(bulk_data_dir, "hvl_downregulated_sc_genes_found_in_bulk"), "down", alpha = 0.05)
 lvl_pos_sc_genes_in_bulk <- 1
 lvl_neg_sc_genes_in_bulk <- 1
 

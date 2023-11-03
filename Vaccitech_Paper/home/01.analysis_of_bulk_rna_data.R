@@ -6,29 +6,29 @@ source(paste0(base_dir, "00.setup.R"))
 # We expect ~0 DEGs because placebo was used (no actual vaccination)
 # 0/0/0/0/0 DEGs
 high_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                "1_D2", "1_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_1_D2_vs_D_minus_1"), "high")
+                                                                                "1_D2", "1_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_1_D2_vs_D_minus_1/"), "high")
 raw_high_placebo_period_1_D2_vs_D_minus_1_results <- high_placebo_period_1_D2_vs_D_minus_1_results[[5]]
 # 0/0/0/0/0 DEGs
 high_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                "1_D8", "1_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_1_D8_vs_D_minus_1"), "high")
+                                                                                "1_D8", "1_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_1_D8_vs_D_minus_1/"), "high")
 raw_high_placebo_period_1_D8_vs_D_minus_1_results <- high_placebo_period_1_D8_vs_D_minus_1_results[[5]]
 # 1/1/1/1/16 DEGs
 high_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                "1_D28", "1_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_1_D28_vs_D_minus_1"), "high")
+                                                                                "1_D28", "1_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_1_D28_vs_D_minus_1/"), "high")
 raw_high_placebo_period_1_D28_vs_D_minus_1_results <- high_placebo_period_1_D28_vs_D_minus_1_results[[5]]
 #### PERIOD 1 LOW VIRAL LOAD ####
 # We expect ~0 DEGs because placebo was used (no actual vaccination)
 # 1/1/0/0/1 DEGs
 low_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
-                                                                         "1_D2", "1_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_1_D2_vs_D_minus_1"), "low")
+                                                                         "1_D2", "1_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_1_D2_vs_D_minus_1/"), "low")
 raw_low_placebo_period_1_D2_vs_D_minus_1_results <- low_placebo_period_1_D2_vs_D_minus_1_results[[5]]
 # 0/0/0/0/0 DEGs
 low_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
-                                                                         "1_D8", "1_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_1_D8_vs_D_minus_1"), "low")
+                                                                         "1_D8", "1_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_1_D8_vs_D_minus_1/"), "low")
 raw_low_placebo_period_1_D8_vs_D_minus_1_results <- low_placebo_period_1_D8_vs_D_minus_1_results[[5]]
 # 19/0/0/0/63 DEGs
 low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
-                                                                          "1_D28", "1_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_1_D28_vs_D_minus_1"), "low")
+                                                                          "1_D28", "1_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_1_D28_vs_D_minus_1/"), "low")
 raw_low_placebo_period_1_D28_vs_D_minus_1_results <- low_placebo_period_1_D28_vs_D_minus_1_results[[5]]
 
 #### PERIOD 2 HIGH VIRAL LOAD ####
@@ -39,34 +39,34 @@ raw_low_placebo_period_1_D28_vs_D_minus_1_results <- low_placebo_period_1_D28_vs
 # Is it just inflammation from getting blood drawn?
 # If so, why would this signal exist for HVL and not LVL?
 high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                "2_D_minus_1", "2_D_minus_2", paste0(bulk_data_dir, "high_placebo_period_2_D_minus_1_vs_D_minus_2"), "high")
+                                                                                "2_D_minus_1", "2_D_minus_2", paste0(bulk_data_dir, "high_placebo_period_2_D_minus_1_vs_D_minus_2/"), "high")
 raw_high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- high_placebo_period_2_D_minus_1_vs_D_minus_2_results[[5]]
 # 0.585 is good, and -0.585 is good
 collected_fmd_high_placebo_period_2_D_minus_1_vs_D_minus_2 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D_minus_1_vs_D_minus_2_results)
 
 # 2 D2 vs 2 D minus 1 - 299/0/0/0/1384 DEGs
 high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                         "2_D2", "2_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_2_D2_vs_D_minus_1"), "high")
+                                                                         "2_D2", "2_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_2_D2_vs_D_minus_1/"), "high")
 raw_high_placebo_period_2_D2_vs_D_minus_1_results <- high_placebo_period_2_D2_vs_D_minus_1_results[[5]]
 # 0.585 is good, and -0.585 is good
 collected_fmd_high_placebo_period_2_D2_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D2_vs_D_minus_1_results)
 
 # 2 D5 vs 2 D minus 1 - 3432/600/228/51/5276 DEGs
 high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                         "2_D5", "2_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_2_D5_vs_D_minus_1"), "high")
+                                                                         "2_D5", "2_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_2_D5_vs_D_minus_1/"), "high")
 raw_high_placebo_period_2_D5_vs_D_minus_1_results <- high_placebo_period_2_D5_vs_D_minus_1_results[[5]]
 # 0.585 or 1 is good, and -0.585 or -1 is good 
 collected_fmd_high_placebo_period_2_D5_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D5_vs_D_minus_1_results, c(0.585, 1, 2))
 
 # 2 D8 vs 2 D minus 1 - 1940/269/59/8/3314 DEGs
 high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                         "2_D8", "2_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_2_D8_vs_D_minus_1"), "high")
+                                                                         "2_D8", "2_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_2_D8_vs_D_minus_1/"), "high")
 raw_high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[5]]
 # ???
 collected_fmd_high_placebo_period_2_D8_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D8_vs_D_minus_1_results, c(0.585, 1, 2))
 # 2 D28 vs 2 D minus 1 - 34/2/0/0/1394 DEGs
 high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                          "2_D28", "2_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_2_D28_vs_D_minus_1"), "high")
+                                                                          "2_D28", "2_D_minus_1", paste0(bulk_data_dir, "high_placebo_period_2_D28_vs_D_minus_1/"), "high")
 raw_high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[5]]
 # 0.3 is good, and -0.3 is good
 collected_fmd_high_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_placebo_period_2_D28_vs_D_minus_1_results)
@@ -118,23 +118,23 @@ pheatmap(high_placebo_period_2_LRT_analysis_200_mat, breaks=seq(from=-high_place
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 0/0/0/0/0 DEGs found
 low_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
-                                                                               "2_D_minus_1", "2_D_minus_2", paste0(bulk_data_dir, "low_placebo_period_2_D_minus_1_vs_D_minus_2"), "low")
+                                                                               "2_D_minus_1", "2_D_minus_2", paste0(bulk_data_dir, "low_placebo_period_2_D_minus_1_vs_D_minus_2/"), "low")
 raw_low_placebo_period_2_D_minus_1_vs_D_minus_2_results <- low_placebo_period_2_D_minus_1_vs_D_minus_2_results[[5]]
 # 2 D2 vs 2 D minus 1 - 1/1/1/1/2 DEGs
 low_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
-                                                                        "2_D2", "2_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_2_D2_vs_D_minus_1"), "low")
+                                                                        "2_D2", "2_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_2_D2_vs_D_minus_1/"), "low")
 raw_low_placebo_period_2_D2_vs_D_minus_1_results <- low_placebo_period_2_D2_vs_D_minus_1_results[[5]]
 # 2 D5 vs 2 D minus 1 - 0/0/0/0/1 DEGs
 low_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
-                                                                        "2_D5", "2_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_2_D5_vs_D_minus_1"), "low")
+                                                                        "2_D5", "2_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_2_D5_vs_D_minus_1/"), "low")
 raw_low_placebo_period_2_D5_vs_D_minus_1_results <- low_placebo_period_2_D5_vs_D_minus_1_results[[5]]
 # 2 D8 vs 2 D minus 1 - 0/0/0/0/0 DEGs
 low_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
-                                                                        "2_D8", "2_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_2_D8_vs_D_minus_1"), "low")
+                                                                        "2_D8", "2_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_2_D8_vs_D_minus_1/"), "low")
 raw_low_placebo_period_2_D8_vs_D_minus_1_results <- low_placebo_period_2_D8_vs_D_minus_1_results[[5]]
 # 2 D28 vs 2 D minus 1 - 51/0/0/0/647 DEGs
 low_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
-                                                                         "2_D28", "2_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_2_D28_vs_D_minus_1"), "low")
+                                                                         "2_D28", "2_D_minus_1", paste0(bulk_data_dir, "low_placebo_period_2_D28_vs_D_minus_1/"), "low")
 raw_low_placebo_period_2_D28_vs_D_minus_1_results <- low_placebo_period_2_D28_vs_D_minus_1_results[[5]]
 # 0.3 is good, and -0.3 is good
 collected_fmd_low_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(raw_low_placebo_period_2_D28_vs_D_minus_1_results)
@@ -195,62 +195,62 @@ placebo_period_2_D28_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("
 #### PERIOD 1 HIGH T CELL RESPONSE ####
 # 6234/1686/678/163/7799 DEGs
 high_vaccinated_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", high_vaccinated_counts, high_vaccinated_metadata,
-                                                                                     "1_D2", "1_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_1_D2_vs_D_minus_1"), "high")
+                                                                                     "1_D2", "1_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_1_D2_vs_D_minus_1/"), "high")
 raw_high_vaccinated_period_1_D2_vs_D_minus_1_results <- high_vaccinated_period_1_D2_vs_D_minus_1_results[[5]]
 # 59/15/2/0/96 DEGs
 high_vaccinated_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", high_vaccinated_counts, high_vaccinated_metadata,
-                                                                                     "1_D8", "1_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_1_D8_vs_D_minus_1"), "high")
+                                                                                     "1_D8", "1_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_1_D8_vs_D_minus_1/"), "high")
 raw_high_vaccinated_period_1_D8_vs_D_minus_1_results <- high_vaccinated_period_1_D8_vs_D_minus_1_results[[5]]
 # 0/0/0/0/0 DEGs
 high_vaccinated_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", high_vaccinated_counts, high_vaccinated_metadata,
-                                                                                      "1_D28", "1_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_1_D28_vs_D_minus_1"), "high")
+                                                                                      "1_D28", "1_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_1_D28_vs_D_minus_1/"), "high")
 raw_high_vaccinated_period_1_D28_vs_D_minus_1_results <- high_vaccinated_period_1_D28_vs_D_minus_1_results[[5]]
 #### PERIOD 1 LOW VIRAL LOAD ####
 # 2280/312/129/18/3854 DEGs
 low_vaccinated_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", low_vaccinated_counts, low_vaccinated_metadata,
-                                                                                    "1_D2", "1_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_1_D2_vs_D_minus_1"), "low")
+                                                                                    "1_D2", "1_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_1_D2_vs_D_minus_1/"), "low")
 raw_low_vaccinated_period_1_D2_vs_D_minus_1_results <- low_vaccinated_period_1_D2_vs_D_minus_1_results[[5]]
 # 70/0/0/0/521 DEGs
 low_vaccinated_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", low_vaccinated_counts, low_vaccinated_metadata,
-                                                                                    "1_D8", "1_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_1_D8_vs_D_minus_1"), "low")
+                                                                                    "1_D8", "1_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_1_D8_vs_D_minus_1/"), "low")
 raw_low_vaccinated_period_1_D8_vs_D_minus_1_results <- low_vaccinated_period_1_D8_vs_D_minus_1_results[[5]]
 # 2/0/0/0/3 DEGs
 low_vaccinated_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", low_vaccinated_counts, low_vaccinated_metadata,
-                                                                                     "1_D28", "1_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_1_D28_vs_D_minus_1"), "low")
+                                                                                     "1_D28", "1_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_1_D28_vs_D_minus_1/"), "low")
 raw_low_vaccinated_period_1_D28_vs_D_minus_1_results <- low_vaccinated_period_1_D28_vs_D_minus_1_results[[5]]
 
 #### PERIOD 2 HIGH VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 294/0/0/0/1225 DEGs found - seems weird that so many are found
 high_vaccinated_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("vaccinated", high_vaccinated_counts, high_vaccinated_metadata,
-                                                                                            "2_D_minus_1", "2_D_minus_2", paste0(bulk_data_dir, "high_vaccinated_period_2_D_minus_1_vs_D_minus_2"), "high")
+                                                                                            "2_D_minus_1", "2_D_minus_2", paste0(bulk_data_dir, "high_vaccinated_period_2_D_minus_1_vs_D_minus_2/"), "high")
 raw_high_vaccinated_period_2_D_minus_1_vs_D_minus_2_results <- high_vaccinated_period_2_D_minus_1_vs_D_minus_2_results[[5]]
 # 0.585 is good, and -0.585 is good
 #collected_fmd_high_vaccinated_period_2_D_minus_1_vs_D_minus_2 <- run_fmd_on_flu_data(raw_high_vaccinated_period_2_D_minus_1_vs_D_minus_2_results)
 
 # 2 D2 vs 2 D minus 1 - 0/0/0/0/2 DEGs
 high_vaccinated_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", high_vaccinated_counts, high_vaccinated_metadata,
-                                                                                     "2_D2", "2_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_2_D2_vs_D_minus_1"), "high")
+                                                                                     "2_D2", "2_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_2_D2_vs_D_minus_1/"), "high")
 raw_high_vaccinated_period_2_D2_vs_D_minus_1_results <- high_vaccinated_period_2_D2_vs_D_minus_1_results[[5]]
 # 0.585 is good, and -0.585 is good
 #collected_fmd_high_vaccinated_period_2_D2_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_vaccinated_period_2_D2_vs_D_minus_1_results)
 
 # 2 D5 vs 2 D minus 1 - 704/20/0/0/1588 DEGs
 high_vaccinated_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", high_vaccinated_counts, high_vaccinated_metadata,
-                                                                                     "2_D5", "2_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_2_D5_vs_D_minus_1"), "high")
+                                                                                     "2_D5", "2_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_2_D5_vs_D_minus_1/"), "high")
 raw_high_vaccinated_period_2_D5_vs_D_minus_1_results <- high_vaccinated_period_2_D5_vs_D_minus_1_results[[5]]
 # 0.585 or 1 is good, and -0.585 or -1 is good 
 #collected_fmd_high_vaccinated_period_2_D5_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_vaccinated_period_2_D5_vs_D_minus_1_results, c(0.585, 1, 2))
 
 # 2 D8 vs 2 D minus 1 - 1359/85/1/0/2441 DEGs
 high_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", high_vaccinated_counts, high_vaccinated_metadata,
-                                                                                     "2_D8", "2_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_2_D8_vs_D_minus_1"), "high")
+                                                                                     "2_D8", "2_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_2_D8_vs_D_minus_1/"), "high")
 raw_high_vaccinated_period_2_D8_vs_D_minus_1_results <- high_vaccinated_period_2_D8_vs_D_minus_1_results[[5]]
 # ???
 # collected_fmd_high_vaccinated_period_2_D8_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_vaccinated_period_2_D8_vs_D_minus_1_results, c(0.585, 1, 2))
 # 2 D28 vs 2 D minus 1 - 6/4/4/3/21 DEGs
 high_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", high_vaccinated_counts, high_vaccinated_metadata,
-                                                                                      "2_D28", "2_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_2_D28_vs_D_minus_1"), "high")
+                                                                                      "2_D28", "2_D_minus_1", paste0(bulk_data_dir, "high_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
 raw_high_vaccinated_period_2_D28_vs_D_minus_1_results <- high_vaccinated_period_2_D28_vs_D_minus_1_results[[5]]
 # 0.3 is good, and -0.3 is good
 #collected_fmd_high_vaccinated_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(raw_high_vaccinated_period_2_D28_vs_D_minus_1_results)
@@ -259,34 +259,34 @@ raw_high_vaccinated_period_2_D28_vs_D_minus_1_results <- high_vaccinated_period_
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 1/0/0/0/9 DEGs found - seems weird that so many are found
 low_vaccinated_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("vaccinated", low_vaccinated_counts, low_vaccinated_metadata,
-                                                                                               "2_D_minus_1", "2_D_minus_2", paste0(bulk_data_dir, "low_vaccinated_period_2_D_minus_1_vs_D_minus_2"), "low")
+                                                                                               "2_D_minus_1", "2_D_minus_2", paste0(bulk_data_dir, "low_vaccinated_period_2_D_minus_1_vs_D_minus_2/"), "low")
 raw_low_vaccinated_period_2_D_minus_1_vs_D_minus_2_results <- low_vaccinated_period_2_D_minus_1_vs_D_minus_2_results[[5]]
 # 0.585 is good, and -0.585 is good
 #collected_fmd_low_vaccinated_period_2_D_minus_1_vs_D_minus_2 <- run_fmd_on_flu_data(raw_low_vaccinated_period_2_D_minus_1_vs_D_minus_2_results)
 
 # 2 D2 vs 2 D minus 1 - 2/0/0/0/2 DEGs
 low_vaccinated_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", low_vaccinated_counts, low_vaccinated_metadata,
-                                                                                        "2_D2", "2_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_2_D2_vs_D_minus_1"), "low")
+                                                                                        "2_D2", "2_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_2_D2_vs_D_minus_1/"), "low")
 raw_low_vaccinated_period_2_D2_vs_D_minus_1_results <- low_vaccinated_period_2_D2_vs_D_minus_1_results[[5]]
 # 0.585 is good, and -0.585 is good
 #collected_fmd_low_vaccinated_period_2_D2_vs_D_minus_1 <- run_fmd_on_flu_data(raw_low_vaccinated_period_2_D2_vs_D_minus_1_results)
 
 # 2 D5 vs 2 D minus 1 - 101/20/0/0/366 DEGs
 low_vaccinated_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", low_vaccinated_counts, low_vaccinated_metadata,
-                                                                                        "2_D5", "2_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_2_D5_vs_D_minus_1"), "low")
+                                                                                        "2_D5", "2_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_2_D5_vs_D_minus_1/"), "low")
 raw_low_vaccinated_period_2_D5_vs_D_minus_1_results <- low_vaccinated_period_2_D5_vs_D_minus_1_results[[5]]
 # 0.585 or 1 is good, and -0.585 or -1 is good 
 #collected_fmd_low_vaccinated_period_2_D5_vs_D_minus_1 <- run_fmd_on_flu_data(raw_low_vaccinated_period_2_D5_vs_D_minus_1_results, c(0.585, 1, 2))
 
 # 2 D8 vs 2 D minus 1 - 4/0/0/0/15 DEGs
 low_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", low_vaccinated_counts, low_vaccinated_metadata,
-                                                                                        "2_D8", "2_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_2_D8_vs_D_minus_1"), "low")
+                                                                                        "2_D8", "2_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_2_D8_vs_D_minus_1/"), "low")
 #raw_low_vaccinated_period_2_D8_vs_D_minus_1_results <- low_vaccinated_period_2_D8_vs_D_minus_1_results[[5]]
 # ???
 # collected_fmd_low_vaccinated_period_2_D8_vs_D_minus_1 <- run_fmd_on_flu_data(raw_low_vaccinated_period_2_D8_vs_D_minus_1_results, c(0.585, 1, 2))
 # 2 D28 vs 2 D minus 1 - 106/0/0/0/800 DEGs
 low_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", low_vaccinated_counts, low_vaccinated_metadata,
-                                                                                         "2_D28", "2_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_2_D28_vs_D_minus_1"), "low")
+                                                                                         "2_D28", "2_D_minus_1", paste0(bulk_data_dir, "low_vaccinated_period_2_D28_vs_D_minus_1/"), "low")
 raw_low_vaccinated_period_2_D28_vs_D_minus_1_results <- low_vaccinated_period_2_D28_vs_D_minus_1_results[[5]]
 # 0.3 is good, and -0.3 is good
 #collected_fmd_low_vaccinated_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(raw_low_vaccinated_period_2_D28_vs_D_minus_1_results)
