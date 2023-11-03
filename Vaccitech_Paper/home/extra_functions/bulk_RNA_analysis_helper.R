@@ -699,6 +699,8 @@ fill_in_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts, hi
     }
   }
   
+  # Compute results for D2 / D5 / D8 (with alpha = 0.05)
+  
   
   
 
