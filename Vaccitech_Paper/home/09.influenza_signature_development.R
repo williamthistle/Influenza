@@ -3,10 +3,6 @@ library(dplyr)
 library(openxlsx)
 library(ggplot2)
 
-# Set working directory to wherever this script is
-# (because Compendium_Functions.R will be in the same place)
-setwd(dirname(rstudioapi::getSourceEditorContext()$path))
-source("Compendium_Functions.R")
 # Now set working directory to where compendium data files are
 setwd("~/")
 setwd("../OneDrive - Princeton University/Influenza Analysis/Data Compendium")
