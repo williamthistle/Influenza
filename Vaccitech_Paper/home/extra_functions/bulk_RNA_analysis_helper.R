@@ -657,7 +657,8 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
 
 
 
-fill_in_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts, high_placebo_metadata, data_dir, sc_fc_direction) {
+fill_in_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts, high_placebo_metadata, output_dir, sc_fc_direction) {
+  if (!dir.exists(output_dir)) {dir.create(output_dir)}
   final_df <- data.frame(Gene = character(), Day = character(), Fold.Change.Abs = numeric(), 
                                          Fold.Change.Direction.Raw = character(), Fold.Change.Direction = character(), 
                                          Adjusted.P.Value = numeric())

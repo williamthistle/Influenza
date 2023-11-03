@@ -4,9 +4,9 @@ source(paste0(base_dir, "00.setup.R"))
 
 # Different method for filling in HVL and LVL - very similar, though!
 hvl_pos_sc_genes_in_bulk <- fill_in_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
-                                                             data_dir, "up")
+                                                             paste0(bulk_data_dir, "hvl_upregulated_sc_genes_found_in_bulk") , "up")
 hvl_neg_sc_genes_in_bulk <- fill_in_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
-                                                             data_dir, "down")
+                                                             paste0(bulk_data_dir, "hvl_downregulated_sc_genes_found_in_bulk"), "down")
 lvl_pos_sc_genes_in_bulk <- 1
 lvl_neg_sc_genes_in_bulk <- 1
 
