@@ -2,6 +2,25 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+# Different method for filling in HVL and LVL - very similar, though!
+hvl_pos_sc_genes_in_bulk <- fill_in_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+                                                             data_dir, "up")
+hvl_neg_sc_genes_in_bulk <- fill_in_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+                                                             data_dir, "down")
+lvl_pos_sc_genes_in_bulk <- 1
+lvl_neg_sc_genes_in_bulk <- 1
+
+
+
+
+
+
+
+
+
+
+
+
 # Data frame that captures the fold changes for sc pseudobulk genes in various bulk differential expression analyses
 # NOTE: Recently updated to only include innate immune cells (supplemental can include adaptive)
 high_pos_pseudobulk_sc_DEGs_bulk_passing_df <- data.frame(gene = character(), cell_types = character(), D2_fc = numeric(),
