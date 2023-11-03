@@ -671,17 +671,17 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts,
   
   # Find bulk RNA-seq validated genes
   high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                             "2_D28", "2_D_minus_1", data_dir, "high", alpha = alpha)
-  raw_high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[5]]
+                                                                                             "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
+  high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[5]]
   filtered_sc_trained_immunity_genes <- intersect(possible_genes,
-                                                                   rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results))
+                                                                   rownames(high_placebo_period_2_D28_vs_D_minus_1_results))
   
   # Verify that FC in bulk agrees with FC in SC (if not, discard)
   final_filtered_sc_trained_immunity_genes <- c()
   
   for(gene in filtered_sc_trained_immunity_genes) {
     sc_fc <- sc_gene_df[sc_gene_df$Gene_Name == gene,]$sc_log2FC
-    bulk_fc <- raw_high_placebo_period_2_D28_vs_D_minus_1_results[rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results) == gene,]$log2FoldChange
+    bulk_fc <- high_placebo_period_2_D28_vs_D_minus_1_results[rownames(high_placebo_period_2_D28_vs_D_minus_1_results) == gene,]$log2FoldChange
     if(all(sign(sc_fc) == sign(bulk_fc))) {
       final_filtered_sc_trained_immunity_genes <- c(final_filtered_sc_trained_immunity_genes, gene)
     }
@@ -689,9 +689,9 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts,
   
   # Compute results for D2 / D5 / D8 (with alpha parameter and without alpha parameter)
   # WITH ALPHA SET
-  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+  high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                        "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
-  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered[[5]]
+  high_placebo_period_2_D2_vs_D_minus_1_results <- high_placebo_period_2_D2_vs_D_minus_1_results[[5]]
   
   high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                                        "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
@@ -702,17 +702,47 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts,
   high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[5]]
   # WITHOUT ALPHA SET
   high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_", alpha, "/"), "high", alpha = 0.99999)
+                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered[[5]]
   
   high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_", alpha, "/"), "high", alpha = 0.99999)
+                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered[[5]]
   
   high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_", alpha, "/"), "high", alpha = 0.99999)
+                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered[[5]]
   
-  
+  # Parse our list of genes
+  for(current_gene in final_filtered_sc_trained_immunity_genes) {
+    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D2_vs_D_minus_1_results, 
+                                                          high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered, "D2"))
+    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D5_vs_D_minus_1_results, 
+                                                          high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered, "D5"))
+    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D8_vs_D_minus_1_results, 
+                                                          high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered, "D8"))
+    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D28_vs_D_minus_1_results, 
+                                                          high_placebo_period_2_D28_vs_D_minus_1_results, "D28"))
+  }
+  final_df$Day <- factor(final_df$Day, levels = c("Day.2","Day.5","Day.8","Day.28"))
+  return(final_df)
+}
 
+grab_deg_info_for_sc_gene <- function(current_gene, current_deseq2_results, current_deseq2_results_unfiltered, current_day) {
+  if(current_gene %in% rownames(current_deseq2_results)) {
+    gene_result <- current_deseq2_results[rownames(current_deseq2_results) == current_gene,]
+    fold.change.abs <- abs(gene_result$log2FoldChange)
+    fold.change.direction.raw <- ifelse(gene_result$log2FoldChange > 0, "Positive", "Negative")
+    fold.change.direction <- ifelse(gene_result$log2FoldChange > 0, "Positive", "Negative")
+    adjusted.p.value <- gene_result$padj
+  } else {
+    gene_result <- current_deseq2_results_unfiltered[rownames(current_deseq2_results_unfiltered) == current_gene,]
+    fold.change.abs <- abs(gene_result$log2FoldChange)
+    fold.change.direction.raw <- ifelse(gene_result$log2FoldChange > 0, "Positive", "Negative")
+    fold.change.direction <- "Not Significant"
+    adjusted.p.value <- gene_result$padj
+  }
+  return(data.frame(Gene = current_gene, Day = current_day, Fold.Change.Abs = fold.change.abs, 
+                         Fold.Change.Direction.Raw = fold.change.direction.raw, Fold.Change.Direction = fold.change.direction, 
+                         Adjusted.P.Value = adjusted.p.value))
 }
