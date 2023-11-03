@@ -18,6 +18,13 @@ onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 load(paste0(onedrive_dir, "Influenza Analysis/Analyses/Bulk_RNA-Seq/Results/bulk_RNA_analysis.RData"))
 
+# Reload onedrive dir
+onedrive_dir <- "~"
+setwd(onedrive_dir)
+setwd("../")
+onedrive_dir <- getwd()
+onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
+
 set.seed(get_speedi_seed())
 options(max.print=10000)
 
@@ -34,12 +41,6 @@ sample_metadata <- read.table(paste0(metadata_dir, "all_metadata_sheet.tsv"), se
 flu_tokens <- read.table(paste0(metadata_dir, "flu_data_tokens.tsv"), sep = "\t", header = TRUE)
 possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "NK_CD56bright", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT", "B", "B_naive", "B_memory")
 innate_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright")
-# Reload onedrive dir
-onedrive_dir <- "~"
-setwd(onedrive_dir)
-setwd("../")
-onedrive_dir <- getwd()
-onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 # Set other dirs
 sc_rna_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/scRNA-Seq/Results/HVL/")
 sc_deg_dir <- paste0(onedrive_dir, "Influenza Analysis/Analyses/scRNA-Seq/Results/HVL/DEGs/")
