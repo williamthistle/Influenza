@@ -136,6 +136,7 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
 }
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {
+  if (!dir.exists(output_dir)) {dir.create(output_dir)}
   # Select the two relevant time points from our metadata
   metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
   # Remove subjects that only have one time point (not both)
@@ -194,6 +195,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
 }
 
 run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_time, test_cond, baseline_cond, output_dir, output_name_prefix=NA) {
+  if (!dir.exists(output_dir)) {dir.create(output_dir)}
   # Select the relevant time point from our metadata
   metadata_subset <- metadata[metadata$time_point == test_time,]  
   # Select subset of counts associated with subjects
