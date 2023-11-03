@@ -1,11 +1,11 @@
 # Method to set up bulk analysis
-setup_bulk_analysis=function(base_dir, data_dir) {
+setup_bulk_analysis=function(metadata_dir, data_dir) {
   # Read in count and metadata files
   gene_counts <<- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
-  all_metadata_file <<- paste0(base_dir, "metadata/all_metadata_sheet.tsv")
+  all_metadata_file <<- paste0(metadata_dir, "all_metadata_sheet.tsv")
   all_metadata <<- read.table(all_metadata_file, header = TRUE, sep = "\t")
   # Currently, only capturing viral load for placebo subjects
-  viral_load_file <<- paste0(base_dir, "metadata/bulk_RNA_viral_load.tsv")
+  viral_load_file <<- paste0(metadata_dir, "bulk_RNA_viral_load.tsv")
   viral_load <<- read.table(viral_load_file, header = TRUE, sep = "\t")
   viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
   viral_load_primary <<- viral_load_primary[viral_load_primary$TRT01A == "PLACEBO",]
@@ -79,7 +79,7 @@ setup_bulk_analysis=function(base_dir, data_dir) {
                                                                %in% names(table(vaccinated_metadata$subject_id)
                                                                           [table(vaccinated_metadata$subject_id) == 10]),]
   ### VACCINATED ###
-  immunogenicity_data <<- read.table(paste0(base_dir, "metadata/Immunogenicity_Data.tsv"), sep = "\t", header = TRUE)
+  immunogenicity_data <<- read.table(paste0(metadata_dir, "Immunogenicity_Data.tsv"), sep = "\t", header = TRUE)
   immunogenicity_data <<- immunogenicity_data[immunogenicity_data$SUBJID %in% vaccinated_full_time_series_metadata$subject_id,]
   immunogenicity_data <<- immunogenicity_data[,c(1,105,106,115,116)]
   immunogenicity_data <<- immunogenicity_data[order(immunogenicity_data$Vaccination.Day8_IFNg_NP.Background_SFC.10.6.cells, decreasing = TRUE),]
