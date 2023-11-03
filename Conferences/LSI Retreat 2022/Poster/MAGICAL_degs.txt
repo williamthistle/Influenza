@@ -1,9 +1,0 @@
-Cell Type	DEGs
-CD14 Mono	703
-CD16 Mono	655
-NK	477
-CD8 Memory	386
-MAIT	378
-CD4 Memory	345
-T Naive	292
-B	290

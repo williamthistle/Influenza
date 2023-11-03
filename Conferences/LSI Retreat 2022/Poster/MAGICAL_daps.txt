@@ -1,9 +1,0 @@
-Cell Type	DAPs
-T Naive	8719
-CD4 Memory	4570
-NK	3326
-CD14 Mono	2713
-CD16 Mono	2076
-MAIT	1751
-B	1707
-CD8 Memory	1567
