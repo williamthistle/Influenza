@@ -146,6 +146,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Run DESeq2
   current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   current_analysis <- DESeq(current_analysis)
+  save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_alpha_", alpha, ".rds"))
   # Grab results with lfcThreshold = 0.1
   current_analysis_results <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.1)
   current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
