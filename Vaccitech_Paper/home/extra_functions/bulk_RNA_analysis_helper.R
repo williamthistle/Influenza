@@ -146,7 +146,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Run DESeq2
   current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   current_analysis <- DESeq(current_analysis)
-  save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_alpha_", alpha, ".rds"))
+  save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
   # Grab results with lfcThreshold = 0.1
   current_analysis_results <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.1)
   current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
@@ -154,7 +154,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
-    write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_fc_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
   # Grab results with lfcThreshold = 0.585 (1.5 fold increase)
   current_analysis_results_1.5 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.585)
@@ -163,7 +163,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
-    write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)   
+    write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.fc_585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)   
   }
   # Grab results with lfcThreshold = 1
   current_analysis_results_2 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 1)
@@ -172,7 +172,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
-    write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_fc_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
   # Grab results with lfcThreshold = 2
   current_analysis_results_4 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 2)
@@ -181,7 +181,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
-    write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_fc_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
   # Grab results with no lfcThreshold set
   current_analysis_results_none <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha)
@@ -190,7 +190,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
-    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_fc_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
   return(list(current_analysis_results, current_analysis_results_1.5, current_analysis_results_2, current_analysis_results_4, current_analysis_results_none))
 }
@@ -672,7 +672,7 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts,
   
   # Find bulk RNA-seq validated genes
   high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                             "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
+                                                                                             "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
   high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[5]]
   filtered_sc_trained_immunity_genes <- intersect(possible_genes,
                                                                    rownames(high_placebo_period_2_D28_vs_D_minus_1_results))
