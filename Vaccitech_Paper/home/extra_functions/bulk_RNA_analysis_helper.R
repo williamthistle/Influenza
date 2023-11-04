@@ -151,7 +151,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
   current_analysis_results <- subset(current_analysis_results, padj < alpha)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
@@ -160,7 +160,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   current_analysis_results_1.5 <- current_analysis_results_1.5[order(current_analysis_results_1.5$padj),]
   current_analysis_results_1.5 <- subset(current_analysis_results_1.5, padj < alpha)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)   
   }
@@ -169,7 +169,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   current_analysis_results_2 <- current_analysis_results_2[order(current_analysis_results_2$padj),]
   current_analysis_results_2 <- subset(current_analysis_results_2, padj < alpha)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
@@ -178,7 +178,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   current_analysis_results_4 <- current_analysis_results_4[order(current_analysis_results_4$padj),]
   current_analysis_results_4 <- subset(current_analysis_results_4, padj < alpha)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results_4), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
@@ -187,7 +187,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   current_analysis_results_none <- current_analysis_results_none[order(current_analysis_results_none$padj),]
   current_analysis_results_none <- subset(current_analysis_results_none, padj < alpha)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
@@ -208,7 +208,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
   current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
   current_analysis_results <- subset(current_analysis_results, padj < 0.05)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_fc_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
@@ -217,7 +217,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
   current_analysis_results_1.5 <- current_analysis_results_1.5[order(current_analysis_results_1.5$padj),]
   current_analysis_results_1.5 <- subset(current_analysis_results_1.5, padj < 0.05)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_fc_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)   
   }
@@ -226,7 +226,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
   current_analysis_results_2 <- current_analysis_results_2[order(current_analysis_results_2$padj),]
   current_analysis_results_2 <- subset(current_analysis_results_2, padj < 0.05)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results_2), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_2), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_fc_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results_2), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
@@ -235,7 +235,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
   current_analysis_results_4 <- current_analysis_results_4[order(current_analysis_results_4$padj),]
   current_analysis_results_4 <- subset(current_analysis_results_4, padj < 0.05)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results_4), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_4), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_fc_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results_4), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
@@ -244,7 +244,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
   current_analysis_results_none <- current_analysis_results_none[order(current_analysis_results_none$padj),]
   current_analysis_results_none <- subset(current_analysis_results_none, padj < 0.05)
   if(is.na(output_name_prefix)) {
-    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(rownames(current_analysis_results_none), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", sample_type, "_fc_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
     write.table(rownames(current_analysis_results_none), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
@@ -690,27 +690,27 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts,
   # Compute results for D2 / D5 / D8 (with alpha parameter and without alpha parameter)
   # WITH ALPHA SET
   high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
+                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
   high_placebo_period_2_D2_vs_D_minus_1_results <- high_placebo_period_2_D2_vs_D_minus_1_results[[5]]
   
   high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
+                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
   high_placebo_period_2_D5_vs_D_minus_1_results <- high_placebo_period_2_D5_vs_D_minus_1_results[[5]]
   
   high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_", alpha, "/"), "high", alpha = alpha)
+                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
   high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[5]]
   # WITHOUT ALPHA SET
   high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_0.99999/"), "high", alpha = 0.99999)
+                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered[[5]]
   
   high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_0.99999/"), "high", alpha = 0.99999)
+                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered[[5]]
   
   high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
-                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_0.99999/"), "high", alpha = 0.99999)
+                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered[[5]]
   
   # Parse our list of genes
@@ -724,6 +724,10 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts,
     final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D28_vs_D_minus_1_results, 
                                                           high_placebo_period_2_D28_vs_D_minus_1_results, "D28"))
   }
+  final_df$Day <- replace(final_df$Day, final_df$Day == "D2", "Day.2")
+  final_df$Day <- replace(final_df$Day, final_df$Day == "D5", "Day.5")
+  final_df$Day <- replace(final_df$Day, final_df$Day == "D8", "Day.8")
+  final_df$Day <- replace(final_df$Day, final_df$Day == "D28", "Day.28")
   final_df$Day <- factor(final_df$Day, levels = c("Day.2","Day.5","Day.8","Day.28"))
   return(final_df)
 }

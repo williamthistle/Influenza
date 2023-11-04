@@ -30,6 +30,7 @@ options(max.print=10000)
 
 script_base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 bulk_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Data/")
+bulk_results_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/")
 metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Overall_Metadata/")
 source(paste0(script_base_dir, "extra_functions/bulk_RNA_analysis_helper.R"))
 source(paste0(script_base_dir, "extra_functions/Compendium_Functions.R"))
