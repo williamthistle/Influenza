@@ -2,22 +2,22 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-# Different method for filling in HVL and LVL - very similar, though!
-hvl_pos_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+# Fill out HVL matrices (upregulated and downregulated genes, with alpha = 0.05 and 0.1)
+hvl_upregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                              paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/"), "up", alpha = 0.05)
-hvl_neg_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+hvl_downregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                              paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/"), "down", alpha = 0.05)
 
-hvl_pos_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+hvl_upregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                                      paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/"), "up", alpha = 0.1)
-hvl_neg_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+hvl_downregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                                      paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/"), "down", alpha = 0.1)
 
 # HVL - upregulated, 0.05 alpha
-write.table(hvl_pos_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_pos_sc_genes_in_bulk_alpha_0.05.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-high_passing_pos_genes <- unique(hvl_pos_sc_genes_in_bulk_0.05$Gene)
+write.table(hvl_upregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_alpha_0.05.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+high_passing_upregulated_genes <- unique(hvl_upregulated_sc_genes_in_bulk_0.05$Gene)
 
-hvl_pos_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_pos_sc_genes_in_bulk_0.05, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
+hvl_upregulated_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_upregulated_sc_genes_in_bulk_0.05, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
   geom_point() +
   scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
   theme_minimal() +
@@ -30,13 +30,13 @@ hvl_pos_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_pos_sc_genes_in_bulk_0.0
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
-ggsave(filename = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_pos_sc_genes_in_bulk_alpha_0.05.tiff"), plot = hvl_pos_sc_genes_in_bulk_0.05_plot, device='tiff', dpi=300)
+ggsave(filename = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_alpha_0.05.tiff"), plot = hvl_upregulated_sc_genes_in_bulk_0.05_plot, device='tiff', dpi=300)
 
 # HVL - downregulated, 0.05 alpha
-write.table(hvl_neg_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_neg_sc_genes_in_bulk_alpha_0.05.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-high_passing_neg_genes <- unique(hvl_neg_sc_genes_in_bulk_0.05$Gene)
+write.table(hvl_downregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_alpha_0.05.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+high_passing_downregulated_genes <- unique(hvl_downregulated_sc_genes_in_bulk_0.05$Gene)
 
-hvl_neg_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_neg_sc_genes_in_bulk_0.05, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
+hvl_downregulated_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_downregulated_sc_genes_in_bulk_0.05, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
   geom_point() +
   scale_color_manual(values = c("Positive" = "#00BFC4", "Negative" = "#F3756D", "Not Significant" = "grey")) +
   theme_minimal() +
@@ -49,14 +49,15 @@ hvl_neg_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_neg_sc_genes_in_bulk_0.0
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
-ggsave(filename = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_neg_sc_genes_in_bulk_alpha_0.05.tiff"), plot = hvl_neg_sc_genes_in_bulk_0.05_plot, device='tiff', width = 12, height = 15)
+ggsave(filename = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_alpha_0.05.tiff"), plot = hvl_downregulated_sc_genes_in_bulk_0.05_plot, device='tiff', width = 12, height = 15)
 
+### I think I like 0.05 alpha better ###
 
 # HVL - upregulated, 0.1 alpha
-write.table(hvl_pos_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_pos_sc_genes_in_bulk_alpha_0.1.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-high_passing_pos_genes <- unique(hvl_pos_sc_genes_in_bulk_0.1$Gene)
+write.table(hvl_upregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_alpha_0.1.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+high_passing_upregulated_genes <- unique(hvl_upregulated_sc_genes_in_bulk_0.1$Gene)
 
-hvl_pos_sc_genes_in_bulk_0.1_plot <- ggplot(data = hvl_pos_sc_genes_in_bulk_0.1, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
+hvl_upregulated_sc_genes_in_bulk_0.1_plot <- ggplot(data = hvl_upregulated_sc_genes_in_bulk_0.1, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
   geom_point() +
   scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
   theme_minimal() +
@@ -69,13 +70,13 @@ hvl_pos_sc_genes_in_bulk_0.1_plot <- ggplot(data = hvl_pos_sc_genes_in_bulk_0.1,
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
-ggsave(filename = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_pos_sc_genes_in_bulk_alpha_0.1.tiff"), plot = hvl_pos_sc_genes_in_bulk_0.1_plot, device='tiff', dpi=300)
+ggsave(filename = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_alpha_0.1.tiff"), plot = hvl_upregulated_sc_genes_in_bulk_0.1_plot, device='tiff', dpi=300)
 
 # HVL - downregulated, 0.1 alpha
-write.table(hvl_neg_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_neg_sc_genes_in_bulk_alpha_0.1.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-high_passing_neg_genes <- unique(hvl_neg_sc_genes_in_bulk_0.1$Gene)
+write.table(hvl_downregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_alpha_0.1.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+high_passing_downregulated_genes <- unique(hvl_downregulated_sc_genes_in_bulk_0.1$Gene)
 
-hvl_neg_sc_genes_in_bulk_0.1_plot <- ggplot(data = hvl_neg_sc_genes_in_bulk_0.1, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
+hvl_downregulated_sc_genes_in_bulk_0.1_plot <- ggplot(data = hvl_downregulated_sc_genes_in_bulk_0.1, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
   geom_point() +
   scale_color_manual(values = c("Positive" = "#00BFC4", "Negative" = "#F3756D", "Not Significant" = "grey")) +
   theme_minimal() +
@@ -88,56 +89,10 @@ hvl_neg_sc_genes_in_bulk_0.1_plot <- ggplot(data = hvl_neg_sc_genes_in_bulk_0.1,
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
-ggsave(filename = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_neg_sc_genes_in_bulk_alpha_0.1.tiff"), plot = hvl_neg_sc_genes_in_bulk_0.1_plot, device='tiff', width = 12, height = 15)
+ggsave(filename = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_alpha_0.1.tiff"), plot = hvl_downregulated_sc_genes_in_bulk_0.1_plot, device='tiff', width = 12, height = 15)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# neg: 73 genes
-high_neg_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(high_neg_pseudobulk_sc_DEGs_bulk_passing_df)
-write.table(high_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Vaccitech_Paper/high_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-high_passing_neg_genes <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df$gene
-
-# Plot heatmap for genes and their FC
-high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df
-colnames(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot) <- c("Gene", "Cell.Types", "Day.2", "Day.5", "Day.8", "Day.28", "Special.Notes")
-high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot %>%
-  pivot_longer(cols = starts_with("D"), names_to = "Day", values_to = "FoldChange")
-high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot %>% filter(FoldChange != 0)
-high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$Day <- factor(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$Day, levels = c("Day.2","Day.5","Day.8","Day.28"))
-high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChangeSign <- ifelse(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange > 0, "Positive", "Negative")
-high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange <- abs(high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot$FoldChange)
-
-
-high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot <- ggplot(data = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_for_plot, aes(x = Day, y = Gene, color = FoldChangeSign, size = FoldChange)) +
-  geom_point() +
-  theme_minimal() +
-  labs(
-    title = "Fold Change of Downregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
-    x = "Day (Post Exposure)",
-    y = "Gene",
-    size = "Fold Change (Absolute Value)",
-    color = "Fold Change Direction"
-  ) +
-  theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
-
-ggsave(filename = paste0(onedrive_dir, "Vaccitech_Paper/downregulated_genes_from_innate_across_infection.tiff"), plot = high_neg_pseudobulk_sc_DEGs_bulk_passing_df_plot, device='tiff', width = 12, height = 15)
 
 
 
