@@ -9,10 +9,10 @@ run_fmd_on_mintchip <- function(mintchip_marker_das_list_annotated) {
     fmd_marker_results <- list()
     index_2 <- 1
     for(current_list_of_peaks in marker) {
-      if(length(current_list_of_peaks) > 1) {
+      if(length(current_list_of_peaks) > 1 && nrow(current_list_of_peaks) > 1 && nrow(current_list_of_peaks) < 2000) {
         current_fmd_result <- SPEEDI::RunFMD_RNA(unique(current_list_of_peaks$SYMBOL), "blood")
       } else { 
-        current_fmd_result <- "EMPTY"
+        current_fmd_result <- "EMPTY OR OVER 2000 PEAKS (TOO MANY)"
       }
       fmd_marker_results[[index_2]] <- current_fmd_result
       index_2 <- index_2 + 1
