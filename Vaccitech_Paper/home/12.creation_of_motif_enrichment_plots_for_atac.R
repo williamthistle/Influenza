@@ -30,7 +30,7 @@ up_atac_tf_motif_enrichment_df_plot <- ggplot(data = up_atac_tf_motif_enrichment
     title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
-    size = "Fold Change",
+    size = "Enrichment",
     color = "-Log(Adjusted P Value)"
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
@@ -56,7 +56,7 @@ down_atac_tf_motif_enrichment_df_plot <- ggplot(data = down_atac_tf_motif_enrich
     title = "Fold Change of downregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
-    size = "Fold Change",
+    size = "Enrichment",
     color = "-Log(Adjusted P Value)"
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
