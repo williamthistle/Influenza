@@ -51,6 +51,7 @@ sc_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Res
 sc_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snATAC-Seq/Results/HVL/")
 mintchip_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/")
 mintchip_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/differentially_accessible_sites/")
+homer_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/HOMER/")
 miRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Data/")
 miRNA_metadata_dir <-paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Metadata/")
 totalRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Data/")
