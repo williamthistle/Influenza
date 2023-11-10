@@ -77,5 +77,4 @@ dbObj.norm <- dba.normalize(dbObj,normalize=DBA_NORM_NATIVE,
 # Find DASs
 dbObj.norm <- dba.contrast(dbObj.norm, design="~Tissue+Condition")
 dbObj.norm <- dba.analyze(dbObj.norm, bBlacklist = FALSE, bGreylist = FALSE)
-# ~6600 peaks, but why are FC so low?
-results_fc_0 <- dba.report(dbObj.norm, contrast = 1, fold = 0, bUsePval = TRUE)
+results_fc_0 <- dba.report(dbObj.norm, contrast = 1, fold = 0, bUsePval = TRUE, bNormalized = FALSE)
