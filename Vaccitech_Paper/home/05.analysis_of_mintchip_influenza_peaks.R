@@ -48,8 +48,6 @@ neg_mintchip_marker_das_list_annotated <- list()
 
 fc_thresholds <- c("0", "0.1", "0.2", "0.3", "0.585", "1", "2")
 
-homer_dir <- paste0(mintchip_das_dir, "HOMER/")
-
 for(marker in mintchip_markers) {
   old_das <- mintchip_marker_das_list[[marker]]
   current_pos_annotated_das <- list()
@@ -122,7 +120,12 @@ for(marker in mintchip_markers) {
 }
 
 pos_fmd <- run_fmd_on_mintchip(pos_mintchip_marker_das_list_annotated)
+
+mintchip_fmd_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/differentially_accessible_sites/FMD/")
+if (!dir.exists(mintchip_fmd_dir)) {dir.create(mintchip_fmd_dir)}
+saveRDS(pos_fmd, file = paste0(mintchip_fmd_dir, "pos_fmd.RDS"))
+
 neg_fmd <- run_fmd_on_mintchip(neg_mintchip_marker_das_list_annotated)
   
-
+saveRDS(neg_fmd, file = paste0(mintchip_fmd_dir, "neg_fmd.RDS"))
 
