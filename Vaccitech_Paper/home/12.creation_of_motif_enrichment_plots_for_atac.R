@@ -5,6 +5,9 @@ source(paste0(base_dir, "00.setup.R"))
 atac_tf_motif_enrichment_dir <- paste0(sc_das_dir, "diff_peaks/")
 atac_innate_cell_types <- c("CD14_Mono", "CD16_Mono", "NK")
 
+atac_tf_motif_enrichment_plot_dir <- paste0(sc_das_dir, "motif_enrichment_plots/")
+if (!dir.exists(atac_tf_motif_enrichment_plot_dir)) {dir.create(atac_tf_motif_enrichment_plot_dir)}
+
 # Cell Type
 # Motif
 # -log 10 p-value
@@ -27,9 +30,12 @@ up_atac_tf_motif_enrichment_df_plot <- ggplot(data = up_atac_tf_motif_enrichment
     title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
-    size = "Fold Change"
+    size = "Fold Change",
+    color = "-Log(Adjusted P Value)"
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
+
+ggsave(filename = paste0(atac_tf_motif_enrichment_plot_dir, "up_atac_tf_motif_enrichment_df_plot.tiff"), plot = up_atac_tf_motif_enrichment_df_plot, device='tiff', dpi = 300)
 
 # Second, do downregulated motifs - top 15
 down_atac_tf_motif_enrichment_df <- data.frame(TF = character(), Enrichment = numeric(), Negative.Log.Adjusted.P.Value <- numeric(), Cell.Type = character())
@@ -50,6 +56,9 @@ down_atac_tf_motif_enrichment_df_plot <- ggplot(data = down_atac_tf_motif_enrich
     title = "Fold Change of downregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
-    size = "Fold Change"
+    size = "Fold Change",
+    color = "-Log(Adjusted P Value)"
   ) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
+
+ggsave(filename = paste0(atac_tf_motif_enrichment_plot_dir, "down_atac_tf_motif_enrichment_df_plot.tiff"), plot = down_atac_tf_motif_enrichment_df_plot, device='tiff', dpi = 300)
