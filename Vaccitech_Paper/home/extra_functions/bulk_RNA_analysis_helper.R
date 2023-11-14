@@ -676,7 +676,7 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
 
 
 
-fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts, high_placebo_metadata, output_dir, sc_fc_direction, alpha = 0.05) {
+fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, output_dir, sc_fc_direction, alpha = 0.05) {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
   final_df <- data.frame(Gene = character(), Day = character(), Fold.Change.Abs = numeric(), 
                                          Fold.Change.Direction.Raw = character(), Fold.Change.Direction = character(), 
@@ -689,9 +689,9 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts,
   }
   
   # Find bulk RNA-seq validated genes
-  high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+  high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
                                                                                              "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
-  high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[5]]
+  high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
   filtered_sc_trained_immunity_genes <- intersect(possible_genes,
                                                                    rownames(high_placebo_period_2_D28_vs_D_minus_1_results))
   
@@ -708,29 +708,29 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, high_placebo_counts,
   
   # Compute results for D2 / D5 / D8 (with alpha parameter and without alpha parameter)
   # WITH ALPHA SET
-  high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+  high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
                                                                                        "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
-  high_placebo_period_2_D2_vs_D_minus_1_results <- high_placebo_period_2_D2_vs_D_minus_1_results[[5]]
+  high_placebo_period_2_D2_vs_D_minus_1_results <- high_placebo_period_2_D2_vs_D_minus_1_results[[1]]
   
-  high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+  high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
                                                                                        "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
-  high_placebo_period_2_D5_vs_D_minus_1_results <- high_placebo_period_2_D5_vs_D_minus_1_results[[5]]
+  high_placebo_period_2_D5_vs_D_minus_1_results <- high_placebo_period_2_D5_vs_D_minus_1_results[[1]]
   
-  high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+  high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
                                                                                        "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
-  high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[5]]
+  high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
   # WITHOUT ALPHA SET
-  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
                                                                                        "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
-  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered[[5]]
+  high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered[[1]]
   
-  high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+  high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
                                                                                        "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
-  high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered[[5]]
+  high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered[[1]]
   
-  high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+  high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
                                                                                        "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
-  high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered[[5]]
+  high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered[[1]]
   
   # Parse our list of genes
   for(current_gene in final_filtered_sc_trained_immunity_genes) {
