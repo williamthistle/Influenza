@@ -98,24 +98,31 @@ assign_cell_types_to_pathway_results <- function(pathway_info, gene_table) {
   return(pathway_info)
 }
 
-run_fmd_on_flu_data <- function(gene_table, log_fc_thresholds = c(0.1, 0.3, 0.585, 1, 2)) {
+run_fmd_on_flu_data <- function(list_of_deseq_results_at_different_fc_thresholds) {
   fmd_results <- list()
-  for(log_fc_threshold in log_fc_thresholds) {
-    curated_gene_table <- gene_table[gene_table$log2FoldChange > log_fc_threshold,]
-    if(nrow(curated_gene_table) > 0) {
-      current_fmd_result <- SPEEDI::RunFMD_RNA(rownames(curated_gene_table), "blood")
-      fmd_result_name <- paste0("log2_", log_fc_threshold)
+  log_fc_thresholds <- c(0,0.1,0.2,0.3,0.585,1,2)
+  index <- 1
+  for(current_result in list_of_deseq_results_at_different_fc_thresholds) {
+    log_fc_threshold <- log_fc_thresholds[index]
+    current_gene_list <- rownames(current_result[current_result$log2FoldChange > 0,])
+    if(length(current_gene_list) > 0 && length(current_gene_list) < 2000) {
+      current_fmd_result <- SPEEDI::RunFMD_RNA(current_gene_list, "blood")
+      fmd_result_name <- paste0("logfc_", log_fc_threshold, "_upregulated")
       fmd_results[[fmd_result_name]] <- current_fmd_result
     }
-  }
-  for(log_fc_threshold in log_fc_thresholds) {
-    curated_gene_table <- gene_table[gene_table$log2FoldChange < -log_fc_threshold,]
-    if(nrow(curated_gene_table) > 0) {
-      current_fmd_result <- SPEEDI::RunFMD_RNA(rownames(curated_gene_table), "blood")
-      fmd_result_name <- paste0("log2_-", log_fc_threshold)
+    current_gene_list <- rownames(current_result[current_result$log2FoldChange < 0,])
+    if(length(current_gene_list) > 0 && length(current_gene_list) < 2000) {
+      current_fmd_result <- SPEEDI::RunFMD_RNA(current_gene_list, "blood")
+      fmd_result_name <- paste0("logfc_", log_fc_threshold, "_downregulated")
       fmd_results[[fmd_result_name]] <- current_fmd_result
     }
+    index <- index + 1
   }
-  return(fmd_results)
+  fmd_links <- c()
+  for(entry in fmd_results) { 
+    fmd_links <- c(fmd_links, entry[[1]])
+  }
+  fmd_result_df <- data.frame(fc_threshold_name = names(fmd_results), link = fmd_links)
+  return(fmd_result_df)
 }
 
