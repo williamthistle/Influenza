@@ -214,6 +214,36 @@ lvl_downregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(in
                                                                               paste0(bulk_results_dir, "lvl_downregulated_sc_genes_found_in_bulk/"), "down", alpha = 0.1)
 saveRDS(lvl_downregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "lvl_downregulated_sc_genes_found_in_bulk/lvl_downregulated_sc_genes_in_bulk_0.1.RDS"))
 
+# Load RDS files
+lvl_upregulated_sc_genes_in_bulk_0.05 <- readRDS(paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bulk/lvl_upregulated_sc_genes_in_bulk_0.05.RDS"))
+lvl_downregulated_sc_genes_in_bulk_0.05 <- readRDS(paste0(bulk_results_dir, "lvl_downregulated_sc_genes_found_in_bulk/lvl_downregulated_sc_genes_in_bulk_0.05.RDS"))
+lvl_upregulated_sc_genes_in_bulk_0.1 <- readRDS(paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bulk/lvl_upregulated_sc_genes_in_bulk_0.1.RDS"))
+lvl_downregulated_sc_genes_in_bulk_0.1 <- readRDS(paste0(bulk_results_dir, "lvl_downregulated_sc_genes_found_in_bulk/lvl_downregulated_sc_genes_in_bulk_0.1.RDS"))
+
+# LVL - upregulated, 0.05 alpha
+write.table(lvl_upregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bulk/lvl_upregulated_sc_genes_in_bulk_alpha_0.05.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+low_passing_upregulated_genes_0.05 <- unique(lvl_upregulated_sc_genes_in_bulk_0.05$Gene)
+
+# Plot with D2/D5/D8/D28 in order
+lvl_upregulated_sc_genes_in_bulk_0.05_plot <- ggplot(data = lvl_upregulated_sc_genes_in_bulk_0.05, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
+  geom_point() +
+  scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
+  theme_minimal() +
+  labs(
+    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection for Low Viral Load Individuals",
+    x = "Day (Post Exposure)",
+    y = "Gene",
+    size = "Fold Change (Absolute Value)",
+    color = "Fold Change Direction"
+  ) +
+  guides(color  = guide_legend(order = 1),
+         size = guide_legend(order = 2)) +
+  theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
+
+ggsave(filename = paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bulk/lvl_upregulated_sc_genes_in_bulk_alpha_0.05.tiff"), plot = lvl_upregulated_sc_genes_in_bulk_0.05_plot, device='tiff', width = 12, height = 15)
+
+# Current thought: Use plots for HVL individuals (up and down regulated). 
+# Don't use plots for LVL individuals because only D28 is significant. Instead, just add the LVL D28 significance as a side note.
 
 
 
@@ -224,26 +254,6 @@ saveRDS(lvl_downregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, 
 
 
 
-
-# Check these validated genes on low viral load individuals
-low_pos_pseudobulk_sc_DEGs_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
-                                                                                          raw_low_placebo_period_2_D5_vs_D_minus_1_results,
-                                                                                          raw_low_placebo_period_2_D8_vs_D_minus_1_results,
-                                                                                          raw_low_placebo_period_2_D28_vs_D_minus_1_results,
-                                                                                          low_pos_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$Gene_Name %in% high_passing_pos_genes,])
-low_neg_pseudobulk_sc_DEGs_bulk_passing_df <- find_degs_across_time_points_for_gene_list(raw_low_placebo_period_2_D2_vs_D_minus_1_results,
-                                                                                          raw_low_placebo_period_2_D5_vs_D_minus_1_results,
-                                                                                          raw_low_placebo_period_2_D8_vs_D_minus_1_results,
-                                                                                          raw_low_placebo_period_2_D28_vs_D_minus_1_results,
-                                                                                          low_neg_pseudobulk_sc_DEGs_bulk_passing_df, sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$Gene_Name %in% high_passing_neg_genes,])
-# pos: 6 genes
-low_pos_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(low_pos_pseudobulk_sc_DEGs_bulk_passing_df)
-write.table(low_pos_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Vaccitech_Paper/low_passing_pos_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-low_passing_pos_genes <- low_pos_pseudobulk_sc_DEGs_bulk_passing_df[low_pos_pseudobulk_sc_DEGs_bulk_passing_df$D28_0.2 == TRUE,]$gene
-# neg: 19 genes
-low_neg_pseudobulk_sc_DEGs_bulk_passing_df <- fill_in_special_notes(low_neg_pseudobulk_sc_DEGs_bulk_passing_df)
-write.table(low_neg_pseudobulk_sc_DEGs_bulk_passing_df, file = paste0(onedrive_dir, "Vaccitech_Paper/low_passing_neg_df.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-low_passing_neg_genes <- low_neg_pseudobulk_sc_DEGs_bulk_passing_df[low_neg_pseudobulk_sc_DEGs_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
 
 
 
