@@ -246,7 +246,7 @@ ggsave(filename = paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bu
 # Don't use plots for LVL individuals because only D28 is significant. Instead, just add the LVL D28 significance as a side note.
 
 # Possible idea: Try subset of genes that are found in MAGICAL circuits and plot those
-# Upregulated, alpha = 0.05. Doesn't really work
+# Upregulated, alpha = 0.05. Doesn't really work - too few genes.
 magical_output_dir <- paste0(sc_magical_dir, "Output/")
 overall_magical_results <- read.table(paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 innate_cell_types_with_underscore <- gsub(" ", "_", innate_cell_types)
@@ -254,5 +254,5 @@ innate_magical_results <- overall_magical_results[overall_magical_results$Cell_T
 innate_magical_genes <- unique(innate_magical_results$Gene_symbol)
 hvl_upregulated_sc_genes_in_bulk_0.05_magical <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% innate_magical_genes,]
 
-# Upregulated, alpha = 0.1. Eh, maybe a little better but not much.
+# Upregulated, alpha = 0.1. Eh, maybe a little better but not much - too few genes.
 hvl_upregulated_sc_genes_in_bulk_0.1_magical <- hvl_upregulated_sc_genes_in_bulk_0.1[hvl_upregulated_sc_genes_in_bulk_0.1$Gene %in% innate_magical_genes,]
