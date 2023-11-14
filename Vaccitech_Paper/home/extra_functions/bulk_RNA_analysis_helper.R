@@ -703,6 +703,8 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, ou
     bulk_fc <- high_placebo_period_2_D28_vs_D_minus_1_results[rownames(high_placebo_period_2_D28_vs_D_minus_1_results) == gene,]$log2FoldChange
     if(all(sign(sc_fc) == sign(bulk_fc))) {
       final_filtered_sc_trained_immunity_genes <- c(final_filtered_sc_trained_immunity_genes, gene)
+    } else {
+      print(paste0("Gene ", gene, " has mismatched FC (positive FC in SC and negative FC in bulk or vice versa)"))
     }
   }
   

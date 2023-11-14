@@ -245,32 +245,14 @@ ggsave(filename = paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bu
 # Current thought: Use plots for HVL individuals (up and down regulated). 
 # Don't use plots for LVL individuals because only D28 is significant. Instead, just add the LVL D28 significance as a side note.
 
+# Possible idea: Try subset of genes that are found in MAGICAL circuits and plot those
+# Upregulated, alpha = 0.05. Doesn't really work
+magical_output_dir <- paste0(sc_magical_dir, "Output/")
+overall_magical_results <- read.table(paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+innate_cell_types_with_underscore <- gsub(" ", "_", innate_cell_types)
+innate_magical_results <- overall_magical_results[overall_magical_results$Cell_Type %in% innate_cell_types_with_underscore,]
+innate_magical_genes <- unique(innate_magical_results$Gene_symbol)
+hvl_upregulated_sc_genes_in_bulk_0.05_magical <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% innate_magical_genes,]
 
-
-
-
-
-
-
-
-
-
-
-
-# FLAGGED GENES - those genes which have negative FC in SC data but positive FC in bulk data (or vice versa)
-# Not relevant with new formatting, but can maybe replicate it with small changes
-#flagged_high_pos_genes <- high_pos_pseudobulk_sc_DEGs_bulk_passing_df[high_pos_pseudobulk_sc_DEGs_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
-#flagged_high_pos_gene_df <- sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$Gene_Name %in% flagged_high_pos_genes,]
-
-#flagged_high_neg_genes <- high_neg_pseudobulk_sc_DEGs_bulk_passing_df[high_neg_pseudobulk_sc_DEGs_bulk_passing_df$D28_0.2 == TRUE,]$gene
-#flagged_high_neg_gene_df <- sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$Gene_Name %in% flagged_high_neg_genes,]
-
-#flagged_low_pos_genes <- low_pos_pseudobulk_sc_DEGs_bulk_passing_df[low_pos_pseudobulk_sc_DEGs_bulk_passing_df$D28_negative_0.2 == TRUE,]$gene
-#flagged_low_pos_gene_df <- sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$Gene_Name %in% flagged_low_pos_genes,]
-
-#flagged_low_neg_genes <- low_neg_pseudobulk_sc_DEGs_bulk_passing_df[low_neg_pseudobulk_sc_DEGs_bulk_passing_df$D28_0.2 == TRUE,]$gene
-#flagged_low_neg_gene_df <- sc_pseudobulk_DEG_table[sc_pseudobulk_DEG_table$Gene_Name %in% flagged_low_neg_genes,]
-
-
-
-
+# Upregulated, alpha = 0.1. Eh, maybe a little better but not much.
+hvl_upregulated_sc_genes_in_bulk_0.1_magical <- hvl_upregulated_sc_genes_in_bulk_0.1[hvl_upregulated_sc_genes_in_bulk_0.1$Gene %in% innate_magical_genes,]
