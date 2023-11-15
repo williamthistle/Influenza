@@ -386,16 +386,15 @@ add_day_fc_info <- function(special_notes, gene_df, day) {
 find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table, cell_types, pos_bulk_genes = NULL, neg_bulk_genes = NULL) {
   overlapping_motif_df <- data.frame(tf = character(), cell_types = character(), found_in_bulk = logical())
   for(cell_type in cell_types) {
-    print(cell_type)
-    if(file.exists(paste0(peak_dir, cell_type, "_D28_D1_motif_up_pseudobulk_corrected.tsv"))) {
+    if(file.exists(paste0(peak_dir, cell_type, "_D28_D1_motif_up_pseudobulk_only.tsv"))) {
       # Up-regulated enriched TFs
-      current_motifs_up <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_up_pseudobulk_corrected.tsv"), sep = "\t", header = TRUE)
+      current_motifs_up <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_up_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
       current_motifs_up <- current_motifs_up[current_motifs_up$p_adj < 0.05,]
       current_tfs_up <- current_motifs_up$TF
       # Cut off _ID so we can match with gene names from RNA
       current_tfs_up <- sub("_.*", "", current_tfs_up)
       # Down-regulated enriched TFs
-      current_motifs_down <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_down_pseudobulk_corrected.tsv"), sep = "\t", header = TRUE)
+      current_motifs_down <- read.table(paste0(peak_dir, cell_type, "_D28_D1_motif_down_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
       current_motifs_down <- current_motifs_down[current_motifs_down$p_adj < 0.05,]
       current_tfs_down <- current_motifs_down$TF
       # Cut off _ID so we can match with gene names from RNA
@@ -403,6 +402,10 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
       # Grab genes from SC table for current cell type
       cell_type_in_df <- sub("_", " ", cell_type)
       cell_type_sc_gene_table <- sc_gene_table[sc_gene_table$Cell_Type == cell_type_in_df,]
+      print(current_tfs_up)
+      print(current_tfs_down)
+      print(cell_type_sc_gene_table[cell_type_sc_gene_table$sc_log2FC > 0,]$Gene_Name)
+      print(cell_type_sc_gene_table[cell_type_sc_gene_table$sc_log2FC < 0,]$Gene_Name)
       # Grab overlap between pos SC genes and upregulated TF motifs
       overlapping_pos_tfs <- intersect(current_tfs_up, cell_type_sc_gene_table[cell_type_sc_gene_table$sc_log2FC > 0,]$Gene_Name)
       # Grab overlap between neg SC genes and downregulated TF motifs

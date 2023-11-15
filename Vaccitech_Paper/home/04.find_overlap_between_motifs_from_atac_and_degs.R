@@ -2,4 +2,9 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-overlapping_motifs_sc <- find_overlapping_motifs_between_atac_and_rna(paste0(sc_peak_dir, "diff_peaks/"), sc_pseudobulk_deg_combined_cell_types_table, possible_cell_types, high_pos_pseudobulk_sc_genes_bulk_passing_df$gene, high_neg_pseudobulk_sc_genes_bulk_passing_df$gene)
+# This method finds overlap between enriched transcription factors in pseudobulk and those genes expressed in the scRNA-seq data
+# We also flag whether the gene was also found to be significant in bulk
+overlapping_motifs_sc_innate <- find_overlapping_motifs_between_atac_and_rna(paste0(sc_das_dir, "diff_peaks/"), sc_pseudobulk_deg_combined_cell_types_table, possible_cell_types, unique(hvl_upregulated_sc_genes_in_bulk_combined_cell_types_0.05$Gene), unique(hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05$Gene))
+
+# None of the enriched TFs were found in bulk, but a few were found in the single cell data. This is interesting, I think!
+# I should check mintchip as well

@@ -2,6 +2,11 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+# Make function that does all of this. Has keyword "innate", "adaptive", and "all"
+# This keyword can be used to subset things to innate cell types / adaptive cell types (or just keep all cell types)
+# Then just create files with that keyword in directory name
+# That way, we can have everything at our fingertips - three simple function calls
+
 # Fill out HVL matrices (upregulated and downregulated genes, with alpha = 0.05 and 0.1)
 hvl_upregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                              paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/"), "up", alpha = 0.05)
@@ -256,3 +261,15 @@ hvl_upregulated_sc_genes_in_bulk_0.05_magical <- hvl_upregulated_sc_genes_in_bul
 
 # Upregulated, alpha = 0.1. Eh, maybe a little better but not much - too few genes.
 hvl_upregulated_sc_genes_in_bulk_0.1_magical <- hvl_upregulated_sc_genes_in_bulk_0.1[hvl_upregulated_sc_genes_in_bulk_0.1$Gene %in% innate_magical_genes,]
+
+# Fill out HVL matrices for ALL genes (combined cell types) for motif overlap (script 4)
+hvl_upregulated_sc_genes_in_bulk_combined_cell_types_0.05 <- fill_in_sc_deg_info_for_time_series(sc_pseudobulk_deg_combined_cell_types_table, high_placebo_counts, high_placebo_metadata,
+                                                                             paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk_combined_cell_types/"), "up", alpha = 0.05)
+saveRDS(hvl_upregulated_sc_genes_in_bulk_combined_cell_types_0.05, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk_combined_cell_types/hvl_upregulated_sc_genes_in_bulk_combined_cell_types_0.05.RDS"))
+
+hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05 <- fill_in_sc_deg_info_for_time_series(sc_pseudobulk_deg_combined_cell_types_table, high_placebo_counts, high_placebo_metadata,
+                                                                               paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk_combined_cell_types/"), "down", alpha = 0.05)
+saveRDS(hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk_combined_cell_types/hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05.RDS"))
+
+
+
