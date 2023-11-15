@@ -29,3 +29,5 @@ current_analysis <- DESeq(current_analysis)
 current_analysis_results <- results(current_analysis, contrast = c("time_point", "2_D28", "2_D_minus_1"), alpha = 0.05)
 current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
 current_analysis_results <- subset(current_analysis_results, padj < 0.05)
+
+# Nothing here to analyze - we can maybe do a PC plot?

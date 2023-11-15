@@ -35,7 +35,7 @@ current_analysis_results_0.1 <- results(current_analysis, contrast = c("time_poi
 current_analysis_results_0.1 <- current_analysis_results_0.1[order(current_analysis_results_0.1$padj),]
 current_analysis_results_0.1 <- subset(current_analysis_results_0.1, padj < 0.05)
 
-# Loaded genemap from Wayne's normalization script
+# Load genemap from Wayne's normalization script
 current_genes <- rownames(current_analysis_results_0)
 iim=match(current_genes, genemap$ensembl_gene_id)
 current_gene_symbols <- genemap[iim,  "hgnc_symbol", drop=F]
