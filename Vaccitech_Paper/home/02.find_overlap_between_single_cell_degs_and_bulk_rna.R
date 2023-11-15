@@ -271,5 +271,9 @@ hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05 <- fill_in_sc_deg_in
                                                                                paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk_combined_cell_types/"), "down", alpha = 0.05)
 saveRDS(hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk_combined_cell_types/hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05.RDS"))
 
+# Load HVL matrices for ALL genes (combined cell types)
+hvl_upregulated_sc_genes_in_bulk_combined_cell_types_0.05 <- readRDS(paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk_combined_cell_types/hvl_upregulated_sc_genes_in_bulk_combined_cell_types_0.05.RDS"))
+hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05 <- readRDS(paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk_combined_cell_types/hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05.RDS"))
+
 
 

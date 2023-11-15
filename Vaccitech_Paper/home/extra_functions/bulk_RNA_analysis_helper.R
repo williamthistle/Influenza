@@ -383,6 +383,7 @@ add_day_fc_info <- function(special_notes, gene_df, day) {
   return(special_notes)
 }
 
+# This method finds overlap between enriched transcription factors in pseudobulk ATAC-seq and those genes expressed in the scRNA-seq data
 find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table, cell_types, pos_bulk_genes = NULL, neg_bulk_genes = NULL) {
   overlapping_motif_df <- data.frame(tf = character(), cell_types = character(), found_in_bulk = logical())
   for(cell_type in cell_types) {
@@ -452,6 +453,66 @@ find_overlapping_motifs_between_atac_and_rna <- function(peak_dir, sc_gene_table
   }
   return(overlapping_motif_df)
 }
+
+# This method finds overlap between enriched transcription factors in mintchip and those genes expressed in the scRNA-seq data
+find_overlapping_motifs_between_mintchip_and_rna <- function(peak_dir, sc_gene_table, markers, pos_bulk_genes = NULL, neg_bulk_genes = NULL) {
+  overlapping_motif_df <- data.frame(marker = character(), tf = character(), cell_types = character(), found_in_bulk = logical())
+  for(marker in markers) {
+    specific_marker_dir_pos <- paste0(marker, "_D28_D1_diff_filtered_homer_pos/")
+    specific_marker_dir_neg <- paste0(marker, "_D28_D1_diff_filtered_homer_neg/")
+    if(file.exists(paste0(peak_dir, specific_marker_dir_pos, "knownResults.txt"))) {
+      # Up-regulated enriched TFs
+      current_motifs_up <- read.table(paste0(peak_dir, specific_marker_dir_pos, "knownResults.txt"), sep = "\t", header = TRUE, comment.char = "")
+      current_motifs_up <- current_motifs_up[current_motifs_up$q.value..Benjamini. < 0.05,]
+      current_tfs_up <- current_motifs_up$Motif.Name
+      # Cut off _ID so we can match with gene names from RNA
+      current_tfs_up <- sub("\\(.*", "", current_tfs_up)
+      # Down-regulated enriched TFs
+      current_motifs_down <- read.table(paste0(peak_dir, specific_marker_dir_neg, "knownResults.txt"), sep = "\t", header = TRUE, comment.char = "")
+      current_motifs_down <- current_motifs_down[current_motifs_down$q.value..Benjamini. < 0.05,]
+      current_tfs_down <- current_motifs_down$Motif.Name
+      # Cut off _ID so we can match with gene names from RNA
+      current_tfs_down <- sub("\\(.*", "", current_tfs_down)
+      # Grab overlap between pos SC genes and upregulated TF motifs
+      overlapping_pos_tfs <- intersect(current_tfs_up, sc_gene_table[sc_gene_table$sc_log2FC > 0,]$Gene_Name)
+      overlapping_pos_tfs_upper <- intersect(toupper(current_tfs_up), sc_gene_table[sc_gene_table$sc_log2FC > 0,]$Gene_Name)
+      overlapping_pos_tfs <- unique(union(overlapping_pos_tfs, overlapping_pos_tfs_upper))
+      # Grab overlap between neg SC genes and downregulated TF motifs
+      overlapping_neg_tfs <- intersect(current_tfs_down, sc_gene_table[sc_gene_table$sc_log2FC < 0,]$Gene_Name)
+      overlapping_neg_tfs_upper <- intersect(toupper(current_tfs_down), sc_gene_table[sc_gene_table$sc_log2FC < 0,]$Gene_Name)
+      overlapping_neg_tfs <- unique(union(overlapping_neg_tfs, overlapping_neg_tfs_upper))
+      for(pos_tf in overlapping_pos_tfs) {
+        cell_types <- sc_gene_table[sc_gene_table$Gene_Name == pos_tf,]$Cell_Type
+        # If the tf was found in the bulk data, note that
+        found_in_bulk <- FALSE
+        if(pos_tf %in% pos_bulk_genes) {
+          found_in_bulk <- TRUE
+        }
+        # Add tf to df (and mark it as up)
+        motif_vector <- c(marker, paste0(pos_tf, " (Up)"), paste(cell_types, collapse = ","), found_in_bulk)
+        motif_vector <- as.data.frame(t(motif_vector))
+        names(motif_vector) <- c("marker", "tf", "cell_types", "found_in_bulk")
+        overlapping_motif_df <- rbind(overlapping_motif_df, motif_vector)
+      }
+      for(neg_tf in overlapping_neg_tfs) {
+        cell_types <- sc_gene_table[sc_gene_table$Gene_Name == neg_tf,]$Cell_Type
+        # If the tf was found in the bulk data, note that
+        found_in_bulk <- FALSE
+        if(neg_tf %in% neg_bulk_genes) {
+          found_in_bulk <- TRUE
+        }
+        # Add tf to df (and mark it as down)
+        motif_vector <- c(marker, paste0(neg_tf, " (Down)"), paste(cell_types, collapse = ","), found_in_bulk)
+        motif_vector <- as.data.frame(t(motif_vector))
+        names(motif_vector) <- c("marker", "tf", "cell_types", "found_in_bulk")
+        overlapping_motif_df <- rbind(overlapping_motif_df, motif_vector)
+      }
+    }
+  }
+  return(overlapping_motif_df)
+}
+
+
 
 fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
                                             pos_bulk_genes, neg_bulk_genes, sc_peaks, overall_pseudobulk_motif_enrichment_df) {
