@@ -42,6 +42,7 @@ sample_metadata <- read.table(paste0(metadata_dir, "all_metadata_sheet.tsv"), se
 flu_tokens <- read.table(paste0(metadata_dir, "flu_data_tokens.tsv"), sep = "\t", header = TRUE)
 possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "NK_CD56bright", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT", "B", "B_naive", "B_memory")
 innate_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright")
+adaptive_cell_types <- c("CD4 Naive", "CD8 Naive", "CD4 Memory", "CD8 Memory", "B memory", "MAIT", "B naive", "T Naive", "B")
 possible_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 # Set other dirs
 sc_rna_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/")
@@ -69,6 +70,8 @@ sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(sc_deg_combined
 sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type != "Platelet",]
 sc_pseudobulk_deg_combined_cell_types_table$Cell_Type[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == "NK_MAGICAL"] <- "NK"
 innate_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% innate_cell_types,]
+adaptive_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% adaptive_cell_types,]
+
 rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
 
 # Peak related tables
@@ -109,6 +112,15 @@ print(paste0("Number of upregulated DEGs that pass pseudobulk in innate cell typ
 
 neg_innate_sc_pseudobulk_degs <- unique(innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$sc_log2FC < 0,]$Gene_Name)
 print(paste0("Number of downregulated DEGs that pass pseudobulk in innate cell types (scRNA): ", length(neg_innate_sc_pseudobulk_degs)))
+
+adaptive_sc_pseudobulk_degs <- unique(adaptive_sc_pseudobulk_deg_table$Gene_Name)
+print(paste0("Number of DEGs that pass pseudobulk in adaptive cell types (scRNA): ", length(adaptive_sc_pseudobulk_degs)))
+
+pos_adaptive_sc_pseudobulk_degs <- unique(adaptive_sc_pseudobulk_deg_table[adaptive_sc_pseudobulk_deg_table$sc_log2FC > 0,]$Gene_Name)
+print(paste0("Number of upregulated DEGs that pass pseudobulk in adaptive cell types (scRNA): ", length(pos_adaptive_sc_pseudobulk_degs)))
+
+neg_adaptive_sc_pseudobulk_degs <- unique(adaptive_sc_pseudobulk_deg_table[adaptive_sc_pseudobulk_deg_table$sc_log2FC < 0,]$Gene_Name)
+print(paste0("Number of downregulated DEGs that pass pseudobulk in adaptive cell types (scRNA): ", length(neg_adaptive_sc_pseudobulk_degs)))
 
 # Next, we can select bulk RNA-seq associated with the specific subjects that we used for single-cell / multiome
 sc_aliquots <- c("91910a04711aa3dd","3731a6247ae23831","2232300b0e3a3d06","76ea83ff9293871a","5fdfdbaeb3c8eee8","981520e7e138d460","bb3d7b309cb5fc58","8338411dc3e181e9","da4fe21a89c8f7f4","41d248a6ec3b87e2","e3e01c75894ef461","4534496c580cb408") # 12 samples - 6 paired
