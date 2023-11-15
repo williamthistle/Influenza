@@ -800,13 +800,15 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, ou
   
   # Parse our list of genes
   for(current_gene in final_filtered_sc_trained_immunity_genes) {
-    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D2_vs_D_minus_1_results, 
+    cell_types <- sc_gene_df[sc_gene_df$Gene_Name == current_gene,]$Cell_Type
+    cell_types <- paste0("(", paste(cell_types, collapse = ", "), ")")
+    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, cell_types, high_placebo_period_2_D2_vs_D_minus_1_results, 
                                                           high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered, "D2"))
-    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D5_vs_D_minus_1_results, 
+    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, cell_types, high_placebo_period_2_D5_vs_D_minus_1_results, 
                                                           high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered, "D5"))
-    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D8_vs_D_minus_1_results, 
+    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, cell_types, high_placebo_period_2_D8_vs_D_minus_1_results, 
                                                           high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered, "D8"))
-    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, high_placebo_period_2_D28_vs_D_minus_1_results, 
+    final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, cell_types, high_placebo_period_2_D28_vs_D_minus_1_results, 
                                                           high_placebo_period_2_D28_vs_D_minus_1_results, "D28"))
   }
   final_df$Day <- replace(final_df$Day, final_df$Day == "D2", "Day.2")
@@ -817,7 +819,7 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, ou
   return(final_df)
 }
 
-grab_deg_info_for_sc_gene <- function(current_gene, current_deseq2_results, current_deseq2_results_unfiltered, current_day) {
+grab_deg_info_for_sc_gene <- function(current_gene, cell_types, current_deseq2_results, current_deseq2_results_unfiltered, current_day) {
   if(current_gene %in% rownames(current_deseq2_results)) {
     gene_result <- current_deseq2_results[rownames(current_deseq2_results) == current_gene,]
     fold.change.abs <- abs(gene_result$log2FoldChange)
@@ -831,7 +833,7 @@ grab_deg_info_for_sc_gene <- function(current_gene, current_deseq2_results, curr
     fold.change.direction <- "Not Significant"
     adjusted.p.value <- gene_result$padj
   }
-  return(data.frame(Gene = current_gene, Day = current_day, Fold.Change.Abs = fold.change.abs, 
+  return(data.frame(Gene = paste0(cell_types, " ", current_gene), Day = current_day, Fold.Change.Abs = fold.change.abs, 
                          Fold.Change.Direction.Raw = fold.change.direction.raw, Fold.Change.Direction = fold.change.direction, 
                          Adjusted.P.Value = adjusted.p.value))
 }
