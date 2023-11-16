@@ -2,21 +2,28 @@
 source("~/00.setup.R")
 home_dir <- "/Genomics/ogtr04/wat2/"
 
-# Helper function to set column to include chr and start/end coordinates in format for UCSC liftover
-set_chr_info <- function(differential_analysis_results) {
-  chr_loc_info <- strsplit(rownames(differential_analysis_results), "_")
-  chr <- sapply(chr_loc_info, function(x) x[1])
-  start <- sapply(chr_loc_info, function(x) x[2])
-  end <- sapply(chr_loc_info, function(x) x[3])
-  differential_analysis_results$chr <- chr
-  differential_analysis_results$start <- start
-  differential_analysis_results$end <- end
-  differential_analysis_results$coordinates <- paste0(chr, ":", start, "-", end)
-  new_col_order <- c("chr", "start", "end", "coordinates", "baseMean", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")
-  differential_analysis_results <- differential_analysis_results[new_col_order]
-  return(differential_analysis_results)
-}
+saveDiffBindPeaks <- function(dbObj, fold, output_dir, marker) {
+  results_fc_edger <- dba.report(dbObj, method = DBA_EDGER, contrast = 1, fold = fold, bUsePval = TRUE, bNormalized = FALSE)
+  results_fc_deseq2 <- dba.report(dbObj, method = DBA_DESEQ2, contrast = 1, fold = fold, bUsePval = TRUE, bNormalized = FALSE)
+  consensus_peak_set <- as.data.frame(subset(results_fc_deseq2, names(results_fc_deseq2) %in% intersect(names(results_fc_deseq2), names(results_fc_edger))))
+  
+  results_fc_edger <- as.data.frame(results_fc_edger)
+  results_fc_deseq2 <- as.data.frame(results_fc_deseq2)
+  
+  if(nrow(results_fc_edger) > 0) {
+    results_fc_edger$coordinates <- paste0(results_fc_edger$seqnames, ":", results_fc_edger$start, "-", results_fc_edger$end)
+  }
+  if(nrow(results_fc_deseq2) > 0) {
+    results_fc_deseq2$coordinates <- paste0(results_fc_deseq2$seqnames, ":", results_fc_deseq2$start, "-", results_fc_deseq2$end)
+  }
+  if(nrow(consensus_peak_set) > 0) {
+    consensus_peak_set$coordinates <- paste0(consensus_peak_set$seqnames, ":", consensus_peak_set$start, "-", consensus_peak_set$end)
+  }
 
+  write.table(results_fc_edger, file = paste0(output_dir, marker, "_edgeR_FC_", fold, ".tsv"), sep = "\t", quote = FALSE)
+  write.table(results_fc_deseq2, file = paste0(output_dir, marker, "_DESeq2_FC_", fold, ".tsv"), sep = "\t", quote = FALSE)
+  write.table(consensus_peak_set, file = paste0(output_dir, marker, "_consensus_peak_set_FC_", fold, ".tsv"), sep = "\t", quote = FALSE)
+}
 
 ################## SETUP ##################
 data_path <- paste0(home_dir, "mintchip/data")
@@ -77,102 +84,33 @@ setwd(output_dir)
 
 # Markers from mintchip
 markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
-DAS_matrices <- list()
 for(marker in markers) {
   print(marker)
   samples <- read.table(paste0("~/", marker, "_metadata.tsv"), sep = "\t", header = TRUE)
   # Remove subjects that only have one time point (not both)
   samples <- samples[samples$Tissue  %in% names(table(samples$Tissue)[table(samples$Tissue) == 2]),]
-  current_peak_info <- DiffBind::dba(sampleSheet=samples)
-  current_peak_info <- DiffBind::dba.count(current_peak_info)
-  current_peak_info$config$cores <- 32
-  current_peaks <- current_peak_info$peaks
-  first_peaks <- current_peaks[[1]]
-  peak_row_names <- paste0(first_peaks$Chr, "_", first_peaks$Start, "_", first_peaks$End)
-  peak_col_names <- current_peak_info$samples$SampleID
+  # Load samples into DiffBind and count peaks
+  dbObj <- DiffBind::dba(sampleSheet=samples)
+  dbObj$config$cores <- 32
+  dbObj <- DiffBind::dba.count(dbObj)
   
-  # Create a matrix filled with zeroes using nrow and ncol
-  numRows <- length(peak_row_names)
-  numCols <- length(peak_col_names)
-  zeroMatrix <- matrix(0, nrow = numRows, ncol = numCols)
+  # Normalize for both DESeq2 and edgeR
+  dbObj.norm <- dba.normalize(dbObj,normalize=DBA_NORM_NATIVE,
+                              method=DBA_ALL_METHODS,
+                              background=TRUE)
+  # Find DASs
+  dbObj.norm <- dba.contrast(dbObj.norm, design="~Tissue+Condition")
+  dbObj.norm <- dba.analyze(dbObj.norm, method = DBA_ALL_METHODS, bBlacklist = FALSE, bGreylist = FALSE)
   
-  # Create a data frame with the zero matrix and set row and column names
-  peak_counts <- data.frame(zeroMatrix)
-  rownames(peak_counts) <- peak_row_names
-  colnames(peak_counts) <- peak_col_names
-  
-  for(current_index in 1:length(current_peaks)) {
-    peak_counts[,current_index] <- current_peaks[[current_index]]$Reads
-  }
-  
-  rownames(samples) <- samples$SampleID
-  
-  # Note that Tissue is actually subject ID
-  differential_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = peak_counts, colData = samples, design = stats::formula("~ Tissue + Condition"))
-  differential_analysis <- DESeq2::DESeq(differential_analysis)
-  save(differential_analysis, file = paste0(output_dir, marker, "_", "D28_D1_diff_obj.rds"))
-  differential_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(differential_analysis), n=1)
-  print(differential_analysis_results_contrast)
-  
-  # LFC = 0
-  differential_analysis_results_0 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast)
-  differential_analysis_results_0 <- set_chr_info(differential_analysis_results_0)
-  
-  write.table(differential_analysis_results_0, paste0(output_dir, marker, "_", "D28_D1_diff_unfiltered.tsv"), quote = FALSE, sep = "\t")
-  
-  differential_analysis_results_0 <- differential_analysis_results_0[rowSums(is.na(differential_analysis_results_0)) == 0, ] # Remove NAs
-  differential_analysis_results_0_filtered <- differential_analysis_results_0[differential_analysis_results_0$pvalue < 0.05,]
-  
-  write.table(differential_analysis_results_0_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered.tsv"), quote = FALSE, sep = "\t")
-  
-  # LFC = 0.1
-  differential_analysis_results_0.1 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.1)
-  differential_analysis_results_0.1 <- set_chr_info(differential_analysis_results_0.1)
-  differential_analysis_results_0.1 <- differential_analysis_results_0.1[rowSums(is.na(differential_analysis_results_0.1)) == 0, ] # Remove NAs
-  differential_analysis_results_0.1_filtered <- differential_analysis_results_0.1[differential_analysis_results_0.1$pvalue < 0.05,]
-  
-  write.table(differential_analysis_results_0.1_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.1.tsv"), quote = FALSE, sep = "\t")
-  
-  # LFC = 0.2
-  differential_analysis_results_0.2 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.2)
-  differential_analysis_results_0.2 <- set_chr_info(differential_analysis_results_0.2)
-  differential_analysis_results_0.2 <- differential_analysis_results_0.2[rowSums(is.na(differential_analysis_results_0.2)) == 0, ] # Remove NAs
-  differential_analysis_results_0.2_filtered <- differential_analysis_results_0.2[differential_analysis_results_0.2$pvalue < 0.05,]
-  
-  write.table(differential_analysis_results_0.2_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.2.tsv"), quote = FALSE, sep = "\t")
-  
-  # LFC = 0.3
-  differential_analysis_results_0.3 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.3)
-  differential_analysis_results_0.3 <- set_chr_info(differential_analysis_results_0.3)
-  differential_analysis_results_0.3 <- differential_analysis_results_0.3[rowSums(is.na(differential_analysis_results_0.3)) == 0, ] # Remove NAs
-  differential_analysis_results_0.3_filtered <- differential_analysis_results_0.3[differential_analysis_results_0.3$pvalue < 0.05,]
-  
-  write.table(differential_analysis_results_0.3_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.3.tsv"), quote = FALSE, sep = "\t")
-  
-  # LFC = 0.585
-  differential_analysis_results_0.585 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 0.585)
-  differential_analysis_results_0.585 <- set_chr_info(differential_analysis_results_0.585)
-  differential_analysis_results_0.585 <- differential_analysis_results_0.585[rowSums(is.na(differential_analysis_results_0.585)) == 0, ] # Remove NAs
-  differential_analysis_results_0.585_filtered <- differential_analysis_results_0.585[differential_analysis_results_0.585$pvalue < 0.05,]
-  
-  write.table(differential_analysis_results_0.585_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_0.585.tsv"), quote = FALSE, sep = "\t")
-  
-  # LFC = 1
-  differential_analysis_results_1 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 1)
-  differential_analysis_results_1 <- set_chr_info(differential_analysis_results_1)
-  differential_analysis_results_1 <- differential_analysis_results_1[rowSums(is.na(differential_analysis_results_1)) == 0, ] # Remove NAs
-  differential_analysis_results_1_filtered <- differential_analysis_results_1[differential_analysis_results_1$pvalue < 0.05,]
-  
-  write.table(differential_analysis_results_1_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_1.tsv"), quote = FALSE, sep = "\t")
-  
-  # LFC = 2
-  differential_analysis_results_2 <- DESeq2::results(differential_analysis, name=differential_analysis_results_contrast, lfcThreshold = 2)
-  differential_analysis_results_2 <- set_chr_info(differential_analysis_results_2)
-  differential_analysis_results_2 <- differential_analysis_results_2[rowSums(is.na(differential_analysis_results_2)) == 0, ] # Remove NAs
-  differential_analysis_results_2_filtered <- differential_analysis_results_2[differential_analysis_results_2$pvalue < 0.05,]
-  
-  write.table(differential_analysis_results_2_filtered, paste0(output_dir, marker, "_", "D28_D1_diff_filtered_2.tsv"), quote = FALSE, sep = "\t")
-  DAS_matrices[[marker]] <- list(differential_analysis_results_0_filtered, differential_analysis_results_0.1_filtered, 
-                                 differential_analysis_results_0.585_filtered, differential_analysis_results_1_filtered, 
-                                 differential_analysis_results_2_filtered)
+  # Save DAS object to file
+  saveRDS(dbObj.norm, file = paste0(output_dir, marker, "_dbObj.rds"))
+
+  # Save peaks with 0 FC (DESeq2, edgeR, and overlapping)
+  saveDiffBindPeaks(dbObj.norm, fold = 0, output_dir = output_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0.1, output_dir = output_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0.2, output_dir = output_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0.3, output_dir = output_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0.585, output_dir = output_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 1, output_dir = output_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 2, output_dir = output_dir, marker = marker)
 }

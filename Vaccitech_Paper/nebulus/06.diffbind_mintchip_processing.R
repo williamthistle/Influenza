@@ -61,20 +61,39 @@ setwd(output_dir)
 
 
 # TEST FOR ONE MARKER BELOW
-# OVERALL, SEEMS LIKE FOLD CHANGE IS EXTREMELY LOW (MESSED UP?) BUT PEAKS ARE THE SAME AS WHEN RUNNING DESEQ2 INDEPENDENTLY 
 
+marker <- "H3K4me1"
 samples <- read.table("~/H3K4me1_metadata.tsv", sep = "\t", header = TRUE)
 # Remove subjects that only have one time point (not both)
 samples <- samples[samples$Tissue  %in% names(table(samples$Tissue)[table(samples$Tissue) == 2]),]
 
 dbObj <- dba(sampleSheet=samples)
-dbObj <- dba.count(dbObj)
 dbObj$config$cores <- 32
+dbObj <- dba.count(dbObj)
+
 
 dbObj.norm <- dba.normalize(dbObj,normalize=DBA_NORM_NATIVE,
-                            method=DBA_DESEQ2,
+                            method=DBA_ALL_METHODS,
                             background=TRUE)
 # Find DASs
 dbObj.norm <- dba.contrast(dbObj.norm, design="~Tissue+Condition")
-dbObj.norm <- dba.analyze(dbObj.norm, bBlacklist = FALSE, bGreylist = FALSE)
-results_fc_0 <- dba.report(dbObj.norm, contrast = 1, fold = 0, bUsePval = TRUE, bNormalized = FALSE)
+dbObj.norm <- dba.analyze(dbObj.norm, method = DBA_ALL_METHODS, bBlacklist = FALSE, bGreylist = FALSE)
+
+results_fc_0_edger <- dba.report(dbObj.norm, method = DBA_EDGER, contrast = 1, fold = 0, bUsePval = TRUE, bNormalized = FALSE)
+results_fc_0_deseq2 <- dba.report(dbObj.norm, method = DBA_DESEQ2, contrast = 1, fold = 0, bUsePval = TRUE, bNormalized = FALSE)
+consensus_peak_set_0 <- subset(results_fc_0_deseq2, names(results_fc_0_deseq2) %in% intersect(names(results_fc_0_edger), names(results_fc_0_deseq2)))
+write.table(consensus_peak_set_0, file = paste0(output_dir, marker, "_consensus_peak_set_0.tsv"), sep = "\t", quote = FALSE)
+
+
+results_fc_0.1_edger <- dba.report(dbObj.norm, method = DBA_EDGER, contrast = 1, fold = 0.1, bUsePval = TRUE, bNormalized = FALSE)
+results_fc_0.1_deseq2 <- dba.report(dbObj.norm, method = DBA_DESEQ2, contrast = 1, fold = 0.1, bUsePval = TRUE, bNormalized = FALSE)
+consensus_peak_set_0.1 <- subset(results_fc_0.1_deseq2, names(results_fc_0.1_deseq2) %in% intersect(names(results_fc_0.1_edger), names(results_fc_0.1_deseq2)))
+
+results_fc_0.2_edger <- dba.report(dbObj.norm, method = DBA_EDGER, contrast = 1, fold = 0.2, bUsePval = TRUE, bNormalized = FALSE)
+results_fc_0.2_deseq2 <- dba.report(dbObj.norm, method = DBA_DESEQ2, contrast = 1, fold = 0.2, bUsePval = TRUE, bNormalized = FALSE)
+consensus_peak_set_0.2 <- subset(results_fc_0.2_deseq2, names(results_fc_0.2_deseq2) %in% intersect(names(results_fc_0.2_edger), names(results_fc_0.2_deseq2)))
+
+results_fc_0.3_edger <- dba.report(dbObj.norm, method = DBA_EDGER, contrast = 1, fold = 0.3, bUsePval = TRUE, bNormalized = FALSE)
+results_fc_0.3_deseq2 <- dba.report(dbObj.norm, method = DBA_DESEQ2, contrast = 1, fold = 0.3, bUsePval = TRUE, bNormalized = FALSE)
+consensus_peak_set_0.3 <- subset(results_fc_0.3_deseq2, names(results_fc_0.3_deseq2) %in% intersect(names(results_fc_0.3_edger), names(results_fc_0.3_deseq2)))
+
