@@ -14,6 +14,10 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+create_homer_files <- function() {
+  
+}
+
 run_fmd_on_mintchip <- function(mintchip_marker_das_list_annotated) {
   fmd_results <- list()
   index_1 <- 1
@@ -42,17 +46,47 @@ mintchip_marker_das_list <- list()
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 for(marker in mintchip_markers) {
-  differential_analysis_results_0_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered.tsv"), sep = "\t", header = TRUE)
-  differential_analysis_results_0.1_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.1.tsv"), sep = "\t", header = TRUE)
-  differential_analysis_results_0.2_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.2.tsv"), sep = "\t", header = TRUE)
-  differential_analysis_results_0.3_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.3.tsv"), sep = "\t", header = TRUE)
-  differential_analysis_results_0.585_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_0.585.tsv"), sep = "\t", header = TRUE)
-  differential_analysis_results_1_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_1.tsv"), sep = "\t", header = TRUE)
-  differential_analysis_results_2_filtered <- read.table(paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_2.tsv"), sep = "\t", header = TRUE)
-  mintchip_marker_das_list[[marker]] <- list(differential_analysis_results_0_filtered, differential_analysis_results_0.1_filtered, 
-                                             differential_analysis_results_0.2_filtered, differential_analysis_results_0.3_filtered,
-                                             differential_analysis_results_0.585_filtered, differential_analysis_results_1_filtered, 
-                                        differential_analysis_results_2_filtered)
+  marker_dir <- paste0(mintchip_das_dir, marker, "/")
+  for(peak_set in c("DESeq2", "edgeR", "consensus_peak_set")) {
+    for(fc in c(0, 0.1, 0.2, 0.3, 0.585, 1, 2)) {
+      differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/", marker, "_", peak_set, "_FC_", fc, ".tsv")
+      if(file.size(differential_analysis_results_file) > 1) {
+        differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
+        upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$Fold > 0,]
+        downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$Fold < 0,]
+        upregulated_dir <- paste0(marker_dir, "upregulated/")
+        downregulated_dir <- paste0(marker_dir, "downregulated/")
+        if (!dir.exists(upregulated_dir)) {dir.create(upregulated_dir)}
+        if (!dir.exists(downregulated_dir)) {dir.create(downregulated_dir)}
+        if(nrow(upregulated_differential_analysis_results) > 0) {
+          write.table(upregulated_differential_analysis_results, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated.tsv"), 
+                      sep = "\t", quote = FALSE)
+          upregulated_homer_df <- data.frame(peak_id = rownames(upregulated_differential_analysis_results), chr = upregulated_differential_analysis_results$seqnames, 
+                                 start = upregulated_differential_analysis_results$start, end = upregulated_differential_analysis_results$end, strand = "+")
+          write.table(upregulated_homer_df, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated_homer.tsv"), 
+                      sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+          upregulated_differential_analysis_results <- upregulated_differential_analysis_results[,c(1,2,3,4,5)]
+          upregulated_differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
+          upregulated_differential_analysis_results <- as.data.frame(upregulated_differential_analysis_results)
+          write.table(upregulated_differential_analysis_results, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated_annotated.tsv"), 
+                      sep = "\t", quote = FALSE)
+        }
+        if(nrow(downregulated_differential_analysis_results) > 0) {
+          write.table(downregulated_differential_analysis_results, file = paste0(downregulated_dir, marker, "_", peak_set, "_FC_", fc, "_downregulated.tsv"), 
+                    sep = "\t", quote = FALSE)
+          downregulated_homer_df <- data.frame(peak_id = rownames(downregulated_differential_analysis_results), chr = downregulated_differential_analysis_results$seqnames, 
+                                             start = downregulated_differential_analysis_results$start, end = downregulated_differential_analysis_results$end, strand = "+")
+          write.table(downregulated_homer_df, file = paste0(downregulated_dir, marker, "_", peak_set, "_FC_", fc, "_downregulated_homer.tsv"), 
+                      sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+          downregulated_differential_analysis_results <- downregulated_differential_analysis_results[,c(1,2,3,4,5)]
+          downregulated_differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(downregulated_differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
+          downregulated_differential_analysis_results <- as.data.frame(downregulated_differential_analysis_results)
+          write.table(downregulated_differential_analysis_results, file = paste0(downregulated_dir, marker, "_", peak_set, "_FC_", fc, "_downregulated_annotated.tsv"), 
+                      sep = "\t", quote = FALSE)
+        }
+      }
+    }
+  }
 }
 
 pos_mintchip_marker_das_list_annotated <- list()
