@@ -103,7 +103,7 @@ collected_fmd_high_placebo_period_2_D2_vs_D_minus_1 <- run_fmd_on_flu_data(high_
 collected_fmd_high_placebo_period_2_D5_vs_D_minus_1 <- run_fmd_on_flu_data(high_placebo_period_2_D5_vs_D_minus_1_results)
 # 0.3, and -0.3
 collected_fmd_high_placebo_period_2_D8_vs_D_minus_1 <- run_fmd_on_flu_data(high_placebo_period_2_D8_vs_D_minus_1_results)
-# ???
+# 0, and -0
 collected_fmd_high_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(high_placebo_period_2_D28_vs_D_minus_1_results)
 # 0, and -0
 collected_fmd_low_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(low_placebo_period_2_D28_vs_D_minus_1_results)
