@@ -104,8 +104,10 @@ collected_fmd_high_placebo_period_2_D5_vs_D_minus_1 <- run_fmd_on_flu_data(high_
 # 0.3, and -0.3
 collected_fmd_high_placebo_period_2_D8_vs_D_minus_1 <- run_fmd_on_flu_data(high_placebo_period_2_D8_vs_D_minus_1_results)
 # 0, and -0
+# Maybe you just specify it's a sample-level filtering or something, just for this one?
 collected_fmd_high_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(high_placebo_period_2_D28_vs_D_minus_1_results)
 # 0, and -0
+# Maybe you just specify it's a sample-level filtering or something, just for this one?
 collected_fmd_low_placebo_period_2_D28_vs_D_minus_1 <- run_fmd_on_flu_data(low_placebo_period_2_D28_vs_D_minus_1_results)
 
 save.image(paste0(bulk_results_dir, "bulk_RNA_analysis.RData"))
