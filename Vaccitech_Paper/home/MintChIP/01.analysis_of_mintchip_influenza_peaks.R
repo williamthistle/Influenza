@@ -56,8 +56,16 @@ for(marker in mintchip_markers) {
         downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$Fold < 0,]
         upregulated_dir <- paste0(marker_dir, "upregulated/")
         downregulated_dir <- paste0(marker_dir, "downregulated/")
+        all_dir <- paste0(marker_dir, "all/")
         if (!dir.exists(upregulated_dir)) {dir.create(upregulated_dir)}
         if (!dir.exists(downregulated_dir)) {dir.create(downregulated_dir)}
+        if (!dir.exists(all_dir)) {dir.create(all_dir)}
+        write.table(differential_analysis_results, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, ".tsv"), 
+                    sep = "\t", quote = FALSE)
+        all_homer_df <- data.frame(peak_id = rownames(differential_analysis_results), chr = differential_analysis_results$seqnames, 
+                                           start = differential_analysis_results$start, end = differential_analysis_results$end, strand = "+")
+        write.table(all_homer_df, file = paste0(all_dir, marker, "_", peak_set, "_FC_", fc, "_homer.tsv"), 
+                    sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
         if(nrow(upregulated_differential_analysis_results) > 0) {
           write.table(upregulated_differential_analysis_results, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated.tsv"), 
                       sep = "\t", quote = FALSE)
