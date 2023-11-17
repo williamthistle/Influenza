@@ -292,3 +292,28 @@ hvl_downregulated_sc_genes_in_bulk_combined_cell_types_0.05 <- readRDS(paste0(bu
 
 
 
+#### here is some code to plot adjusted p-value with color gradient - not sure I like it better, and don't know
+#### how to handle negative and positive fold change
+
+library(dplyr)
+
+# Convert Adjusted.P.Value to numeric (if it's not already numeric)
+hvl_upregulated_sc_genes_in_bulk_0.05 <- hvl_upregulated_sc_genes_in_bulk_0.05 %>%
+  mutate(Adjusted.P.Value = as.numeric(Adjusted.P.Value))
+
+# Plot with color gradient based on Adjusted.P.Value for positive Fold Change
+ggplot(data = hvl_upregulated_sc_genes_in_bulk_0.05, aes(x = Day, y = Gene, size = Fold.Change.Abs)) +
+  geom_point(aes(color = ifelse(Fold.Change.Direction == "Positive", Adjusted.P.Value, NA)), show.legend = TRUE) +
+  scale_color_gradientn(colors = c("aquamarine4", "aquamarine"), na.value = "grey") +
+  theme_minimal() +
+  labs(
+    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    x = "Day (Post Exposure)",
+    y = "Gene (Cell Types)",
+    size = "Fold Change (Absolute Value)",
+    color = "Adjusted P-Value (Significant)"
+  ) +
+  guides(color = guide_colorbar(order = 1), size = guide_legend(order = 2)) +
+  theme(plot.title = element_text(hjust = 0.6)) +
+  theme(aspect.ratio = 2/1)
+
