@@ -14,10 +14,6 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-create_homer_files <- function() {
-  
-}
-
 run_fmd_on_mintchip <- function(mintchip_marker_das_list_annotated) {
   fmd_results <- list()
   index_1 <- 1
@@ -50,7 +46,7 @@ for(marker in mintchip_markers) {
   for(peak_set in c("DESeq2", "edgeR", "consensus_peak_set")) {
     for(fc in c(0, 0.1, 0.2, 0.3, 0.585, 1, 2)) {
       differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/", marker, "_", peak_set, "_FC_", fc, ".tsv")
-      if(file.size(differential_analysis_results_file) > 1) {
+      if(file.size(differential_analysis_results_file) != 1 && file.size(differential_analysis_results_file) != 75) {
         differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
         upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$Fold > 0,]
         downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$Fold < 0,]
@@ -64,14 +60,24 @@ for(marker in mintchip_markers) {
                     sep = "\t", quote = FALSE)
         all_homer_df <- data.frame(peak_id = rownames(differential_analysis_results), chr = differential_analysis_results$seqnames, 
                                            start = differential_analysis_results$start, end = differential_analysis_results$end, strand = "+")
+        all_homer_bed_df <- data.frame(chr = differential_analysis_results$seqnames, 
+                                       start = differential_analysis_results$start, end = differential_analysis_results$end, 
+                                       peak_id = rownames(differential_analysis_results), strand = "*")
         write.table(all_homer_df, file = paste0(all_dir, marker, "_", peak_set, "_FC_", fc, "_homer.tsv"), 
+                    sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+        write.table(all_homer_bed_df, file = paste0(all_dir, marker, "_", peak_set, "_FC_", fc, "_homer.bed"), 
                     sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
         if(nrow(upregulated_differential_analysis_results) > 0) {
           write.table(upregulated_differential_analysis_results, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated.tsv"), 
                       sep = "\t", quote = FALSE)
           upregulated_homer_df <- data.frame(peak_id = rownames(upregulated_differential_analysis_results), chr = upregulated_differential_analysis_results$seqnames, 
                                  start = upregulated_differential_analysis_results$start, end = upregulated_differential_analysis_results$end, strand = "+")
+          upregulated_homer_bed_df <- data.frame(chr = upregulated_differential_analysis_results$seqnames, 
+                                         start = upregulated_differential_analysis_results$start, end = upregulated_differential_analysis_results$end, 
+                                         peak_id = rownames(upregulated_differential_analysis_results), strand = "*")
           write.table(upregulated_homer_df, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated_homer.tsv"), 
+                      sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+          write.table(upregulated_homer_bed_df, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated_homer.bed"), 
                       sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
           upregulated_differential_analysis_results <- upregulated_differential_analysis_results[,c(1,2,3,4,5)]
           upregulated_differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
@@ -84,7 +90,12 @@ for(marker in mintchip_markers) {
                     sep = "\t", quote = FALSE)
           downregulated_homer_df <- data.frame(peak_id = rownames(downregulated_differential_analysis_results), chr = downregulated_differential_analysis_results$seqnames, 
                                              start = downregulated_differential_analysis_results$start, end = downregulated_differential_analysis_results$end, strand = "+")
+          downpregulated_homer_bed_df <- data.frame(chr = downregulated_differential_analysis_results$seqnames, 
+                                                 start = downregulated_differential_analysis_results$start, end = downregulated_differential_analysis_results$end, 
+                                                 peak_id = rownames(downregulated_differential_analysis_results), strand = "*")
           write.table(downregulated_homer_df, file = paste0(downregulated_dir, marker, "_", peak_set, "_FC_", fc, "_downregulated_homer.tsv"), 
+                      sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+          write.table(downpregulated_homer_bed_df, file = paste0(downregulated_dir, marker, "_", peak_set, "_FC_", fc, "_downregulated_homer.bed"), 
                       sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
           downregulated_differential_analysis_results <- downregulated_differential_analysis_results[,c(1,2,3,4,5)]
           downregulated_differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(downregulated_differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
@@ -97,81 +108,7 @@ for(marker in mintchip_markers) {
   }
 }
 
-pos_mintchip_marker_das_list_annotated <- list()
-neg_mintchip_marker_das_list_annotated <- list()
 
-fc_thresholds <- c("0", "0.1", "0.2", "0.3", "0.585", "1", "2")
-
-for(marker in mintchip_markers) {
-  old_das <- mintchip_marker_das_list[[marker]]
-  current_pos_annotated_das <- list()
-  current_neg_annotated_das <- list()
-  index <- 1
-  for(current_das in old_das) {
-    if(nrow(current_das) > 0) {
-      pos_das <- current_das[current_das$log2FoldChange > 0,]
-      if(nrow(pos_das) > 0) {
-        # Print HOMER friendly file
-        homer_df <- data.frame(peak_id = rownames(pos_das), chr = pos_das$chr, start = pos_das$start, end = pos_das$end, strand = "+")
-        current_fc_threshold <- fc_thresholds[index]
-        if(current_fc_threshold == "0") {
-          homer_file_path <- paste0(homer_dir, marker, "_D28_D1_diff_filtered_homer_pos.tsv")
-        } else {
-          homer_file_path <- paste0(homer_dir, marker, "_D28_D1_diff_filtered_", current_fc_threshold, "_homer_pos.tsv")
-        }
-        write.table(homer_df, file = homer_file_path, quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
-        # Annotate peaks and print to file
-        pos_das <- pos_das[,c(1,2,3,4,6)]
-        pos_das$length <- pos_das$end - pos_das$start
-
-        pos_das <- annotatePeak(makeGRangesFromDataFrame(pos_das), TxDb = txdb, annoDb = "org.Hs.eg.db")
-        pos_das <- as.data.frame(pos_das)
-        if(current_fc_threshold == "0") {
-          annotated_file_path <- paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_annotated_pos.tsv")
-        } else {
-          annotated_file_path <- paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_", current_fc_threshold, "_annotated_pos.tsv")
-        }
-        write.table(pos_das, file = annotated_file_path, quote = FALSE, sep = "\t", row.names = FALSE)
-        current_pos_annotated_das[[index]] <- pos_das
-      } else {
-        current_pos_annotated_das[[index]] <- "EMPTY"
-      }
-      neg_das <- current_das[current_das$log2FoldChange < 0,]
-      if(nrow(neg_das) > 0) {
-        # Print HOMER friendly file
-        homer_df <- data.frame(peak_id = rownames(neg_das), chr = neg_das$chr, start = neg_das$start, end = neg_das$end, strand = "+")
-        current_fc_threshold <- fc_thresholds[index]
-        if(current_fc_threshold == "0") {
-          homer_file_path <- paste0(homer_dir, marker, "_D28_D1_diff_filtered_homer_neg.tsv")
-        } else {
-          homer_file_path <- paste0(homer_dir, marker, "_D28_D1_diff_filtered_", current_fc_threshold, "_homer_neg.tsv")
-        }
-        write.table(homer_df, file = homer_file_path, quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
-        # Annotate peaks and print to file
-        neg_das <- neg_das[,c(1,2,3,4,6)]
-        neg_das$length <- neg_das$end - neg_das$start
-        neg_das <- annotatePeak(makeGRangesFromDataFrame(neg_das), TxDb = txdb, annoDb = "org.Hs.eg.db")
-        neg_das <- as.data.frame(neg_das)
-        current_fc_threshold <- fc_thresholds[index]
-        if(current_fc_threshold == "0") {
-          annotated_file_path <- paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_annotated_neg.tsv")
-        } else {
-          annotated_file_path <- paste0(mintchip_das_dir, marker, "_D28_D1_diff_filtered_", current_fc_threshold, "_annotated_neg.tsv")
-        }
-        write.table(neg_das, file = annotated_file_path, quote = FALSE, sep = "\t", row.names = FALSE)
-        current_neg_annotated_das[[index]] <- neg_das
-      } else {
-        current_neg_annotated_das[[index]] <- "EMPTY"
-      }
-    } else {
-      current_pos_annotated_das[[index]] <- "EMPTY"
-      current_neg_annotated_das[[index]] <- "EMPTY"
-    }
-    index <- index + 1
-  }
-  pos_mintchip_marker_das_list_annotated[[marker]] <- current_pos_annotated_das
-  neg_mintchip_marker_das_list_annotated[[marker]] <- current_neg_annotated_das
-}
 
 pos_fmd <- run_fmd_on_mintchip(pos_mintchip_marker_das_list_annotated)
 

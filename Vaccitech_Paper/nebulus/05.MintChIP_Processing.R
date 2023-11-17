@@ -83,9 +83,12 @@ if (!dir.exists(output_dir)) {dir.create(output_dir)}
 setwd(output_dir)
 
 # Markers from mintchip
-markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
+# markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
+markers <- c("H3K36me3")
 for(marker in markers) {
   print(marker)
+  marker_dir <- paste0(output_dir, marker, "/")
+  if (!dir.exists(marker_dir)) {dir.create(marker_dir)}
   samples <- read.table(paste0("~/", marker, "_metadata.tsv"), sep = "\t", header = TRUE)
   # Remove subjects that only have one time point (not both)
   samples <- samples[samples$Tissue  %in% names(table(samples$Tissue)[table(samples$Tissue) == 2]),]
@@ -103,14 +106,14 @@ for(marker in markers) {
   dbObj.norm <- dba.analyze(dbObj.norm, method = DBA_ALL_METHODS, bBlacklist = FALSE, bGreylist = FALSE)
   
   # Save DAS object to file
-  saveRDS(dbObj.norm, file = paste0(output_dir, marker, "_dbObj.rds"))
+  saveRDS(dbObj.norm, file = paste0(marker_dir, marker, "_dbObj.rds"))
 
   # Save peaks with 0 FC (DESeq2, edgeR, and overlapping)
-  saveDiffBindPeaks(dbObj.norm, fold = 0, output_dir = output_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 0.1, output_dir = output_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 0.2, output_dir = output_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 0.3, output_dir = output_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 0.585, output_dir = output_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 1, output_dir = output_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 2, output_dir = output_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0, output_dir = marker_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0.1, output_dir = marker_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0.2, output_dir = marker_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0.3, output_dir = marker_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 0.585, output_dir = marker_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 1, output_dir = marker_dir, marker = marker)
+  saveDiffBindPeaks(dbObj.norm, fold = 2, output_dir = marker_dir, marker = marker)
 }
