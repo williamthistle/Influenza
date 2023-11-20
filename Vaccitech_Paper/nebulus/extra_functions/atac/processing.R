@@ -423,7 +423,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
-      cutOff = "Pval < 0.05 & Log2FC > 0.1"
+      cutOff = "Pval < 0.05 & Log2FC > 0.3"
     )
     df_up_all_positive <- data.frame(TF = rownames(motifsUp_all_positive), enrichment = assays(motifsUp_all_positive)$Enrichment$D28, 
                                      mlog10Padj = assays(motifsUp_all_positive)$mlog10Padj$D28)
@@ -488,6 +488,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
+      background = "bgdPeaks",
       idx = pos_peak_indices
     )
     df_up <- data.frame(TF = rownames(motifsUp), enrichment = assays(motifsUp)$Enrichment$D28, 
@@ -517,7 +518,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
-      cutOff = "Pval < 0.05 & Log2FC < -0.1"
+      cutOff = "Pval < 0.05 & Log2FC < -0.3"
     )
     df_down_all_negative <- data.frame(TF = rownames(motifsDown_all_negative), enrichment = assays(motifsDown_all_negative)$Enrichment$D28, 
                                        mlog10Padj = assays(motifsDown_all_negative)$mlog10Padj$D28)
@@ -545,6 +546,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       seMarker = marker_D28_D1_pseudo,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
+      background = "bgdPeaks",
       cutOff = "Pval < 0.05 & Log2FC < 0"
     )
     df_down <- data.frame(TF = rownames(motifsDown), enrichment = assays(motifsDown)$Enrichment$D28, 
@@ -582,6 +584,7 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
       seMarker = marker_D28_D1,
       ArchRProj = atac_proj,
       peakAnnotation = "Motif",
+      background = "bgdPeaks",
       idx = neg_peak_indices
     )
     df_down <- data.frame(TF = rownames(motifsDown), enrichment = assays(motifsDown)$Enrichment$D28, 
