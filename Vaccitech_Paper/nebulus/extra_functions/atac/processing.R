@@ -301,7 +301,9 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
   final_strictest_de <- data.frame(Cell_Type = character(), chr = character(), start = character(), end = character(), idx = character(),
                                  sc_log2FC = character(), sc_pval = character(), sc_FDR = character(), pseudobulk_log2FC = character(),
                                  pseudobulk_pval = character())
-  current_peaks <- getPeakSet(HVL_proj_minus_clusters)
+  current_peaks <- getPeakSet(atac_proj)
+  peak_count <- getMatrixFromProject(ArchRProj = atac_proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE, binarize = FALSE, threads = getArchRThreads(), logFile = createLogFile("getMatrixFromProject"))
+  peak_count_matrix <- peak_count@assays@data$PeakMatrix
   all_chr <- as.data.frame(current_peaks@seqnames)
   all_coord <- as.data.frame(current_peaks@ranges)
   peak_info <- cbind(all_chr, all_coord)
@@ -317,6 +319,14 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     marker_D28_D1 <- getMarkerFeatures(ArchRProj = cells_subset, useMatrix = "PeakMatrix", groupBy = group,
                                        testMethod = "wilcoxon", bias = c("TSSEnrichment", "log10(nFrags)"), normBy = "ReadsInPeaks", maxCells = 15000,
                                        useGroups = "D28", bgdGroups = "D_minus_1")
+    # Grab cells for current cell type in peak matrix
+    idxMatch <- which(str_detect(peak_count$Cell_type_voting,cell_type))
+    cell_type_specific_peak_count_matrix <- peak_count_matrix[,idxMatch]
+    # Only keep rows where peaks are expressed in greater than 5% of cells in either condition
+    print("Only keeping peaks expressed in 5% of cells in either condition (SC)")
+    passing_peak_indices <- find_rows_with_threshold(cell_type_specific_peak_count_matrix, metadata_df, threshold = 0.01)
+
+    # assays(marker_D28_D1)$Pval[non_passing_peak_indices,] <- 1
     marker_de <- data.frame(chr = rownames(marker_D28_D1), start = rownames(marker_D28_D1), end = rownames(marker_D28_D1), idx = rownames(marker_D28_D1), log2FC = rownames(marker_D28_D1), mean = rownames(marker_D28_D1),
                                   mean_diff = rownames(marker_D28_D1), AUC = rownames(marker_D28_D1), mean_BGD = rownames(marker_D28_D1), pval = rownames(marker_D28_D1), FDR = rownames(marker_D28_D1))  
     marker_de$chr <- as.character(rowData(marker_D28_D1)$seqnames)
@@ -330,6 +340,16 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     marker_de$mean_BGD <- assays(marker_D28_D1)$MeanBGD[,1]
     marker_de$pval <- assays(marker_D28_D1)$Pval[,1]
     marker_de$FDR <- assays(marker_D28_D1)$FDR[,1]
+    # Rearrange order of chromosomes
+    custom_order <- c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX")
+    marker_de$chr_custom_order <- factor(marker_de$chr, levels = custom_order)
+    marker_de <- marker_de[order(marker_de$chr_custom_order), ]
+    marker_de$chr_custom_order <- NULL
+    # Set pval to 1 for any indices that aren't passing
+    non_passing_peak_indices <- setdiff(as.numeric(rownames(marker_de)), passing_peak_indices)
+    marker_de[non_passing_peak_indices,]$pval <- 1
+    
+
     cell_type_for_file_name <- sub(" ", "_", cell_type)
     write.table(marker_de, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_sc_unfiltered.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
     marker_de_passing_fc <- marker_de[marker_de$log2FC < -0.1 | marker_de$log2FC > 0.1,]
@@ -355,6 +375,9 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results$end <- peak_info$end
     pseudobulk_analysis_results <- pseudobulk_analysis_results[,c('chr','start','end','baseMean', "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")]
     write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo_unfiltered.tsv"), quote = FALSE, sep = "\t")
+    # Only keep rows where peaks are expressed in greater than 5% of cells in either condition
+    print("Only keeping peaks expressed in 5% of cells in either condition (pseudobulk)")
+    pseudobulk_analysis_results$pvalue[non_passing_peak_indices] <- 1
     # Create a marker DE object that uses pseudobulk info - this will make it easier for us to make plots, run motif enrichment, etc.
     marker_D28_D1_pseudo <- marker_D28_D1
     # Rearrange pseudobulk_analysis_results so chrs are in same order as marker_D28_D1_pseudo
@@ -684,6 +707,48 @@ create_pseudobulk_atac <- function(proj, pseudo_bulk_dir) {
   }
 }
 
+# Create pseudobulk count files for each cell type - new? approach
+create_pseudobulk_atac_new <- function(proj, metadata_df, pseudo_bulk_dir) {
+  # Create text file for each cell type containing pseudobulk counts for peaks
+  Cell_types <- unique(proj$Cell_type_voting)
+  sample.names <- unique(proj$Sample)
+  peaks <- getPeakSet(proj)
+  peak_count <- getMatrixFromProject(ArchRProj = proj, useMatrix = "PeakMatrix", useSeqnames = NULL, verbose = TRUE, binarize = FALSE, threads = getArchRThreads(), logFile = createLogFile("getMatrixFromProject"))
+  peak_count_matrix <- peak_count@assays@data$PeakMatrix
+  for (i in c(1:length(Cell_types))){
+    print(Cell_types[i])
+    # Grab cells for current cell type in peak matrix
+    print("Grabbing cells for current cell type")
+    idxMatch <- which(str_detect(peak_count$Cell_type_voting,Cell_types[i]))
+    cell_type_specific_peak_count_matrix <- peak_count_matrix[,idxMatch]
+    # Only keep rows where peaks are expressed in greater than 5% of cells in either condition
+    print("Only keeping peaks expressed in 5% of cells in either condition")
+    passing_peak_indices <- find_rows_with_threshold(cell_type_specific_peak_count_matrix, metadata_df, threshold = 0.05)
+    cell_type_specific_peak_count_matrix <- cell_type_specific_peak_count_matrix[passing_peak_indices,]
+    pseudo_bulk <- matrix(nrow = nrow(cell_type_specific_peak_count_matrix), ncol = length(sample.names), 0)
+    colnames(pseudo_bulk) <- sample.names
+    cell_type_peaks <- peaks[passing_peak_indices,]
+    rownames(pseudo_bulk) <- paste0(as.character(cell_type_peaks@seqnames), "_", cell_type_peaks@elementMetadata$idx)
+    print("Adding peak counts for each sample to pseudobulk matrix")
+    for (s in c(1:length(sample.names))){
+      print(sample.names[s])
+      idxMatch <- grep(sample.names[s], colnames(cell_type_specific_peak_count_matrix))
+      if (length(idxMatch)>1){
+        pseudo_bulk[,s] <- Matrix::rowSums(cell_type_specific_peak_count_matrix[,idxMatch])
+      } else {
+        pseudo_bulk[,s] <- 0
+      }
+    }
+    cell_type <- sub(" ", "_", Cell_types[i])
+    write.table(pseudo_bulk, file = paste0(pseudo_bulk_dir, "pseudo_bulk_ATAC_count_", cell_type, ".txt"), quote = FALSE, sep = "\t")
+  }
+}
+
+
+
+
+
+
 # Create pseudobulk count files (sample level)
 create_pseudobulk_atac_sample <- function(proj) {
   sample.names <- unique(proj$Sample)
@@ -798,4 +863,17 @@ peakAnnoEnrichment_mine <- function(seMarker = NULL, ArchRProj = NULL, peakAnnot
   out <- SummarizedExperiment::SummarizedExperiment(assays = assays)
   ArchR:::.endLogging(logFile = logFile)
   out
+}
+
+find_rows_with_threshold <- function(matrix_data, metadata_df, threshold = 0.05) {
+  d28_aliquots <- rownames(metadata_df[metadata_df$time_point == "D28",])
+  d28_pattern <- paste(d28_aliquots, collapse = "|")
+  d_minus_1_aliquots <-  rownames(metadata_df[metadata_df$time_point == "D_minus_1",])
+  d_minus_1_pattern <- paste(d_minus_1_aliquots, collapse = "|")
+  d28_matrix <- matrix_data[,grep(d28_pattern, colnames(matrix_data))]
+  d_minus_1_matrix <- matrix_data[grep(d_minus_1_pattern, colnames(matrix_data)),]
+  row_indices_1 <- which(rowSums(d28_matrix != 0) / ncol(d28_matrix) >= threshold)
+  row_indices_2 <- which(rowSums(d_minus_1_matrix != 0) / ncol(d_minus_1_matrix) >= threshold)
+  row_indices <- sort(unique(row_indices_1, row_indices_2))
+  return(row_indices)
 }
