@@ -56,7 +56,7 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
         first_group <- "M"
         second_group <- "F"
       }
-      current_de = FindMarkers(cells_subset, test.use="LR", latent.vars = 'subject_id', ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0.1, min.pct = 0.1, assay = "SCT", recorrect_umi = FALSE)
+      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = 'subject_id', ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0.1, min.pct = 0.1, assay = "SCT", recorrect_umi = FALSE)
       current_de <- current_de[current_de$p_val_adj < 0.05,]
       cell_type_for_file_name <- sub(" ", "_", current_cell_type)
       write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc.tsv"), quote = FALSE, sep = "\t")

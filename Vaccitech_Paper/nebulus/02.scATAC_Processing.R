@@ -265,14 +265,53 @@ pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_r
 # Theoretically, I could create my own hg38 refseq file, but maybe not worth it
 
 
+# Convert ArchR to Signac
+HVL_peak_matrix <- getPeakMatrix(HVL_proj_minus_clusters)
+annotations <- getAnnotation(reference = EnsDb.Hsapiens.v86, refversion = "hg38")
+
+seurat_atac <- ArchR2Signac(
+  ArchRProject = HVL_proj_minus_clusters,
+  refversion = "hg38",
+  #samples = samplelist, # list of samples in the ArchRProject (default will use ArchRProject@cellColData$Sample but another list can be provided)
+  fragments_dir = data_path,
+  pm = HVL_peak_matrix, # peak matrix from getPeakMatrix()
+  fragments_fromcellranger = "Yes", # fragments_fromcellranger This is an Yes or No selection ("NO" | "N" | "No" or "YES" | "Y" | "Yes")
+  fragments_file_extension = NULL, # Default - NULL: File_Extension for fragments files (typically they should be '.tsv.gz' or '.fragments.tsv.gz')
+  annotation = annotations # annotation from getAnnotation()
+)
 
 
+# Returns TRUE as expected - samples are in correct order
+all.equal(colnames(seurat_atac), gsub('#', '_', rownames(HVL_proj_minus_clusters@cellColData)))
 
+# Add gene score matrix from ArchR to Seurat object (could recompute it using Signac, but we'll stick with ArchR matrix for now)
+gsm <- getGeneScoreMatrix(ArchRProject = HVL_proj_minus_clusters, SeuratObject = seurat_atac)
+seurat_atac[['RNA']] <- CreateAssayObject(counts = gsm)
 
+# This doesn't work currently because the LSI matrix was calculated with the full set of cells, whereas this HVL project is just
+# the HVL cells. So I can either recompute the LSI matrix for the HVL proj or transfer the full object from ArchR and then subdivide it to HVL cells
+# in the Seurat object.
+seurat_atac <- addDimRed(
+  ArchRProject = HVL_proj_minus_clusters,
+  SeuratObject = seurat_atac,
+  addUMAPs = "UMAP",
+  reducedDims = "Harmony"
+)
 
+# saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
+# seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
 
+seurat_atac$predicted_celltype_majority_vote <- HVL_proj_minus_clusters$Cell_type_voting
+seurat_atac$subject_id <- HVL_proj_minus_clusters$subject_id
+cell_names <- rownames(seurat_atac@meta.data)
+seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name = "cell_name")
 
+differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/seurat_peaks/")
+if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
 
+cell_types <- unique(seurat_atac$predicted_celltype_majority_vote)
+
+run_differential_expression_controlling_for_subject_id_atac(seurat_atac, differential_peaks_dir, sample_metadata_for_SPEEDI_df, "time_point", cell_types)
 
 
 
