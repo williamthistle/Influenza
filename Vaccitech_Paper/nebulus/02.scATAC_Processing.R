@@ -313,8 +313,20 @@ cell_types <- unique(seurat_atac$predicted_celltype_majority_vote)
 
 run_differential_expression_controlling_for_subject_id_atac(seurat_atac, differential_peaks_dir, sample_metadata_for_SPEEDI_df, "time_point", cell_types)
 
+Idents(seurat_atac) <- "predicted_celltype_majority_vote"
+B_markers <- FindMarkers(seurat_atac, ident.1 = "B")
+pos_B_markers <- B_markers[B_markers$avg_log2FC > 0,]
+neg_B_markers <- B_markers[B_markers$avg_log2FC < 0,]
+top_pos_B_markers <- head(pos_B_markers, n = 1000)
+background_pos_B_markers <- tail(pos_B_markers, n = 1000)
 
+B_pos_motifs <- FindMotifs(
+  object = seurat_atac,
+  features = rownames(top_pos_B_markers),
+  background = rownames(background_pos_B_markers)
+)
 
+                         
 ### ETC ###
 # Print distributions for each cell type and create cell type proportions file for MAGICAL
 print_cell_type_distributions(final_proj)
