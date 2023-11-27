@@ -313,18 +313,84 @@ cell_types <- unique(seurat_atac$predicted_celltype_majority_vote)
 
 run_differential_expression_controlling_for_subject_id_atac(seurat_atac, differential_peaks_dir, sample_metadata_for_SPEEDI_df, "time_point", cell_types)
 
+# Add GC content
+seurat_atac <- RegionStats(seurat_atac, genome = BSgenome.Hsapiens.UCSC.hg38)
+# Add motifs
+seurat_atac <- AddMotifs(
+  object = seurat_atac,
+  genome = BSgenome.Hsapiens.UCSC.hg38,
+  pfm = human_pwms_v2
+)
+
+# Testing for B peaks
+B_pos_peaks <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/ATAC/diff_peaks/2023-11-22/seurat_peaks/D28-vs-D_minus_1-degs-CD14_Mono-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_pos.tsv"
+B_pos_peaks <- read.table(B_pos_peaks, sep = "\t", header = TRUE)
+#B_pos_peaks <- B_pos_peaks[order(B_pos_peaks$avg_log2FC, decreasing = TRUE),]
+#B_pos_peaks <- B_pos_peaks[1:1000,]
+pct_threshold <- 0.05
+B_pos_peaks <- B_pos_peaks[B_pos_peaks$pct.1 >= pct_threshold | B_pos_peaks$pct.2 >= pct_threshold,]
+
+B_neg_peaks <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/ATAC/diff_peaks/2023-11-22/seurat_peaks/D28-vs-D_minus_1-degs-CD14_Mono-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_neg.tsv"
+B_neg_peaks <- read.table(B_neg_peaks, sep = "\t", header = TRUE)
+#B_neg_peaks <- B_neg_peaks[order(B_neg_peaks$avg_log2FC, decreasing = TRUE),]
+#B_neg_peaks <- B_neg_peaks[1:1000,]
+pct_threshold <- 0.05
+B_neg_peaks <- B_neg_peaks[B_neg_peaks$pct.1 >= pct_threshold | B_neg_peaks$pct.2 >= pct_threshold,]
+
 Idents(seurat_atac) <- "predicted_celltype_majority_vote"
-B_markers <- FindMarkers(seurat_atac, ident.1 = "B")
-pos_B_markers <- B_markers[B_markers$avg_log2FC > 0,]
-neg_B_markers <- B_markers[B_markers$avg_log2FC < 0,]
-top_pos_B_markers <- head(pos_B_markers, n = 1000)
-background_pos_B_markers <- tail(pos_B_markers, n = 1000)
+open.peaks <- AccessiblePeaks(seurat_atac, idents = c("CD14 Mono"))
+
+meta.feature <- GetAssayData(cells_subset, assay = "peaks", slot = "meta.features")
+
+#seurat_atac <- RunChromVAR(
+#  object = seurat_atac,
+#  genome = BSgenome.Hsapiens.UCSC.hg38
+#)
+
+pos.peaks.matched <- MatchRegionStats(
+  meta.feature = meta.feature[open.peaks, ],
+  query.feature = meta.feature[rownames(B_pos_peaks), ],
+  n = 40000
+)
+
+neg.peaks.matched <- MatchRegionStats(
+  meta.feature = meta.feature[open.peaks, ],
+  query.feature = meta.feature[rownames(B_neg_peaks), ],
+  n = 40000
+)
+
+B_pos_motifs_orig_atac <- FindMotifs(
+  object = seurat_atac,
+  features = rownames(B_pos_peaks)
+)
 
 B_pos_motifs <- FindMotifs(
-  object = seurat_atac,
-  features = rownames(top_pos_B_markers),
-  background = rownames(background_pos_B_markers)
+  object = cells_subset,
+  features = rownames(B_pos_peaks)
 )
+
+B_pos_motifs_with_bg <- FindMotifs(
+  object = cells_subset,
+  features = rownames(B_pos_peaks),
+  background = pos.peaks.matched
+)
+
+B_neg_motifs_orig_atac <- FindMotifs(
+  object = seurat_atac,
+  features = rownames(B_neg_peaks)
+)
+
+B_neg_motifs <- FindMotifs(
+  object = cells_subset,
+  features = rownames(B_neg_peaks)
+)
+
+B_neg_motifs_with_bg <- FindMotifs(
+  object = cells_subset,
+  features = rownames(B_neg_peaks),
+  background = neg.peaks.matched
+)
+
 
                          
 ### ETC ###
