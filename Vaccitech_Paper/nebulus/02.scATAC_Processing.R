@@ -322,75 +322,12 @@ seurat_atac <- AddMotifs(
   pfm = human_pwms_v2
 )
 
-# Testing for B peaks
-B_pos_peaks <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/ATAC/diff_peaks/2023-11-22/seurat_peaks/D28-vs-D_minus_1-degs-CD14_Mono-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_pos.tsv"
-B_pos_peaks <- read.table(B_pos_peaks, sep = "\t", header = TRUE)
-#B_pos_peaks <- B_pos_peaks[order(B_pos_peaks$avg_log2FC, decreasing = TRUE),]
-#B_pos_peaks <- B_pos_peaks[1:1000,]
-pct_threshold <- 0.05
-B_pos_peaks <- B_pos_peaks[B_pos_peaks$pct.1 >= pct_threshold | B_pos_peaks$pct.2 >= pct_threshold,]
+motif_output_dir <- paste0(ATAC_output_dir, "motifs/", date, "/")
+if (!dir.exists(motif_output_dir)) {dir.create(motif_output_dir, recursive = TRUE)}
 
-B_neg_peaks <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/ATAC/diff_peaks/2023-11-22/seurat_peaks/D28-vs-D_minus_1-degs-CD14_Mono-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_neg.tsv"
-B_neg_peaks <- read.table(B_neg_peaks, sep = "\t", header = TRUE)
-#B_neg_peaks <- B_neg_peaks[order(B_neg_peaks$avg_log2FC, decreasing = TRUE),]
-#B_neg_peaks <- B_neg_peaks[1:1000,]
-pct_threshold <- 0.05
-B_neg_peaks <- B_neg_peaks[B_neg_peaks$pct.1 >= pct_threshold | B_neg_peaks$pct.2 >= pct_threshold,]
+motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/ATAC/diff_peaks/2023-11-22/seurat_peaks/"
 
-Idents(seurat_atac) <- "predicted_celltype_majority_vote"
-open.peaks <- AccessiblePeaks(seurat_atac, idents = c("CD14 Mono"))
-
-meta.feature <- GetAssayData(cells_subset, assay = "peaks", slot = "meta.features")
-
-#seurat_atac <- RunChromVAR(
-#  object = seurat_atac,
-#  genome = BSgenome.Hsapiens.UCSC.hg38
-#)
-
-pos.peaks.matched <- MatchRegionStats(
-  meta.feature = meta.feature[open.peaks, ],
-  query.feature = meta.feature[rownames(B_pos_peaks), ],
-  n = 40000
-)
-
-neg.peaks.matched <- MatchRegionStats(
-  meta.feature = meta.feature[open.peaks, ],
-  query.feature = meta.feature[rownames(B_neg_peaks), ],
-  n = 40000
-)
-
-B_pos_motifs_orig_atac <- FindMotifs(
-  object = seurat_atac,
-  features = rownames(B_pos_peaks)
-)
-
-B_pos_motifs <- FindMotifs(
-  object = cells_subset,
-  features = rownames(B_pos_peaks)
-)
-
-B_pos_motifs_with_bg <- FindMotifs(
-  object = cells_subset,
-  features = rownames(B_pos_peaks),
-  background = pos.peaks.matched
-)
-
-B_neg_motifs_orig_atac <- FindMotifs(
-  object = seurat_atac,
-  features = rownames(B_neg_peaks)
-)
-
-B_neg_motifs <- FindMotifs(
-  object = cells_subset,
-  features = rownames(B_neg_peaks)
-)
-
-B_neg_motifs_with_bg <- FindMotifs(
-  object = cells_subset,
-  features = rownames(B_neg_peaks),
-  background = neg.peaks.matched
-)
-
+generate_motifs_with_signac(seurat_atac, motif_input_dir, motif_output_dir)
 
                          
 ### ETC ###
