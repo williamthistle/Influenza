@@ -1051,16 +1051,20 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
                                   sep = "\t", header = TRUE)
           
           # Because I made an error, those files which were supposed to be filtered for 0.03 / 0.05 are not, so we do that here
+          # Also, order peaks by fold change
           if(analysis_type == "sc_filtered") {
             pos_peaks <- pos_peaks[pos_peaks$pct.1 >= pct_level | pos_peaks$pct.2 >= pct_level,]
             neg_peaks <- neg_peaks[neg_peaks$pct.1 >= pct_level | neg_peaks$pct.2 >= pct_level,]
+            pos_peaks <- pos_peaks[order(pos_peaks$avg_log2FC, decreasing = TRUE), ]
+            neg_peaks <- neg_peaks[order(neg_peaks$avg_log2FC), ]
+          } else {
+            pos_peaks <- pos_peaks[order(pos_peaks$sc_log2FC, decreasing = TRUE), ]
+            neg_peaks <- neg_peaks[order(neg_peaks$sc_log2FC), ]
           }
           
           # If we're doing top 1000 peaks or top 500 peaks via FC, then filter it here
           # Skip the analysis if we don't have enough peaks
           if(fc_subset != "all") {
-            pos_peaks <- pos_peaks[order(pos_peaks$avg_log2FC, decreasing = TRUE), ]
-            neg_peaks <- neg_peaks[order(neg_peaks$avg_log2FC), ]
             if(fc_subset == "top_1000") {
               if(nrow(pos_peaks) >= 1000) {
                 pos_peaks <- pos_peaks[1:1000, ]
