@@ -43,19 +43,15 @@ for(cell_type in unique(sc_pseudobulk_deg_combined_cell_types_table$Cell_Type)) 
               row.names = FALSE, col.names = FALSE)
 }
 
-# b) Cell type candidate peaks.txt (overlap)
+# b) Cell type candidate peaks.txt
 for(cell_type in unique(sc_das_lenient$Cell_Type)) {
-  cell_type_sc_das_lenient <- sc_das_lenient[sc_das_lenient$Cell_Type == cell_type,]
-  cell_type_sc_das_lenient <- cell_type_sc_das_lenient[,c("chr", "start", "end")]
-  write.table(cell_type_sc_das_lenient,
-              file = paste0(cell_type_candidate_peak_overlap_dir, sub(" ", "_", cell_type), "_Candidate_Peaks.txt"), sep = "\t", quote = FALSE,
-              row.names = FALSE, col.names = FALSE)
-}
-
-# c) Cell type candidate peaks.txt (pseudo)
-for(cell_type in unique(sc_das_lenient$Cell_Type)) {
-  current_pseudobulk_das <- read.table(paste0(sc_das_dir, "diff_peaks/", sub(" ", "_", cell_type), "_D28_D1_diff_pseudo_filtered.tsv"), sep = "\t",
+  current_das <- read.table(paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"), sep = "\t",
                                        header = TRUE)
+  peak_list <- current_das$Gene_Name
+  chromosomes <- sapply(strsplit(peak_list, "-"), `[`, 1)
+  start_coords <- sapply(strsplit(peak_list, "-"), `[`, 2)
+  end_coords <- sapply(strsplit(peak_list, "-"), `[`, 3)
+  
   current_pseudobulk_das <- current_pseudobulk_das[,c("chr", "start", "end")]
   write.table(current_pseudobulk_das,
               file = paste0(cell_type_candidate_peak_pseudo_dir, sub(" ", "_", cell_type), "_Candidate_Peaks.txt"), sep = "\t", quote = FALSE,
