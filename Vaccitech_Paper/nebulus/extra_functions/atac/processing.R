@@ -948,7 +948,7 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
       pct_thresholds <- c(0.01, 0.03, 0.05)
       for(pct_threshold in pct_thresholds) {
         # This DF will store those peaks which were found to be significant in both SC and pseudobulk
-        overlapping_peak_de <- data.frame(Cell_Type = character(), Peak_Name = character(), sc_pval_adj = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
+        overlapping_peak_de <- data.frame(Cell_Type = character(), Peak_Name = character(), sc_pval = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
                                           pseudo_bulk_log2FC = character())
         if(pct_threshold != 0.01) {
           current_de_with_current_pct <- current_de[current_de$pct.1 >= pct_threshold | current_de$pct.2 >= pct_threshold,]
@@ -973,7 +973,7 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
           current_pseudo_bulk_pval <- pseudobulk_analysis_results[rownames(pseudobulk_analysis_results) == current_peak,]$pvalue
           current_pseudo_bulk_log2FC <- pseudobulk_analysis_results[rownames(pseudobulk_analysis_results) == current_peak,]$log2FoldChange
           current_row <- data.frame(current_cell_type, current_peak, current_sc_pval_adj, current_sc_log2FC, current_pseudo_bulk_pval, current_pseudo_bulk_log2FC)
-          names(current_row) <- c("Cell_Type", "Peak_Name", "sc_pval_adj", "sc_log2FC", "pseudo_bulk_pval", "pseudo_bulk_log2FC")
+          names(current_row) <- c("Cell_Type", "Peak_Name", "sc_pval", "sc_log2FC", "pseudo_bulk_pval", "pseudo_bulk_log2FC")
           overlapping_peak_de <- rbind(overlapping_peak_de, current_row)
         }
         # Make sure that FC sign matches between SC and pseudo analysis
