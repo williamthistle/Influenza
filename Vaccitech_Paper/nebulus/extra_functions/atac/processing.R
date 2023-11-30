@@ -1022,8 +1022,11 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
   Idents(seurat_atac) <- "predicted_celltype_majority_vote"
   for(cell_type in cell_types) {
     print(cell_type)
-    # Grab cells associated with cell type
+    # Create dir for cell type results
     cell_type_for_file_name <- sub(" ", "_", cell_type)
+    cell_type_dir <- paste0(motif_output_dir, cell_type_for_file_name, "/")
+    if (!dir.exists(cell_type_dir)) {dir.create(cell_type_dir, recursive = TRUE)}
+    # Grab cells associated with cell type
     idxPass <- which(seurat_atac$predicted_celltype_majority_vote %in% cell_type)
     cellsPass <- names(seurat_atac$orig.ident[idxPass])
     cells_subset <- subset(x = seurat_atac, subset = cell_name %in% cellsPass)
@@ -1040,7 +1043,11 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
     # Take subset of peaks based on fold change
     fc_subsets <- c("all", "top_1000", "top_500")
     for(analysis_type in analysis_types) {
+      analysis_type_dir <- paste0(cell_type_dir, analysis_type, "/")
+      if (!dir.exists(analysis_type_dir)) {dir.create(analysis_type_dir, recursive = TRUE)}
       for(pct_level in pct_levels) {
+        pct_level_dir <- paste0(analysis_type_dir, pct_level, "/")
+        if (!dir.exists(pct_level_dir)) {dir.create(pct_level_dir, recursive = TRUE)}
         for(fc_subset in fc_subsets) {
           # Read in pos and neg peaks
           pos_peaks <- read.table(paste0(motif_input_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_",
@@ -1133,14 +1140,14 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
           )
           
           # Write results to file
-          write.table(pos_motifs, file = paste0(motif_output_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+          write.table(pos_motifs, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                 analysis_type, "_pct_", pct_level, "_", fc_subset, "_pos_motifs.tsv"), sep = "\t", quote = FALSE)
-          write.table(pos_motifs_with_bg, file = paste0(motif_output_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+          write.table(pos_motifs_with_bg, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                         analysis_type, "_pct_", pct_level, "_", fc_subset, "_pos_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
           
-          write.table(neg_motifs, file = paste0(motif_output_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+          write.table(neg_motifs, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                 analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
-          write.table(neg_motifs_with_bg, file = paste0(motif_output_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+          write.table(neg_motifs_with_bg, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                         analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
         }
       }

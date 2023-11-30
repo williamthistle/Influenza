@@ -2,6 +2,10 @@
 source("~/00.setup.R")
 home_dir <- "/Genomics/ogtr04/wat2/"
 
+### SHORTCUT ###
+# HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
+# seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
+
 ################## SETUP ##################
 data_path <- paste0(home_dir, "single_cell/data")
 reference_dir <- paste0(home_dir, "references/")
@@ -298,9 +302,6 @@ seurat_atac <- addDimRed(
   reducedDims = "Harmony"
 )
 
-# saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
-# seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
-
 seurat_atac$predicted_celltype_majority_vote <- HVL_proj_minus_clusters$Cell_type_voting
 seurat_atac$subject_id <- HVL_proj_minus_clusters$subject_id
 cell_names <- rownames(seurat_atac@meta.data)
@@ -321,6 +322,10 @@ seurat_atac <- AddMotifs(
   genome = BSgenome.Hsapiens.UCSC.hg38,
   pfm = human_pwms_v2
 )
+
+# saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
+# seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
+
 
 motif_output_dir <- paste0(ATAC_output_dir, "motifs/", date, "/")
 if (!dir.exists(motif_output_dir)) {dir.create(motif_output_dir, recursive = TRUE)}
