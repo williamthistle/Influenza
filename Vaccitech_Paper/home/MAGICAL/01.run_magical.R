@@ -112,34 +112,34 @@ overall_magical_df <- overall_magical_df[,c(9,1,2,3,4,5,6,7,8)]
 
 # Create overall pseudobulk motif enrichment table
 cell_type <- cell_types[1]
-overall_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_up_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
-overall_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
-overall_pseudobulk_motif_enrichment_df$Direction <- "Up"
-current_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_down_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
-current_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
-current_pseudobulk_motif_enrichment_df$Direction <- "Down"
-overall_pseudobulk_motif_enrichment_df <- rbind(overall_pseudobulk_motif_enrichment_df, current_pseudobulk_motif_enrichment_df)
+overall_motif_enrichment_df <- read.table(paste0(sc_das_dir, "motif_enrichment/overlapping_peak/0.01/D28-vs-D_minus_1-degs-", cell_type, "-overlapping_peak_pct_0.01_all_pos_motifs_with_bg.tsv"), sep = "\t", header = TRUE)
+overall_motif_enrichment_df$Cell_Type <- cell_type
+overall_motif_enrichment_df$Direction <- "Up"
+current_motif_enrichment_df <- read.table(paste0(sc_das_dir, "motif_enrichment/overlapping_peak/0.01/D28-vs-D_minus_1-degs-", cell_type, "-overlapping_peak_pct_0.01_all_neg_motifs_with_bg.tsv"), sep = "\t", header = TRUE)
+current_motif_enrichment_df$Cell_Type <- cell_type
+current_motif_enrichment_df$Direction <- "Down"
+overall_motif_enrichment_df <- rbind(overall_motif_enrichment_df, current_motif_enrichment_df)
 rest_of_cell_types <- cell_types[c(-1)]
 for(cell_type in rest_of_cell_types) {
-  for(direction in c("up", "down")) {
-    current_pseudobulk_motif_enrichment_df <- read.table(paste0(sc_das_dir, "diff_peaks/", cell_type, "_D28_D1_motif_", direction, "_pseudobulk_only.tsv"), sep = "\t", header = TRUE)
-    current_pseudobulk_motif_enrichment_df$Cell_Type <- cell_type
-    if(direction == "up") {
-      current_pseudobulk_motif_enrichment_df$Direction <- "Up"
+  for(direction in c("pos", "neg")) {
+    current_motif_enrichment_df <- read.table(paste0(sc_das_dir, "motif_enrichment/overlapping_peak/0.01/D28-vs-D_minus_1-degs-", cell_type, "-overlapping_peak_pct_0.01_all_", direction, "_motifs_with_bg.tsv"), sep = "\t", header = TRUE)
+    current_motif_enrichment_df$Cell_Type <- cell_type
+    if(direction == "pos") {
+      current_motif_enrichment_df$Direction <- "Up"
     } else {
-      current_pseudobulk_motif_enrichment_df$Direction <- "Down"
+      current_motif_enrichment_df$Direction <- "Down"
     }
-    overall_pseudobulk_motif_enrichment_df <- rbind(overall_pseudobulk_motif_enrichment_df, current_pseudobulk_motif_enrichment_df)
+    overall_motif_enrichment_df <- rbind(overall_motif_enrichment_df, current_motif_enrichment_df)
   }
 }
-overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df[overall_pseudobulk_motif_enrichment_df$p_adj < 0.05,]
-overall_pseudobulk_motif_enrichment_df <- overall_pseudobulk_motif_enrichment_df[,c(5,6,1,2,3,4)]
-overall_pseudobulk_motif_enrichment_df$TF <- sub("_.*", "", overall_pseudobulk_motif_enrichment_df$TF)
+overall_motif_enrichment_df <- overall_motif_enrichment_df[overall_motif_enrichment_df$p.adjust < 0.05,]
+
+overall_motif_enrichment_df <- overall_motif_enrichment_df[,c(10,11,8,6,7,9)]
 
 overall_magical_df <- fill_in_info_for_magical_output(overall_magical_df, sc_das_dir, 
                                                                 sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
                                                       high_pos_pseudobulk_sc_genes_bulk_passing_df$gene, 
-                                                      high_neg_pseudobulk_sc_genes_bulk_passing_df$gene, sc_peaks, overall_pseudobulk_motif_enrichment_df)
+                                                      high_neg_pseudobulk_sc_genes_bulk_passing_df$gene, sc_peaks, overall_motif_enrichment_df)
 write.table(overall_magical_df,
             file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", quote = FALSE,
             row.names = FALSE)

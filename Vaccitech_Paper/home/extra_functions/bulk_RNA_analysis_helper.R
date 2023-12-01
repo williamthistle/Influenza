@@ -515,7 +515,7 @@ find_overlapping_motifs_between_mintchip_and_rna <- function(peak_dir, sc_gene_t
 
 
 fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseudobulk_deg_combined_cell_types_table, sc_pseudobulk_deg_table,
-                                            pos_bulk_genes, neg_bulk_genes, sc_peaks, overall_pseudobulk_motif_enrichment_df) {
+                                            pos_bulk_genes, neg_bulk_genes, sc_peaks, overall_motif_enrichment_df) {
   # Distance between relevant gene TSS and peak 
   dist_between_gene_tss_and_peak <- c()
   # FC for circuit gene from SC data (positive or negative?)
@@ -537,7 +537,7 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   nearest_gene_to_site <- c()
   #dist_to_nearest_gene_tss <- c()
   #dist_to_nearest_gene_start <- c()
-  pseudobulk_motif_enrichment <- c()
+  motif_enrichment <- c()
   for(current_circuit_index in 1:nrow(overall_magical_df)) {
     current_circuit <- overall_magical_df[current_circuit_index,]
     cell_type <- current_circuit$Cell_Type
@@ -546,21 +546,22 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     current_tfs <- current_circuit$TFs.binding.prob.
     current_tfs <- unlist(strsplit(current_tfs, ","))
     current_tfs <- current_tfs[c(TRUE, FALSE)]
-    all_pseudobulk_info <- ""
+    motif_info <- ""
     for(current_tf in current_tfs) {
-      pseudobulk_enrichment_subset_df <- overall_pseudobulk_motif_enrichment_df[overall_pseudobulk_motif_enrichment_df$TF == current_tf,]
-      pseudobulk_enrichment_subset_df <- pseudobulk_enrichment_subset_df[pseudobulk_enrichment_subset_df$Cell_Type == cell_type,]
-      if(nrow(pseudobulk_enrichment_subset_df) > 0) {
-        current_pseudobulk_info <- paste0(current_tf, ": ")
-        current_pseudobulk_tf_info <- paste(pseudobulk_enrichment_subset_df$Direction, " (Rank ", pseudobulk_enrichment_subset_df$rank, ")", sep = "")
-        current_pseudobulk_tf_info <- paste(current_pseudobulk_tf_info, collapse = ",")
-        current_pseudobulk_info <- paste0(current_pseudobulk_info, current_pseudobulk_tf_info, ".")
+      motif_enrichment_subset_df <- overall_motif_enrichment_df[overall_motif_enrichment_df$motif.name == current_tf,]
+      motif_enrichment_subset_df <- motif_enrichment_subset_df[motif_enrichment_subset_df$Cell_Type == cell_type,]
+      motif_enrichment_subset_df$rank <- seq.int(nrow(motif_enrichment_subset_df))
+      if(nrow(motif_enrichment_subset_df) > 0) {
+        current_motif_info <- paste0(current_tf, ": ")
+        current_motif_tf_info <- paste(motif_enrichment_subset_df$Direction, " (Rank ", motif_enrichment_subset_df$rank, ")", sep = "")
+        current_motif_tf_info <- paste(current_motif_tf_info, collapse = ",")
+        current_motif_info <- paste0(current_motif_info, current_motif_tf_info, ".")
       } else {
-        current_pseudobulk_info <- paste0(current_tf, ": N/A.")
+        current_motif_info <- paste0(current_tf, ": N/A.")
       }
-      all_pseudobulk_info <- paste0(all_pseudobulk_info, current_pseudobulk_info)
+      motif_info <- paste0(motif_info, current_motif_info)
     }
-    pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, all_pseudobulk_info)
+    motif_enrichment <- c(motif_enrichment, motif_info)
     # Capture distance between gene TSS and peak
     gene_tss <- current_circuit$Gene_TSS
     peak_start <- current_circuit$Peak_start
@@ -619,11 +620,11 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   overall_magical_df$magical_cell_types <- magical_cell_types
   overall_magical_df$combined_single_cell_types <- combined_single_cell_types
   overall_magical_df$original_single_cell_types <- original_single_cell_types
-  overall_magical_df$pseudobulk_motif_enrichment_for_tf <- pseudobulk_motif_enrichment
+  overall_magical_df$pseudobulk_motif_enrichment_for_tf <- motif_enrichment
   return(overall_magical_df)
 }
 
-fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseudobulk_motif_enrichment_df) {
+fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_motif_enrichment_df) {
   # TF 
   tf <- c()
   # Total Circuit Count
@@ -640,8 +641,8 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
   found_as_DEGs_in_original_cell_types <- c()
   # Found_as_DEGs_in_Bulk (Direction)
   found_as_DEGs_in_bulk <- c()
-  # Pseudobulk_Motif_Enrichment (Cell Type and Direction)
-  pseudobulk_motif_enrichment <- c()
+  # Motif_Enrichment (Cell Type and Direction)
+  motif_enrichment <- c()
   # Grab all TFs found in MAGICAL circuits
   for(current_circuit_index in 1:nrow(overall_magical_df)) {
     current_circuit <- overall_magical_df[current_circuit_index,]
@@ -714,16 +715,16 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
     }
     # If the current TF is found as enriched in the pseudobulk motif analysis, record that info (cell type and direction)
     # If the current TF is not found, just write N/A
-    current_pseudobulk_motif_enrichment_tf <- overall_pseudobulk_motif_enrichment_df[overall_pseudobulk_motif_enrichment_df$TF == current_tf,]
-    if(nrow(current_pseudobulk_motif_enrichment_tf) > 0) {
-      current_pseudobulk_motif_enrichment_cell_types <- current_pseudobulk_motif_enrichment_tf$Cell_Type
-      current_pseudobulk_motif_enrichment_directions <- current_pseudobulk_motif_enrichment_tf$Direction
-      current_pseudobulk_motif_enrichment_ranks <- current_pseudobulk_motif_enrichment_tf$rank
-      current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_cell_types, " (", current_pseudobulk_motif_enrichment_directions, "; Rank ", current_pseudobulk_motif_enrichment_ranks, ")", sep = "")
-      current_pseudobulk_motif_enrichment_info <- paste(current_pseudobulk_motif_enrichment_info, collapse = ",")
-      pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, current_pseudobulk_motif_enrichment_info)
+    current_motif_enrichment_tf <- overall_motif_enrichment_df[overall_motif_enrichment_df$motif.name == current_tf,]
+    if(nrow(current_motif_enrichment_tf) > 0) {
+      current_motif_enrichment_cell_types <- current_motif_enrichment_tf$Cell_Type
+      current_motif_enrichment_directions <- current_motif_enrichment_tf$Direction
+      current_motif_enrichment_ranks <- current_motif_enrichment_tf$rank
+      current_motif_enrichment_info <- paste(current_motif_enrichment_cell_types, " (", current_motif_enrichment_directions, "; Rank ", current_motif_enrichment_ranks, ")", sep = "")
+      current_motif_enrichment_info <- paste(current_motif_enrichment_info, collapse = ",")
+      motif_enrichment <- c(motif_enrichment, current_motif_enrichment_info)
     } else {
-      pseudobulk_motif_enrichment <- c(pseudobulk_motif_enrichment, "N/A")
+      motif_enrichment <- c(motif_enrichment, "N/A")
     }
   }
   overall_magical_tf_df <- data.frame(tf = tf, total_circuit_count = total_circuit_count, circuit_cell_types = circuit_cell_types,
@@ -731,7 +732,7 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_pseud
                                       found_as_DEGs_in_combined_cell_types = found_as_DEGs_in_combined_cell_types,
                                       found_as_DEGs_in_original_cell_types = found_as_DEGs_in_original_cell_types,
                                       found_as_DEGs_in_bulk = found_as_DEGs_in_bulk,
-                                      pseudobulk_motif_enrichment = pseudobulk_motif_enrichment)
+                                      motif_enrichment = motif_enrichment)
   return(overall_magical_tf_df)
 }
 
