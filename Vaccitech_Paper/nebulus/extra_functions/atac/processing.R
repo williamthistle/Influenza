@@ -1147,7 +1147,7 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
                                                         analysis_type, "_pct_", pct_level, "_", fc_subset, "_pos_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
           
           write.table(neg_motifs, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_mPeak_Nameotifs.tsv"), sep = "\t", quote = FALSE)
+                                                analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
           write.table(neg_motifs_with_bg, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                         analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
         }

@@ -330,7 +330,7 @@ seurat_atac <- AddMotifs(
 motif_output_dir <- paste0(ATAC_output_dir, "motifs/", date, "/")
 if (!dir.exists(motif_output_dir)) {dir.create(motif_output_dir, recursive = TRUE)}
 
-motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/ATAC/diff_peaks/2023-11-22/seurat_peaks/"
+motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/ATAC/diff_peaks/2023-11-30/seurat_peaks/"
 
 generate_motifs_with_signac(seurat_atac, motif_input_dir, motif_output_dir)
 
