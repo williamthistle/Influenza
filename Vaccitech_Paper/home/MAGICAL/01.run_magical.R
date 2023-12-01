@@ -45,7 +45,7 @@ for(cell_type in unique(sc_pseudobulk_deg_combined_cell_types_table$Cell_Type)) 
 for(cell_type in unique(sc_das_lenient$Cell_Type)) {
   current_das <- read.table(paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"), sep = "\t",
                                        header = TRUE)
-  peak_list <- current_das$Gene_Name
+  peak_list <- current_das$Peak_Name
   chromosomes <- sapply(strsplit(peak_list, "-"), `[`, 1)
   start_coords <- sapply(strsplit(peak_list, "-"), `[`, 2)
   end_coords <- sapply(strsplit(peak_list, "-"), `[`, 3)
