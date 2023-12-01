@@ -77,14 +77,7 @@ rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"),
 # Peak related tables
 sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
 sc_motifs <- read.table(paste0(sc_das_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
-sc_motifs$chr <- paste0("chr", sc_motifs$chr)
-sc_das_lenient <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_lenient_final.tsv"), sep = "\t", header = TRUE)
-sc_motif_lenient_subset <- sc_motifs[sc_motifs$chr %in% sc_das_lenient$chr & sc_motifs$point1 %in% sc_das_lenient$start & sc_motifs$point2 %in% sc_das_lenient$end,]
-sc_motif_lenient_subset$chr <- as.numeric(substr(sc_motif_lenient_subset$chr, 4, 6))
-sc_motifs$chr <- as.numeric(substr(sc_motifs$chr, 4, 6))
-sc_das_stricter <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_stricter_final.tsv"), sep = "\t", header = TRUE)
-sc_das_strictest <- read.table(paste0(sc_das_dir, "diff_peaks/D28_D1_diff_strictest_final.tsv"), sep = "\t", header = TRUE)
-atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
+atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_ATAC_cell_metadata.tsv"), sep = "\t", comment.char = "")
 
 # miRNA tables
 miRNA_raw_counts <- read.table(paste0(miRNA_data_dir, "miRNA_raw_counts.csv"), sep =",", header = TRUE)

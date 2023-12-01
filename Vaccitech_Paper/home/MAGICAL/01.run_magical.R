@@ -31,6 +31,8 @@ motif_prior <- paste0(sc_magical_dir, "scATAC_Motif_Mapping_Prior/HVL_ATAC_motif
 tads <- paste0(sc_magical_dir, "RaoGM12878_40kb_TopDomTADs_filtered_hg38.txt")
 distance_control=5e5
 
+atac_cell_types <- c("B", "CD14 Mono", "CD16 Mono", "Proliferating", "NK", "CD4 Memory", "CD8 Memory", "MAIT", "T Naive")
+
 # STEP 1: CREATE CANDIDATE GENE AND PEAK FILES
 
 # a) Cell type candidate genes.txt
@@ -42,7 +44,7 @@ for(cell_type in unique(sc_pseudobulk_deg_combined_cell_types_table$Cell_Type)) 
 }
 
 # b) Cell type candidate peaks.txt
-for(cell_type in unique(sc_das_lenient$Cell_Type)) {
+for(cell_type in atac_cell_types) {
   current_das <- read.table(paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"), sep = "\t",
                                        header = TRUE)
   peak_list <- current_das$Peak_Name
