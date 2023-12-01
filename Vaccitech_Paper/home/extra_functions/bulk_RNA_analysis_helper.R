@@ -520,8 +520,12 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   dist_between_gene_tss_and_peak <- c()
   # FC for circuit gene from SC data (positive or negative?)
   gene_fcs <- c()
-  # FC for circuit site from SC (pseudobulk) data (positive or negative?)
+  # FC for circuit site from SC data (positive or negative?)
   site_fcs <- c()
+  # PCT 1 for circuit site from SC data
+  site_pct_1s <- c()
+  # PCT 2 for circuit site from SC data
+  site_pct_2s <- c()
   # Cell types where a circuit was found with the same gene
   magical_cell_types <- c()
   # Cell types where the gene was found to be a DEG (combined cell types used as input for MAGICAL)
@@ -550,14 +554,13 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     for(current_tf in current_tfs) {
       motif_enrichment_subset_df <- overall_motif_enrichment_df[overall_motif_enrichment_df$motif.name == current_tf,]
       motif_enrichment_subset_df <- motif_enrichment_subset_df[motif_enrichment_subset_df$Cell_Type == cell_type,]
-      motif_enrichment_subset_df$rank <- seq.int(nrow(motif_enrichment_subset_df))
       if(nrow(motif_enrichment_subset_df) > 0) {
         current_motif_info <- paste0(current_tf, ": ")
         current_motif_tf_info <- paste(motif_enrichment_subset_df$Direction, " (Rank ", motif_enrichment_subset_df$rank, ")", sep = "")
         current_motif_tf_info <- paste(current_motif_tf_info, collapse = ",")
         current_motif_info <- paste0(current_motif_info, current_motif_tf_info, ".")
       } else {
-        current_motif_info <- paste0(current_tf, ": N/A.")
+        current_motif_info <- paste0(current_tf, ": N/A. ")
       }
       motif_info <- paste0(motif_info, current_motif_info)
     }
@@ -573,11 +576,16 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     gene_fc <- gene_fc[gene_fc$Cell_Type == cell_type_in_df,]$sc_log2FC
     gene_fcs <- c(gene_fcs, gene_fc)
     # Capture site FC
-    site_fc <- read.table(paste0(sc_das_dir, "diff_peaks/", sub(" ", "_", cell_type), "_D28_D1_diff_pseudo_filtered.tsv"), sep = "\t",
+    site_info <- read.table(paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_sc_filtered_pct_0.01.tsv"), sep = "\t",
                                                       header = TRUE)
-    site_fc <- site_fc[site_fc$chr == current_circuit$Peak_chr & site_fc$start == current_circuit$Peak_start & site_fc$end == current_circuit$Peak_end,]
-    site_fc <- site_fc$log2FoldChange
+    current_peak_name <- paste0(current_circuit$Peak_chr, "-", current_circuit$Peak_start, "-", current_circuit$Peak_end)
+    site_info <- site_info[rownames(site_info) == current_peak_name,]
+    site_fc <- site_info$avg_log2FC
+    site_pct_1 <- site_info$pct.1
+    site_pct_2 <- site_info$pct.2
     site_fcs <- c(site_fcs, site_fc)
+    site_pct_1s <- c(site_pct_1s, site_pct_1)
+    site_pct_2s <- c(site_pct_2s, site_pct_2)
     # Capture cell types from MAGICAL circuits for current gene
     magical_gene_cell_types <- overall_magical_df[overall_magical_df$Gene_symbol == current_gene,]$Cell_Type
     magical_gene_cell_types <- sort(unique(magical_gene_cell_types))
@@ -612,6 +620,8 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   overall_magical_df$dist_between_gene_tss_and_peak <- dist_between_gene_tss_and_peak
   overall_magical_df$gene_fc <- gene_fcs
   overall_magical_df$site_fc <- site_fcs
+  overall_magical_df$site_pct_1 <- site_pct_1s
+  overall_magical_df$site_pct_2 <- site_pct_2s
   overall_magical_df$nearest_gene_to_site <- nearest_gene_to_site
   #overall_magical_df$dist_to_nearest_gene_start <- dist_to_nearest_gene_start
   #overall_magical_df$dist_to_nearest_gene_tss <- dist_to_nearest_gene_tss
@@ -620,7 +630,7 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
   overall_magical_df$magical_cell_types <- magical_cell_types
   overall_magical_df$combined_single_cell_types <- combined_single_cell_types
   overall_magical_df$original_single_cell_types <- original_single_cell_types
-  overall_magical_df$pseudobulk_motif_enrichment_for_tf <- motif_enrichment
+  overall_magical_df$motif_enrichment_for_tf <- motif_enrichment
   return(overall_magical_df)
 }
 
