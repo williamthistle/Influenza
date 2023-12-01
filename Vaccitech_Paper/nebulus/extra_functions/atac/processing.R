@@ -1017,6 +1017,7 @@ create_pseudobulk_counts_atac_seurat <- function(sc_obj) {
 
 # Generate motif tables using Signac
 generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_output_dir) {
+  set.seed(SPEEDI::get_speedi_seed())
   # Declare cell types
   cell_types <- unique(seurat_atac$predicted_celltype_majority_vote)
   Idents(seurat_atac) <- "predicted_celltype_majority_vote"
