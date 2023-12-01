@@ -968,11 +968,11 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
         final_peaks <- intersect(rownames(current_de_with_current_pct), rownames(pseudobulk_analysis_results))
         # Record information about remaining genes in overlapping_peak_de
         for(current_peak in final_peaks) {
-          current_sc_pval_adj <- current_de[rownames(current_de) == current_peak,]$p_val
+          current_sc_pval <- current_de[rownames(current_de) == current_peak,]$p_val
           current_sc_log2FC <- current_de[rownames(current_de) == current_peak,]$avg_log2FC
           current_pseudo_bulk_pval <- pseudobulk_analysis_results[rownames(pseudobulk_analysis_results) == current_peak,]$pvalue
           current_pseudo_bulk_log2FC <- pseudobulk_analysis_results[rownames(pseudobulk_analysis_results) == current_peak,]$log2FoldChange
-          current_row <- data.frame(current_cell_type, current_peak, current_sc_pval_adj, current_sc_log2FC, current_pseudo_bulk_pval, current_pseudo_bulk_log2FC)
+          current_row <- data.frame(current_cell_type, current_peak, current_sc_pval, current_sc_log2FC, current_pseudo_bulk_pval, current_pseudo_bulk_log2FC)
           names(current_row) <- c("Cell_Type", "Peak_Name", "sc_pval", "sc_log2FC", "pseudo_bulk_pval", "pseudo_bulk_log2FC")
           overlapping_peak_de <- rbind(overlapping_peak_de, current_row)
         }
@@ -1103,8 +1103,8 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
             pos_query_feature <- rownames(pos_peaks)
             neg_query_feature <- rownames(neg_peaks)
           } else {
-            pos_query_feature <- pos_peaks$Gene_Name
-            neg_query_feature <- neg_peaks$Gene_Name
+            pos_query_feature <- pos_peaks$Peak_Name
+            neg_query_feature <- neg_peaks$Peak_Name
           }
           
           # Find background peaks for pos and neg peaks
@@ -1147,7 +1147,7 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
                                                         analysis_type, "_pct_", pct_level, "_", fc_subset, "_pos_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
           
           write.table(neg_motifs, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
+                                                analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_mPeak_Nameotifs.tsv"), sep = "\t", quote = FALSE)
           write.table(neg_motifs_with_bg, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                         analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
         }
