@@ -10,10 +10,8 @@ source(paste0(base_dir, "extra_functions/MAGICAL_functions.R"))
 # STEP 0: Set up directories and global files
 cell_type_candidate_gene_dir <- paste0(sc_magical_dir, "Candidate_Genes/")
 if (!dir.exists(cell_type_candidate_gene_dir)) {dir.create(cell_type_candidate_gene_dir, recursive = TRUE)}
-cell_type_candidate_peak_overlap_dir <- paste0(sc_magical_dir, "Candidate_Peaks/Overlap_SC_Pseudo/")
-if (!dir.exists(cell_type_candidate_peak_overlap_dir)) {dir.create(cell_type_candidate_peak_overlap_dir, recursive = TRUE)}
-cell_type_candidate_peak_pseudo_dir <- paste0(sc_magical_dir, "Candidate_Peaks/Pseudo/")
-if (!dir.exists(cell_type_candidate_peak_pseudo_dir)) {dir.create(cell_type_candidate_peak_pseudo_dir, recursive = TRUE)}
+cell_type_candidate_peak_dir <- paste0(sc_magical_dir, "Candidate_Peaks/")
+if (!dir.exists(cell_type_candidate_peak_dir)) {dir.create(cell_type_candidate_peak_dir, recursive = TRUE)}
 cell_type_scATAC_cell_metadata_dir <- paste0(sc_magical_dir, "scATAC_Cell_Metadata/")
 if (!dir.exists(cell_type_scATAC_cell_metadata_dir)) {dir.create(cell_type_scATAC_cell_metadata_dir, recursive = TRUE)}
 cell_type_scRNA_cell_metadata_dir <- paste0(sc_magical_dir, "scRNA_Cell_Metadata/")
@@ -51,10 +49,9 @@ for(cell_type in unique(sc_das_lenient$Cell_Type)) {
   chromosomes <- sapply(strsplit(peak_list, "-"), `[`, 1)
   start_coords <- sapply(strsplit(peak_list, "-"), `[`, 2)
   end_coords <- sapply(strsplit(peak_list, "-"), `[`, 3)
-  
-  current_pseudobulk_das <- current_pseudobulk_das[,c("chr", "start", "end")]
-  write.table(current_pseudobulk_das,
-              file = paste0(cell_type_candidate_peak_pseudo_dir, sub(" ", "_", cell_type), "_Candidate_Peaks.txt"), sep = "\t", quote = FALSE,
+  final_das <- data.frame(chr = chromosomes, start = start_coords, end = end_coords)
+  write.table(final_das,
+              file = paste0(cell_type_candidate_peak_dir, sub(" ", "_", cell_type), "_Candidate_Peaks.txt"), sep = "\t", quote = FALSE,
               row.names = FALSE, col.names = FALSE)
 }
 
@@ -62,7 +59,7 @@ for(cell_type in unique(sc_das_lenient$Cell_Type)) {
 possible_RNA_types <- list.files(path = cell_type_candidate_gene_dir)
 possible_RNA_types <- unlist(strsplit(possible_RNA_types, "_Candidate_Genes.txt"))
 
-possible_ATAC_types <- list.files(path = cell_type_candidate_peak_pseudo_dir)
+possible_ATAC_types <- list.files(path = cell_type_candidate_peak_dir)
 possible_ATAC_types <- unlist(strsplit(possible_ATAC_types, "_Candidate_Peaks.txt"))
 
 cell_types <- intersect(possible_RNA_types, possible_ATAC_types)
@@ -72,7 +69,7 @@ set.seed(get_speedi_seed())
 for(cell_type in cell_types) {
   print(cell_type)
   current_candidate_genes <- paste0(cell_type_candidate_gene_dir, cell_type, "_Candidate_Genes.txt")
-  current_candidate_peaks <- paste0(cell_type_candidate_peak_pseudo_dir, cell_type, "_Candidate_Peaks.txt")
+  current_candidate_peaks <- paste0(cell_type_candidate_peak_dir, cell_type, "_Candidate_Peaks.txt")
   
   current_scRNA_cell_metadata <- paste0(cell_type_scRNA_cell_metadata_dir, cell_type, "_HVL_RNA_cell_metadata.tsv")
   current_scATAC_cell_metadata <- paste0(cell_type_scATAC_cell_metadata_dir, cell_type, "_HVL_ATAC_cell_metadata.tsv")
