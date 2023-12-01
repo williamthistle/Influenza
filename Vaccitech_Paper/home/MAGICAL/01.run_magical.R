@@ -152,7 +152,7 @@ write.table(overall_magical_df,
 # For TFs associated with the current circuit, were any found to be DEGs in the more granular cell types from the original DEG analysis?
 # For TFs associated with the current circuit, were any found to be DEGs in the bulk data?
 # For TFs associated with the current circuit, were any found to be significant in motif enrichment analysis for the scATAC-seq data?
-overall_magical_tf_df <- fill_in_info_for_magical_tf_output(overall_magical_df, overall_pseudobulk_motif_enrichment_df)
+overall_magical_tf_df <- fill_in_info_for_magical_tf_output(overall_magical_df, overall_motif_enrichment_df)
 write.table(overall_magical_tf_df,
             file = paste0(magical_output_dir, "MAGICAL_overall_output_tf.tsv"), sep = "\t", quote = FALSE,
             row.names = FALSE)
