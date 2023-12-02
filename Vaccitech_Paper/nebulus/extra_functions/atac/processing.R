@@ -1070,6 +1070,9 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
             neg_peaks <- neg_peaks[order(neg_peaks$sc_log2FC), ]
           }
           
+          # NEW IDEA: Use sc filtering peaks for motif finding, but use filtered list for circuit discovery
+          pos_peaks <- pos_peaks[pos_peaks$avg_log2FC > 2,]
+          neg_peaks <- neg_peaks[neg_peaks$avg_log2FC < -2,]
           # If we're doing top 1000 peaks or top 500 peaks via FC, then filter it here
           # Skip the analysis if we don't have enough peaks
           if(fc_subset != "all") {
@@ -1140,6 +1143,9 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
             background = neg.peaks.matched
           )
           
+          intersect(head(pos_motifs_with_bg$motif.name, n = 20), head(neg_motifs_with_bg$motif.name, n = 20))
+          nrow(pos_motifs_with_bg[pos_motifs_with_bg$p.adjust < 0.05,])
+          nrow(neg_motifs_with_bg[neg_motifs_with_bg$p.adjust < 0.05,])
           # Write results to file
           write.table(pos_motifs, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                 analysis_type, "_pct_", pct_level, "_", fc_subset, "_pos_motifs.tsv"), sep = "\t", quote = FALSE)
