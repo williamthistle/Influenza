@@ -553,7 +553,7 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     motif_info <- ""
     for(current_tf in current_tfs) {
       motif_enrichment_subset_df <- overall_motif_enrichment_df[overall_motif_enrichment_df$motif.name == current_tf,]
-      motif_enrichment_subset_df <- motif_enrichment_subset_df[motif_enrichment_subset_df$Cell_Type == cell_type,]
+      motif_enrichment_subset_df <- motif_enrichment_subset_df[motif_enrichment_subset_df$Cell_Type == cell_type_in_df,]
       if(nrow(motif_enrichment_subset_df) > 0) {
         current_motif_info <- paste0(current_tf, ": ")
         current_motif_tf_info <- paste(motif_enrichment_subset_df$Direction, " (Rank ", motif_enrichment_subset_df$rank, ")", sep = "")
@@ -847,4 +847,34 @@ grab_deg_info_for_sc_gene <- function(current_gene, cell_types, current_deseq2_r
   return(data.frame(Gene = paste0(cell_types, " ", current_gene), Day = current_day, Fold.Change.Abs = fold.change.abs, 
                          Fold.Change.Direction.Raw = fold.change.direction.raw, Fold.Change.Direction = fold.change.direction, 
                          Adjusted.P.Value = adjusted.p.value))
+}
+
+# Reads motif table (necessary now because file names include total peak counts)
+read_motif_table <- function(current_dir, analysis_type, pct, fc_threshold, direction) {
+  # List files in the directory
+  files <- list.files(current_dir)
+  
+  # Define the tokens you want to match
+  pct <- paste0("_", pct, "_")
+  if(direction == "pos") {
+    fc_threshold <- paste0("_", fc_threshold, "_")
+  } else {
+    fc_threshold <- paste0("_-", fc_threshold, "_")
+  }
+
+  direction <- paste0("_", direction, "_")
+  tokens <- c(analysis_type, pct, fc_threshold, direction)
+  
+  # Function to check if a file contains all tokens
+  check_all_tokens <- function(file, tokens) {
+    all(sapply(tokens, function(token) grepl(token, file)))
+  }
+
+
+  # Filter files that contain all tokens
+  matching_file <- files[ sapply(files, check_all_tokens, tokens) ]
+  
+  # Read in table
+  matching_file <- read.table(paste0(current_dir, matching_file), sep = "\t", header = TRUE)
+  return(matching_file)
 }

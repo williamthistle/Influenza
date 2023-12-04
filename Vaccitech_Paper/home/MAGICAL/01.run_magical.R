@@ -111,20 +111,26 @@ for(cell_type in rest_of_cell_types) {
 overall_magical_df <- overall_magical_df[,c(9,1,2,3,4,5,6,7,8)]
 
 # Create overall motif enrichment table
-cell_type <- cell_types[1]
-overall_motif_enrichment_df <- read.table(paste0(sc_das_dir, "motif_enrichment/", cell_type, "/overlapping_peak/0.01/D28-vs-D_minus_1-degs-", cell_type, "-overlapping_peak_pct_0.01_all_pos_motifs_with_bg.tsv"), sep = "\t", header = TRUE)
+fc_0.1_motif_cell_types <- c("B")
+fc_0.585_motif_cell_types <- c("CD4 Memory", "CD8 Memory")
+fc_1_motif_cell_types <- c("CD14 Mono", "CD16 Mono", "T Naive", "NK")
+# not parsing MAIT or Proliferating because everything is significant 
+
+cell_type <- fc_0.1_motif_cell_types[1]
+overall_motif_enrichment_df <- read_motif_table(current_dir = paste0(sc_das_dir, "motif_enrichment/", sub(" ", "_", cell_type), "/sc_filtered/0.01/with_bg/"), analysis_type = "sc_filtered", pct = 0.01, fc_threshold = 0.1, direction = "pos")
 overall_motif_enrichment_df$Cell_Type <- cell_type
 overall_motif_enrichment_df$Direction <- "Up"
 overall_motif_enrichment_df$rank <- seq.int(nrow(overall_motif_enrichment_df))
-current_motif_enrichment_df <- read.table(paste0(sc_das_dir, "motif_enrichment/", cell_type, "/overlapping_peak/0.01/D28-vs-D_minus_1-degs-", cell_type, "-overlapping_peak_pct_0.01_all_neg_motifs_with_bg.tsv"), sep = "\t", header = TRUE)
+current_motif_enrichment_df <- read_motif_table(current_dir = paste0(sc_das_dir, "motif_enrichment/", sub(" ", "_", cell_type), "/sc_filtered/0.01/with_bg/"), analysis_type = "sc_filtered", pct = 0.01, fc_threshold = 0.1, direction = "neg")
 current_motif_enrichment_df$Cell_Type <- cell_type
 current_motif_enrichment_df$Direction <- "Down"
 current_motif_enrichment_df$rank <- seq.int(nrow(current_motif_enrichment_df))
 overall_motif_enrichment_df <- rbind(overall_motif_enrichment_df, current_motif_enrichment_df)
-rest_of_cell_types <- cell_types[c(-1)]
-for(cell_type in rest_of_cell_types) {
+
+
+for(cell_type in fc_0.585_motif_cell_types) {
   for(direction in c("pos", "neg")) {
-    current_motif_enrichment_df <- read.table(paste0(sc_das_dir, "motif_enrichment/", cell_type, "/overlapping_peak/0.01/D28-vs-D_minus_1-degs-", cell_type, "-overlapping_peak_pct_0.01_all_", direction, "_motifs_with_bg.tsv"), sep = "\t", header = TRUE)
+    current_motif_enrichment_df <- read_motif_table(current_dir = paste0(sc_das_dir, "motif_enrichment/", sub(" ", "_", cell_type), "/sc_filtered/0.01/with_bg/"), analysis_type = "sc_filtered", pct = 0.01, fc_threshold = 0.585, direction = direction)
     current_motif_enrichment_df$Cell_Type <- cell_type
     if(direction == "pos") {
       current_motif_enrichment_df$Direction <- "Up"
@@ -135,6 +141,21 @@ for(cell_type in rest_of_cell_types) {
     overall_motif_enrichment_df <- rbind(overall_motif_enrichment_df, current_motif_enrichment_df)
   }
 }
+
+for(cell_type in fc_1_motif_cell_types) {
+  for(direction in c("pos", "neg")) {
+    current_motif_enrichment_df <- read_motif_table(current_dir = paste0(sc_das_dir, "motif_enrichment/", sub(" ", "_", cell_type), "/sc_filtered/0.01/with_bg/"), analysis_type = "sc_filtered", pct = 0.01, fc_threshold = 1, direction = direction)
+    current_motif_enrichment_df$Cell_Type <- cell_type
+    if(direction == "pos") {
+      current_motif_enrichment_df$Direction <- "Up"
+    } else {
+      current_motif_enrichment_df$Direction <- "Down"
+    }
+    current_motif_enrichment_df$rank <- seq.int(nrow(current_motif_enrichment_df))
+    overall_motif_enrichment_df <- rbind(overall_motif_enrichment_df, current_motif_enrichment_df)
+  }
+}
+
 overall_motif_enrichment_df <- overall_motif_enrichment_df[overall_motif_enrichment_df$p.adjust < 0.05,]
 
 overall_motif_enrichment_df <- overall_motif_enrichment_df[,c(10,11,8,6,7,9,12)]
