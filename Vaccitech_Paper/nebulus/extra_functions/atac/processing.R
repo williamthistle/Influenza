@@ -1042,13 +1042,17 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
     # Tested pct levels include 0.01, 0.03, 0.05
     pct_levels <- c("0.01", "0.03", "0.05")
     # Take subset of peaks based on fold change
-    fc_subsets <- c("all", "top_1000", "top_500")
+    fc_subsets <- c(0, 1, 2)
     for(analysis_type in analysis_types) {
       analysis_type_dir <- paste0(cell_type_dir, analysis_type, "/")
       if (!dir.exists(analysis_type_dir)) {dir.create(analysis_type_dir, recursive = TRUE)}
       for(pct_level in pct_levels) {
         pct_level_dir <- paste0(analysis_type_dir, pct_level, "/")
         if (!dir.exists(pct_level_dir)) {dir.create(pct_level_dir, recursive = TRUE)}
+        no_bg_dir <- paste0(pct_level_dir, "without_bg", "/")
+        if (!dir.exists(no_bg_dir)) {dir.create(no_bg_dir, recursive = TRUE)}
+        bg_dir <- paste0(pct_level_dir, "with_bg", "/")
+        if (!dir.exists(bg_dir)) {dir.create(bg_dir, recursive = TRUE)}
         for(fc_subset in fc_subsets) {
           # Read in pos and neg peaks
           pos_peaks <- read.table(paste0(motif_input_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_",
@@ -1057,105 +1061,89 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
           neg_peaks <- read.table(paste0(motif_input_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_",
                                          analysis_type, "_pct_", pct_level, "_neg.tsv"), 
                                   sep = "\t", header = TRUE)
-          
-          # Because I made an error, those files which were supposed to be filtered for 0.03 / 0.05 are not, so we do that here
-          # Also, order peaks by fold change
+          # Take subset of peaks based on fold change for sc_filtered
           if(analysis_type == "sc_filtered") {
-            pos_peaks <- pos_peaks[pos_peaks$pct.1 >= pct_level | pos_peaks$pct.2 >= pct_level,]
-            neg_peaks <- neg_peaks[neg_peaks$pct.1 >= pct_level | neg_peaks$pct.2 >= pct_level,]
-            pos_peaks <- pos_peaks[order(pos_peaks$avg_log2FC, decreasing = TRUE), ]
-            neg_peaks <- neg_peaks[order(neg_peaks$avg_log2FC), ]
-          } else {
-            pos_peaks <- pos_peaks[order(pos_peaks$sc_log2FC, decreasing = TRUE), ]
-            neg_peaks <- neg_peaks[order(neg_peaks$sc_log2FC), ]
+            pos_peaks <- pos_peaks[pos_peaks$avg_log2FC > fc_subset,]
+            neg_peaks <- neg_peaks[neg_peaks$avg_log2FC < -fc_subset,]
           }
           
-          # NEW IDEA: Use sc filtering peaks for motif finding, but use filtered list for circuit discovery
-          pos_peaks <- pos_peaks[pos_peaks$avg_log2FC > 2,]
-          neg_peaks <- neg_peaks[neg_peaks$avg_log2FC < -2,]
-          # If we're doing top 1000 peaks or top 500 peaks via FC, then filter it here
-          # Skip the analysis if we don't have enough peaks
-          if(fc_subset != "all") {
-            if(fc_subset == "top_1000") {
-              if(nrow(pos_peaks) >= 1000) {
-                pos_peaks <- pos_peaks[1:1000, ]
-              } else {
-                next
-              }
-              if(nrow(neg_peaks) >= 1000) {
-                neg_peaks <- neg_peaks[1:1000, ]
-              } else {
-                next
-              }
+          # If we have no positive peaks, don't proceed with pos analysis
+          if(nrow(pos_peaks) > 0) {
+            total_pos_peaks <- nrow(pos_peaks)
+            # Grab peak names 
+            if(analysis_type == "sc_filtered") {
+              pos_query_feature <- rownames(pos_peaks)
             } else {
-              if(nrow(pos_peaks) >= 500) {
-                pos_peaks <- pos_peaks[1:500, ]
-              } else {
-                next
-              }
-              if(nrow(neg_peaks) >= 500) {
-                neg_peaks <- neg_peaks[1:500, ]
-              } else {
-                next
-              }
+              pos_query_feature <- pos_peaks$Peak_Name
+            }
+            # Find background peaks for pos and neg peaks
+            pos.peaks.matched <- MatchRegionStats(
+              meta.feature = meta.feature[open.peaks, ],
+              query.feature = meta.feature[pos_query_feature, ],
+              n = 40000
+            )
+            # Find motifs (pos, pos with bg, neg, neg with bg)
+            pos_motifs <- FindMotifs(
+              object = cells_subset,
+              features = pos_query_feature
+            )
+            pos_motifs_with_bg <- FindMotifs(
+              object = cells_subset,
+              features = pos_query_feature,
+              background = pos.peaks.matched
+            )
+            if(analysis_type == "sc_filtered") {
+              write.table(pos_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                    analysis_type, "_pct_", pct_level, "_FC_", fc_subset, "_total_peaks_", total_pos_peaks, "_pos_motifs.tsv"), sep = "\t", quote = FALSE)
+              write.table(pos_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                            analysis_type, "_pct_", pct_level, "_FC_", fc_subset, "_total_peaks_", total_pos_peaks, "_pos_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
+            } else {
+              write.table(pos_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                    analysis_type, "_pct_", pct_level, "_total_peaks_", total_pos_peaks, "_pos_motifs.tsv"), sep = "\t", quote = FALSE)
+              write.table(pos_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                            analysis_type, "_pct_", pct_level, "_total_peaks_", total_pos_peaks, "_pos_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
+            }
+          } 
+          
+          # If we have no negative peaks, don't proceed with neg analysis
+          if(nrow(neg_peaks) > 0) {
+            total_neg_peaks <- nrow(neg_peaks)
+            # Grab peak names 
+            if(analysis_type == "sc_filtered") {
+              neg_query_feature <- rownames(neg_peaks)
+            } else {
+              neg_query_feature <- neg_peaks$Peak_Name
+            }
+            neg.peaks.matched <- MatchRegionStats(
+              meta.feature = meta.feature[open.peaks, ],
+              query.feature = meta.feature[neg_query_feature, ],
+              n = 40000
+            )
+            neg_motifs <- FindMotifs(
+              object = cells_subset,
+              features = neg_query_feature
+            )
+            neg_motifs_with_bg <- FindMotifs(
+              object = cells_subset,
+              features = neg_query_feature,
+              background = neg.peaks.matched
+            )
+            if(analysis_type == "sc_filtered") {
+              negative_FC_subset <- -fc_subset
+              write.table(neg_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                    analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
+              write.table(neg_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                            analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
+            } else {
+              write.table(neg_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                    analysis_type, "_pct_", pct_level, "_total_peaks_", total_neg_peaks, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
+              write.table(neg_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                            analysis_type, "_pct_", pct_level, "_total_peaks_", total_neg_peaks, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
             }
           }
-         
-          # Grab peak names 
-          if(analysis_type == "sc_filtered") {
-            pos_query_feature <- rownames(pos_peaks)
-            neg_query_feature <- rownames(neg_peaks)
-          } else {
-            pos_query_feature <- pos_peaks$Peak_Name
-            neg_query_feature <- neg_peaks$Peak_Name
-          }
-          
-          # Find background peaks for pos and neg peaks
-          pos.peaks.matched <- MatchRegionStats(
-            meta.feature = meta.feature[open.peaks, ],
-            query.feature = meta.feature[pos_query_feature, ],
-            n = 40000
-          )
-          neg.peaks.matched <- MatchRegionStats(
-            meta.feature = meta.feature[open.peaks, ],
-            query.feature = meta.feature[neg_query_feature, ],
-            n = 40000
-          )
-          
-          # Find motifs (pos, pos with bg, neg, neg with bg)
-          pos_motifs <- FindMotifs(
-            object = cells_subset,
-            features = pos_query_feature
-          )
-          pos_motifs_with_bg <- FindMotifs(
-            object = cells_subset,
-            features = pos_query_feature,
-            background = pos.peaks.matched
-          )
-          
-          neg_motifs <- FindMotifs(
-            object = cells_subset,
-            features = neg_query_feature
-          )
-          neg_motifs_with_bg <- FindMotifs(
-            object = cells_subset,
-            features = neg_query_feature,
-            background = neg.peaks.matched
-          )
-          
-          intersect(head(pos_motifs_with_bg$motif.name, n = 20), head(neg_motifs_with_bg$motif.name, n = 20))
-          nrow(pos_motifs_with_bg[pos_motifs_with_bg$p.adjust < 0.05,])
-          nrow(neg_motifs_with_bg[neg_motifs_with_bg$p.adjust < 0.05,])
-          # Write results to file
-          write.table(pos_motifs, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                analysis_type, "_pct_", pct_level, "_", fc_subset, "_pos_motifs.tsv"), sep = "\t", quote = FALSE)
-          write.table(pos_motifs_with_bg, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                        analysis_type, "_pct_", pct_level, "_", fc_subset, "_pos_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
-          
-          write.table(neg_motifs, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
-          write.table(neg_motifs_with_bg, file = paste0(pct_level_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                        analysis_type, "_pct_", pct_level, "_", fc_subset, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
+          #intersect(head(pos_motifs_with_bg$motif.name, n = 20), head(neg_motifs_with_bg$motif.name, n = 20))
+          #nrow(pos_motifs_with_bg[pos_motifs_with_bg$p.adjust < 0.05,])
+          #nrow(neg_motifs_with_bg[neg_motifs_with_bg$p.adjust < 0.05,])
         }
       }
     }
