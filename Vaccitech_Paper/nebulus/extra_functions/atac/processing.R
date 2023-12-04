@@ -1042,7 +1042,7 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
     # Tested pct levels include 0.01, 0.03, 0.05
     pct_levels <- c("0.01", "0.03", "0.05")
     # Take subset of peaks based on fold change
-    fc_subsets <- c(0, 1, 2)
+    fc_subsets <- c(0.1, 0.3, 0.585, 1, 2)
     for(analysis_type in analysis_types) {
       analysis_type_dir <- paste0(cell_type_dir, analysis_type, "/")
       if (!dir.exists(analysis_type_dir)) {dir.create(analysis_type_dir, recursive = TRUE)}
@@ -1061,10 +1061,14 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
           neg_peaks <- read.table(paste0(motif_input_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_",
                                          analysis_type, "_pct_", pct_level, "_neg.tsv"), 
                                   sep = "\t", header = TRUE)
-          # Take subset of peaks based on fold change for sc_filtered
+          # Take subset of peaks based on fold change
+          # Note that we filter FC based on single cell FC, not DESeq2 FC!
           if(analysis_type == "sc_filtered") {
-            pos_peaks <- pos_peaks[pos_peaks$avg_log2FC > fc_subset,]
-            neg_peaks <- neg_peaks[neg_peaks$avg_log2FC < -fc_subset,]
+            pos_peaks <- pos_peaks[pos_peaks$avg_log2FC >= fc_subset,]
+            neg_peaks <- neg_peaks[neg_peaks$avg_log2FC <= -fc_subset,]
+          } else {
+            pos_peaks <- pos_peaks[pos_peaks$sc_log2FC >= fc_subset,]
+            neg_peaks <- neg_peaks[neg_peaks$sc_log2FC <= -fc_subset,]
           }
           
           # If we have no positive peaks, don't proceed with pos analysis
@@ -1092,17 +1096,10 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
               features = pos_query_feature,
               background = pos.peaks.matched
             )
-            if(analysis_type == "sc_filtered") {
-              write.table(pos_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+            write.table(pos_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                     analysis_type, "_pct_", pct_level, "_FC_", fc_subset, "_total_peaks_", total_pos_peaks, "_pos_motifs.tsv"), sep = "\t", quote = FALSE)
-              write.table(pos_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+            write.table(pos_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                             analysis_type, "_pct_", pct_level, "_FC_", fc_subset, "_total_peaks_", total_pos_peaks, "_pos_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
-            } else {
-              write.table(pos_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                    analysis_type, "_pct_", pct_level, "_total_peaks_", total_pos_peaks, "_pos_motifs.tsv"), sep = "\t", quote = FALSE)
-              write.table(pos_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                            analysis_type, "_pct_", pct_level, "_total_peaks_", total_pos_peaks, "_pos_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
-            }
           } 
           
           # If we have no negative peaks, don't proceed with neg analysis
@@ -1134,11 +1131,6 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
                                                     analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
               write.table(neg_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                             analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
-            } else {
-              write.table(neg_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                    analysis_type, "_pct_", pct_level, "_total_peaks_", total_neg_peaks, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
-              write.table(neg_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                            analysis_type, "_pct_", pct_level, "_total_peaks_", total_neg_peaks, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
             }
           }
           #intersect(head(pos_motifs_with_bg$motif.name, n = 20), head(neg_motifs_with_bg$motif.name, n = 20))
