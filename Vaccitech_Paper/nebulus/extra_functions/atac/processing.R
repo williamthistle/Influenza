@@ -1130,9 +1130,6 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
             write.table(neg_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
                                                           analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
           }
-          #intersect(head(pos_motifs_with_bg$motif.name, n = 20), head(neg_motifs_with_bg$motif.name, n = 20))
-          #nrow(pos_motifs_with_bg[pos_motifs_with_bg$p.adjust < 0.05,])
-          #nrow(neg_motifs_with_bg[neg_motifs_with_bg$p.adjust < 0.05,])
         }
       }
     }
