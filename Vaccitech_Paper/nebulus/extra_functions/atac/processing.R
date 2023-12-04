@@ -1070,7 +1070,6 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
             pos_peaks <- pos_peaks[pos_peaks$sc_log2FC >= fc_subset,]
             neg_peaks <- neg_peaks[neg_peaks$sc_log2FC <= -fc_subset,]
           }
-          
           # If we have no positive peaks, don't proceed with pos analysis
           if(nrow(pos_peaks) > 0) {
             total_pos_peaks <- nrow(pos_peaks)
@@ -1125,13 +1124,11 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
               features = neg_query_feature,
               background = neg.peaks.matched
             )
-            if(analysis_type == "sc_filtered") {
-              negative_FC_subset <- -fc_subset
-              write.table(neg_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                    analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
-              write.table(neg_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
-                                                            analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
-            }
+            negative_FC_subset <- -fc_subset
+            write.table(neg_motifs, file = paste0(no_bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                  analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs.tsv"), sep = "\t", quote = FALSE)
+            write.table(neg_motifs_with_bg, file = paste0(bg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-",
+                                                          analysis_type, "_pct_", pct_level, "_FC_", negative_FC_subset, "_total_peaks_", total_neg_peaks, "_neg_motifs_with_bg.tsv"), sep = "\t", quote = FALSE)
           }
           #intersect(head(pos_motifs_with_bg$motif.name, n = 20), head(neg_motifs_with_bg$motif.name, n = 20))
           #nrow(pos_motifs_with_bg[pos_motifs_with_bg$p.adjust < 0.05,])
