@@ -46,6 +46,7 @@ for(cell_type in cell_types) {
   index <- index + 2
 }
 
+# NOTE: I may want to do logFC < -1 for negative to get better signal. 
 snATAC_nearest_gene_FMD_results <- run_fmd_on_snATAC(snATAC_peaks_for_hb_files)
 
 
