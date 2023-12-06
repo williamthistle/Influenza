@@ -76,9 +76,8 @@ snATAC_nearest_gene_FMD_results <- run_fmd_on_snATAC(snATAC_peaks_for_hb_files)
 
 
 
-
-
-### USING SAME PEAKS AS MOTIF - MAYBE JUST DO OVERLAPPING PEAKS?
+# Alternative strategy: using same peaks as motif discovery
+# I think it's worse
 # CD4 Memory
 
 names(snATAC_peaks_for_hb_files)[[1]] <- "CD4_Memory_Negative"
@@ -129,7 +128,10 @@ snATAC_peaks_for_hb_files[[11]] <- snATAC_get_list_of_closest_genes(file_path = 
 names(snATAC_peaks_for_hb_files)[[11]] <- "B_Positive"
 
 
-
+# I can also do liftover for mintchip and then compare overlap between mintchip markers and my peaks
+# I can also look at overlap between closest genes and genes associated with specific markers
+# For example, are we seeing a lot of one or two types of markers in CD14 Mono?
+# I guess I could also do innate immune system and adaptive, but I'll delay that for now
 
 
 
