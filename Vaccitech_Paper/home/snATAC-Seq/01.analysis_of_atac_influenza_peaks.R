@@ -2,6 +2,152 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+snATAC_get_list_of_closest_genes <- function(file_path, sc_peaks) {
+  current_peaks <- read.table(file_path, sep = "\t", header = TRUE)
+  current_peaks <- current_peaks$Peak_Name
+  chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
+  start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
+  end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
+  current_peaks_coords <- data.frame(value = chromosomes, start = start_coords, end = end_coords)
+  closest_genes <- dplyr::inner_join(sc_peaks, current_peaks_coords, by = c("value", "start", "end"))
+  return(closest_genes$nearestGene)
+}
+
+run_fmd_on_snATAC <- function(snATAC_list) {
+  fmd_results <- list()
+  index <- 1
+  for(current_nearest_gene_list in snATAC_list) {
+    if(length(current_nearest_gene_list) > 1 && length(current_nearest_gene_list) < 2000) {
+      current_fmd_result <- SPEEDI::RunFMD_RNA(current_nearest_gene_list, "blood")
+    } else { 
+      current_fmd_result <- "EMPTY OR OVER 2000 PEAKS (TOO MANY)"
+    }
+    fmd_results[[index]] <- current_fmd_result
+    index <- index + 1
+  }
+  return(fmd_results)
+}
+
+# Read in relevant peaks
+snATAC_peaks_for_hb_files <- list()
+
+# Use overlapping peaks
+cell_types <- c("B", "CD4_Memory", "CD8_Memory", "CD14_Mono", "CD16_Mono", "MAIT", "NK", "Proliferating", "T_Naive")
+index <- 1
+for(cell_type in cell_types) {
+  snATAC_peaks_for_hb_files[[index]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                        "diff_peaks/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv"),
+                                                                     sc_peaks = sc_peaks)
+  names(snATAC_peaks_for_hb_files)[[index]] <- paste0(cell_type, "_neg")
+  snATAC_peaks_for_hb_files[[index + 1]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                            "diff_peaks/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv"),
+                                                                         sc_peaks = sc_peaks)
+  names(snATAC_peaks_for_hb_files)[[index + 1]] <- paste0(cell_type, "_pos")
+  index <- index + 2
+}
+
+snATAC_nearest_gene_FMD_results <- run_fmd_on_snATAC(snATAC_peaks_for_hb_files)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### USING SAME PEAKS AS MOTIF - MAYBE JUST DO OVERLAPPING PEAKS?
+# CD4 Memory
+
+names(snATAC_peaks_for_hb_files)[[1]] <- "CD4_Memory_Negative"
+# CD8 Memory
+snATAC_peaks_for_hb_files[[2]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-CD8_Memory-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_neg.tsv"),
+                                                                   logFC = -0.585, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[2]] <- "CD8_Memory_Negative"
+snATAC_peaks_for_hb_files[[3]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-CD8_Memory-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_pos.tsv"),
+                                                                   logFC = 0.585, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[3]] <- "CD8_Memory_Positive"
+# CD14 Mono
+snATAC_peaks_for_hb_files[[4]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-CD14_Mono-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_neg.tsv"),
+                                                                   logFC = -1, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[4]] <- "CD14_Mono_Negative"
+snATAC_peaks_for_hb_files[[5]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-CD14_Mono-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_pos.tsv"),
+                                                                   logFC = 1, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[5]] <- "CD14_Mono_Positive"
+# CD16 Mono
+snATAC_peaks_for_hb_files[[6]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-CD16_Mono-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_neg.tsv"),
+                                                                   logFC = -1, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[6]] <- "CD16_Mono_Negative"
+snATAC_peaks_for_hb_files[[7]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-CD16_Mono-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_pos.tsv"),
+                                                                   logFC = 1, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[7]] <- "CD16_Mono_Positive"
+# T Naive
+snATAC_peaks_for_hb_files[[8]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-T_Naive-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_neg.tsv"),
+                                                                   logFC = -1, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[8]] <- "T_Naive_Negative"
+snATAC_peaks_for_hb_files[[9]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-T_Naive-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_pos.tsv"),
+                                                                   logFC = 1, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[9]] <- "T_Naive_Positive"
+# T Naive
+snATAC_peaks_for_hb_files[[10]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-B-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_neg.tsv"),
+                                                                   logFC = -0.1, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[10]] <- "B_Negative"
+snATAC_peaks_for_hb_files[[11]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
+                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-B-time_point-controlling_for_subject_id_sc_filtered_pct_0.01_pos.tsv"),
+                                                                   logFC = 0.1, sc_peaks = sc_peaks)
+names(snATAC_peaks_for_hb_files)[[11]] <- "B_Positive"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Subset sc_peaks to only have the lenient DAS
 colnames(sc_peaks)[colnames(sc_peaks) == "value"] <- "chr"
 sc_peaks_lenient_subset <- merge(sc_peaks, sc_das_lenient, by = c("chr", "idx"))
@@ -37,29 +183,6 @@ for(current_chr in unique(sc_peaks_lenient_subset_extended$chr)) {
     colnames(overlap_ranges) <- c("chr", "Cell_Type", "ATAC_peaks_start", "ATAC_peaks_end", "mintchip_peaks_start", "mintchip_peaks_end")
   }
 }
-
-# Find associated motifs with peaks - we use sc_motif_lenient_subset (all pseudobulk passing peaks as opposed to ALL peaks)
-# In motif file, chromosome is written like "10" versus "chr10"
-current_chr <- substr(overlap_ranges$chr, 4, 6)
-current_peak_start <- as.numeric(overlap_ranges$ATAC_peaks_start) + 250
-current_peak_end <- as.numeric(overlap_ranges$ATAC_peaks_end) - 250
-associated_motifs <- sc_motifs[sc_motifs$chr %in% current_chr & sc_motifs$point1 %in% current_peak_start & sc_motifs$point2 %in% current_peak_end,]
-zero_columns <- colSums(associated_motifs) == 0
-associated_motifs <- associated_motifs[, !zero_columns]
-
-associated_motif_counts <- colSums(associated_motifs)[4:ncol(associated_motifs)]
-total_motif_counts <- colSums(sc_motif_lenient_subset)[4:ncol(sc_motif_lenient_subset)]
-
-# Within overlapping peaks
-enriched_motif_p_values <- c()
-for(current_motif in colnames(associated_motifs)[4:ncol(associated_motifs)]) {
-  current_motif_associated <- associated_motif_counts[names(associated_motif_counts) == current_motif]
-  current_motif_total <- total_motif_counts[names(total_motif_counts) == current_motif]
-  p_value <- phyper(current_motif_associated - 1, current_motif_total, nrow(sc_motif_lenient_subset) - current_motif_total, nrow(associated_motifs), lower.tail = FALSE)
-  enriched_motif_p_values <- c(enriched_motif_p_values, p_value)
-}
-
-enriched_motif_p_values <- sort(enriched_motif_p_values)
 
 # OVERLAPPING GENES
 mintchip_validated_genes <- sc_peaks_lenient_subset[sc_peaks_lenient_subset$nearestGene %in% mintchip_table$SYMBOL,]
