@@ -129,7 +129,7 @@ names(snATAC_peaks_for_hb_files)[[11]] <- "B_Positive"
 
 
 # I can also do liftover for mintchip and then compare overlap between mintchip markers and my peaks
-# I can also look at overlap between closest genes and genes associated with specific markers
+# I can also look at overlap between closest genes and genes associataed with specific markers
 # For example, are we seeing a lot of one or two types of markers in CD14 Mono?
 # I guess I could also do innate immune system and adaptive, but I'll delay that for now
 
