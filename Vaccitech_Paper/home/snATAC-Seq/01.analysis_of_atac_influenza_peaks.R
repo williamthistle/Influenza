@@ -49,6 +49,10 @@ for(cell_type in cell_types) {
 # NOTE: I may want to do logFC < -1 for negative to get better signal. 
 snATAC_nearest_gene_FMD_results <- run_fmd_on_snATAC(snATAC_peaks_for_hb_files)
 
+# saveRDS(snATAC_nearest_gene_FMD_results, file = paste0(sc_das_dir, "snATAC_nearest_gene_FMD_results.rds"))
+# snATAC_nearest_gene_FMD_results <- readRDS(file = paste0(sc_das_dir, "snATAC_nearest_gene_FMD_results.rds"))
+
+snATAC_nearest_gene_FMD_results
 
 
 
