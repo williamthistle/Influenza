@@ -9,6 +9,7 @@ library(ChIPseeker)
 library(DiffBind)
 library(SPEEDI)
 library(pheatmap)
+library(dplyr)
 
 # Load bulk RNA-seq analysis results
 onedrive_dir <- "~"
@@ -54,10 +55,12 @@ sc_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snATAC-Seq/Results/
 mintchip_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/")
 mintchip_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/differentially_accessible_sites/")
 homer_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/HOMER/")
+snME_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMethylation/Data/")
 miRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Data/")
 miRNA_metadata_dir <-paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Metadata/")
 totalRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Data/")
 totalRNA_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Metadata/")
+
 
 # Read in Mint-ChIP metadata
 mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
@@ -78,6 +81,9 @@ rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"),
 sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
 sc_motifs <- read.table(paste0(sc_das_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
 atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_ATAC_cell_metadata.tsv"), sep = "\t", comment.char = "")
+
+# snME related tables
+snME_dms <- read.table(paste0(snME_data_dir, "snME_dms_processed.tsv"), sep = "\t", header = TRUE)
 
 # miRNA tables
 miRNA_raw_counts <- read.table(paste0(miRNA_data_dir, "miRNA_raw_counts.csv"), sep =",", header = TRUE)
