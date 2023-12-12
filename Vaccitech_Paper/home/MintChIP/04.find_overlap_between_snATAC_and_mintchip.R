@@ -8,7 +8,7 @@ check_overlap <- function(start1, end1, start2, end2) {
   return(overlap)
 }
 
-find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak_file_path, pos_peak_file_path, marker, mintchip_file_path, mintchip_hg38_file_path, lenient = FALSE) {
+find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak_file_path, pos_peak_file_path, mintchip_markers, lenient = FALSE) {
   # Grab positive DAS and negative snaTAC DAS
   pos_peak_table <- read.table(pos_peak_file_path, sep = "\t", header = TRUE)
   neg_peak_table <- read.table(neg_peak_file_path, sep = "\t", header = TRUE)
@@ -30,126 +30,122 @@ find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak
   neg_peak_table$start <- neg_start_coords
   neg_peak_table$end <- neg_end_coords
   
-  # Grab mintchip DAS
-  mintchip_table <- read.table(mintchip_file_path, sep = "\t", header = TRUE)
-  mintchip_table_for_hg38_coordinates <- read.table(mintchip_hg38_file_path, sep = "\t", header = TRUE)
-  hg38_start <- c()
-  hg38_end <- c()
-  for(current_row_num in 1:nrow(mintchip_table)) {
-    current_mintchip_row <- mintchip_table[current_row_num,]
-    matching_hg38_mintchip_row <- mintchip_table_for_hg38_coordinates[mintchip_table_for_hg38_coordinates$seqnames == current_mintchip_row$seqnames
-                                                                      & mintchip_table_for_hg38_coordinates$start == current_mintchip_row$start
-                                                                      & mintchip_table_for_hg38_coordinates$end == current_mintchip_row$end,]
-    if(nrow(matching_hg38_mintchip_row) > 0) {
-      components <- unlist(strsplit(matching_hg38_mintchip_row$hg38_coordinates, "[:-]"))
-      hg38_start <- c(hg38_start, components[2])
-      hg38_end <- c(hg38_end, components[3])
-    } else {
-      hg38_start <- c(hg38_start, "REMOVE")
-      hg38_end <- c(hg38_end, "REMOVE")
-    }
-  }
-  mintchip_table$hg38_start <- hg38_start
-  mintchip_table$hg38_end <- hg38_end
-  mintchip_table <- subset(mintchip_table, !grepl("REMOVE", hg38_start))
-  mintchip_table$hg38_start <- as.numeric(mintchip_table$hg38_start)
-  mintchip_table$hg38_end <- as.numeric(mintchip_table$hg38_end)
-  
-  
-  #pos_mintchip_table <- mintchip_table[mintchip_table$Fold > 0,]
-  #neg_mintchip_table <- mintchip_table[mintchip_table$Fold < 0,]
-  
   # Expand peaks (double length) if lenient is TRUE
   if(lenient) {
     pos_peak_table$start <- pos_peak_table$start - 250
     pos_peak_table$end <- pos_peak_table$end + 250
     neg_peak_table$start <- neg_peak_table$start - 250
     neg_peak_table$end <- neg_peak_table$end + 250
-    
-    mintchip_table$hg38_start <- mintchip_table$hg38_start - 200
-    mintchip_table$hg38_end <- mintchip_table$hg38_end + 200
-    # pos_mintchip_table$hg38_start <- pos_mintchip_table$hg38_start - 200
-    # pos_mintchip_table$hg38_end <- pos_mintchip_table$hg38_end + 200
-    # neg_mintchip_table$hg38_start <- neg_mintchip_table$hg38_start - 200
-    # neg_mintchip_table$hg38_end <- neg_mintchip_table$hg38_end + 200
   }
   
   filtered_rows <- list()
-  print("Positive peaks")
-  positive_overlap_indices <- list()
-  for(chr in unique(pos_peak_table$seqnames)) {
-    print(chr)
-    pos_peak_table_chr_subset <- pos_peak_table[pos_peak_table$seqnames == chr,]
-    mintchip_table_chr_subset <- mintchip_table[mintchip_table$seqnames == chr,]
-    for (i in 1:nrow(mintchip_table_chr_subset)) {
-      overlap <- check_overlap(mintchip_table_chr_subset$hg38_start[i], mintchip_table_chr_subset$hg38_end[i], pos_peak_table_chr_subset$start, pos_peak_table_chr_subset$end)
-      if (any(overlap)) {
-        print(overlap)
-        positive_overlap_indices[[i]] <- which(overlap)
+  # Traverse markers one at a time
+  for(marker in mintchip_markers) {
+    print(marker)
+    # Grab marker peaks and file containing hg38 coordinates (since markers originally were hg19)
+    current_marker_peaks_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.1.tsv")
+    current_marker_hg38_coordinate_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_with_hg38_coordinates.tsv")
+    current_marker_peaks <- read.table(current_marker_peaks_file_path, sep = "\t", header = TRUE)
+    current_marker_hg38_coordinates <- read.table(current_marker_hg38_coordinate_file_path, sep = "\t", header = TRUE)
+    hg38_coords <- c()
+    hg38_start <- c()
+    hg38_end <- c()
+    for(current_row_num in 1:nrow(current_marker_peaks)) {
+      current_mintchip_row <- current_marker_peaks[current_row_num,]
+      matching_hg38_mintchip_row <- current_marker_hg38_coordinates[current_marker_hg38_coordinates$seqnames == current_mintchip_row$seqnames
+                                                                        & current_marker_hg38_coordinates$start == current_mintchip_row$start
+                                                                        & current_marker_hg38_coordinates$end == current_mintchip_row$end,]
+      if(nrow(matching_hg38_mintchip_row) > 0) {
+        components <- unlist(strsplit(matching_hg38_mintchip_row$hg38_coordinates, "[:-]"))
+        hg38_coords <- c(hg38_coords, matching_hg38_mintchip_row$hg38_coordinates)
+        hg38_start <- c(hg38_start, components[2])
+        hg38_end <- c(hg38_end, components[3])
       } else {
-        positive_overlap_indices[[i]] <- NA
+        hg38_coords <- c(hg38_coords, "REMOVE")
+        hg38_start <- c(hg38_start, "REMOVE")
+        hg38_end <- c(hg38_end, "REMOVE")
+      }
+    }
+    current_marker_peaks$hg38_coordinates <- hg38_coords
+    current_marker_peaks$hg38_start <- hg38_start
+    current_marker_peaks$hg38_end <- hg38_end
+    current_marker_peaks <- subset(current_marker_peaks, !grepl("REMOVE", hg38_start))
+    current_marker_peaks$hg38_start <- as.numeric(current_marker_peaks$hg38_start)
+    current_marker_peaks$hg38_end <- as.numeric(current_marker_peaks$hg38_end)
+    
+    # Is this OK?
+    if(lenient) {
+      current_marker_peaks$start <- current_marker_peaks$start - 200
+      current_marker_peaks$end <- current_marker_peaks$end + 200
+      current_marker_peaks$hg38_start <- current_marker_peaks$hg38_start - 200
+      current_marker_peaks$hg38_end <- current_marker_peaks$hg38_end + 200
+    }
+    
+    for(chr in unique(pos_peak_table$seqnames)) {
+      positive_overlap_indices <- list()
+      pos_peak_table_chr_subset <- pos_peak_table[pos_peak_table$seqnames == chr,]
+      mintchip_table_chr_subset <- current_marker_peaks[current_marker_peaks$seqnames == chr,]
+      if(nrow(mintchip_table_chr_subset) == 0) {
+        next
+      }
+      for (i in 1:nrow(mintchip_table_chr_subset)) {
+        overlap <- check_overlap(mintchip_table_chr_subset$hg38_start[i], mintchip_table_chr_subset$hg38_end[i], pos_peak_table_chr_subset$start, pos_peak_table_chr_subset$end)
+        if (any(overlap)) {
+          positive_overlap_indices[[i]] <- which(overlap)
+        } else {
+          positive_overlap_indices[[i]] <- NA
+        }
+      }
+      
+      for(current_mintchip_row_index in 1:length(positive_overlap_indices)) {
+        current_peak_row_index <- positive_overlap_indices[[current_mintchip_row_index]]
+        if(!is.na(current_peak_row_index)) {
+          current_mintchip_row <- mintchip_table_chr_subset[current_mintchip_row_index,]
+          current_peak_row <- pos_peak_table_chr_subset[current_peak_row_index,]
+          current_peak_row$mintchip_marker <- marker
+          current_peak_row$mintchip_start <- current_mintchip_row$start
+          current_peak_row$mintchip_end <- current_mintchip_row$end
+          current_peak_row$mintchip_fc <- current_mintchip_row$Fold      
+          current_peak_row$mintchip_pvalue <- current_mintchip_row$p.value   
+          filtered_rows[[length(filtered_rows) + 1]] <- current_peak_row
+        }
       }
     }
     
-    for(current_mintchip_row_index in 1:length(positive_overlap_indices)) {
-      current_peak_row_index <- positive_overlap_indices[[current_mintchip_row_index]]
-      if(!is.na(current_peak_row_index)) {
-        current_mintchip_row <- mintchip_table[current_mintchip_row_index,]
-        current_peak_row <- pos_peak_table_chr_subset[current_peak_row_index,]
-        current_peak_row$mintchip_marker <- marker
-        current_peak_row$mintchip_start <- current_mintchip_row$start
-        current_peak_row$mintchip_end <- current_mintchip_row$end
-        current_peak_row$mintchip_fc <- current_mintchip_row$Fold      
-        current_peak_row$mintchip_pvalue <- current_mintchip_row$p.value   
-        filtered_rows[[length(filtered_rows) + 1]] <- current_peak_row
+    for(chr in unique(neg_peak_table$seqnames)) {
+      negative_overlap_indices <- list()
+      neg_peak_table_chr_subset <- neg_peak_table[neg_peak_table$seqnames == chr,]
+      mintchip_table_chr_subset <- current_marker_peaks[current_marker_peaks$seqnames == chr,]
+      if(nrow(mintchip_table_chr_subset) == 0) {
+        next
+      }
+      for (i in 1:nrow(mintchip_table_chr_subset)) {
+        overlap <- check_overlap(mintchip_table_chr_subset$hg38_start[i], mintchip_table_chr_subset$hg38_end[i], neg_peak_table_chr_subset$start, neg_peak_table_chr_subset$end)
+        if (any(overlap)) {
+          negative_overlap_indices[[i]] <- which(overlap)
+        } else {
+          negative_overlap_indices[[i]] <- NA
+        }
+      }
+      
+      for(current_mintchip_row_index in 1:length(negative_overlap_indices)) {
+        current_peak_row_index <- negative_overlap_indices[[current_mintchip_row_index]]
+        if(!is.na(current_peak_row_index)) {
+          current_mintchip_row <- mintchip_table_chr_subset[current_mintchip_row_index,]
+          current_peak_row <- neg_peak_table_chr_subset[current_peak_row_index,]
+          current_peak_row$mintchip_marker <- marker
+          current_peak_row$mintchip_start <- current_mintchip_row$start
+          current_peak_row$mintchip_end <- current_mintchip_row$end
+          current_peak_row$mintchip_fc <- current_mintchip_row$Fold      
+          current_peak_row$mintchip_pvalue <- current_mintchip_row$p.value   
+          filtered_rows[[length(filtered_rows) + 1]] <- current_peak_row
+        }
       }
     }
   }
-  
   snATAC_mintchip_overlap <- do.call(rbind, filtered_rows)
-  
+}
 
-    
-    sc_peaks_lenient_chr_subset <- sc_peaks_lenient[sc_peaks_lenient$value == chr,]
-    snME_dms_chr_subset <- snME_dms[snME_dms$chr == chr,]
-    
-    overlap_indices_snME_dms <- list()
-    overlap_indices_snME_dms_lenient <- list()
-    
-    
-    
-    for(current_snME_row_index in 1:length(overlap_indices_snME_dms)) {
-      current_peak_row_index <- overlap_indices_snME_dms[[current_snME_row_index]]
-      if(!is.na(current_peak_row_index)) {
-        current_snME_row <- snME_dms_chr_subset[current_snME_row_index,]
-        current_peak_row <- sc_peaks_chr_subset[current_peak_row_index,]
-        current_peak_row$start_methyl <- current_snME_row$start
-        current_peak_row$end_methyl <- current_snME_row$end
-        current_peak_row$methyl_status <- current_snME_row$methylation
-        current_peak_row$number_of_dms <- current_snME_row$number_of_dms
-        current_peak_row$cell_type_snME <- current_snME_row$celltype
-        filtered_rows[[length(filtered_rows) + 1]] <- current_peak_row
-      }
-    }
-    
-    for(current_snME_row_index in 1:length(overlap_indices_snME_dms_lenient)) {
-      current_peak_row_index <- overlap_indices_snME_dms_lenient[[current_snME_row_index]]
-      if(sum(!is.na(current_peak_row_index)) >= 1) {
-        for(entry in current_peak_row_index) {
-          current_snME_row <- snME_dms_chr_subset[current_snME_row_index,]
-          current_peak_row <- sc_peaks_lenient_chr_subset[entry,]
-          current_peak_row$start_methyl <- current_snME_row$start
-          current_peak_row$end_methyl <- current_snME_row$end
-          current_peak_row$methyl_status <- current_snME_row$methylation
-          current_peak_row$number_of_dms <- current_snME_row$number_of_dms
-          current_peak_row$cell_type_snME <- current_snME_row$celltype
-          filtered_rows_lenient[[length(filtered_rows_lenient) + 1]] <- current_peak_row
-        } 
-      }
-    }
-  }
-  
-  
   
   
   
@@ -226,14 +222,12 @@ atac_cell_types_for_mintchip_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD1
 
 for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
   print(atac_cell_type)
-  for(marker in mintchip_markers) {
-    print(marker)
-    atac_cell_type_for_file_name <- sub(" ", "_", atac_cell_type)
-    cell_type_snATAC_snME_overlap_das_subset <- find_matching_snATAC_das_and_mintchip_das(cell_type, paste0(sc_das_dir, 
+  atac_cell_type_for_file_name <- sub(" ", "_", atac_cell_type)
+  cell_type_snATAC_mintchip_das_overlap <- find_matching_snATAC_das_and_mintchip_das(cell_type, paste0(sc_das_dir, 
                                                                                                         "diff_peaks/D28-vs-D_minus_1-degs-", atac_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv"),
                                                                                       paste0(sc_das_dir, 
                                                                                              "diff_peaks/D28-vs-D_minus_1-degs-", atac_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv"),
-                                                                                      marker, paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.1.tsv"), paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_with_hg38_coordinates.tsv"), lenient = FALSE)
+                                                                                      mintchip_markers, lenient = FALSE)
   }
 }
 
