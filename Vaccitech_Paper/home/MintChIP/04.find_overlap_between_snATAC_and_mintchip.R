@@ -8,7 +8,7 @@ check_overlap <- function(start1, end1, start2, end2) {
   return(overlap)
 }
 
-find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak_file_path, pos_peak_file_path, mintchip_markers, lenient = FALSE) {
+find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak_file_path, pos_peak_file_path, mintchip_markers, fc_threshold, lenient = FALSE) {
   # Grab positive DAS and negative snaTAC DAS
   pos_peak_table <- read.table(pos_peak_file_path, sep = "\t", header = TRUE)
   neg_peak_table <- read.table(neg_peak_file_path, sep = "\t", header = TRUE)
@@ -43,7 +43,7 @@ find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak
   for(marker in mintchip_markers) {
     print(marker)
     # Grab marker peaks and file containing hg38 coordinates (since markers originally were hg19)
-    current_marker_peaks_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.1.tsv")
+    current_marker_peaks_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_", fc_threshold, ".tsv")
     current_marker_hg38_coordinate_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_with_hg38_coordinates.tsv")
     current_marker_peaks <- read.table(current_marker_peaks_file_path, sep = "\t", header = TRUE)
     current_marker_hg38_coordinates <- read.table(current_marker_hg38_coordinate_file_path, sep = "\t", header = TRUE)
@@ -147,10 +147,10 @@ find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak
   return(snATAC_mintchip_overlap)
 }
 
-# We will use consensus peak FC 0 threshold for liftover (hg19 -> hg38)
-
+# Mintchip markers
 mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 
+# We will use consensus peak FC 0 threshold for liftover (hg19 -> hg38)
 for(marker in mintchip_markers) {
   current_hg19_sites <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.tsv"), sep = "\t", header = TRUE)
   current_hg19_sites <- current_hg19_sites$coordinates
@@ -182,10 +182,9 @@ magical_output_dir <- paste0(sc_magical_dir, "Output/")
 magical_results <- read.table(file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 
 # Next, we want to find overlap between each cell type and each marker
-# Define FC threshold above method (maybe should be different FC threshold for each marker?)
 atac_cell_types_for_mintchip_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "MAIT", "NK", "Proliferating", "T Naive")
-
 atac_mintchip_tables <- list()
+
 for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
   print(atac_cell_type)
   atac_cell_type_for_file_name <- sub(" ", "_", atac_cell_type)
@@ -193,7 +192,7 @@ for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
                                                                                                         "diff_peaks/D28-vs-D_minus_1-degs-", atac_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv"),
                                                                                       paste0(sc_das_dir, 
                                                                                              "diff_peaks/D28-vs-D_minus_1-degs-", atac_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv"),
-                                                                                      mintchip_markers, lenient = FALSE)
+                                                                                      mintchip_markers, fc_threshold = 0.1, lenient = FALSE)
   atac_mintchip_tables[[atac_cell_type]] <- cell_type_snATAC_mintchip_das_overlap
   
   # Overlap between MAGICAL circuits and DAS peaks that contained mintchip marker
