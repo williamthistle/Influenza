@@ -60,7 +60,7 @@ find_matching_snATAC_das_and_snME_dms <- function(snATAC_cell_type, neg_peak_fil
   index <- 1
   for(snME_cell_type in matching_snME_cell_types) {
     # Subset to current cell type in snME data
-    overlapping_snME_and_all_peaks_cell_type_subset <- overlapping_snME_and_all_peaks[overlapping_snME_and_all_peaks$dms_cell_type == snME_cell_type,]
+    overlapping_snME_and_all_peaks_cell_type_subset <- overlapping_snME_and_all_peaks[overlapping_snME_and_all_peaks$cell_type_snME == snME_cell_type,]
     # Find overlap between pos/neg peaks and snME DMS
     pos_peaks_overlapping_with_snME <- dplyr::inner_join(pos_peak_table, overlapping_snME_and_all_peaks_cell_type_subset, by = c("value", "start", "end"))
     if(nrow(pos_peaks_overlapping_with_snME) > 0) {
@@ -180,7 +180,7 @@ for(cell_type in atac_cell_types_for_snME_analysis) {
                                                                                                                              "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv"),
                                                                                   paste0(sc_das_dir, 
                                                                                          "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv"),
-                                                                                  snATAC_snME_lenient_overlap, lenient = TRUE)
+                                                                                  snATAC_snME_overlap_lenient, lenient = TRUE)
   write.table(cell_type_snATAC_snME_overlap_das_subset, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
   write.table(cell_type_snATAC_snME_overlap_das_subset_lenient, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
   
