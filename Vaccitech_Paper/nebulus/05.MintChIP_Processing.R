@@ -83,8 +83,7 @@ if (!dir.exists(output_dir)) {dir.create(output_dir)}
 setwd(output_dir)
 
 # Markers from mintchip
-# markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
-markers <- c("H3K36me3")
+markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 for(marker in markers) {
   print(marker)
   marker_dir <- paste0(output_dir, marker, "/")
