@@ -43,7 +43,7 @@ find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak
   for(marker in mintchip_markers) {
     print(marker)
     # Grab marker peaks and file containing hg38 coordinates (since markers originally were hg19)
-    current_marker_peaks_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.tsv")
+    current_marker_peaks_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.1.tsv")
     current_marker_hg38_coordinate_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_with_hg38_coordinates.tsv")
     current_marker_peaks <- read.table(current_marker_peaks_file_path, sep = "\t", header = TRUE)
     current_marker_hg38_coordinates <- read.table(current_marker_hg38_coordinate_file_path, sep = "\t", header = TRUE)
