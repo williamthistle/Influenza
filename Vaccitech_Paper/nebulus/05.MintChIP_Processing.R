@@ -25,6 +25,15 @@ saveDiffBindPeaks <- function(dbObj, fold, output_dir, marker) {
   write.table(consensus_peak_set, file = paste0(output_dir, marker, "_consensus_peak_set_FC_", fold, ".tsv"), sep = "\t", quote = FALSE)
 }
 
+saveAllPeaks <- function(dbObj, output_dir, marker) {
+  peaks <- dbObj$peaks[[1]]
+  peak_set <- data.frame(chr = peaks$Chr, start = peaks$Start, end = peaks$End, strand = "+")
+  write.table(peak_set, file = paste0(output_dir, marker, "_all_peaks.tsv"), sep = "\t", quote = FALSE, col.names = FALSE)
+}
+
+
+
+
 ################## SETUP ##################
 data_path <- paste0(home_dir, "mintchip/data")
 processed_data_path <- paste0(home_dir, "mintchip/processed_data/")
@@ -96,23 +105,25 @@ for(marker in markers) {
   dbObj$config$cores <- 32
   dbObj <- DiffBind::dba.count(dbObj)
   
+  saveAllPeaks(dbObj, output_dir = marker_dir, marker = marker)
+  
   # Normalize for both DESeq2 and edgeR
-  dbObj.norm <- dba.normalize(dbObj,normalize=DBA_NORM_NATIVE,
-                              method=DBA_ALL_METHODS,
-                              background=TRUE)
+  #dbObj.norm <- dba.normalize(dbObj,normalize=DBA_NORM_NATIVE,
+  #                            method=DBA_ALL_METHODS,
+  #                            background=TRUE)
   # Find DASs
-  dbObj.norm <- dba.contrast(dbObj.norm, design="~Tissue+Condition")
-  dbObj.norm <- dba.analyze(dbObj.norm, method = DBA_ALL_METHODS, bBlacklist = FALSE, bGreylist = FALSE)
+  #dbObj.norm <- dba.contrast(dbObj.norm, design="~Tissue+Condition")
+  #dbObj.norm <- dba.analyze(dbObj.norm, method = DBA_ALL_METHODS, bBlacklist = FALSE, bGreylist = FALSE)
   
   # Save DAS object to file
-  saveRDS(dbObj.norm, file = paste0(marker_dir, marker, "_dbObj.rds"))
+  #saveRDS(dbObj.norm, file = paste0(marker_dir, marker, "_dbObj.rds"))
 
   # Save peaks with 0 FC (DESeq2, edgeR, and overlapping)
-  saveDiffBindPeaks(dbObj.norm, fold = 0, output_dir = marker_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 0.1, output_dir = marker_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 0.2, output_dir = marker_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 0.3, output_dir = marker_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 0.585, output_dir = marker_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 1, output_dir = marker_dir, marker = marker)
-  saveDiffBindPeaks(dbObj.norm, fold = 2, output_dir = marker_dir, marker = marker)
+  #saveDiffBindPeaks(dbObj.norm, fold = 0, output_dir = marker_dir, marker = marker)
+  #saveDiffBindPeaks(dbObj.norm, fold = 0.1, output_dir = marker_dir, marker = marker)
+  #saveDiffBindPeaks(dbObj.norm, fold = 0.2, output_dir = marker_dir, marker = marker)
+  #saveDiffBindPeaks(dbObj.norm, fold = 0.3, output_dir = marker_dir, marker = marker)
+  #saveDiffBindPeaks(dbObj.norm, fold = 0.585, output_dir = marker_dir, marker = marker)
+  #saveDiffBindPeaks(dbObj.norm, fold = 1, output_dir = marker_dir, marker = marker)
+  #saveDiffBindPeaks(dbObj.norm, fold = 2, output_dir = marker_dir, marker = marker)
 }
