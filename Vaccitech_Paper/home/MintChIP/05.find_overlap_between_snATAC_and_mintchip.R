@@ -2,68 +2,148 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-combineRows <- function(df1, df2, matches) {
-  combined <- data.frame()
-  for (i in 1:nrow(matches)) {
-    queryRow <- matches[i, "queryHits"]
-    subjectRow <- matches[i, "subjectHits"]
-    combinedRow <- cbind(df1[queryRow,], df2[subjectRow,])
-    combined <- rbind(combined, combinedRow)
+find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak_file_path, pos_peak_file_path, mintchip_markers, fc_threshold, lenient = FALSE) {
+  # Grab positive DAS and negative snaTAC DAS
+  pos_peak_table <- read.table(pos_peak_file_path, sep = "\t", header = TRUE)
+  neg_peak_table <- read.table(neg_peak_file_path, sep = "\t", header = TRUE)
+  
+  # Save coordinate information for each positive and negative peak so we can more easily find overlap
+  pos_peaks <- pos_peak_table$Peak_Name
+  pos_chromosomes <- sapply(strsplit(pos_peaks, "-"), `[`, 1)
+  pos_start_coords <- as.numeric(sapply(strsplit(pos_peaks, "-"), `[`, 2))
+  pos_end_coords <- as.numeric(sapply(strsplit(pos_peaks, "-"), `[`, 3))
+  pos_peak_table$seqnames <- pos_chromosomes
+  pos_peak_table$start <- pos_start_coords
+  pos_peak_table$end <- pos_end_coords
+  
+  neg_peaks <- neg_peak_table$Peak_Name
+  neg_chromosomes <- sapply(strsplit(neg_peaks, "-"), `[`, 1)
+  neg_start_coords <- as.numeric(sapply(strsplit(neg_peaks, "-"), `[`, 2))
+  neg_end_coords <- as.numeric(sapply(strsplit(neg_peaks, "-"), `[`, 3))
+  neg_peak_table$seqnames <- neg_chromosomes
+  neg_peak_table$start <- neg_start_coords
+  neg_peak_table$end <- neg_end_coords
+  
+  # Expand peaks (double length) if lenient is TRUE
+  if(lenient) {
+    pos_peak_table$start <- pos_peak_table$start - 250
+    pos_peak_table$end <- pos_peak_table$end + 250
+    neg_peak_table$start <- neg_peak_table$start - 250
+    neg_peak_table$end <- neg_peak_table$end + 250
   }
-  return(combined)
+  
+  filtered_rows <- list()
+  # Traverse markers one at a time
+  for(marker in mintchip_markers) {
+    print(marker)
+    # Grab marker peaks and file containing hg38 coordinates (since markers originally were hg19)
+    current_marker_peaks_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_", fc_threshold, ".tsv")
+    current_marker_hg38_coordinate_file_path <- paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_with_hg38_coordinates.tsv")
+    current_marker_peaks <- read.table(current_marker_peaks_file_path, sep = "\t", header = TRUE)
+    current_marker_hg38_coordinates <- read.table(current_marker_hg38_coordinate_file_path, sep = "\t", header = TRUE)
+    hg38_coords <- c()
+    hg38_start <- c()
+    hg38_end <- c()
+    for(current_row_num in 1:nrow(current_marker_peaks)) {
+      current_mintchip_row <- current_marker_peaks[current_row_num,]
+      matching_hg38_mintchip_row <- current_marker_hg38_coordinates[current_marker_hg38_coordinates$seqnames == current_mintchip_row$seqnames
+                                                                        & current_marker_hg38_coordinates$start == current_mintchip_row$start
+                                                                        & current_marker_hg38_coordinates$end == current_mintchip_row$end,]
+      if(nrow(matching_hg38_mintchip_row) > 0) {
+        components <- unlist(strsplit(matching_hg38_mintchip_row$hg38_coordinates, "[:-]"))
+        hg38_coords <- c(hg38_coords, matching_hg38_mintchip_row$hg38_coordinates)
+        hg38_start <- c(hg38_start, components[2])
+        hg38_end <- c(hg38_end, components[3])
+      } else {
+        hg38_coords <- c(hg38_coords, "REMOVE")
+        hg38_start <- c(hg38_start, "REMOVE")
+        hg38_end <- c(hg38_end, "REMOVE")
+      }
+    }
+    current_marker_peaks$hg38_coordinates <- hg38_coords
+    current_marker_peaks$hg38_start <- hg38_start
+    current_marker_peaks$hg38_end <- hg38_end
+    current_marker_peaks <- subset(current_marker_peaks, !grepl("REMOVE", hg38_start))
+    current_marker_peaks$hg38_start <- as.numeric(current_marker_peaks$hg38_start)
+    current_marker_peaks$hg38_end <- as.numeric(current_marker_peaks$hg38_end)
+    
+    # Is this OK?
+    if(lenient) {
+      current_marker_peaks$start <- current_marker_peaks$start - 200
+      current_marker_peaks$end <- current_marker_peaks$end + 200
+      current_marker_peaks$hg38_start <- current_marker_peaks$hg38_start - 200
+      current_marker_peaks$hg38_end <- current_marker_peaks$hg38_end + 200
+    }
+    
+    for(chr in unique(pos_peak_table$seqnames)) {
+      positive_overlap_indices <- list()
+      pos_peak_table_chr_subset <- pos_peak_table[pos_peak_table$seqnames == chr,]
+      mintchip_table_chr_subset <- current_marker_peaks[current_marker_peaks$seqnames == chr,]
+      if(nrow(mintchip_table_chr_subset) == 0) {
+        next
+      }
+      for (i in 1:nrow(mintchip_table_chr_subset)) {
+        overlap <- check_overlap(mintchip_table_chr_subset$hg38_start[i], mintchip_table_chr_subset$hg38_end[i], pos_peak_table_chr_subset$start, pos_peak_table_chr_subset$end)
+        if (any(overlap)) {
+          positive_overlap_indices[[i]] <- which(overlap)
+        } else {
+          positive_overlap_indices[[i]] <- NA
+        }
+      }
+      
+      for(current_mintchip_row_index in 1:length(positive_overlap_indices)) {
+        current_peak_row_index <- positive_overlap_indices[[current_mintchip_row_index]]
+        if(!is.na(current_peak_row_index)) {
+          current_mintchip_row <- mintchip_table_chr_subset[current_mintchip_row_index,]
+          current_peak_row <- pos_peak_table_chr_subset[current_peak_row_index,]
+          current_peak_row$mintchip_marker <- marker
+          current_peak_row$mintchip_start <- current_mintchip_row$hg38_start
+          current_peak_row$mintchip_end <- current_mintchip_row$hg38_end
+          current_peak_row$mintchip_fc <- current_mintchip_row$Fold      
+          current_peak_row$mintchip_pvalue <- current_mintchip_row$p.value   
+          filtered_rows[[length(filtered_rows) + 1]] <- current_peak_row
+        }
+      }
+    }
+    
+    for(chr in unique(neg_peak_table$seqnames)) {
+      negative_overlap_indices <- list()
+      neg_peak_table_chr_subset <- neg_peak_table[neg_peak_table$seqnames == chr,]
+      mintchip_table_chr_subset <- current_marker_peaks[current_marker_peaks$seqnames == chr,]
+      if(nrow(mintchip_table_chr_subset) == 0) {
+        next
+      }
+      for (i in 1:nrow(mintchip_table_chr_subset)) {
+        overlap <- check_overlap(mintchip_table_chr_subset$hg38_start[i], mintchip_table_chr_subset$hg38_end[i], neg_peak_table_chr_subset$start, neg_peak_table_chr_subset$end)
+        if (any(overlap)) {
+          negative_overlap_indices[[i]] <- which(overlap)
+        } else {
+          negative_overlap_indices[[i]] <- NA
+        }
+      }
+      
+      for(current_mintchip_row_index in 1:length(negative_overlap_indices)) {
+        current_peak_row_index <- negative_overlap_indices[[current_mintchip_row_index]]
+        if(!is.na(current_peak_row_index)) {
+          current_mintchip_row <- mintchip_table_chr_subset[current_mintchip_row_index,]
+          current_peak_row <- neg_peak_table_chr_subset[current_peak_row_index,]
+          current_peak_row$mintchip_marker <- marker
+          current_peak_row$mintchip_start <- current_mintchip_row$hg38_start
+          current_peak_row$mintchip_end <- current_mintchip_row$hg38_end
+          current_peak_row$mintchip_fc <- current_mintchip_row$Fold      
+          current_peak_row$mintchip_pvalue <- current_mintchip_row$p.value   
+          filtered_rows[[length(filtered_rows) + 1]] <- current_peak_row
+        }
+      }
+    }
+  }
+  snATAC_mintchip_overlap <- do.call(rbind, filtered_rows)
+  return(snATAC_mintchip_overlap)
 }
 
-find_matching_snATAC_das_and_snME_dms <- function(snATAC_cell_type, sc_peak_file_path, snME_dms, lenient = 0) {
-  # Find matching snME cell types
-  if(snATAC_cell_type == "B") {
-    matching_snME_cell_types <- c("B-Mem", "B-Naive")
-  } else if(snATAC_cell_type == "CD14 Mono") {
-    matching_snME_cell_types <- c("Monocyte")
-  } else if(snATAC_cell_type == "CD16 Mono") {
-    matching_snME_cell_types <- c("Monocyte")
-  } else if(snATAC_cell_type == "NK") {
-    matching_snME_cell_types <- c("NK-cell2")
-  } else if(snATAC_cell_type == "T Naive") {
-    matching_snME_cell_types <- c("Tc-Naive", "Th-Naive")
-  } else if(snATAC_cell_type == "CD4 Memory") {
-    matching_snME_cell_types <- c("Tc-Mem", "Th-Mem")
-  } else if(snATAC_cell_type == "CD8 Memory") {
-    matching_snME_cell_types <- c("Tc-Mem", "Th-Mem")
-  } else {
-    raise("ERROR!")
-  }
-  
-  # Grab DAS
-  peak_table <- read.table(sc_peak_file_path, sep = "\t", header = TRUE)
-  
-  # Grab coordinate information for each positive and negative peak so we can find overlap between DAS and DMS
-  peaks <- peak_table$Peak_Name
-  chromosomes <- sapply(strsplit(peaks, "-"), `[`, 1)
-  start_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 2))
-  end_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 3))
-  peak_table$seqnames <- chromosomes
-  peak_table$start <- start_coords
-  peak_table$end <- end_coords
-  
-  peak_table$start <- peak_table$start - lenient
-  peak_table$end <- peak_table$end + lenient
-  
-  peak_table_granges <- makeGRangesFromDataFrame(df = peak_table, keep.extra.columns = TRUE)
-  
-  final_df <- list()
-  
-  for(snME_cell_type in matching_snME_cell_types) {
-    snME_dms_subset <- snME_dms[snME_dms$celltype == snME_cell_type,]
-    snME_dms_subset_granges <- makeGRangesFromDataFrame(df = snME_dms_subset, keep.extra.columns = TRUE)
-    overlap <- as.data.frame(findOverlaps(peak_table_granges, snME_dms_subset_granges))
-    overlap_df <- combineRows(peak_table, snME_dms_subset,overlap)
-    overlap_df <- overlap_df[,-c(27:52)]
-    final_df[[length(final_df) + 1]] <- overlap_df
-  }
-  
-  final_df <- do.call(rbind, final_df)
-  return(final_df)
-}
+# MAGICAL info
+magical_output_dir <- paste0(sc_magical_dir, "Output/")
+magical_results <- read.table(file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 
 # Find all overlap between snATAC-seq (hg38) and MintChIP (hg38)
 
@@ -80,88 +160,109 @@ sc_peaks_granges <- makeGRangesFromDataFrame(df = sc_peaks, keep.extra.columns =
 sc_peaks_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_lenient, keep.extra.columns = TRUE)
 sc_peaks_more_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_more_lenient, keep.extra.columns = TRUE)
 
+# Mintchip markers
 mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 
+# We will use consensus peak FC 0 threshold for liftover (hg19 -> hg38)
 for(marker in mintchip_markers) {
+  current_hg19_sites <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.tsv"), sep = "\t", header = TRUE)
+  current_hg19_sites <- current_hg19_sites$coordinates
+  write.table(current_hg19_sites, file = paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_coordinates.tsv"),
+                                                sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
+}
+
+# Go to UCSC site to perform liftover
+
+# Add hg38 coordinates to each file
+for(marker in mintchip_markers) {
+  current_marker_sites <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.tsv"), sep = "\t", header = TRUE)
+  associated_hg38_coordinates <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_coordinates_hg38.tsv"), 
+                                            sep = "\t")$V1
+  if(file.size(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_coordinates_hg38_error.tsv")) > 2) {
+    associated_hg38_errors <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_coordinates_hg38_error.tsv"), 
+                                         sep = "\t")$V1
+    # Remove any site that didn't have associated hg38 site in liftover
+    current_marker_sites <- current_marker_sites[current_marker_sites$coordinates != associated_hg38_errors, ]
+  }
+  # Add hg38 info
+  current_marker_sites$hg38_coordinates <- associated_hg38_coordinates
+  write.table(current_marker_sites, file = paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_with_hg38_coordinates.tsv"),
+              sep = "\t", row.names = FALSE, quote = FALSE)
+  
+}
+
+for(marker in mintchip_markers) {
+  # Fix hg19 coordinates to be hg38
   marker_peaks <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.1.tsv"),
                              sep = "\t", header = TRUE)
   marker_peaks_granges <- makeGRangesFromDataFrame(df = marker_peaks, keep.extra.columns = TRUE)
-  sc_peak_and_marker_overlap <- as.data.frame(findOverlaps(sc_peaks_granges, marker_peaks_granges))
-  sc_peak_and_marker_overlap_df <- combineRows(sc_peaks, marker_peaks, sc_peak_and_snME_dms_overlap)
+  marker_peaks_with_hg38_coordinates <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_with_hg38_coordinates.tsv"),
+                                                   sep = "\t", header = TRUE)
+  marker_peaks_with_hg38_coordinates_granges <- makeGRangesFromDataFrame(df = marker_peaks_with_hg38_coordinates, keep.extra.columns = TRUE)
+  marker_overlap <- as.data.frame(findOverlaps(marker_peaks_granges, marker_peaks_with_hg38_coordinates_granges))
+  marker_overlap_df <- combineRows(marker_peaks, marker_peaks_with_hg38_coordinates, marker_overlap)
+  components <- strsplit(marker_overlap_df$hg38_coordinates, "[:-]")
+  hg38_start <- c()
+  hg38_end <- c()
+  for(component in components) {
+    hg38_start <- c(hg38_start, component[2])
+    hg38_end <- c(hg38_end, component[3])
+  }
+  marker_overlap_df$start <- hg38_start
+  marker_overlap_df$end <- hg38_end
+  # Find overlap between marker peaks and sc peaks
+  
+
+  
+  
+  
+  
+
+
   
 }
 
 
-# 5498
 
-sc_peak_and_snME_dms_overlap_df <- sc_peak_and_snME_dms_overlap_df[,-c(27:52)]
+# Next, we want to find overlap between each cell type and each marker
+atac_cell_types_for_mintchip_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "MAIT", "NK", "Proliferating", "T Naive")
+atac_mintchip_tables <- list()
 
-# 10424
-sc_peak_lenient_and_snME_dms_overlap <- as.data.frame(findOverlaps(snME_dms_granges, sc_peaks_lenient_granges))
-sc_peak_lenient_and_snME_dms_overlap_df <- combineRows(sc_peaks_lenient, snME_dms, sc_peak_lenient_and_snME_dms_overlap)
-sc_peak_lenient_and_snME_dms_overlap_df <- sc_peak_lenient_and_snME_dms_overlap_df[,-c(27:52)]
-
-# 14622
-sc_peak_more_lenient_and_snME_dms_overlap <- as.data.frame(findOverlaps(snME_dms_granges, sc_peaks_more_lenient_granges))
-sc_peak_more_lenient_and_snME_dms_overlap_df <- combineRows(sc_peaks_more_lenient, snME_dms, sc_peak_more_lenient_and_snME_dms_overlap)
-sc_peak_more_lenient_and_snME_dms_overlap_df <- sc_peak_more_lenient_and_snME_dms_overlap_df[,-c(27:52)]
-
-write.table(sc_peak_and_snME_dms_overlap_df, file = paste0(snME_results_dir, "snME_dms_overlap_with_all_atac_peaks.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-write.table(sc_peak_lenient_and_snME_dms_overlap_df, file = paste0(snME_results_dir, "snME_dms_overlap_with_all_atac_peaks_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-write.table(sc_peak_more_lenient_and_snME_dms_overlap_df, file = paste0(snME_results_dir, "snME_dms_overlap_with_all_atac_peaks_more_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-
-# The next question is: Are any of these peaks differentially accessible in the relevant cell type?
-# If so, we have matching differential accessibility and differential methylation
-atac_cell_types_for_snME_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "T Naive")
-
-magical_output_dir <- paste0(sc_magical_dir, "Output/")
-magical_results <- read.table(file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
-
-for(cell_type in atac_cell_types_for_snME_analysis) {
-  cell_type_for_file_name <- sub(" ", "_", cell_type)
-  cell_type_snATAC_snME_overlap_das_subset <- find_matching_snATAC_das_and_snME_dms(cell_type, paste0(sc_das_dir, 
-                                                                                                      "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"),
-                                                                                    snME_dms, lenient = 0)
-  cell_type_snATAC_snME_overlap_das_subset_lenient <- find_matching_snATAC_das_and_snME_dms(cell_type, paste0(sc_das_dir, 
-                                                                                                              "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"),
-                                                                                            snME_dms, lenient = 250)
-  cell_type_snATAC_snME_overlap_das_subset_more_lenient <- find_matching_snATAC_das_and_snME_dms(cell_type, paste0(sc_das_dir, 
-                                                                                                                   "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"),
-                                                                                                 snME_dms, lenient = 500)
+for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
+  print(atac_cell_type)
+  atac_cell_type_for_file_name <- sub(" ", "_", atac_cell_type)
   
-  write.table(cell_type_snATAC_snME_overlap_das_subset, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-  write.table(cell_type_snATAC_snME_overlap_das_subset_lenient, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-  write.table(cell_type_snATAC_snME_overlap_das_subset_more_lenient, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_more_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
   
-  sc_peaks_granges <- makeGRangesFromDataFrame(df = cell_type_snATAC_snME_overlap_das_subset, keep.extra.columns = TRUE)
-  sc_peaks_lenient_granges <- makeGRangesFromDataFrame(df = cell_type_snATAC_snME_overlap_das_subset_lenient, keep.extra.columns = TRUE)
-  sc_peaks_more_lenient_granges <- makeGRangesFromDataFrame(df = cell_type_snATAC_snME_overlap_das_subset_more_lenient, keep.extra.columns = TRUE)
   
-  # Overlap between MAGICAL circuits and DAS peaks that contained DMS
-  magical_results_cell_type_subset <- magical_results[magical_results$Cell_Type == cell_type_for_file_name,]
-  colnames(magical_results_cell_type_subset)[5] <- "seqnames"
-  colnames(magical_results_cell_type_subset)[6] <- "start"
-  colnames(magical_results_cell_type_subset)[7] <- "end"
   
-  magical_granges <- makeGRangesFromDataFrame(df = magical_results_cell_type_subset, keep.extra.columns = TRUE)
+  
+  
+  
+  
+  cell_type_snATAC_mintchip_das_overlap <- find_matching_snATAC_das_and_mintchip_das(cell_type, paste0(sc_das_dir, 
+                                                                                                        "diff_peaks/D28-vs-D_minus_1-degs-", atac_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv"),
+                                                                                      paste0(sc_das_dir, 
+                                                                                             "diff_peaks/D28-vs-D_minus_1-degs-", atac_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv"),
+                                                                                      mintchip_markers, fc_threshold = 0.1, lenient = FALSE)
+  atac_mintchip_tables[[atac_cell_type]] <- cell_type_snATAC_mintchip_das_overlap
+  
+  # Overlap between MAGICAL circuits and DAS peaks that contained mintchip marker
+  magical_results_cell_type_subset <- magical_results[magical_results$Cell_Type == atac_cell_type_for_file_name,]
   
   # Normal
-  magical_overlap <- as.data.frame(findOverlaps(sc_peaks_granges, magical_granges))
-  magical_lenient_overlap <- as.data.frame(findOverlaps(sc_peaks_lenient_granges, magical_granges))
-  magical_more_lenient_overlap <- as.data.frame(findOverlaps(sc_peaks_more_lenient_granges, magical_granges))
-  
-  if(nrow(magical_overlap) > 0) {
-    magical_overlap_df <- combineRows(cell_type_snATAC_snME_overlap_das_subset, magical_results_cell_type_subset, magical_overlap)
-    write.table(magical_overlap_df, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-  }
-  
-  if(nrow(magical_lenient_overlap) > 0) {
-    magical_overlap_lenient_df <- combineRows(cell_type_snATAC_snME_overlap_das_subset_lenient, magical_results_cell_type_subset, magical_lenient_overlap)
-    write.table(magical_overlap_lenient_df, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-  }
-  
-  if(nrow(magical_more_lenient_overlap) > 0) {
-    magical_overlap_more_lenient_df <- combineRows(cell_type_snATAC_snME_overlap_das_subset_more_lenient, magical_results_cell_type_subset, magical_more_lenient_overlap)
-    write.table(magical_more_lenient_overlap, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL_more_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  peaks <- cell_type_snATAC_mintchip_das_overlap$Peak_Name
+  chromosomes <- sapply(strsplit(peaks, "-"), `[`, 1)
+  start_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 2))
+  end_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 3))
+  cell_type_snATAC_mintchip_das_overlap$Peak_chr <- chromosomes
+  cell_type_snATAC_mintchip_das_overlap$Peak_start <- start_coords
+  cell_type_snATAC_mintchip_das_overlap$Peak_end <- end_coords
+  magical_results_cell_type_subset_overlap <- dplyr::inner_join(magical_results_cell_type_subset, cell_type_snATAC_mintchip_das_overlap, by = c("Peak_chr", "Peak_start", "Peak_end"))
+  if(nrow(magical_results_cell_type_subset_overlap) > 0) {
+    print(magical_results_cell_type_subset_overlap)
+    #write.table(magical_results_cell_type_subset_overlap, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
   }
 }
+
+
+
