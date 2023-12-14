@@ -2,13 +2,18 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-# Function to check for overlapping ranges
-check_overlap <- function(start1, end1, start2, end2) {
-  overlap <- (start1 <= end2) & (end1 >= start2)
-  return(overlap)
+combineRows <- function(df1, df2, matches) {
+  combined <- data.frame()
+  for (i in 1:nrow(matches)) {
+    queryRow <- matches[i, "queryHits"]
+    subjectRow <- matches[i, "subjectHits"]
+    combinedRow <- cbind(df1[queryRow,], df2[subjectRow,])
+    combined <- rbind(combined, combinedRow)
+  }
+  return(combined)
 }
 
-find_matching_snATAC_das_and_snME_dms <- function(snATAC_cell_type, neg_peak_file_path, pos_peak_file_path, overlapping_snME_and_all_peaks, lenient = FALSE) {
+find_matching_snATAC_das_and_snME_dms <- function(snATAC_cell_type, sc_peak_file_path, snME_dms, lenient = 0) {
   # Find matching snME cell types
   if(snATAC_cell_type == "B") {
     matching_snME_cell_types <- c("B-Mem", "B-Naive")
@@ -28,139 +33,74 @@ find_matching_snATAC_das_and_snME_dms <- function(snATAC_cell_type, neg_peak_fil
     raise("ERROR!")
   }
   
-  # We expanded the snATAC peaks to find matches between snME and snATAC peaks
-  # To find whether those snATAC peaks are differentially accessible, we need to shrink them again so they match with our DAS tables
-  if(lenient) {
-    overlapping_snME_and_all_peaks$start <- overlapping_snME_and_all_peaks$start + 250
-    overlapping_snME_and_all_peaks$end <- overlapping_snME_and_all_peaks$end - 250
-  }
-  
-  # Grab positive DAS and negative DAS
-  pos_peak_table <- read.table(pos_peak_file_path, sep = "\t", header = TRUE)
-  neg_peak_table <- read.table(neg_peak_file_path, sep = "\t", header = TRUE)
+  # Grab DAS
+  peak_table <- read.table(sc_peak_file_path, sep = "\t", header = TRUE)
   
   # Grab coordinate information for each positive and negative peak so we can find overlap between DAS and DMS
-  pos_peaks <- pos_peak_table$Peak_Name
-  pos_chromosomes <- sapply(strsplit(pos_peaks, "-"), `[`, 1)
-  pos_start_coords <- as.numeric(sapply(strsplit(pos_peaks, "-"), `[`, 2))
-  pos_end_coords <- as.numeric(sapply(strsplit(pos_peaks, "-"), `[`, 3))
-  pos_peak_table$value <- pos_chromosomes
-  pos_peak_table$start <- pos_start_coords
-  pos_peak_table$end <- pos_end_coords
+  peaks <- peak_table$Peak_Name
+  chromosomes <- sapply(strsplit(peaks, "-"), `[`, 1)
+  start_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 2))
+  end_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 3))
+  peak_table$seqnames <- chromosomes
+  peak_table$start <- start_coords
+  peak_table$end <- end_coords
   
-  neg_peaks <- neg_peak_table$Peak_Name
-  neg_chromosomes <- sapply(strsplit(neg_peaks, "-"), `[`, 1)
-  neg_start_coords <- as.numeric(sapply(strsplit(neg_peaks, "-"), `[`, 2))
-  neg_end_coords <- as.numeric(sapply(strsplit(neg_peaks, "-"), `[`, 3))
-  neg_peak_table$value <- neg_chromosomes
-  neg_peak_table$start <- neg_start_coords
-  neg_peak_table$end <- neg_end_coords
+  peak_table$start <- peak_table$start - lenient
+  peak_table$end <- peak_table$end + lenient
   
-  final_list_of_sites <- list()
-  index <- 1
+  peak_table_granges <- makeGRangesFromDataFrame(df = peak_table, keep.extra.columns = TRUE)
+  
+  final_df <- list()
+  
   for(snME_cell_type in matching_snME_cell_types) {
-    # Subset to current cell type in snME data
-    overlapping_snME_and_all_peaks_cell_type_subset <- overlapping_snME_and_all_peaks[overlapping_snME_and_all_peaks$cell_type_snME == snME_cell_type,]
-    # Find overlap between pos/neg peaks and snME DMS
-    pos_peaks_overlapping_with_snME <- dplyr::inner_join(pos_peak_table, overlapping_snME_and_all_peaks_cell_type_subset, by = c("value", "start", "end"))
-    if(nrow(pos_peaks_overlapping_with_snME) > 0) {
-      for(i in 1:nrow(pos_peaks_overlapping_with_snME)) {
-        final_list_of_sites[[index]] <- pos_peaks_overlapping_with_snME[i,]
-        index <- index + 1
-      }
-    }
-
-    neg_peaks_overlapping_with_snME <- dplyr::inner_join(neg_peak_table, overlapping_snME_and_all_peaks_cell_type_subset, by = c("value", "start", "end"))
-    if(nrow(neg_peaks_overlapping_with_snME) > 0) {
-      for(i in 1:nrow(neg_peaks_overlapping_with_snME)) {
-        final_list_of_sites[[index]] <- neg_peaks_overlapping_with_snME[i,]
-        index <- index + 1
-      }
-    }
+    snME_dms_subset <- snME_dms[snME_dms$celltype == snME_cell_type,]
+    snME_dms_subset_granges <- makeGRangesFromDataFrame(df = snME_dms_subset, keep.extra.columns = TRUE)
+    overlap <- as.data.frame(findOverlaps(peak_table_granges, snME_dms_subset_granges))
+    overlap_df <- combineRows(peak_table, snME_dms_subset,overlap)
+    overlap_df <- overlap_df[,-c(27:52)]
+    final_df[[length(final_df) + 1]] <- overlap_df
   }
   
-  final_list_of_sites <- do.call(rbind, final_list_of_sites)
-  final_list_of_sites <- final_list_of_sites %>%
-    select(-value, -start, -end)
-  return(final_list_of_sites)
+  final_df <- do.call(rbind, final_df)
+  return(final_df)
 }
 
 # Find all overlap between snATAC-seq (hg38) and snMethylation (hg38)
 
 # Create lenient version of sc_peaks (adds 250 to start / end of coordinates)
+colnames(sc_peaks)[1] <- "seqnames"
 sc_peaks_lenient <- sc_peaks
 sc_peaks_lenient$start <- sc_peaks_lenient$start - 250 
 sc_peaks_lenient$end <- sc_peaks_lenient$end + 250
+sc_peaks_more_lenient <- sc_peaks
+sc_peaks_more_lenient$start <- sc_peaks_lenient$start - 250 
+sc_peaks_more_lenient$end <- sc_peaks_lenient$end + 250
 
-# Initialize an empty list to store the filtered rows
-# filtered_rows uses the original peaks
-# filtered_rows_lenient is more lenient (adds 500 to start / end)
-filtered_rows <- list()
-filtered_rows_lenient <- list()
+sc_peaks_granges <- makeGRangesFromDataFrame(df = sc_peaks, keep.extra.columns = TRUE)
+sc_peaks_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_lenient, keep.extra.columns = TRUE)
+sc_peaks_more_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_more_lenient, keep.extra.columns = TRUE)
 
-for(chr in unique(sc_peaks$value)) {
-  print(chr)
-  sc_peaks_chr_subset <- sc_peaks[sc_peaks$value == chr,]
-  sc_peaks_lenient_chr_subset <- sc_peaks_lenient[sc_peaks_lenient$value == chr,]
-  snME_dms_chr_subset <- snME_dms[snME_dms$chr == chr,]
-  
-  overlap_indices_snME_dms <- list()
-  overlap_indices_snME_dms_lenient <- list()
-  
-  # Iterate through rows of B and check for overlaps with A
-  for (i in 1:nrow(snME_dms_chr_subset)) {
-    overlap <- check_overlap(snME_dms_chr_subset$start[i], snME_dms_chr_subset$end[i], sc_peaks_chr_subset$start, sc_peaks_chr_subset$end)
-    if (any(overlap)) {
-      overlap_indices_snME_dms[[i]] <- which(overlap)
-    } else {
-      overlap_indices_snME_dms[[i]] <- NA
-    }
-    overlap <- check_overlap(snME_dms_chr_subset$start[i], snME_dms_chr_subset$end[i], sc_peaks_lenient_chr_subset$start, sc_peaks_lenient_chr_subset$end)
-    if (any(overlap)) {
-      overlap_indices_snME_dms_lenient[[i]] <- which(overlap)
-    } else {
-      overlap_indices_snME_dms_lenient[[i]] <- NA
-    }
-  }
-  
-  for(current_snME_row_index in 1:length(overlap_indices_snME_dms)) {
-    current_peak_row_index <- overlap_indices_snME_dms[[current_snME_row_index]]
-    if(!is.na(current_peak_row_index)) {
-      current_snME_row <- snME_dms_chr_subset[current_snME_row_index,]
-      current_peak_row <- sc_peaks_chr_subset[current_peak_row_index,]
-      current_peak_row$start_methyl <- current_snME_row$start
-      current_peak_row$end_methyl <- current_snME_row$end
-      current_peak_row$methyl_status <- current_snME_row$methylation
-      current_peak_row$number_of_dms <- current_snME_row$number_of_dms
-      current_peak_row$cell_type_snME <- current_snME_row$celltype
-      filtered_rows[[length(filtered_rows) + 1]] <- current_peak_row
-    }
-  }
-  
-  for(current_snME_row_index in 1:length(overlap_indices_snME_dms_lenient)) {
-    current_peak_row_index <- overlap_indices_snME_dms_lenient[[current_snME_row_index]]
-    if(sum(!is.na(current_peak_row_index)) >= 1) {
-      for(entry in current_peak_row_index) {
-        current_snME_row <- snME_dms_chr_subset[current_snME_row_index,]
-        current_peak_row <- sc_peaks_lenient_chr_subset[entry,]
-        current_peak_row$start_methyl <- current_snME_row$start
-        current_peak_row$end_methyl <- current_snME_row$end
-        current_peak_row$methyl_status <- current_snME_row$methylation
-        current_peak_row$number_of_dms <- current_snME_row$number_of_dms
-        current_peak_row$cell_type_snME <- current_snME_row$celltype
-        filtered_rows_lenient[[length(filtered_rows_lenient) + 1]] <- current_peak_row
-      } 
-    }
-  }
-}
+colnames(snME_dms)[2] <- "seqnames"
+snME_dms_granges <- makeGRangesFromDataFrame(df = snME_dms, keep.extra.columns = TRUE)
 
-# 5498 peaks overlap with snME DMR
-snATAC_snME_overlap <- do.call(rbind, filtered_rows)
-write.table(snATAC_snME_overlap, file = paste0(snME_results_dir, "snME_dms_overlap_with_all_atac_peaks.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+# 5498
+sc_peak_and_snME_dms_overlap <- as.data.frame(findOverlaps(sc_peaks_granges, snME_dms_granges))
+sc_peak_and_snME_dms_overlap_df <- combineRows(sc_peaks, snME_dms, sc_peak_and_snME_dms_overlap)
+sc_peak_and_snME_dms_overlap_df <- sc_peak_and_snME_dms_overlap_df[,-c(27:52)]
 
-# 10424 peaks (lenient) overlap with snME DMR
-snATAC_snME_overlap_lenient <- do.call(rbind, filtered_rows_lenient)
-write.table(snATAC_snME_overlap_lenient, file = paste0(snME_results_dir, "snME_dms_overlap_with_all_atac_peaks_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+# 10424
+sc_peak_lenient_and_snME_dms_overlap <- as.data.frame(findOverlaps(sc_peaks_lenient_granges, snME_dms_granges))
+sc_peak_lenient_and_snME_dms_overlap_df <- combineRows(sc_peaks_lenient, snME_dms, sc_peak_lenient_and_snME_dms_overlap)
+sc_peak_lenient_and_snME_dms_overlap_df <- sc_peak_lenient_and_snME_dms_overlap_df[,-c(27:52)]
+
+# 14622
+sc_peak_more_lenient_and_snME_dms_overlap <- as.data.frame(findOverlaps(sc_peaks_more_lenient_granges, snME_dms_granges))
+sc_peak_more_lenient_and_snME_dms_overlap_df <- combineRows(sc_peaks_more_lenient, snME_dms, sc_peak_more_lenient_and_snME_dms_overlap)
+sc_peak_more_lenient_and_snME_dms_overlap_df <- sc_peak_more_lenient_and_snME_dms_overlap_df[,-c(27:52)]
+
+write.table(sc_peak_and_snME_dms_overlap_df, file = paste0(snME_results_dir, "snME_dms_overlap_with_all_atac_peaks.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(sc_peak_lenient_and_snME_dms_overlap_df, file = paste0(snME_results_dir, "snME_dms_overlap_with_all_atac_peaks_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(sc_peak_more_lenient_and_snME_dms_overlap_df, file = paste0(snME_results_dir, "snME_dms_overlap_with_all_atac_peaks_more_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # The next question is: Are any of these peaks differentially accessible in the relevant cell type?
 # If so, we have matching differential accessibility and differential methylation
@@ -172,44 +112,48 @@ magical_results <- read.table(file = paste0(magical_output_dir, "MAGICAL_overall
 for(cell_type in atac_cell_types_for_snME_analysis) {
   cell_type_for_file_name <- sub(" ", "_", cell_type)
   cell_type_snATAC_snME_overlap_das_subset <- find_matching_snATAC_das_and_snME_dms(cell_type, paste0(sc_das_dir, 
-                                                                                                                     "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv"),
-                                                                          paste0(sc_das_dir, 
-                                                                                 "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv"),
-                                                                          snATAC_snME_overlap, lenient = FALSE)
+                                                                                                                     "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"),
+                                                                                    snME_dms, lenient = 0)
   cell_type_snATAC_snME_overlap_das_subset_lenient <- find_matching_snATAC_das_and_snME_dms(cell_type, paste0(sc_das_dir, 
-                                                                                                                             "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv"),
-                                                                                  paste0(sc_das_dir, 
-                                                                                         "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv"),
-                                                                                  snATAC_snME_overlap_lenient, lenient = TRUE)
+                                                                                                              "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"),
+                                                                                            snME_dms, lenient = 250)
+  cell_type_snATAC_snME_overlap_das_subset_more_lenient <- find_matching_snATAC_das_and_snME_dms(cell_type, paste0(sc_das_dir, 
+                                                                                                              "diff_peaks/D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"),
+                                                                                            snME_dms, lenient = 500)
+  
   write.table(cell_type_snATAC_snME_overlap_das_subset, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
   write.table(cell_type_snATAC_snME_overlap_das_subset_lenient, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(cell_type_snATAC_snME_overlap_das_subset_more_lenient, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_more_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  
+  sc_peaks_granges <- makeGRangesFromDataFrame(df = cell_type_snATAC_snME_overlap_das_subset, keep.extra.columns = TRUE)
+  sc_peaks_lenient_granges <- makeGRangesFromDataFrame(df = cell_type_snATAC_snME_overlap_das_subset_lenient, keep.extra.columns = TRUE)
+  sc_peaks_more_lenient_granges <- makeGRangesFromDataFrame(df = cell_type_snATAC_snME_overlap_das_subset_more_lenient, keep.extra.columns = TRUE)
   
   # Overlap between MAGICAL circuits and DAS peaks that contained DMS
   magical_results_cell_type_subset <- magical_results[magical_results$Cell_Type == cell_type_for_file_name,]
+  colnames(magical_results_cell_type_subset)[5] <- "seqnames"
+  colnames(magical_results_cell_type_subset)[6] <- "start"
+  colnames(magical_results_cell_type_subset)[7] <- "end"
+  
+  magical_granges <- makeGRangesFromDataFrame(df = magical_results_cell_type_subset, keep.extra.columns = TRUE)
   
   # Normal
-  peaks <- cell_type_snATAC_snME_overlap_das_subset$Peak_Name
-  chromosomes <- sapply(strsplit(peaks, "-"), `[`, 1)
-  start_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 2))
-  end_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 3))
-  cell_type_snATAC_snME_overlap_das_subset$Peak_chr <- chromosomes
-  cell_type_snATAC_snME_overlap_das_subset$Peak_start <- start_coords
-  cell_type_snATAC_snME_overlap_das_subset$Peak_end <- end_coords
-  magical_results_cell_type_subset_overlap <- dplyr::inner_join(magical_results_cell_type_subset, cell_type_snATAC_snME_overlap_das_subset, by = c("Peak_chr", "Peak_start", "Peak_end"))
-  if(nrow(magical_results_cell_type_subset_overlap) > 0) {
-    write.table(magical_results_cell_type_subset_overlap, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  magical_overlap <- as.data.frame(findOverlaps(sc_peaks_granges, magical_granges))
+  magical_lenient_overlap <- as.data.frame(findOverlaps(sc_peaks_lenient_granges, magical_granges))
+  magical_more_lenient_overlap <- as.data.frame(findOverlaps(sc_peaks_more_lenient_granges, magical_granges))
+  
+  if(nrow(magical_overlap) > 0) {
+    magical_overlap_df <- combineRows(cell_type_snATAC_snME_overlap_das_subset, magical_results_cell_type_subset, magical_overlap)
+    write.table(magical_overlap_df, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
   }
- 
-  # Lenient
-  peaks <- cell_type_snATAC_snME_overlap_das_subset_lenient$Peak_Name
-  chromosomes <- sapply(strsplit(peaks, "-"), `[`, 1)
-  start_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 2))
-  end_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 3))
-  cell_type_snATAC_snME_overlap_das_subset_lenient$Peak_chr <- chromosomes
-  cell_type_snATAC_snME_overlap_das_subset_lenient$Peak_start <- start_coords
-  cell_type_snATAC_snME_overlap_das_subset_lenient$Peak_end <- end_coords
-  magical_results_cell_type_subset_overlap_lenient <- dplyr::inner_join(magical_results_cell_type_subset, cell_type_snATAC_snME_overlap_das_subset_lenient, by = c("Peak_chr", "Peak_start", "Peak_end"))
-  if(nrow(magical_results_cell_type_subset_overlap_lenient) > 0) {
-    write.table(magical_results_cell_type_subset_overlap_lenient, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  
+  if(nrow(magical_lenient_overlap) > 0) {
+    magical_overlap_lenient_df <- combineRows(cell_type_snATAC_snME_overlap_das_subset_lenient, magical_results_cell_type_subset, magical_lenient_overlap)
+    write.table(magical_overlap_lenient_df, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  }
+  
+  if(nrow(magical_more_lenient_overlap) > 0) {
+    magical_overlap_more_lenient_df <- combineRows(cell_type_snATAC_snME_overlap_das_subset_more_lenient, magical_results_cell_type_subset, magical_more_lenient_overlap)
+    write.table(magical_more_lenient_overlap, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL_more_lenient.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
   }
 }
