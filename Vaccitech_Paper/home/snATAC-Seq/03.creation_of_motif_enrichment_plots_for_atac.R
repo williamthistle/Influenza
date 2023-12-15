@@ -78,4 +78,4 @@ down_atac_tf_motif_enrichment_df_plot <- ggplot(data = down_atac_tf_motif_enrich
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
 
-ggsave(filename = paste0(atac_tf_motif_enrichment_plot_dir, "down_atac_tf_motif_enrichment_df_plot.tiff"), plot = down_atac_tf_motif_enrichment_df_plot, device='tiff', dpi = 300)
+ggsave(filename = paste0(atac_tf_motif_enrichment_plot_dir, "down_atac_tf_motif_enrichment_df_plot.png"), plot = down_atac_tf_motif_enrichment_df_plot, device='png', dpi = 300)

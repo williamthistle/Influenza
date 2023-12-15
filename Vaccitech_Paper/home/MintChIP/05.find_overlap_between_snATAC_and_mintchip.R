@@ -2,6 +2,17 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+combineRows <- function(df1, df2, matches) {
+  combined <- data.frame()
+  for (i in 1:nrow(matches)) {
+    queryRow <- matches[i, "queryHits"]
+    subjectRow <- matches[i, "subjectHits"]
+    combinedRow <- cbind(df1[queryRow,], df2[subjectRow,])
+    combined <- rbind(combined, combinedRow)
+  }
+  return(combined)
+}
+
 find_matching_snATAC_das_and_mintchip_das <- function(snATAC_cell_type, neg_peak_file_path, pos_peak_file_path, mintchip_markers, fc_threshold, lenient = FALSE) {
   # Grab positive DAS and negative snaTAC DAS
   pos_peak_table <- read.table(pos_peak_file_path, sep = "\t", header = TRUE)
@@ -191,6 +202,8 @@ for(marker in mintchip_markers) {
   
 }
 
+# Find overlap between marker peaks and ALL snATAC-seq peaks
+all_marker_overlap_df <- list()
 for(marker in mintchip_markers) {
   # Fix hg19 coordinates to be hg38
   marker_peaks <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.1.tsv"),
@@ -210,20 +223,21 @@ for(marker in mintchip_markers) {
   }
   marker_overlap_df$start <- hg38_start
   marker_overlap_df$end <- hg38_end
+  marker_overlap_df <- marker_overlap_df[,-c(12:25)]
   # Find overlap between marker peaks and sc peaks
-  
-
-  
-  
-  
-  
-
-
-  
+  marker_peaks_granges <- makeGRangesFromDataFrame(df = marker_overlap_df, keep.extra.columns = TRUE)
+  marker_overlap <- as.data.frame(findOverlaps(marker_peaks_granges, sc_peaks_granges))
+  marker_overlap_df <- combineRows(marker_peaks, sc_peaks, marker_overlap)
+  marker_overlap_df$marker <- marker
+  all_marker_overlap_df[[length(all_marker_overlap_df) + 1]] <- marker_overlap_df
 }
 
-
-
+# 1479 total marker peaks overlap with ALL snATAC-seq peaks
+# H3K27Ac H3K27me3 H3K36me3  H3K4me1  H3K4me3  H3K9me3 
+#   248       22       62      712      381       54 
+all_marker_overlap_df <- do.call(rbind, all_marker_overlap_df)
+  
+  
 # Next, we want to find overlap between each cell type and each marker
 atac_cell_types_for_mintchip_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "MAIT", "NK", "Proliferating", "T Naive")
 atac_mintchip_tables <- list()
