@@ -258,6 +258,10 @@ for(marker in mintchip_markers) {
 # H3K27Ac H3K27me3 H3K36me3  H3K4me1  H3K4me3  H3K9me3 
 #   248       22       62      712      381       54 
 all_marker_overlap_df <- do.call(rbind, all_marker_overlap_df)
+
+# CHECK DESeq2 only (apples and apples) - do FC 0.1 and maybe 0 as well
+
+
   
 # Next, we want to find overlap between each cell type and each marker
 atac_cell_types_for_mintchip_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "MAIT", "NK", "Proliferating", "T Naive")
