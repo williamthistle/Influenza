@@ -203,31 +203,17 @@ for(marker in mintchip_markers) {
 
 # Go to UCSC site to perform liftover
 
-# Add hg38 coordinates to each file
-for(marker in mintchip_markers) {
-  current_marker_sites <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0.tsv"), sep = "\t", header = TRUE)
-  associated_hg38_coordinates <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_coordinates_hg38.tsv"), 
-                                            sep = "\t")$V1
-  if(file.size(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_coordinates_hg38_error.tsv")) > 2) {
-    associated_hg38_errors <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_coordinates_hg38_error.tsv"), 
-                                         sep = "\t")$V1
-    # Remove any site that didn't have associated hg38 site in liftover
-    current_marker_sites <- current_marker_sites[current_marker_sites$coordinates != associated_hg38_errors, ]
-  }
-  # Add hg38 info
-  current_marker_sites$hg38_coordinates <- associated_hg38_coordinates
-  write.table(current_marker_sites, file = paste0(mintchip_das_dir, marker, "/", marker, "_consensus_peak_set_FC_0_with_hg38_coordinates.tsv"),
-              sep = "\t", row.names = FALSE, quote = FALSE)
-  
-}
-
 # Find overlap between ALL marker peaks and ALL snATAC-seq peaks
 unfiltered_all_marker_overlap_nums <- c()
 for(marker in mintchip_markers) {
   print(marker)
-  all_marker_peaks <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_all_peaks_hg38.tsv"),
-                               sep = "\t")
-  colnames(all_marker_peaks) <- c("seqnames", "start", "end", "coordinates", "blah")
+  all_marker_peaks <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_all_peaks_with_hg38_coordinates.tsv"),
+                               sep = "\t", header = TRUE)
+  components <- strsplit(all_marker_peaks$hg38_coordinates, "[:-]")
+  hg38_start <- as.numeric(sapply(components, function(x) x[2])) 
+  hg38_end <- as.numeric(sapply(components, function(x) x[3]))
+  all_marker_peaks$start <- hg38_start
+  all_marker_peaks$end <- hg38_end
   all_marker_peaks_granges <- makeGRangesFromDataFrame(df = all_marker_peaks, keep.extra.columns = TRUE)
   all_marker_overlap <- as.data.frame(findOverlaps(all_marker_peaks_granges, sc_peaks_granges))
   percentage_peak_overlap <- nrow(all_marker_overlap) / nrow(all_marker_peaks)
