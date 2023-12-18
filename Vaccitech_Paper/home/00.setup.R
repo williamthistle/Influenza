@@ -50,6 +50,7 @@ sc_rna_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/H
 sc_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/DEGs/")
 sc_deg_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/DEGs_with_ATAC_cell_types/")
 sc_magical_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/")
+magical_output_dir <- paste0(sc_magical_dir, "Output/")
 sc_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/HumanBase/")
 sc_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snATAC-Seq/Results/HVL/")
 mintchip_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/")
@@ -62,9 +63,11 @@ miRNA_metadata_dir <-paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Metada
 totalRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Data/")
 totalRNA_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Metadata/")
 
-
 # Read in Mint-ChIP metadata
 mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
+# Mintchip markers
+mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
+
 # Tables containing DEG results for single cell RNA-seq processing
 # Includes genes that passed pseudobulk filtering (remove platelets)
 # TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
@@ -82,6 +85,19 @@ rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"),
 sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
 sc_motifs <- read.table(paste0(sc_das_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
 atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_ATAC_cell_metadata.tsv"), sep = "\t", comment.char = "")
+
+# Create more lenient versions of sc_peaks (adds 250 or 500 to start / end of coordinates)
+colnames(sc_peaks)[1] <- "seqnames"
+sc_peaks_lenient <- sc_peaks
+sc_peaks_lenient$start <- sc_peaks_lenient$start - 250 
+sc_peaks_lenient$end <- sc_peaks_lenient$end + 250
+sc_peaks_more_lenient <- sc_peaks
+sc_peaks_more_lenient$start <- sc_peaks_lenient$start - 250 
+sc_peaks_more_lenient$end <- sc_peaks_lenient$end + 250
+
+sc_peaks_granges <- makeGRangesFromDataFrame(df = sc_peaks, keep.extra.columns = TRUE)
+sc_peaks_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_lenient, keep.extra.columns = TRUE)
+sc_peaks_more_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_more_lenient, keep.extra.columns = TRUE)
 
 # snME related tables
 snME_dms <- read.table(paste0(snME_data_dir, "snME_dms_processed.tsv"), sep = "\t", header = TRUE)
