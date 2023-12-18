@@ -141,45 +141,32 @@ for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
   }
   cell_type_marker_overlap_df <- do.call(rbind, cell_type_marker_overlap_df)
   colnames(cell_type_marker_overlap_df)[10] <- "seqnames_marker"
+  colnames(cell_type_marker_overlap_df)[11] <- "start_marker"
+  colnames(cell_type_marker_overlap_df)[12] <- "end_marker"
   atac_mintchip_tables_lenient[[length(atac_mintchip_tables_lenient) + 1]] <- cell_type_marker_overlap_df
 }
-
 atac_mintchip_tables_lenient <- do.call(rbind, atac_mintchip_tables_lenient)
+
+# Summarize overlap for different cell types and different markers
 for(cell_type in unique(atac_mintchip_tables_lenient$Cell_Type)) { 
   print(cell_type)
   cell_type_subset <- atac_mintchip_tables_lenient[atac_mintchip_tables_lenient$Cell_Type == cell_type,]
   print(table(cell_type_subset$marker))
 }
 
-  
-  
-  
-#magical_results_cell_type_subset <- magical_results[magical_results$Cell_Type == atac_cell_type_for_file_name,]
-#magical_results_cell_type_subset$seqnames <- magical_results_cell_type_subset$Peak_chr
-#magical_results_cell_type_subset$start <- magical_results_cell_type_subset$Peak_start
-#magical_results_cell_type_subset$end <- magical_results_cell_type_subset$Peak_end
-#magical_results_cell_type_subset_overlapping_marker_peaks <- magical_results_cell_type_subset[magical_results_cell_type_subset[, 
-#                                                            c("seqnames", "start")] %in% cell_type_marker_overlap_df[, c("seqnames", "start")], ]
-#print(magical_results_cell_type_subset_overlapping_marker_peaks)
-
-  
-  # Overlap between MAGICAL circuits and DAS peaks that contained mintchip marker
-
-  
-  # Normal
-  peaks <- cell_type_snATAC_mintchip_das_overlap$Peak_Name
-  chromosomes <- sapply(strsplit(peaks, "-"), `[`, 1)
-  start_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 2))
-  end_coords <- as.numeric(sapply(strsplit(peaks, "-"), `[`, 3))
-  cell_type_snATAC_mintchip_das_overlap$Peak_chr <- chromosomes
-  cell_type_snATAC_mintchip_das_overlap$Peak_start <- start_coords
-  cell_type_snATAC_mintchip_das_overlap$Peak_end <- end_coords
-  magical_results_cell_type_subset_overlap <- dplyr::inner_join(magical_results_cell_type_subset, cell_type_snATAC_mintchip_das_overlap, by = c("Peak_chr", "Peak_start", "Peak_end"))
-  if(nrow(magical_results_cell_type_subset_overlap) > 0) {
-    print(magical_results_cell_type_subset_overlap)
-    #write.table(magical_results_cell_type_subset_overlap, file = paste0(snME_results_dir, "Cell_Type_Overlap/", cell_type_for_file_name, "_das_snME_dms_overlap_MAGICAL.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-  }
+# Find MAGICAL overlap
+MAGICAL_overlap_with_mintchip_lenient <- list()
+for(cell_type in unique(atac_mintchip_tables_lenient$Cell_Type)) {
+  print(cell_type)
+  cell_type_for_magical <- sub(" ", "_", cell_type)
+  atac_mintchip_tables_cell_type_subset <- atac_mintchip_tables_lenient[atac_mintchip_tables_lenient$Cell_Type == cell_type,]
+  magical_results_cell_type_subset <- magical_results[magical_results$Cell_Type == cell_type_for_magical,]
+  magical_results_cell_type_subset$seqnames <- magical_results_cell_type_subset$Peak_chr
+  magical_results_cell_type_subset$start <- magical_results_cell_type_subset$Peak_start
+  magical_results_cell_type_subset$end <- magical_results_cell_type_subset$Peak_end
+  magical_results_cell_type_subset$start <- magical_results_cell_type_subset$start - 250
+  magical_results_cell_type_subset$end <- magical_results_cell_type_subset$end + 250
+  result <- merge(magical_results_cell_type_subset, atac_mintchip_tables_cell_type_subset, by = c("seqnames", "start", "end"))
+  MAGICAL_overlap_with_mintchip_lenient[[length(MAGICAL_overlap_with_mintchip_lenient) + 1]] <- result
 }
-
-
-
+MAGICAL_overlap_with_mintchip_lenient <- do.call(rbind, MAGICAL_overlap_with_mintchip_lenient)
