@@ -10,6 +10,15 @@ library(DiffBind)
 library(SPEEDI)
 library(pheatmap)
 library(dplyr)
+library(GenomicRanges)
+library(SummarizedExperiment)
+library(JASPAR2020)
+library(TFBSTools)
+library(BSgenome.Hsapiens.UCSC.hg19)
+library(monaLisa)
+library(ComplexHeatmap)
+library(circlize)
+library(chromVARmotifs)
 
 # Load bulk RNA-seq analysis results
 onedrive_dir <- "~"
