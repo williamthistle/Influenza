@@ -46,7 +46,6 @@ for(marker in mintchip_markers) {
     testing_marker_negative_granges <- makeGRangesFromDataFrame(df = testing_marker_negative_df, keep.extra.columns = TRUE)
     testing_marker_negative_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, testing_marker_negative_granges)
     
-    
     # Set up DF, GRanges, and DNAStringSet objects for positive marker peaks
     testing_marker_positive_df <- testing_marker_df[testing_marker_df$Fold > 0,]
     testing_marker_positive_granges <- makeGRangesFromDataFrame(df = testing_marker_positive_df, keep.extra.columns = TRUE)
@@ -87,7 +86,7 @@ for(marker in mintchip_markers) {
     neg_background_marker_without_candidate_peaks_granges <- makeGRangesFromDataFrame(df = neg_background_marker_without_candidate_peaks_df, keep.extra.columns = TRUE)
     neg_background_marker_without_candidate_peaks_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, neg_background_marker_without_candidate_peaks_granges)
     
-    # Set up DNAStringSet objects for combined (negative then positive) marker peaks
+    # Set up DNAStringSet objects for combined (background then negative) marker peaks
     # Reorganizing in this way makes it easier to do two bin analysis
     neg_markers_combined_seqs <- c(neg_background_marker_without_candidate_peaks_seqs, testing_marker_negative_seqs)
     
@@ -98,12 +97,12 @@ for(marker in mintchip_markers) {
       n = 40000
     )
     
-    # Set up posative peak background DF, GRanges, and DNAStringSet objects
+    # Set up positive peak background DF, GRanges, and DNAStringSet objects
     pos_background_marker_without_candidate_peaks_df <- background_marker_without_candidate_peaks_df[pos.peaks.matched,]
     pos_background_marker_without_candidate_peaks_granges <- makeGRangesFromDataFrame(df = pos_background_marker_without_candidate_peaks_df, keep.extra.columns = TRUE)
     pos_background_marker_without_candidate_peaks_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, pos_background_marker_without_candidate_peaks_granges)
     
-    # Set up DNAStringSet objects for combined (posative then positive) marker peaks
+    # Set up DNAStringSet objects for combined (background then positive) marker peaks
     # Reorganizing in this way makes it easier to do two bin analysis
     pos_markers_combined_seqs <- c(pos_background_marker_without_candidate_peaks_seqs, testing_marker_positive_seqs)
     
