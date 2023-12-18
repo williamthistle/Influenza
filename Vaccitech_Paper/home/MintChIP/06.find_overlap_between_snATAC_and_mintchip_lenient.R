@@ -34,7 +34,7 @@ add_hg38_coordinates_to_marker_peaks <- function(marker_table, hg38_table) {
 
 # Find overlap between ALL marker peaks and ALL snATAC-seq peaks
 # Note that numbers may be slightly off because we don't do the combineRows step, but they are mostly accurate.
-unfiltered_all_marker_overlap_nums <- data.frame(marker = character(), num_marker_peaks = numeric(),
+unfiltered_all_marker_overlap_nums_lenient <- data.frame(marker = character(), num_marker_peaks = numeric(),
                                                  num_atac_peaks = numeric(), num_overlapping_peaks = numeric(),
                                                  percentage_of_marker_peaks_overlapping = numeric(),
                                                  percentage_of_atac_peaks_overlapping = numeric())
@@ -44,24 +44,27 @@ for(marker in mintchip_markers) {
                                sep = "\t", header = TRUE)
   all_marker_peaks$start <- all_marker_peaks$hg38_start
   all_marker_peaks$end <- all_marker_peaks$hg38_end
+  # Increase length of mintchip peaks (lenient)
+  all_marker_peaks$start <- all_marker_peaks$start - 200
+  all_marker_peaks$end <- all_marker_peaks$end + 200 
   all_marker_peaks_granges <- makeGRangesFromDataFrame(df = all_marker_peaks, keep.extra.columns = TRUE)
-  all_marker_overlap <- as.data.frame(findOverlaps(all_marker_peaks_granges, sc_peaks_granges))
+  all_marker_overlap <- as.data.frame(findOverlaps(all_marker_peaks_granges, sc_peaks_lenient_granges))
   marker_percentage_peak_overlap <- nrow(all_marker_overlap) / nrow(all_marker_peaks)
-  atac_percentage_peak_overlap <- nrow(all_marker_overlap) / nrow(sc_peaks)
+  atac_percentage_peak_overlap <- nrow(all_marker_overlap) / nrow(sc_peaks_lenient)
 
-  current_row <- c(marker, nrow(all_marker_peaks), nrow(sc_peaks), nrow(all_marker_overlap),
+  current_row <- c(marker, nrow(all_marker_peaks), nrow(sc_peaks_lenient), nrow(all_marker_overlap),
                    marker_percentage_peak_overlap, atac_percentage_peak_overlap)
   current_row <- data.frame(t(current_row))
-  colnames(current_row) <- colnames(unfiltered_all_marker_overlap_nums)
-  unfiltered_all_marker_overlap_nums <- rbind(unfiltered_all_marker_overlap_nums, current_row)
+  colnames(current_row) <- colnames(unfiltered_all_marker_overlap_nums_lenient)
+  unfiltered_all_marker_overlap_nums_lenient <- rbind(unfiltered_all_marker_overlap_nums_lenient, current_row)
 }
 
 # The overlap is pretty good for all markers!
-unfiltered_all_marker_overlap_nums
+unfiltered_all_marker_overlap_nums_lenient
 
 # Find overlap between DAS marker peaks and ALL snATAC-seq peaks
 # Let's do DESeq2 with FC threshold 0 since that's the best case scenario I'd say
-das_marker_overlap_nums <- data.frame(marker = character(), num_das_marker_peaks = numeric(),
+das_marker_overlap_nums_lenient <- data.frame(marker = character(), num_das_marker_peaks = numeric(),
                                                  num_atac_peaks = numeric(), num_overlapping_peaks = numeric(),
                                                  percentage_of_das_marker_peaks_overlapping = numeric(),
                                                  percentage_of_atac_peaks_overlapping = numeric())
@@ -72,27 +75,30 @@ for(marker in mintchip_markers) {
                                                   sep = "\t", header = TRUE),
                                        read.table(paste0(mintchip_das_dir, marker, "/", marker, "_all_peaks_with_hg38_coordinates.tsv"),
                                                   sep = "\t", header = TRUE))
+  # Increase length of mintchip peaks (lenient)
+  das_marker_with_hg38_df$start <- das_marker_with_hg38_df$start - 200
+  das_marker_with_hg38_df$end <- das_marker_with_hg38_df$end + 200 
   # Find overlap between marker peaks and sc peaks
   das_marker_peaks_granges <- makeGRangesFromDataFrame(df = das_marker_with_hg38_df, keep.extra.columns = TRUE)
-  das_marker_overlap <- as.data.frame(findOverlaps(das_marker_peaks_granges, sc_peaks_granges))
-  das_marker_overlap_df <- combineRows(das_marker_with_hg38_df, sc_peaks, das_marker_overlap)
+  das_marker_overlap <- as.data.frame(findOverlaps(das_marker_peaks_granges, sc_peaks_lenient_granges))
+  das_marker_overlap_df <- combineRows(das_marker_with_hg38_df, sc_peaks_lenient, das_marker_overlap)
   marker_percentage_peak_overlap <- length(unique(das_marker_overlap_df$start)) / nrow(das_marker_with_hg38_df)
-  atac_percentage_peak_overlap <- length(unique(das_marker_overlap_df$idx)) / nrow(sc_peaks)
+  atac_percentage_peak_overlap <- length(unique(das_marker_overlap_df$idx)) / nrow(sc_peaks_lenient)
   
-  current_row <- c(marker, nrow(das_marker_with_hg38_df), nrow(sc_peaks), length(unique(das_marker_overlap_df$start)),
+  current_row <- c(marker, nrow(das_marker_with_hg38_df), nrow(sc_peaks_lenient), length(unique(das_marker_overlap_df$start)),
                    marker_percentage_peak_overlap, atac_percentage_peak_overlap)
   current_row <- data.frame(t(current_row))
-  colnames(current_row) <- colnames(das_marker_overlap_nums)
-  das_marker_overlap_nums <- rbind(das_marker_overlap_nums, current_row)
+  colnames(current_row) <- colnames(das_marker_overlap_nums_lenient)
+  das_marker_overlap_nums_lenient <- rbind(das_marker_overlap_nums_lenient, current_row)
 }
 
 # Not too bad!
-das_marker_overlap_nums
+das_marker_overlap_nums_lenient
 
 # Finally, let's find overlap between the DAS in each cell type and each marker
 
 atac_cell_types_for_mintchip_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "MAIT", "NK", "Proliferating", "T Naive")
-atac_mintchip_tables <- list()
+atac_mintchip_tables_lenient <- list()
 for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
   print(atac_cell_type)
   atac_cell_type_for_file_name <- sub(" ", "_", atac_cell_type)
@@ -109,8 +115,12 @@ for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
     end <- c(end, component[3])
   }
   atac_cell_type_peaks$seqnames <- chr
-  atac_cell_type_peaks$start <- start
-  atac_cell_type_peaks$end <- end
+  atac_cell_type_peaks$start <- as.numeric(start)
+  atac_cell_type_peaks$end <- as.numeric(end)
+  # Make cell type peaks more lenient
+  atac_cell_type_peaks$start <- atac_cell_type_peaks$start - 250
+  atac_cell_type_peaks$end <- atac_cell_type_peaks$end + 250
+  # Create GRanges object
   atac_cell_type_peaks_granges <- makeGRangesFromDataFrame(df = atac_cell_type_peaks, keep.extra.columns = TRUE)
   cell_type_marker_overlap_df <- list()
   for(marker in mintchip_markers) {
@@ -119,6 +129,8 @@ for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
                                                                                sep = "\t", header = TRUE),
                                                                     read.table(paste0(mintchip_das_dir, marker, "/", marker, "_all_peaks_with_hg38_coordinates.tsv"),
                                                                                sep = "\t", header = TRUE))
+    das_marker_with_hg38_df$start <- das_marker_with_hg38_df$start - 200
+    das_marker_with_hg38_df$end <- das_marker_with_hg38_df$end + 200
     das_marker_peaks_granges <- makeGRangesFromDataFrame(df = das_marker_with_hg38_df, keep.extra.columns = TRUE)
     marker_overlap <- as.data.frame(findOverlaps(atac_cell_type_peaks_granges, das_marker_peaks_granges))
     if(nrow(marker_overlap) > 0) {
@@ -129,13 +141,13 @@ for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
   }
   cell_type_marker_overlap_df <- do.call(rbind, cell_type_marker_overlap_df)
   colnames(cell_type_marker_overlap_df)[10] <- "seqnames_marker"
-  atac_mintchip_tables[[length(atac_mintchip_tables) + 1]] <- cell_type_marker_overlap_df
+  atac_mintchip_tables_lenient[[length(atac_mintchip_tables_lenient) + 1]] <- cell_type_marker_overlap_df
 }
 
-atac_mintchip_tables <- do.call(rbind, atac_mintchip_tables)
-for(cell_type in unique(atac_mintchip_tables$Cell_Type)) { 
+atac_mintchip_tables_lenient <- do.call(rbind, atac_mintchip_tables_lenient)
+for(cell_type in unique(atac_mintchip_tables_lenient$Cell_Type)) { 
   print(cell_type)
-  cell_type_subset <- atac_mintchip_tables[atac_mintchip_tables$Cell_Type == cell_type,]
+  cell_type_subset <- atac_mintchip_tables_lenient[atac_mintchip_tables_lenient$Cell_Type == cell_type,]
   print(table(cell_type_subset$marker))
 }
 
