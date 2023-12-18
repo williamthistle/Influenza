@@ -120,13 +120,23 @@ for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
     das_marker_peaks_granges <- makeGRangesFromDataFrame(df = das_marker_with_hg38_df, keep.extra.columns = TRUE)
     marker_overlap <- as.data.frame(findOverlaps(atac_cell_type_peaks_granges, das_marker_peaks_granges))
     if(nrow(marker_overlap) > 0) {
-      marker_overlap_df <- combineRows(atac_cell_type_peaks, marker_with_hg38_df, marker_overlap)
+      marker_overlap_df <- combineRows(atac_cell_type_peaks, das_marker_with_hg38_df, marker_overlap)
       marker_overlap_df$marker <- marker
       cell_type_marker_overlap_df[[length(cell_type_marker_overlap_df) + 1]] <- marker_overlap_df
     }
   }
   cell_type_marker_overlap_df <- do.call(rbind, cell_type_marker_overlap_df)
+  colnames(cell_type_marker_overlap_df)[10] <- "seqnames_marker"
   atac_mintchip_tables[[length(atac_mintchip_tables) + 1]] <- cell_type_marker_overlap_df
+  
+  
+  #magical_results_cell_type_subset <- magical_results[magical_results$Cell_Type == atac_cell_type_for_file_name,]
+  #magical_results_cell_type_subset$seqnames <- magical_results_cell_type_subset$Peak_chr
+  #magical_results_cell_type_subset$start <- magical_results_cell_type_subset$Peak_start
+  #magical_results_cell_type_subset$end <- magical_results_cell_type_subset$Peak_end
+  #magical_results_cell_type_subset_overlapping_marker_peaks <- magical_results_cell_type_subset[magical_results_cell_type_subset[, 
+  #                                                            c("seqnames", "start")] %in% cell_type_marker_overlap_df[, c("seqnames", "start")], ]
+  #print(magical_results_cell_type_subset_overlapping_marker_peaks)
 }
 
 atac_mintchip_tables <- do.call(rbind, atac_mintchip_tables)
@@ -139,7 +149,7 @@ atac_mintchip_tables <- do.call(rbind, atac_mintchip_tables)
 
   
   # Overlap between MAGICAL circuits and DAS peaks that contained mintchip marker
-  magical_results_cell_type_subset <- magical_results[magical_results$Cell_Type == atac_cell_type_for_file_name,]
+
   
   # Normal
   peaks <- cell_type_snATAC_mintchip_das_overlap$Peak_Name
