@@ -136,6 +136,7 @@ for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
 atac_mintchip_tables <- do.call(rbind, atac_mintchip_tables)
 
 # Summarize overlap for different cell types and different markers
+print(table(atac_mintchip_tables$marker))
 for(cell_type in unique(atac_mintchip_tables$Cell_Type)) { 
   print(cell_type)
   cell_type_subset <- atac_mintchip_tables[atac_mintchip_tables$Cell_Type == cell_type,]
