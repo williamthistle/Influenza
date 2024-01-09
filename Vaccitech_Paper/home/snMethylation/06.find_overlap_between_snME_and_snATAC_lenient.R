@@ -40,7 +40,7 @@ find_matching_cell_types_snME <- function(snATAC_cell_type) {
 # So that will definitely affect the overlap we find.
 
 # Find overlap between DMRs and ALL snATAC-seq peaks
-dmr_overlap_nums <- data.frame(cell_type = character(), num_dmr = numeric(),
+dmr_overlap_nums_lenient <- data.frame(cell_type = character(), num_dmr = numeric(),
                                       num_atac_peaks = numeric(), num_of_dmr_overlapping = numeric(),
                                       percentage_of_dmr_overlapping = numeric(),
                                       num_of_atac_peaks_overlapping = numeric(),
@@ -50,27 +50,27 @@ for(cell_type in snME_dms_cell_types) {
   print(cell_type)
   current_snME_dms_data <- snME_dms[snME_dms$celltype == cell_type,]
   # Extend DMR for overlap
-  current_snME_dms_data$start <- current_snME_dms_data$start - 100
-  current_snME_dms_data$end <- current_snME_dms_data$end + 100
+  current_snME_dms_data$start <- current_snME_dms_data$start - 200
+  current_snME_dms_data$end <- current_snME_dms_data$end + 200
   # Find overlap between DMR and sc peaks
   dmr_granges <- makeGRangesFromDataFrame(df = current_snME_dms_data, keep.extra.columns = TRUE)
-  dmr_overlap <- as.data.frame(findOverlaps(dmr_granges, sc_peaks_granges))
+  dmr_overlap <- as.data.frame(findOverlaps(dmr_granges, sc_peaks_lenient_granges))
   dmr_percentage_peak_overlap <- length(unique(dmr_overlap$queryHits)) / nrow(current_snME_dms_data)
-  atac_percentage_peak_overlap <- length(unique(dmr_overlap$subjectHits)) / nrow(sc_peaks)
+  atac_percentage_peak_overlap <- length(unique(dmr_overlap$subjectHits)) / nrow(sc_peaks_lenient)
   
-  current_row <- c(cell_type, nrow(current_snME_dms_data), nrow(sc_peaks), length(unique(dmr_overlap$queryHits)),
+  current_row <- c(cell_type, nrow(current_snME_dms_data), nrow(sc_peaks_lenient), length(unique(dmr_overlap$queryHits)),
                    dmr_percentage_peak_overlap, length(unique(dmr_overlap$subjectHits)), atac_percentage_peak_overlap)
   current_row <- data.frame(t(current_row))
-  colnames(current_row) <- colnames(dmr_overlap_nums)
-  dmr_overlap_nums <- rbind(dmr_overlap_nums, current_row)
+  colnames(current_row) <- colnames(dmr_overlap_nums_lenient)
+  dmr_overlap_nums_lenient <- rbind(dmr_overlap_nums_lenient, current_row)
 }
 
-dmr_overlap_nums
+dmr_overlap_nums_lenient
 
 # The next question is: Are any of these peaks differentially accessible in the relevant cell type?
 # If so, we have matching differential accessibility and differential methylation
 atac_cell_types_for_snME_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "T Naive")
-atac_snME_tables <- list()
+atac_snME_tables_lenient <- list()
 for(atac_cell_type in atac_cell_types_for_snME_analysis) {
   print(atac_cell_type)
   atac_cell_type_for_file_name <- sub(" ", "_", atac_cell_type)
@@ -87,16 +87,16 @@ for(atac_cell_type in atac_cell_types_for_snME_analysis) {
     end <- c(end, component[3])
   }
   atac_cell_type_peaks$seqnames <- chr
-  atac_cell_type_peaks$start <- start
-  atac_cell_type_peaks$end <- end
+  atac_cell_type_peaks$start <- as.numeric(start) - 250
+  atac_cell_type_peaks$end <- as.numeric(end) + 250
   atac_cell_type_peaks_granges <- makeGRangesFromDataFrame(df = atac_cell_type_peaks, keep.extra.columns = TRUE)
   cell_type_overlap_df <- list()
   matching_snME_cell_types <- find_matching_cell_types_snME(atac_cell_type)
   for(matching_cell_type in matching_snME_cell_types) {
     print(matching_cell_type)
     snME_dms_subset <- snME_dms[snME_dms$celltype == matching_cell_type,]
-    snME_dms_subset$start <- snME_dms_subset$start - 100
-    snME_dms_subset$end <- snME_dms_subset$end + 100
+    snME_dms_subset$start <- snME_dms_subset$start - 200
+    snME_dms_subset$end <- snME_dms_subset$end + 200
     snME_dms_subset_granges <- makeGRangesFromDataFrame(df = snME_dms_subset, keep.extra.columns = TRUE)
     overlap <- as.data.frame(findOverlaps(atac_cell_type_peaks_granges, snME_dms_subset_granges))
     if(nrow(overlap) > 0) {
@@ -109,12 +109,12 @@ for(atac_cell_type in atac_cell_types_for_snME_analysis) {
   colnames(cell_type_overlap_df)[11] <- "seqnames_dms"
   colnames(cell_type_overlap_df)[12] <- "start_dms"
   colnames(cell_type_overlap_df)[13] <- "end_dms"
-  atac_snME_tables[[length(atac_snME_tables) + 1]] <- cell_type_overlap_df
+  atac_snME_tables_lenient[[length(atac_snME_tables_lenient) + 1]] <- cell_type_overlap_df
 }
-atac_snME_tables <- do.call(rbind, atac_snME_tables)
+atac_snME_tables_lenient <- do.call(rbind, atac_snME_tables_lenient)
 
 # Summarize overlap for different cell types and different markers
-print(table(atac_snME_tables$Cell_Type))
+print(table(atac_snME_tables_lenient$Cell_Type))
 for(cell_type in unique(atac_mintchip_tables$Cell_Type)) { 
   print(cell_type)
   cell_type_subset <- atac_mintchip_tables[atac_mintchip_tables$Cell_Type == cell_type,]

@@ -92,7 +92,6 @@ for(marker in mintchip_markers) {
 das_marker_overlap_nums
 
 # Finally, let's find overlap between the DAS in each cell type and each marker
-
 atac_cell_types_for_mintchip_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "MAIT", "NK", "Proliferating", "T Naive")
 atac_mintchip_tables <- list()
 for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
