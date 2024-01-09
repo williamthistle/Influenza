@@ -110,6 +110,8 @@ sc_peaks_more_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_more_len
 
 # snME related tables
 snME_dms <- read.table(paste0(snME_data_dir, "snME_dms_processed.tsv"), sep = "\t", header = TRUE)
+# Possible snME cell types
+snME_dms_cell_types <- unique(snME_dms$celltype)
 
 # miRNA tables
 miRNA_raw_counts <- read.table(paste0(miRNA_data_dir, "miRNA_raw_counts.csv"), sep =",", header = TRUE)

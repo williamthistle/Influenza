@@ -173,8 +173,46 @@ for(marker in mintchip_markers) {
   }
 }
 
+#saveRDS(binned_motif_analyses, paste0(mintchip_das_dir, "binned_motif_analyses.RDS" ))
+#saveRDS(two_bin_motif_analyses, paste0(mintchip_das_dir, "two_bin_motif_analyses.RDS" ))
+#saveRDS(two_bin_background_motif_analyses, paste0(mintchip_das_dir, "two_bin_background_motif_analyses.RDS" ))
+
+binned_motif_analyses <- readRDS(paste0(mintchip_das_dir, "binned_motif_analyses.RDS"))
+two_bin_motif_analyses <- readRDS(paste0(mintchip_das_dir, "two_bin_motif_analyses.RDS"))
+two_bin_background_motif_analyses <- readRDS(paste0(mintchip_das_dir, "two_bin_background_motif_analyses.RDS"))
+
+for(binned_motif_analysis in binned_motif_analyses) {
+  sel <- apply(assay(binned_motif_analysis, "negLog10Padj"), 1, 
+                            function(x) max(abs(x), 0, na.rm = TRUE)) > -log(0.05)
+               
+  seSel <- binned_motif_analysis[sel, ]
+  if(nrow(seSel) > 0) {
+    print(nrow(seSel))
+  }
+}
 
 
+for(binned_motif_analysis in two_bin_motif_analyses) {
+  sel <- apply(assay(binned_motif_analysis, "negLog10Padj"), 1, 
+               function(x) max(abs(x), 0, na.rm = TRUE)) > -log(0.05)
+  
+  seSel <- binned_motif_analysis[sel, ]
+  if(nrow(seSel) > 0) {
+    print(nrow(seSel))
+  }
+}
+
+for(index in 1:length(two_bin_background_motif_analyses)) {
+  binned_motif_analysis <- two_bin_background_motif_analyses[[index]]
+  sel <- apply(assay(binned_motif_analysis, "negLog10Padj"), 1, 
+               function(x) max(abs(x), 0, na.rm = TRUE)) > -log(0.05)
+  
+  seSel <- binned_motif_analysis[sel, ]
+  if(nrow(seSel) > 0) {
+    print(index)
+    print(nrow(seSel))
+  }
+}
 
 
 

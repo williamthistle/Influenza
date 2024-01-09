@@ -35,9 +35,10 @@ add_hg38_coordinates_to_marker_peaks <- function(marker_table, hg38_table) {
 # Find overlap between ALL marker peaks and ALL snATAC-seq peaks
 # Note that numbers may be slightly off because we don't do the combineRows step, but they are mostly accurate.
 unfiltered_all_marker_overlap_nums_lenient <- data.frame(marker = character(), num_marker_peaks = numeric(),
-                                                 num_atac_peaks = numeric(), num_overlapping_peaks = numeric(),
-                                                 percentage_of_marker_peaks_overlapping = numeric(),
-                                                 percentage_of_atac_peaks_overlapping = numeric())
+                                                         num_atac_peaks = numeric(), num_of_marker_peaks_overlapping = numeric(),
+                                                         percentage_of_marker_peaks_overlapping = numeric(),
+                                                         num_of_atac_peaks_overlapping = numeric(),
+                                                         percentage_of_atac_peaks_overlapping = numeric())
 for(marker in mintchip_markers) {
   print(marker)
   all_marker_peaks <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_all_peaks_with_hg38_coordinates.tsv"),
@@ -49,11 +50,11 @@ for(marker in mintchip_markers) {
   all_marker_peaks$end <- all_marker_peaks$end + 200 
   all_marker_peaks_granges <- makeGRangesFromDataFrame(df = all_marker_peaks, keep.extra.columns = TRUE)
   all_marker_overlap <- as.data.frame(findOverlaps(all_marker_peaks_granges, sc_peaks_lenient_granges))
-  marker_percentage_peak_overlap <- nrow(all_marker_overlap) / nrow(all_marker_peaks)
-  atac_percentage_peak_overlap <- nrow(all_marker_overlap) / nrow(sc_peaks_lenient)
+  marker_percentage_peak_overlap <- length(unique(all_marker_overlap$queryHits)) / nrow(all_marker_peaks)
+  atac_percentage_peak_overlap <- length(unique(all_marker_overlap$subjectHits)) / nrow(sc_peaks)
 
-  current_row <- c(marker, nrow(all_marker_peaks), nrow(sc_peaks_lenient), nrow(all_marker_overlap),
-                   marker_percentage_peak_overlap, atac_percentage_peak_overlap)
+  current_row <- c(marker, nrow(all_marker_peaks), nrow(sc_peaks_lenient), length(unique(all_marker_overlap$queryHits)),
+                   marker_percentage_peak_overlap, length(unique(all_marker_overlap$subjectHits)), atac_percentage_peak_overlap)
   current_row <- data.frame(t(current_row))
   colnames(current_row) <- colnames(unfiltered_all_marker_overlap_nums_lenient)
   unfiltered_all_marker_overlap_nums_lenient <- rbind(unfiltered_all_marker_overlap_nums_lenient, current_row)
@@ -64,10 +65,12 @@ unfiltered_all_marker_overlap_nums_lenient
 
 # Find overlap between DAS marker peaks and ALL snATAC-seq peaks
 # Let's do DESeq2 with FC threshold 0 since that's the best case scenario I'd say
-das_marker_overlap_nums_lenient <- data.frame(marker = character(), num_das_marker_peaks = numeric(),
-                                                 num_atac_peaks = numeric(), num_overlapping_peaks = numeric(),
-                                                 percentage_of_das_marker_peaks_overlapping = numeric(),
-                                                 percentage_of_atac_peaks_overlapping = numeric())
+das_marker_overlap_nums_lenient <- data.frame(marker = character(), num_marker_peaks = numeric(),
+                                              num_atac_peaks = numeric(), num_of_marker_peaks_overlapping = numeric(),
+                                              percentage_of_marker_peaks_overlapping = numeric(),
+                                              num_of_atac_peaks_overlapping = numeric(),
+                                              percentage_of_atac_peaks_overlapping = numeric())
+
 for(marker in mintchip_markers) {
   print(marker)
   # Fix hg19 coordinates to be hg38
@@ -81,12 +84,11 @@ for(marker in mintchip_markers) {
   # Find overlap between marker peaks and sc peaks
   das_marker_peaks_granges <- makeGRangesFromDataFrame(df = das_marker_with_hg38_df, keep.extra.columns = TRUE)
   das_marker_overlap <- as.data.frame(findOverlaps(das_marker_peaks_granges, sc_peaks_lenient_granges))
-  das_marker_overlap_df <- combineRows(das_marker_with_hg38_df, sc_peaks_lenient, das_marker_overlap)
-  marker_percentage_peak_overlap <- length(unique(das_marker_overlap_df$start)) / nrow(das_marker_with_hg38_df)
-  atac_percentage_peak_overlap <- length(unique(das_marker_overlap_df$idx)) / nrow(sc_peaks_lenient)
+  marker_percentage_peak_overlap <- length(unique(das_marker_overlap$queryHits)) / nrow(das_marker_with_hg38_df)
+  atac_percentage_peak_overlap <- length(unique(das_marker_overlap$subjectHits)) / nrow(sc_peaks_lenient)
   
-  current_row <- c(marker, nrow(das_marker_with_hg38_df), nrow(sc_peaks_lenient), length(unique(das_marker_overlap_df$start)),
-                   marker_percentage_peak_overlap, atac_percentage_peak_overlap)
+  current_row <- c(marker, nrow(das_marker_with_hg38_df), nrow(sc_peaks_lenient), length(unique(das_marker_overlap$queryHits)),
+                   marker_percentage_peak_overlap, length(unique(das_marker_overlap$subjectHits)), atac_percentage_peak_overlap)
   current_row <- data.frame(t(current_row))
   colnames(current_row) <- colnames(das_marker_overlap_nums_lenient)
   das_marker_overlap_nums_lenient <- rbind(das_marker_overlap_nums_lenient, current_row)
