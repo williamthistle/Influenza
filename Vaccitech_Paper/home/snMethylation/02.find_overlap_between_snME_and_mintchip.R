@@ -62,6 +62,8 @@ for(dmr_cell_type in dmr_cell_types_for_mintchip_analysis) {
 dmr_mintchip_tables <- do.call(rbind, dmr_mintchip_tables)
 
 # Summarize overlap for different cell types and different markers
+# TODO: Do I need to think harder about overlap here?
+# Am I really capturing overlap or something slightly different?
 print(table(dmr_mintchip_tables$marker))
 for(cell_type in unique(dmr_mintchip_tables$celltype)) { 
   print(cell_type)
