@@ -115,10 +115,10 @@ atac_snME_tables <- do.call(rbind, atac_snME_tables)
 
 # Summarize overlap for different cell types and different markers
 print(table(atac_snME_tables$Cell_Type))
-for(cell_type in unique(atac_mintchip_tables$Cell_Type)) { 
+for(cell_type in unique(atac_snME_tables$Cell_Type)) { 
   print(cell_type)
-  cell_type_subset <- atac_mintchip_tables[atac_mintchip_tables$Cell_Type == cell_type,]
-  print(table(cell_type_subset$marker))
+  cell_type_subset <- atac_snME_tables[atac_snME_tables$Cell_Type == cell_type,]
+  print(table(cell_type_subset$methylation))
 }
 
 # Find MAGICAL overlap
