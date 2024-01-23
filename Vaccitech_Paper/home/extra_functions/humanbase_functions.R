@@ -37,39 +37,37 @@ assign_cell_types_to_humanbase_results <- function(humanbase_file_path, gene_tab
   overall_module_cell_types <- c()
   for(current_genes in overall_module_data$CLUSTER_GENES) {
     current_genes <- strsplit(current_genes, ",")[[1]]
-    current_cell_types <- gene_table[gene_table$Gene_Name %in% current_genes,]$Cell_Type
-    current_cell_type_summary <- sort(table(current_cell_types), decreasing = TRUE)
-    formatted_elements <- character(length(current_cell_type_summary))
-    
-    # Loop through the named vector and format each element
-    for (i in 1:length(current_cell_type_summary)) {
-      formatted_elements[i] <- paste0(names(current_cell_type_summary)[i], " (", current_cell_type_summary[i], ")")
+    final_gene_list <- ""
+    for(current_gene in current_genes) {
+      current_cell_types <- gene_table[gene_table$Gene_Name %in% current_gene,]$Cell_Type
+      current_gene <- paste0(current_gene, " (", paste0(current_cell_types, collapse = ", "), ")")
+      if(nchar(final_gene_list) == 0) {
+        final_gene_list <- current_gene
+      } else {
+        final_gene_list <- paste0(final_gene_list, ", ", current_gene)
+      }
     }
-    
-    # Combine the formatted elements into a single string
-    final_cell_type_str <- paste(formatted_elements, collapse = ", ")
-    overall_module_cell_types <- c(overall_module_cell_types, final_cell_type_str)
+    overall_module_cell_types <- c(overall_module_cell_types, final_gene_list)
   }
-  overall_module_data$Cell_Types <- overall_module_cell_types
+  overall_module_data$CLUSTER_GENES <- overall_module_cell_types
   
   # Individual GO terms
   individual_go_term_cell_types <- c()
   for(current_genes in individual_go_term_data$TERM_GENES) {
     current_genes <- strsplit(current_genes, ",")[[1]]
-    current_cell_types <- gene_table[gene_table$Gene_Name %in% current_genes,]$Cell_Type
-    current_cell_type_summary <- sort(table(current_cell_types), decreasing = TRUE)
-    formatted_elements <- character(length(current_cell_type_summary))
-    
-    # Loop through the named vector and format each element
-    for (i in 1:length(current_cell_type_summary)) {
-      formatted_elements[i] <- paste0(names(current_cell_type_summary)[i], " (", current_cell_type_summary[i], ")")
+    final_gene_list <- ""
+    for(current_gene in current_genes) {
+      current_cell_types <- gene_table[gene_table$Gene_Name %in% current_gene,]$Cell_Type
+      current_gene <- paste0(current_gene, " (", paste0(current_cell_types, collapse = ", "), ")")
+      if(nchar(final_gene_list) == 0) {
+        final_gene_list <- current_gene
+      } else {
+        final_gene_list <- paste0(final_gene_list, ", ", current_gene)
+      }
     }
-    
-    # Combine the formatted elements into a single string
-    final_cell_type_str <- paste(formatted_elements, collapse = ", ")
-    individual_go_term_cell_types <- c(individual_go_term_cell_types, final_cell_type_str)
+    individual_go_term_cell_types <- c(individual_go_term_cell_types, final_gene_list)
   }
-  individual_go_term_data$Cell_Types <- individual_go_term_cell_types
+  individual_go_term_data$TERM_GENES <- individual_go_term_cell_types
   
   # Return parsed info with cell types
   return(list(overall_module_data, individual_go_term_data))

@@ -2,8 +2,6 @@
 ### 1) ASSIGNS CELL TYPES TO HUMANBASE MODULES (UP AND DOWNREGULATED SC DEGS)
 ### 2) ASSIGNS CELL TYPES TO REACTOME PATHWAYS (MODULES FROM HB ANALYSIS)
 ### 3) CREATES REACTOME PATHWAY PLOTS FOR FIGURE (NOTE: DOESN'T INCLUDE CELL TYPES YET)
-### TODO: ADD SUPPORT FOR ADAPTIVE / INNATE / ALL
-
 
 # Setup environment
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
@@ -14,7 +12,7 @@ sc_trained_immunity_upregulated_genes <- unique(innate_sc_pseudobulk_deg_table[i
 sc_trained_immunity_downregulated_genes <- unique(innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$sc_log2FC < 0,]$Gene_Name)
 
 # Assign cell types to upregulated genes from scRNA-seq (blood network)
-HB_innate_upregulated_genes_blood <- assign_cell_types_to_humanbase_results(paste0(sc_humanbase_dir, "HB_innate_upregulated_genes_blood.tsv"), sc_pseudobulk_gene_table)
+HB_innate_upregulated_genes_blood <- assign_cell_types_to_humanbase_results(paste0(sc_humanbase_dir, "HB_innate_upregulated_genes_blood.tsv"), innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$sc_log2FC > 0,])
 HB_innate_upregulated_genes_blood_modules <- HB_innate_upregulated_genes_blood[[1]]
 HB_innate_upregulated_genes_blood_go_terms <- HB_innate_upregulated_genes_blood[[2]]
 
@@ -25,7 +23,7 @@ cat(paste0("# GENES ASSOCIATED WITH EACH GO TERM WITHIN EACH MODULE \n"), file=o
 utils::write.table(HB_innate_upregulated_genes_blood_go_terms, file = output_file, append=TRUE, sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Assign cell types to downregulated genes from scRNA-seq (blood network)
-HB_innate_downregulated_genes_blood <- assign_cell_types_to_humanbase_results(paste0(sc_humanbase_dir, "HB_innate_downregulated_genes_blood.tsv"), sc_pseudobulk_gene_table)
+HB_innate_downregulated_genes_blood <- assign_cell_types_to_humanbase_results(paste0(sc_humanbase_dir, "HB_innate_downregulated_genes_blood.tsv"), innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$sc_log2FC < 0,])
 HB_innate_downregulated_genes_blood_modules <- HB_innate_downregulated_genes_blood[[1]]
 HB_innate_downregulated_genes_blood_go_terms <- HB_innate_downregulated_genes_blood[[2]]
 

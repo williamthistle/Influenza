@@ -62,7 +62,7 @@ unfiltered_all_marker_overlap_nums
 
 # Find overlap between DAS marker peaks and ALL snATAC-seq peaks
 # Let's do DESeq2 with FC threshold 0 since that's the best case scenario I'd say
-das_marker_overlap_nums <- data.frame(marker = character(), num_marker_peaks = numeric(),
+das_marker_overlap_nums_0 <- data.frame(marker = character(), num_marker_peaks = numeric(),
                                       num_atac_peaks = numeric(), num_of_marker_peaks_overlapping = numeric(),
                                       percentage_of_marker_peaks_overlapping = numeric(),
                                       num_of_atac_peaks_overlapping = numeric(),
@@ -84,12 +84,12 @@ for(marker in mintchip_markers) {
   current_row <- c(marker, nrow(das_marker_with_hg38_df), nrow(sc_peaks), length(unique(das_marker_overlap$queryHits)),
                    marker_percentage_peak_overlap, length(unique(das_marker_overlap$subjectHits)), atac_percentage_peak_overlap)
   current_row <- data.frame(t(current_row))
-  colnames(current_row) <- colnames(das_marker_overlap_nums)
-  das_marker_overlap_nums <- rbind(das_marker_overlap_nums, current_row)
+  colnames(current_row) <- colnames(das_marker_overlap_nums_0)
+  das_marker_overlap_nums_0 <- rbind(das_marker_overlap_nums_0, current_row)
 }
 
 # Not too bad!
-das_marker_overlap_nums
+das_marker_overlap_nums_0
 
 # Finally, let's find overlap between the DAS in each cell type and each marker
 atac_cell_types_for_mintchip_analysis <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "MAIT", "NK", "Proliferating", "T Naive")
@@ -116,7 +116,7 @@ for(atac_cell_type in atac_cell_types_for_mintchip_analysis) {
   cell_type_marker_overlap_df <- list()
   for(marker in mintchip_markers) {
     print(marker)
-    das_marker_with_hg38_df <- add_hg38_coordinates_to_marker_peaks(read.table(paste0(mintchip_das_dir, marker, "/", marker, "_DESeq2_FC_0.tsv"),
+    das_marker_with_hg38_df <- add_hg38_coordinates_to_marker_peaks(read.table(paste0(mintchip_das_dir, marker, "/", marker, "_DESeq2_FC_0.1.tsv"),
                                                                                sep = "\t", header = TRUE),
                                                                     read.table(paste0(mintchip_das_dir, marker, "/", marker, "_all_peaks_with_hg38_coordinates.tsv"),
                                                                                sep = "\t", header = TRUE))

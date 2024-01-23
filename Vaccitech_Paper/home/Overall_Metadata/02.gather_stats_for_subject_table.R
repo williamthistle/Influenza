@@ -42,6 +42,11 @@ placebo_metadata_for_table$time_point <- paste0(placebo_metadata_for_table$perio
 placebo_metadata_for_table$time_point[placebo_metadata_for_table$time_point == '1_D1 predose'] <- '1_D_minus_1'
 placebo_metadata_for_table$time_point[placebo_metadata_for_table$time_point == '2_D-2'] <- '2_D_minus_2'
 placebo_metadata_for_table$time_point[placebo_metadata_for_table$time_point == '2_D-1'] <- '2_D_minus_1'
+# Remove bad LVL subject
+placebo_metadata_for_table <- placebo_metadata_for_table[!(placebo_metadata_for_table$subject_id %in% "f18c54d93cef4a4e"),]
+
+### Primary Subject (HVL and LVL)
+summarize_stats(both_placebo_metadata)
 
 ### Bulk RNA-Seq
 bulk_placebo_metadata_for_table <- placebo_metadata_for_table[placebo_metadata_for_table$bulkRNA_seq == TRUE,]
