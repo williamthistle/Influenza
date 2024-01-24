@@ -186,6 +186,9 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by
 
 hvl_cluster_info <- capture_cluster_info(hvl_sc_obj)
 
+# Record cell type proportions
+create_magical_cell_type_proportion_file(hvl_sc_obj, "/Genomics/ogtr04/wat2/", "time_point", high_viral_load_samples, d28_samples, male_samples)
+
 
 
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
@@ -228,6 +231,7 @@ for(cell_type in unique(hvl_sc_obj$magical_cell_types)) {
               quote = FALSE, row.names = TRUE, col.names = FALSE,  sep = "\t")
 }
   
+# Record info abo
   
   
 
