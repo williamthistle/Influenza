@@ -45,6 +45,25 @@ for(marker in mintchip_markers) {
       background_marker_without_candidate_peaks_granges <- makeGRangesFromDataFrame(df = background_marker_without_candidate_peaks_df, keep.extra.columns = TRUE)
       background_marker_without_candidate_peaks_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, background_marker_without_candidate_peaks_granges)
       
+      testing_marker_granges <- makeGRangesFromDataFrame(df = testing_marker_df, keep.extra.columns = TRUE)
+      testing_marker_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, testing_marker_granges)
+      gc_content <- letterFrequency(testing_marker_seqs, letters = "GC", as.prob = TRUE)
+      testing_marker_df$GC.percent <- gc_content[,1] * 100
+      testing_marker_granges <- makeGRangesFromDataFrame(df = testing_marker_df, keep.extra.columns = TRUE)
+      testing_marker_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, testing_marker_granges)
+      
+      # Grab subset of GC matched negative peaks from background
+      peaks.matched <- Signac::MatchRegionStats(
+        meta.feature = background_marker_without_candidate_peaks_df,
+        query.feature = testing_marker_df,
+        features.match = c("GC.percent"),
+        n = 100000
+      )
+      
+      background_marker_without_candidate_peaks_df <- background_marker_without_candidate_peaks_df[peaks.matched, , drop = FALSE]
+      background_marker_without_candidate_peaks_granges <- makeGRangesFromDataFrame(df = background_marker_without_candidate_peaks_df, keep.extra.columns = TRUE)
+      background_marker_without_candidate_peaks_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, background_marker_without_candidate_peaks_granges)
+      
       if(nrow(testing_marker_negative_df) > 0) {
         # Set up DF, GRanges, and DNAStringSet objects for negative marker peaks
         testing_marker_negative_granges <- makeGRangesFromDataFrame(df = testing_marker_negative_df, keep.extra.columns = TRUE)
@@ -54,38 +73,23 @@ for(marker in mintchip_markers) {
         testing_marker_negative_granges <- makeGRangesFromDataFrame(df = testing_marker_negative_df, keep.extra.columns = TRUE)
         testing_marker_negative_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, testing_marker_negative_granges)
         
-        # Grab subset of GC matched negative peaks from background
-        neg.peaks.matched <- Signac::MatchRegionStats(
-          meta.feature = background_marker_without_candidate_peaks_df,
-          query.feature = testing_marker_negative_df,
-          features.match = c("GC.percent"),
-          n = 40000
-        )
-        
-        # Set up negative peak background DF, GRanges, and DNAStringSet objects
-        neg_background_marker_without_candidate_peaks_df <- background_marker_without_candidate_peaks_df[neg.peaks.matched, , drop = FALSE]
-        print(mean(testing_marker_negative_df$GC.percent))
-        print(mean(neg_background_marker_without_candidate_peaks_df$GC.percent))
-        neg_background_marker_without_candidate_peaks_granges <- makeGRangesFromDataFrame(df = neg_background_marker_without_candidate_peaks_df, keep.extra.columns = TRUE)
-        neg_background_marker_without_candidate_peaks_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, neg_background_marker_without_candidate_peaks_granges)
-        
         # Negative peaks
         query_motifs <- motifmatchr::matchMotifs(human_pwms_v2, testing_marker_negative_seqs, genome = "hg19") 
         query_motifs_matches <- motifmatchr::motifMatches(query_motifs)
         
-        background_motifs <- motifmatchr::matchMotifs(human_pwms_v2, neg_background_marker_without_candidate_peaks_seqs, genome = "hg19") 
+        background_motifs <- motifmatchr::matchMotifs(human_pwms_v2, background_marker_without_candidate_peaks_seqs, genome = "hg19") 
         background_motifs_matches <- motifmatchr::motifMatches(background_motifs)
         
         query.counts <- colSums(x = query_motifs_matches)
         background.counts <- colSums(x = background_motifs_matches)
         percent.observed <- query.counts/length(x = testing_marker_negative_seqs) * 100
-        percent.background <- background.counts/length(x = neg_background_marker_without_candidate_peaks_seqs) * 
+        percent.background <- background.counts/length(x = background_marker_without_candidate_peaks_seqs) * 
           100
         fold.enrichment <- percent.observed/percent.background
         p.list <- vector(mode = "numeric")
         for (i in seq_along(along.with = query.counts)) {
           p.list[[i]] <- phyper(q = query.counts[[i]] - 1, m = background.counts[[i]], 
-                                n = length(x = neg_background_marker_without_candidate_peaks_seqs) - background.counts[[i]], 
+                                n = length(x = background_marker_without_candidate_peaks_seqs) - background.counts[[i]], 
                                 k = length(x = testing_marker_negative_seqs), lower.tail = FALSE)
         }
         
@@ -108,37 +112,23 @@ for(marker in mintchip_markers) {
         testing_marker_positive_granges <- makeGRangesFromDataFrame(df = testing_marker_positive_df, keep.extra.columns = TRUE)
         testing_marker_positive_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, testing_marker_positive_granges)
         
-        # Grab subset of GC matched positive peaks from background
-        pos.peaks.matched <- Signac::MatchRegionStats(
-          meta.feature = background_marker_without_candidate_peaks_df,
-          query.feature = testing_marker_positive_df,
-          n = 40000
-        )
-        
-        # Set up positive peak background DF, GRanges, and DNAStringSet objects
-        pos_background_marker_without_candidate_peaks_df <- background_marker_without_candidate_peaks_df[pos.peaks.matched,]
-        print(mean(testing_marker_positive_df$GC.percent))
-        print(mean(pos_background_marker_without_candidate_peaks_df$GC.percent))
-        pos_background_marker_without_candidate_peaks_granges <- makeGRangesFromDataFrame(df = pos_background_marker_without_candidate_peaks_df, keep.extra.columns = TRUE)
-        pos_background_marker_without_candidate_peaks_seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg19, pos_background_marker_without_candidate_peaks_granges)
-        
         # POS
         query_motifs <- motifmatchr::matchMotifs(human_pwms_v2, testing_marker_positive_seqs, genome = "hg19") 
         query_motifs_matches <- motifmatchr::motifMatches(query_motifs)
         
-        background_motifs <- motifmatchr::matchMotifs(human_pwms_v2, pos_background_marker_without_candidate_peaks_seqs, genome = "hg19") 
+        background_motifs <- motifmatchr::matchMotifs(human_pwms_v2, background_marker_without_candidate_peaks_seqs, genome = "hg19") 
         background_motifs_matches <- motifmatchr::motifMatches(background_motifs)
         
         query.counts <- colSums(x = query_motifs_matches)
         background.counts <- colSums(x = background_motifs_matches)
         percent.observed <- query.counts/length(x = testing_marker_positive_seqs) * 100
-        percent.background <- background.counts/length(x = pos_background_marker_without_candidate_peaks_seqs) * 
+        percent.background <- background.counts/length(x = background_marker_without_candidate_peaks_seqs) * 
           100
         fold.enrichment <- percent.observed/percent.background
         p.list <- vector(mode = "numeric")
         for (i in seq_along(along.with = query.counts)) {
           p.list[[i]] <- phyper(q = query.counts[[i]] - 1, m = background.counts[[i]], 
-                                n = length(x = pos_background_marker_without_candidate_peaks_seqs) - background.counts[[i]], 
+                                n = length(x = background_marker_without_candidate_peaks_seqs) - background.counts[[i]], 
                                 k = length(x = testing_marker_positive_seqs), lower.tail = FALSE)
         }
         
