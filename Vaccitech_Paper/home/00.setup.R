@@ -59,6 +59,11 @@ possible_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H
 sc_rna_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/")
 sc_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/DEGs/")
 sc_deg_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/DEGs_with_ATAC_cell_types/")
+
+sc_rna_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/")
+sc_deg_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/DEGs/")
+sc_deg_lvl_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/DEGs_with_ATAC_cell_types/")
+
 sc_magical_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/")
 magical_output_dir <- paste0(sc_magical_dir, "Output/")
 sc_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/HumanBase/")
@@ -78,7 +83,7 @@ mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata
 # Mintchip markers
 mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 
-# Tables containing DEG results for single cell RNA-seq processing
+# Tables containing DEG results for single cell RNA-seq processing (HVL)
 # Includes genes that passed pseudobulk filtering (remove platelets)
 # TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
 sc_pseudobulk_deg_table <- read.table(paste0(sc_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
@@ -90,6 +95,11 @@ innate_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_tabl
 adaptive_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% adaptive_cell_types,]
 
 rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
+
+# Tables containing DEG results for single cell RNA-seq processing (LVL)
+# Includes genes that passed pseudobulk filtering (remove platelets)
+sc_pseudobulk_deg_lvl_table <- read.table(paste0(sc_deg_lvl_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_deg_lvl_table <- sc_pseudobulk_deg_lvl_table[sc_pseudobulk_deg_lvl_table$Cell_Type != "Platelet",]
 
 # Peak related tables
 sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
