@@ -227,46 +227,42 @@ print_cell_type_distributions <- function(proj) {
 }
 
 # Method to create the cell type proportion file for MAGICAL
-create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, metadata_categories, day_metadata) {
-  for(metadata_category in metadata_categories) {
-    if(metadata_category == "time_point") {
-      metadata <- day_metadata
-    }
-    cell_type_proportions_df <- data.frame("Condition" = metadata, "Sample_name" = paste0("Sample_", names(metadata)))
-    total_cell_counts_df <- data.frame("Sample_name" = paste0("Sample_", names(metadata)))
-    cell_counts <- vector()
-    # Find total cell counts for each sample
-    for (sample_id in names(metadata)) {
-      idxPass <- which(proj$Sample %in% sample_id)
-      print(length(idxPass))
-      cellsPass <- proj$cellNames[idxPass]
-      sample_subset <- subsetCells(proj, cellsPass)
-      cell_counts <- append(cell_counts, nCells(sample_subset))
-    }
-    total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
-    for (cell_type in unique(proj$Cell_type_voting)) {
-      cell_type_proportions <- vector()
-      print(cell_type)
-      # Grab cells associated with cell type
-      idxPass <- which(proj$Cell_type_voting %in% cell_type)
-      print(length(idxPass))
-      cellsPass <- proj$cellNames[idxPass]
-      cells_subset <- subsetCells(proj, cellsPass)
-      for (sample_id in names(metadata)) {
-        # Subset further based on cells associated with sample ID
-        idxPass <- which(cells_subset$Sample %in% sample_id)
-        print(length(idxPass))
-        cellsPass <- cells_subset$cellNames[idxPass]
-        sample_subset <- subsetCells(cells_subset, cellsPass)
-        cell_counts <- nCells(sample_subset)
-        cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == paste0("Sample_", sample_id),]$cell_counts)
-      }
-      temp_df <- data.frame(cell_type_proportions)
-      names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
-      cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
-    }
-    write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "ATAC_cell_type_proportion_", metadata_category, ".csv"), quote = FALSE, row.names = FALSE)
+create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, sample_metadata_for_SPEEDI_df) {
+  cell_type_proportions_df <- data.frame("Condition" = sample_metadata_for_SPEEDI_df$time_point, 
+                                         "Sample_name" = rownames(sample_metadata_for_SPEEDI_df))
+  total_cell_counts_df <- data.frame("Sample_name" = rownames(sample_metadata_for_SPEEDI_df))
+  cell_counts <- vector()
+  # Find total cell counts for each sample
+  for(sample_id in total_cell_counts_df$Sample_name) {
+    idxPass <- which(proj$Sample %in% sample_id)
+    print(length(idxPass))
+    cellsPass <- proj$cellNames[idxPass]
+    sample_subset <- subsetCells(proj, cellsPass)
+    cell_counts <- append(cell_counts, nCells(sample_subset))
   }
+  total_cell_counts_df <- cbind(total_cell_counts_df, cell_counts)
+  for (cell_type in unique(proj$Cell_type_voting)) {
+    cell_type_proportions <- vector()
+    print(cell_type)
+    # Grab cells associated with cell type
+    idxPass <- which(proj$Cell_type_voting %in% cell_type)
+    print(length(idxPass))
+    cellsPass <- proj$cellNames[idxPass]
+    cells_subset <- subsetCells(proj, cellsPass)
+    for (sample_id in total_cell_counts_df$Sample_name) {
+      # Subset further based on cells associated with sample ID
+      idxPass <- which(cells_subset$Sample %in% sample_id)
+      print(length(idxPass))
+      cellsPass <- cells_subset$cellNames[idxPass]
+      sample_subset <- subsetCells(cells_subset, cellsPass)
+      cell_counts <- nCells(sample_subset)
+      cell_type_proportions <- append(cell_type_proportions, cell_counts / total_cell_counts_df[total_cell_counts_df$Sample_name == sample_id,]$cell_counts)
+    }
+    temp_df <- data.frame(cell_type_proportions)
+    names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
+    cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
+  }
+  write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "ATAC_cell_type_proportion_time_point.csv"), quote = FALSE, row.names = FALSE)
 }
 
 # Method to create pseudo bulk replicates and call peaks

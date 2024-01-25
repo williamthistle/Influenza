@@ -268,6 +268,9 @@ pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_r
 
 # Theoretically, I could create my own hg38 refseq file, but maybe not worth it
 
+HVL_sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "high",]
+create_cell_type_proportion_MAGICAL_atac(HVL_proj_minus_clusters, "/Genomics/ogtr04/wat2/", HVL_sample_metadata_for_SPEEDI_df)
+
 
 # Convert ArchR to Signac
 HVL_peak_matrix <- getPeakMatrix(HVL_proj_minus_clusters)
