@@ -30,7 +30,8 @@ run_differential_expression_cluster <- function(sc_obj, marker_dir) {
 run_differential_expression_controlling_for_subject_id <- function(sc_obj, analysis_dir, sample_metadata_for_SPEEDI_df, group, cell_types) {
   print(paste0("Performing differential expression for group ", group, " for each cell type (controlling for subject ID)"))
   final_current_de <- data.frame(Cell_Type = character(), Gene_Name = character(), sc_pval_adj = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
-                                 pseudo_bulk_log2FC = character())  
+                                 pseudo_bulk_log2FC = character())
+  expected_num_samples <- length(unique(sc_obj$sample))
   for(current_cell_type in cell_types) {
     print(current_cell_type)
     if(current_cell_type %in% unique(sc_obj$predicted_celltype_majority_vote)) {
@@ -44,6 +45,10 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
     } else {
       cellsPass <- names(sc_obj$orig.ident[idxPass])
       cells_subset <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+      if(length(unique(cells_subset$sample)) != expected_num_samples) {
+        print("Missing at least one sample for analysis, so skipping cell type")
+        next
+      }
       DefaultAssay(cells_subset) <- "SCT"
       Idents(cells_subset) <- group
       if(group == "viral_load") {
