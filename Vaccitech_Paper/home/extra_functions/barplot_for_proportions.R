@@ -35,7 +35,7 @@ rna_barplot <- ggplot(results_long, aes(fill=Cell_Type, y=Expression, x=Conditio
   geom_bar(position="stack", stat="identity") + 
   xlab("Group") + ylab("Cell Type Proportion") + scale_fill_brewer(palette = "Paired") +
   labs(fill = "Cell Type") +
-  ggtitle("Cell Type Proportions for scRNA-Seq (High Viral Load Subjects)") + theme(plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Cell Type Proportions for scRNA-Seq (High Viral Load)") + theme(plot.title = element_text(hjust = 0.5)) +
   theme(panel.border = element_blank(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + coord_fixed(ratio = 1.5) + theme_bw()
 
@@ -77,7 +77,12 @@ results_ATAC_long <- results_ATAC_long %>%
     TRUE ~ Condition  # Keep other values unchanged
   ))
 
-ggplot(results_ATAC_long, aes(fill=Cell_Type, y=Expression, x=Condition)) + 
-  geom_bar(position="stack", stat="identity") + scale_fill_viridis_d() +
-  theme_minimal() + xlab("Group") + ylab("Cell Type Proportion") + labs(fill = "Cell Type") +
-  ggtitle("Cell Type Proportions for snATAC-Seq (High Viral Load Subjects)") +  theme(plot.title = element_text(hjust = 0.5))
+atac_barplot <- ggplot(results_ATAC_long, aes(fill=Cell_Type, y=Expression, x=Condition)) + 
+  geom_bar(position="stack", stat="identity") + 
+  xlab("Group") + ylab("Cell Type Proportion") + scale_fill_brewer(palette = "Paired") +
+  labs(fill = "Cell Type") +
+  ggtitle("Cell Type Proportions for scATAC-Seq (High Viral Load)") + theme(plot.title = element_text(hjust = 0.5)) +
+  theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + coord_fixed(ratio = 1.5) + theme_bw()
+
+ggsave("C:/Users/willi/Desktop/atac_barplot.png", plot = atac_barplot, device = "tiff", dpi = 300)

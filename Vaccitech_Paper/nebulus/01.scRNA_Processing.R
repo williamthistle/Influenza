@@ -109,10 +109,10 @@ idx <- grep("cDC", Cell_type_combined)
 Cell_type_combined[idx] <- "cDC"
 idx <- grep("Proliferating", Cell_type_combined)
 Cell_type_combined[idx] <- "Proliferating"
-#idx <- grep("CD4 Naive", Cell_type_combined)
-#Cell_type_combined[idx] <- "T Naive"
-#idx <- grep("CD8 Naive", Cell_type_combined)
-#Cell_type_combined[idx] <- "T Naive"
+idx <- grep("CD4 Naive", Cell_type_combined)
+Cell_type_combined[idx] <- "T Naive"
+idx <- grep("CD8 Naive", Cell_type_combined)
+Cell_type_combined[idx] <- "T Naive"
 idx <- grep("Treg", Cell_type_combined)
 Cell_type_combined[idx] <- "CD4 Memory"
 sc_obj$predicted.id <- Cell_type_combined
@@ -124,7 +124,6 @@ sc_obj <- MajorityVote_RNA(sc_obj)
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 #sc_obj <- combine_cell_types_magical(sc_obj)
 
-# May be 32, not sure
 messy_clusters <- c(33)
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])

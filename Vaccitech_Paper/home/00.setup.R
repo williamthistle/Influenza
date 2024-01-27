@@ -100,6 +100,12 @@ rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"),
 # Includes genes that passed pseudobulk filtering (remove platelets)
 sc_pseudobulk_deg_lvl_table <- read.table(paste0(sc_deg_lvl_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 sc_pseudobulk_deg_lvl_table <- sc_pseudobulk_deg_lvl_table[sc_pseudobulk_deg_lvl_table$Cell_Type != "Platelet",]
+sc_pseudobulk_deg_lvl_table <- subset(sc_pseudobulk_deg_lvl_table, sign(sc_log2FC) == sign(pseudo_bulk_log2FC))
+sc_pseudobulk_deg_lvl_combined_cell_types_table <- read.table(paste0(sc_deg_lvl_combined_cell_types_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_deg_lvl_combined_cell_types_table <- sc_pseudobulk_deg_lvl_combined_cell_types_table[sc_pseudobulk_deg_lvl_combined_cell_types_table$Cell_Type != "Platelet",]
+sc_pseudobulk_deg_lvl_combined_cell_types_table <- subset(sc_pseudobulk_deg_lvl_combined_cell_types_table, sign(sc_log2FC) == sign(pseudo_bulk_log2FC))
+innate_sc_pseudobulk_deg_lvl_table <- sc_pseudobulk_deg_lvl_table[sc_pseudobulk_deg_lvl_table$Cell_Type %in% innate_cell_types,]
+adaptive_sc_pseudobulk_deg_lvl_table <- sc_pseudobulk_deg_lvl_table[sc_pseudobulk_deg_lvl_table$Cell_Type %in% adaptive_cell_types,]
 
 # Peak related tables
 sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
