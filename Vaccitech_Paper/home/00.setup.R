@@ -93,6 +93,8 @@ sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_t
 sc_pseudobulk_deg_combined_cell_types_table$Cell_Type[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == "NK_MAGICAL"] <- "NK"
 innate_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% innate_cell_types,]
 adaptive_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% adaptive_cell_types,]
+innate_sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type %in% innate_cell_types,]
+adaptive_sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type %in% adaptive_cell_types,]
 
 rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
 
