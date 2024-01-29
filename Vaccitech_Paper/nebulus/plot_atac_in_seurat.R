@@ -70,4 +70,4 @@ idxPass <- which(seurat_atac$seurat_clusters %in% messy_clusters)
 cellsPass <- names(seurat_atac$orig.ident[-idxPass])
 seurat_atac_minus_clusters <- subset(x = seurat_atac, subset = cell_name %in% cellsPass)
 
-print_UMAP_ATAC_Seurat(seurat_atac, "seurat_atac_minus_clusters_test.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
+print_UMAP_ATAC_Seurat(seurat_atac_minus_clusters, "seurat_atac_minus_clusters_test.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
