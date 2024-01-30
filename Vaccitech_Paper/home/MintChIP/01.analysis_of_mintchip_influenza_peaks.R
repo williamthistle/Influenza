@@ -84,13 +84,15 @@ for(marker in mintchip_markers) {
   }
 }
 
+saveRDS(pos_fmd_list, file = paste0(mintchip_fmd_dir, "pos_fmd_V2.RDS"))
+
 neg_fmd_list <- list()
 for(marker in mintchip_markers) {
   marker_dir <- paste0(mintchip_das_dir, marker, "/")
   neg_fmd_list[[marker]] <- list()
   for(fc in c(0, 0.1, 0.2, 0.3, 0.585, 1, 2)) {
-    neg_differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/downregulated/", marker, "_DESeq2_FC_", fc, "_upregulated_annotated.tsv")
-    if(file.size(neg_differential_analysis_results_file) != 1 && file.size(neg_differential_analysis_results_file) != 75) {
+    neg_differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/downregulated/", marker, "_DESeq2_FC_", fc, "_downregulated_annotated.tsv")
+    if(file.exists(neg_differential_analysis_results_file) && file.size(neg_differential_analysis_results_file) != 1 && file.size(neg_differential_analysis_results_file) != 75) {
       neg_differential_analysis_results_file <- read.table(neg_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
       neg_genes <- unique(neg_differential_analysis_results_file$SYMBOL)
       neg_results <- run_fmd_on_mintchip(neg_genes)
@@ -99,6 +101,7 @@ for(marker in mintchip_markers) {
   }
 }
 
+saveRDS(neg_fmd_list, file = paste0(mintchip_fmd_dir, "neg_fmd_V2.RDS"))
 
 
 mintchip_fmd_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/differentially_accessible_sites/FMD/")
