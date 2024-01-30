@@ -43,8 +43,16 @@ for(snME_cell_type in snME_cell_types) {
   pos_snME_cell_type_annotations <- read.table(pos_snME_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
   pos_genes <- unique(pos_snME_cell_type_annotations$SYMBOL)
   pos_results <- run_fmd_on_mintchip(pos_genes)
-  pos_fmd_list[[marker]][[as.character(fc)]] <- pos_results
+  pos_fmd_snME_list[[snME_cell_type]] <- pos_results
 }
 
+neg_fmd_snME_list <- list()
+for(snME_cell_type in snME_cell_types) {
+  neg_snME_results_file <- paste0(snME_results_dir, "Closest_Gene_Analysis/", snME_cell_type, "_D_minus_1_hypermethylated_annotated_genes.tsv")
+  neg_snME_cell_type_annotations <- read.table(neg_snME_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+  neg_genes <- unique(neg_snME_cell_type_annotations$SYMBOL)
+  neg_results <- run_fmd_on_mintchip(neg_genes)
+  neg_fmd_snME_list[[snME_cell_type]] <- neg_results
+}
 
 
