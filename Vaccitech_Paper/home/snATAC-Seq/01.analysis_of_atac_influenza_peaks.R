@@ -8,8 +8,8 @@ snATAC_get_list_of_closest_genes <- function(file_path, sc_peaks) {
   chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
   start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
   end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
-  current_peaks_coords <- data.frame(value = chromosomes, start = start_coords, end = end_coords)
-  closest_genes <- dplyr::inner_join(sc_peaks, current_peaks_coords, by = c("value", "start", "end"))
+  current_peaks_coords <- data.frame(seqnames = chromosomes, start = start_coords, end = end_coords)
+  closest_genes <- dplyr::inner_join(sc_peaks, current_peaks_coords, by = c("seqnames", "start", "end"))
   return(closest_genes$nearestGene)
 }
 
@@ -31,19 +31,22 @@ run_fmd_on_snATAC <- function(snATAC_list) {
 # Read in relevant peaks
 snATAC_peaks_for_hb_files <- list()
 
-# Use overlapping peaks
+# Write annotated peaks down
 cell_types <- c("B", "CD4_Memory", "CD8_Memory", "CD14_Mono", "CD16_Mono", "MAIT", "NK", "Proliferating", "T_Naive")
-index <- 1
 for(cell_type in cell_types) {
-  snATAC_peaks_for_hb_files[[index]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
-                                                                                        "diff_peaks/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv"),
-                                                                     sc_peaks = sc_peaks)
-  names(snATAC_peaks_for_hb_files)[[index]] <- paste0(cell_type, "_neg")
-  snATAC_peaks_for_hb_files[[index + 1]] <- snATAC_get_list_of_closest_genes(file_path = paste0(sc_das_dir, 
-                                                                                            "diff_peaks/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv"),
-                                                                         sc_peaks = sc_peaks)
-  names(snATAC_peaks_for_hb_files)[[index + 1]] <- paste0(cell_type, "_pos")
-  index <- index + 2
+  input_neg_file_path <- paste0(sc_das_dir, 
+                                "diff_peaks/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg.tsv")
+  annotated_peaks_neg <- snATAC_get_list_of_closest_genes(file_path = input_neg_file_path, sc_peaks = sc_peaks)
+  output_neg_file_path <- paste0(sc_das_dir, 
+                                 "diff_peaks/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_neg_annotated.tsv")
+  write.table(annotated_peaks_neg, file = output_neg_file_path, sep = "\t", quote = FALSE)
+  
+  input_pos_file_path <- paste0(sc_das_dir, 
+                                "diff_peaks/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos.tsv")
+  annotated_peaks_pos <- snATAC_get_list_of_closest_genes(file_path = input_pos_file_path, sc_peaks = sc_peaks)
+  output_pos_file_path <- paste0(sc_das_dir, 
+                                 "diff_peaks/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01_pos_annotated.tsv")
+  write.table(annotated_peaks_pos, file = output_pos_file_path, sep = "\t", quote = FALSE)
 }
 
 # NOTE: I may want to do logFC < -1 for negative to get better signal. 

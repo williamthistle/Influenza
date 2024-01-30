@@ -25,6 +25,9 @@ library(chromVARmotifs)
 onedrive_dir <- "~"
 setwd(onedrive_dir)
 setwd("../")
+if(grep("OneDrive", getwd())) {
+  setwd("../")
+}
 onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 load(paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/bulk_RNA_analysis.RData"))
@@ -33,6 +36,9 @@ load(paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/bulk_RN
 onedrive_dir <- "~"
 setwd(onedrive_dir)
 setwd("../")
+if(grep("OneDrive", getwd())) {
+  setwd("../")
+}
 onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 
