@@ -75,17 +75,14 @@ for(marker in mintchip_markers) {
   pos_fmd_list[[marker]] <- list()
   for(fc in c(0, 0.1, 0.2, 0.3, 0.585, 1, 2)) {
     pos_differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/upregulated/", marker, "_DESeq2_FC_", fc, "_upregulated_annotated.tsv")
-    if(file.size(pos_differential_analysis_results_file) != 1 & file.size(pos_differential_analysis_results_file) != 75) {
-      pos_differential_analysis_results_file <- read.table(pos_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "")
+    if(file.exists(pos_differential_analysis_results_file) && file.size(pos_differential_analysis_results_file) != 1 && file.size(pos_differential_analysis_results_file) != 75) {
+      pos_differential_analysis_results_file <- read.table(pos_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
       pos_genes <- unique(pos_differential_analysis_results_file$SYMBOL)
       pos_results <- run_fmd_on_mintchip(pos_genes)
-      pos_fmd_list[[marker]][[fc]] <- pos_results
+      pos_fmd_list[[marker]][[as.character(fc)]] <- pos_results
     }
   }
 }
-
-lines <- readLines(pos_differential_analysis_results_file , n = 40)  # Read the first 40 lines
-cat(lines, sep = "\n")  # Display the lines
 
 neg_fmd_list <- list()
 for(marker in mintchip_markers) {
@@ -94,10 +91,10 @@ for(marker in mintchip_markers) {
   for(fc in c(0, 0.1, 0.2, 0.3, 0.585, 1, 2)) {
     neg_differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/downregulated/", marker, "_DESeq2_FC_", fc, "_upregulated_annotated.tsv")
     if(file.size(neg_differential_analysis_results_file) != 1 && file.size(neg_differential_analysis_results_file) != 75) {
-      neg_differential_analysis_results_file <- read.table(neg_differential_analysis_results_file, sep = "\t", header = TRUE)
+      neg_differential_analysis_results_file <- read.table(neg_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
       neg_genes <- unique(neg_differential_analysis_results_file$SYMBOL)
       neg_results <- run_fmd_on_mintchip(neg_genes)
-      neg_fmd_list[[marker]][[fc]] <- neg_results
+      neg_fmd_list[[marker]][[as.character(fc)]] <- neg_results
     }
   }
 }
