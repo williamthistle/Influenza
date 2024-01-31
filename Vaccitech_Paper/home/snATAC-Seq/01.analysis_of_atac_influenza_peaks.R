@@ -12,68 +12,85 @@ run_fmd_on_snATAC <- function(gene_list) {
   return(current_fmd_result)
 }
 
-# Find snME within promoter regions of genes for each cell type
 snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "T Naive", "Proliferating")
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Create annotated up and downregulated peak files (annotated)
+snATAC_peak_annotated_dir <- paste0(sc_das_dir, "diff_peaks/annotated/")
+if (!dir.exists(snATAC_peak_annotated_dir)) {dir.create(snATAC_peak_annotated_dir)}
 for(snATAC_cell_type in snATAC_cell_types) {
-  differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/", marker, "_", peak_set, "_FC_", fc, ".tsv")
-      if(file.size(differential_analysis_results_file) != 1 && file.size(differential_analysis_results_file) != 75) {
-        differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
-        upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$Fold > 0,]
-        downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$Fold < 0,]
-        upregulated_dir <- paste0(marker_dir, "upregulated/")
-        downregulated_dir <- paste0(marker_dir, "downregulated/")
-        all_dir <- paste0(marker_dir, "all/")
-        if (!dir.exists(upregulated_dir)) {dir.create(upregulated_dir)}
-        if (!dir.exists(downregulated_dir)) {dir.create(downregulated_dir)}
-        if (!dir.exists(all_dir)) {dir.create(all_dir)}
-        write.table(differential_analysis_results, file = paste0(all_dir, marker, "_", peak_set, "_FC_", fc, ".tsv"), 
-                    sep = "\t", quote = FALSE, row.names = FALSE)
-        if(nrow(upregulated_differential_analysis_results) > 0) {
-          write.table(upregulated_differential_analysis_results, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated.tsv"), 
-                      sep = "\t", quote = FALSE, row.names = FALSE)
-          upregulated_differential_analysis_results <- upregulated_differential_analysis_results[,c(1,2,3,4,5)]
-          upregulated_differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
-          upregulated_differential_analysis_results <- as.data.frame(upregulated_differential_analysis_results)
-          write.table(upregulated_differential_analysis_results, file = paste0(upregulated_dir, marker, "_", peak_set, "_FC_", fc, "_upregulated_annotated.tsv"), 
-                      sep = "\t", quote = FALSE, row.names = FALSE)
-        }
-        if(nrow(downregulated_differential_analysis_results) > 0) {
-          write.table(downregulated_differential_analysis_results, file = paste0(downregulated_dir, marker, "_", peak_set, "_FC_", fc, "_downregulated.tsv"), 
-                      sep = "\t", quote = FALSE, row.names = FALSE)
-          downregulated_differential_analysis_results <- downregulated_differential_analysis_results[,c(1,2,3,4,5)]
-          downregulated_differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(downregulated_differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
-          downregulated_differential_analysis_results <- as.data.frame(downregulated_differential_analysis_results)
-          write.table(downregulated_differential_analysis_results, file = paste0(downregulated_dir, marker, "_", peak_set, "_FC_", fc, "_downregulated_annotated.tsv"), 
-                      sep = "\t", quote = FALSE, row.names = FALSE)
-        }
-      }
+  snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
+  differential_analysis_results_file <- paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv")
+  differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
+  upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC > 0,]
+  downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC < 0,]
+  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+    # Upregulated
+    upregulated_differential_analysis_results_fc_subset <- upregulated_differential_analysis_results[upregulated_differential_analysis_results$sc_log2FC >= fc,]
+    if(nrow(upregulated_differential_analysis_results_fc_subset) > 0) {
+      current_peaks <- upregulated_differential_analysis_results_fc_subset$Peak_Name
+      chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
+      start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
+      end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
+      upregulated_differential_analysis_results_fc_subset$seqnames <- chromosomes
+      upregulated_differential_analysis_results_fc_subset$start <- start_coords
+      upregulated_differential_analysis_results_fc_subset$end <- end_coords
+      upregulated_differential_analysis_results_fc_subset <- upregulated_differential_analysis_results_fc_subset[,c(7,8,9)]
+      upregulated_differential_analysis_results_fc_subset <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results_fc_subset), TxDb = txdb, annoDb = "org.Hs.eg.db")
+      upregulated_differential_analysis_results_fc_subset <- as.data.frame(upregulated_differential_analysis_results_fc_subset)
+      write.table(upregulated_differential_analysis_results_fc_subset, file = paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_upregulated_annotated.tsv"), 
+                  sep = "\t", quote = FALSE, row.names = FALSE)
+    }
+    # Downregulated
+    downregulated_differential_analysis_results_fc_subset <- downregulated_differential_analysis_results[downregulated_differential_analysis_results$sc_log2FC <= -fc,]
+    if(nrow(downregulated_differential_analysis_results_fc_subset) > 0) {
+      current_peaks <- downregulated_differential_analysis_results_fc_subset$Peak_Name
+      chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
+      start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
+      end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
+      downregulated_differential_analysis_results_fc_subset$seqnames <- chromosomes
+      downregulated_differential_analysis_results_fc_subset$start <- start_coords
+      downregulated_differential_analysis_results_fc_subset$end <- end_coords
+      downregulated_differential_analysis_results_fc_subset <- downregulated_differential_analysis_results_fc_subset[,c(7,8,9)]
+      downregulated_differential_analysis_results_fc_subset <- annotatePeak(makeGRangesFromDataFrame(downregulated_differential_analysis_results_fc_subset), TxDb = txdb, annoDb = "org.Hs.eg.db")
+      downregulated_differential_analysis_results_fc_subset <- as.data.frame(downregulated_differential_analysis_results_fc_subset)
+      write.table(downregulated_differential_analysis_results_fc_subset, file = paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_downregulated_annotated.tsv"), 
+                  sep = "\t", quote = FALSE, row.names = FALSE)
+    }
+  }
+}  
+
+# Run FMD (pos and neg)
+pos_fmd_list <- list()
+for(snATAC_cell_type in snATAC_cell_types) {
+  snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
+  pos_fmd_list[[snATAC_cell_type_for_file_name]] <- list()
+  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+    pos_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_upregulated_annotated.tsv")
+    if(file.exists(pos_differential_analysis_results_file) && file.size(pos_differential_analysis_results_file) != 1 && file.size(pos_differential_analysis_results_file) != 75) {
+      pos_differential_analysis_results_file <- read.table(pos_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+      pos_genes <- unique(pos_differential_analysis_results_file$SYMBOL)
+      pos_results <- run_fmd_on_mintchip(pos_genes)
+      pos_fmd_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- pos_results
     }
   }
 }
 
+saveRDS(pos_fmd_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd.RDS"))
 
-for(fc in c(0, 0.1, 0.2, 0.3, 0.585, 1, 2)) {
-
-
-
-# Run HB on positive (hypermethylated in D28) genes
-pos_fmd_snATAC_list <- list()
+neg_fmd_list <- list()
 for(snATAC_cell_type in snATAC_cell_types) {
-  pos_snATAC_results_file <- paste0(snATAC_results_dir, "Closest_Gene_Analysis/", snATAC_cell_type, "_D28_hypermethylated_annotated_genes.tsv")
-  pos_snATAC_cell_type_annotations <- read.table(pos_snATAC_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
-  pos_genes <- unique(pos_snATAC_cell_type_annotations$SYMBOL)
-  pos_results <- run_fmd_on_mintchip(pos_genes)
-  pos_fmd_snATAC_list[[snATAC_cell_type]] <- pos_results
+  snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
+  neg_fmd_list[[snATAC_cell_type_for_file_name]] <- list()
+  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+    neg_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_downregulated_annotated.tsv")
+    if(file.exists(neg_differential_analysis_results_file) && file.size(neg_differential_analysis_results_file) != 1 && file.size(neg_differential_analysis_results_file) != 75) {
+      neg_differential_analysis_results_file <- read.table(neg_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+      neg_genes <- unique(neg_differential_analysis_results_file$SYMBOL)
+      neg_results <- run_fmd_on_mintchip(neg_genes)
+      neg_fmd_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- neg_results
+    }
+  }
 }
 
-neg_fmd_snATAC_list <- list()
-for(snATAC_cell_type in snATAC_cell_types) {
-  neg_snATAC_results_file <- paste0(snATAC_results_dir, "Closest_Gene_Analysis/", snATAC_cell_type, "_D_minus_1_hypermethylated_annotated_genes.tsv")
-  neg_snATAC_cell_type_annotations <- read.table(neg_snATAC_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
-  neg_genes <- unique(neg_snATAC_cell_type_annotations$SYMBOL)
-  neg_results <- run_fmd_on_mintchip(neg_genes)
-  neg_fmd_snATAC_list[[snATAC_cell_type]] <- neg_results
-}
+saveRDS(neg_fmd_list, file = paste0(snATAC_peak_annotated_dir, "neg_fmd.RDS"))

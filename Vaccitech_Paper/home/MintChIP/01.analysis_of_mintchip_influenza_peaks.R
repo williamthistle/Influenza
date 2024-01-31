@@ -102,15 +102,3 @@ for(marker in mintchip_markers) {
 }
 
 saveRDS(neg_fmd_list, file = paste0(mintchip_fmd_dir, "neg_fmd_V2.RDS"))
-
-
-mintchip_fmd_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/differentially_accessible_sites/FMD/")
-if (!dir.exists(mintchip_fmd_dir)) {dir.create(mintchip_fmd_dir)}
-saveRDS(pos_fmd, file = paste0(mintchip_fmd_dir, "pos_fmd.RDS"))
-
-# pos_fmd <- readRDS(paste0(mintchip_fmd_dir, "pos_fmd.RDS"))
-
-neg_fmd <- run_fmd_on_mintchip(neg_mintchip_marker_das_list_annotated)
-  
-saveRDS(neg_fmd, file = paste0(mintchip_fmd_dir, "neg_fmd.RDS"))
-
