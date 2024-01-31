@@ -12,10 +12,11 @@ run_fmd_on_snATAC <- function(gene_list) {
   return(current_fmd_result)
 }
 
-snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "T Naive", "Proliferating")
+snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "T Naive", "MAIT", "Proliferating")
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Create annotated up and downregulated peak files (annotated)
+# NOTE: Check histogram of fold change for CD16 Mono.
 snATAC_peak_annotated_dir <- paste0(sc_das_dir, "diff_peaks/annotated/")
 if (!dir.exists(snATAC_peak_annotated_dir)) {dir.create(snATAC_peak_annotated_dir)}
 for(snATAC_cell_type in snATAC_cell_types) {
@@ -70,7 +71,7 @@ for(snATAC_cell_type in snATAC_cell_types) {
     if(file.exists(pos_differential_analysis_results_file) && file.size(pos_differential_analysis_results_file) != 1 && file.size(pos_differential_analysis_results_file) != 75) {
       pos_differential_analysis_results_file <- read.table(pos_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
       pos_genes <- unique(pos_differential_analysis_results_file$SYMBOL)
-      pos_results <- run_fmd_on_mintchip(pos_genes)
+      pos_results <- run_fmd_on_snATAC(pos_genes)
       pos_fmd_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- pos_results
     }
   }
@@ -87,7 +88,7 @@ for(snATAC_cell_type in snATAC_cell_types) {
     if(file.exists(neg_differential_analysis_results_file) && file.size(neg_differential_analysis_results_file) != 1 && file.size(neg_differential_analysis_results_file) != 75) {
       neg_differential_analysis_results_file <- read.table(neg_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
       neg_genes <- unique(neg_differential_analysis_results_file$SYMBOL)
-      neg_results <- run_fmd_on_mintchip(neg_genes)
+      neg_results <- run_fmd_on_snATAC(neg_genes)
       neg_fmd_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- neg_results
     }
   }
