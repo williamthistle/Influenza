@@ -25,7 +25,8 @@ library(chromVARmotifs)
 onedrive_dir <- "~"
 setwd(onedrive_dir)
 setwd("../")
-if(grep("OneDrive", getwd())) {
+laptop_use <- grep("OneDrive", getwd())
+if(length(laptop_use == 1)) {
   setwd("../")
 }
 onedrive_dir <- getwd()
@@ -36,7 +37,8 @@ load(paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/bulk_RN
 onedrive_dir <- "~"
 setwd(onedrive_dir)
 setwd("../")
-if(grep("OneDrive", getwd())) {
+laptop_use <- grep("OneDrive", getwd())
+if(length(laptop_use == 1)) {
   setwd("../")
 }
 onedrive_dir <- getwd()
@@ -61,6 +63,8 @@ possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "
 innate_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright")
 adaptive_cell_types <- c("CD4 Naive", "CD8 Naive", "CD4 Memory", "CD8 Memory", "B memory", "MAIT", "B naive", "T Naive", "B")
 possible_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
+snME_cell_types <- c("B-Mem", "B-Naive", "Monocyte", "NK-cell2", "Tc-Mem", "Tc-Naive", "Th-Mem", "Th-Naive")
+atac_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "T Naive", "MAIT", "Proliferating")
 # Set other dirs
 sc_rna_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/")
 sc_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/DEGs/")
@@ -72,6 +76,7 @@ sc_deg_lvl_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Anal
 
 sc_magical_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/")
 magical_output_dir <- paste0(sc_magical_dir, "Output/")
+magical_results <- read.table(file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 sc_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/HumanBase/")
 sc_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snATAC-Seq/Results/HVL/")
 mintchip_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/")
@@ -83,6 +88,9 @@ miRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Data/")
 miRNA_metadata_dir <-paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Metadata/")
 totalRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Data/")
 totalRNA_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Metadata/")
+
+txdb_hg38 <- TxDb.Hsapiens.UCSC.hg38.knownGene
+txdb_hg19 <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 # Read in Mint-ChIP metadata
 mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
