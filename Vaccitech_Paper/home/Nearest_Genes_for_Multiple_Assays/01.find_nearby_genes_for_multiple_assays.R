@@ -69,11 +69,13 @@ ATAC_and_mintchip_and_scRNA_and_bulkRNA_gene_overlap <- list()
 ATAC_and_snME_and_mintchip_and_scRNA_and_bulkRNA_gene_overlap <- list()
 # Instead of this, why not use DF?
 # Row names are genes from ATAC
+# I guess I need to check whether a given gene is 
 # Columns are cell type, ATAC (always upregulated or downregulated), 
 # mintchip (list of markers followed by upregulated, downregulated, or NA), 
 # snME (cell type followed by upregulated, downregulated, or NA),
 # scRNA-seq (cell type followed by upregulated, downregulated, or NA),
 # bulkRNA-seq (upregulated, downregulated, or NA)
+# Go gene by gene 
 
 for(atac_cell_type in atac_cell_types) {
   atac_cell_type_for_file_name <- sub(" ", "_", atac_cell_type)
