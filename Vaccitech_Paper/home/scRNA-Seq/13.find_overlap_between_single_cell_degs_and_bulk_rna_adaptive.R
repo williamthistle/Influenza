@@ -17,36 +17,36 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-# Make function that does all of this. Has keyword "innate", "adaptive", and "all"
-# This keyword can be used to subset things to innate cell types / adaptive cell types (or just keep all cell types)
+# Make function that does all of this. Has keyword "adaptive", "adaptive", and "all"
+# This keyword can be used to subset things to adaptive cell types / adaptive cell types (or just keep all cell types)
 # Then just create files with that keyword in directory name
 # That way, we can have everything at our fingertips - three simple function calls
 
 # Fill out HVL matrices (upregulated and downregulated genes, with alpha = 0.05 and 0.1)
-hvl_upregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+hvl_upregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(adaptive_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                              paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/"), "up", alpha = 0.05)
-saveRDS(hvl_upregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_0.05.RDS"))
+saveRDS(hvl_upregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/adaptive_hvl_upregulated_sc_genes_in_bulk_0.05.RDS"))
 
-hvl_downregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+hvl_downregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(adaptive_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                              paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/"), "down", alpha = 0.05)
-saveRDS(hvl_downregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_0.05.RDS"))
+saveRDS(hvl_downregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/adaptive_hvl_downregulated_sc_genes_in_bulk_0.05.RDS"))
 
-hvl_upregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+hvl_upregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(adaptive_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                                      paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/"), "up", alpha = 0.1)
-saveRDS(hvl_upregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_0.1.RDS"))
+saveRDS(hvl_upregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/adaptive_hvl_upregulated_sc_genes_in_bulk_0.1.RDS"))
 
-hvl_downregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
+hvl_downregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(adaptive_sc_pseudobulk_deg_table, high_placebo_counts, high_placebo_metadata,
                                                                      paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/"), "down", alpha = 0.1)
-saveRDS(hvl_downregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_0.1.RDS"))
+saveRDS(hvl_downregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/adaptive_hvl_downregulated_sc_genes_in_bulk_0.1.RDS"))
 
 # Load RDS files
-hvl_upregulated_sc_genes_in_bulk_0.05 <- readRDS(paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_0.05.RDS"))
-hvl_downregulated_sc_genes_in_bulk_0.05 <- readRDS(paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_0.05.RDS"))
-hvl_upregulated_sc_genes_in_bulk_0.1 <- readRDS(paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_0.1.RDS"))
-hvl_downregulated_sc_genes_in_bulk_0.1 <- readRDS(paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_0.1.RDS"))
+hvl_upregulated_sc_genes_in_bulk_0.05 <- readRDS(paste0(bulk_results_dir, "adaptive_hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_0.05.RDS"))
+hvl_downregulated_sc_genes_in_bulk_0.05 <- readRDS(paste0(bulk_results_dir, "adaptive_hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_0.05.RDS"))
+hvl_upregulated_sc_genes_in_bulk_0.1 <- readRDS(paste0(bulk_results_dir, "adaptive_hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_0.1.RDS"))
+hvl_downregulated_sc_genes_in_bulk_0.1 <- readRDS(paste0(bulk_results_dir, "adaptive_hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_0.1.RDS"))
 
 # HVL - upregulated, 0.05 alpha
-write.table(hvl_upregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_alpha_0.05.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(hvl_upregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/adaptive_hvl_upregulated_sc_genes_in_bulk_alpha_0.05.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 high_passing_upregulated_genes_0.05 <- unique(hvl_upregulated_sc_genes_in_bulk_0.05$Gene)
 
 # Plot with D2/D5/D8/D28 in order
@@ -55,7 +55,7 @@ hvl_upregulated_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_upregulated_sc_g
   scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Upregulated Genes (at Day 28) from Adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene (Cell Types)",
     size = "Fold Change (Absolute Value)",
@@ -65,17 +65,28 @@ hvl_upregulated_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_upregulated_sc_g
          size = guide_legend(order = 2)) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 2/1)
 
-ggsave(filename = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_alpha_0.05_with_cell_types.tiff"), plot = hvl_upregulated_sc_genes_in_bulk_0.05_plot, device='tiff', width = 12, height = 15)
+ggsave(filename = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/adaptive_hvl_upregulated_sc_genes_in_bulk_alpha_0.05_with_cell_types.tiff"), plot = hvl_upregulated_sc_genes_in_bulk_0.05_plot, device='tiff', width = 12, height = 15)
 
 # Alternatively, plot with D28/D2/D5/D8 (can draw a line between D28 and the rest of the days)
 hvl_upregulated_sc_genes_in_bulk_0.05_alt <- hvl_upregulated_sc_genes_in_bulk_0.05
 hvl_upregulated_sc_genes_in_bulk_0.05_alt$Day <- factor(hvl_upregulated_sc_genes_in_bulk_0.05_alt$Day, levels = c("Day.28","Day.2","Day.5","Day.8"))
+
+remove_text_in_parentheses <- function(input_string) {
+  output_string <- gsub("\\([^\\)]+\\)", "", input_string)
+  return(trimws(output_string))
+}
+
+# Apply the function to the 'text' column
+hvl_upregulated_sc_genes_in_bulk_0.05_alt <- hvl_upregulated_sc_genes_in_bulk_0.05_alt %>%
+  mutate(Gene = sapply(Gene, remove_text_in_parentheses))
+
+
 hvl_upregulated_sc_genes_in_bulk_0.05_alt_plot <- ggplot(data = hvl_upregulated_sc_genes_in_bulk_0.05_alt, aes(x = Day, y = Gene, size = Fold.Change.Abs, color = Fold.Change.Direction)) +
   geom_point() +
-  scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
+  scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey", "Negative" = "#F3756D")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Upregulated Genes (at Day 28) from Adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -85,7 +96,7 @@ hvl_upregulated_sc_genes_in_bulk_0.05_alt_plot <- ggplot(data = hvl_upregulated_
          size = guide_legend(order = 2)) +
   theme(plot.title = element_text(hjust = 0.6)) + theme(aspect.ratio = 3/1)
 
-ggsave(filename = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_alpha_0.05_alt.png"), plot = hvl_upregulated_sc_genes_in_bulk_0.05_alt_plot, device='png', width = 12, height = 15)
+ggsave(filename = paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/adaptive_hvl_upregulated_sc_genes_in_bulk_alpha_0.05_alt.png"), plot = hvl_upregulated_sc_genes_in_bulk_0.05_alt_plot, device='png', width = 12, height = 15)
 
 # HVL - downregulated, 0.05 alpha
 write.table(hvl_downregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_bulk/hvl_downregulated_sc_genes_in_bulk_alpha_0.05.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
@@ -96,7 +107,7 @@ hvl_downregulated_sc_genes_in_bulk_0.05_plot <- ggplot(data = hvl_downregulated_
   scale_color_manual(values = c("Positive" = "#00BFC4", "Negative" = "#F3756D", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Downregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Downregulated Genes (at Day 28) from adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -116,7 +127,7 @@ hvl_downregulated_sc_genes_in_bulk_0.05_alt_plot <- ggplot(data = hvl_downregula
   scale_color_manual(values = c("Positive" = "#00BFC4", "Negative" = "#F3756D", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Downregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Downregulated Genes (at Day 28) from adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -137,7 +148,7 @@ hvl_upregulated_sc_genes_in_bulk_0.1_plot <- ggplot(data = hvl_upregulated_sc_ge
   scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Upregulated Genes (at Day 28) from adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -157,7 +168,7 @@ hvl_upregulated_sc_genes_in_bulk_0.1_alt_plot <- ggplot(data = hvl_upregulated_s
   scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Upregulated Genes (at Day 28) from adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -178,7 +189,7 @@ hvl_downregulated_sc_genes_in_bulk_0.1_plot <- ggplot(data = hvl_downregulated_s
   scale_color_manual(values = c("Positive" = "#00BFC4", "Negative" = "#F3756D", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Downregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Downregulated Genes (at Day 28) from adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -198,7 +209,7 @@ hvl_downregulated_sc_genes_in_bulk_0.1_alt_plot <- ggplot(data = hvl_downregulat
   scale_color_manual(values = c("Positive" = "#00BFC4", "Negative" = "#F3756D", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Downregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Downregulated Genes (at Day 28) from adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -212,25 +223,25 @@ ggsave(filename = paste0(bulk_results_dir, "hvl_downregulated_sc_genes_found_in_
 
 # Subset to validated genes
 high_all_passing_genes_0.05 <- c(high_passing_upregulated_genes_0.05, high_passing_downregulated_genes_0.05)
-innate_sc_pseudobulk_deg_table_passing_hvl_0.05 <- innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$Gene_Name %in% high_all_passing_genes_0.05,]
+adaptive_sc_pseudobulk_deg_table_passing_hvl_0.05 <- adaptive_sc_pseudobulk_deg_table[adaptive_sc_pseudobulk_deg_table$Gene_Name %in% high_all_passing_genes_0.05,]
 
 high_all_passing_genes_0.1 <- c(high_passing_upregulated_genes_0.1, high_passing_downregulated_genes_0.1)
-innate_sc_pseudobulk_deg_table_passing_hvl_0.1 <- innate_sc_pseudobulk_deg_table[innate_sc_pseudobulk_deg_table$Gene_Name %in% high_all_passing_genes_0.1,]
+adaptive_sc_pseudobulk_deg_table_passing_hvl_0.1 <- adaptive_sc_pseudobulk_deg_table[adaptive_sc_pseudobulk_deg_table$Gene_Name %in% high_all_passing_genes_0.1,]
 
 # Check validated genes on LVL individuals
-lvl_upregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table_passing_hvl_0.05, low_placebo_counts, low_placebo_metadata,
+lvl_upregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(adaptive_sc_pseudobulk_deg_table_passing_hvl_0.05, low_placebo_counts, low_placebo_metadata,
                                                                              paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bulk/"), "up", alpha = 0.05)
 saveRDS(lvl_upregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bulk/lvl_upregulated_sc_genes_in_bulk_0.05.RDS"))
 
-lvl_downregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table_passing_hvl_0.05, low_placebo_counts, low_placebo_metadata,
+lvl_downregulated_sc_genes_in_bulk_0.05 <- fill_in_sc_deg_info_for_time_series(adaptive_sc_pseudobulk_deg_table_passing_hvl_0.05, low_placebo_counts, low_placebo_metadata,
                                                                                paste0(bulk_results_dir, "lvl_downregulated_sc_genes_found_in_bulk/"), "down", alpha = 0.05)
 saveRDS(lvl_downregulated_sc_genes_in_bulk_0.05, file = paste0(bulk_results_dir, "lvl_downregulated_sc_genes_found_in_bulk/lvl_downregulated_sc_genes_in_bulk_0.05.RDS"))
 
-lvl_upregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table_passing_hvl_0.1, low_placebo_counts, low_placebo_metadata,
+lvl_upregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(adaptive_sc_pseudobulk_deg_table_passing_hvl_0.1, low_placebo_counts, low_placebo_metadata,
                                                                             paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bulk/"), "up", alpha = 0.1)
 saveRDS(lvl_upregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bulk/lvl_upregulated_sc_genes_in_bulk_0.1.RDS"))
 
-lvl_downregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(innate_sc_pseudobulk_deg_table_passing_hvl_0.1, low_placebo_counts, low_placebo_metadata,
+lvl_downregulated_sc_genes_in_bulk_0.1 <- fill_in_sc_deg_info_for_time_series(adaptive_sc_pseudobulk_deg_table_passing_hvl_0.1, low_placebo_counts, low_placebo_metadata,
                                                                               paste0(bulk_results_dir, "lvl_downregulated_sc_genes_found_in_bulk/"), "down", alpha = 0.1)
 saveRDS(lvl_downregulated_sc_genes_in_bulk_0.1, file = paste0(bulk_results_dir, "lvl_downregulated_sc_genes_found_in_bulk/lvl_downregulated_sc_genes_in_bulk_0.1.RDS"))
 
@@ -250,7 +261,7 @@ lvl_upregulated_sc_genes_in_bulk_0.05_plot <- ggplot(data = lvl_upregulated_sc_g
   scale_color_manual(values = c("Positive" = "#00BFC4", "Not Significant" = "grey")) +
   theme_minimal() +
   labs(
-    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection for Low Viral Load Individuals",
+    title = "Fold Change of Upregulated Genes (at Day 28) from adaptive Immune Cells Across Course of Infection for Low Viral Load Individuals",
     x = "Day (Post Exposure)",
     y = "Gene",
     size = "Fold Change (Absolute Value)",
@@ -269,13 +280,13 @@ ggsave(filename = paste0(bulk_results_dir, "lvl_upregulated_sc_genes_found_in_bu
 # Upregulated, alpha = 0.05. Doesn't really work - too few genes.
 magical_output_dir <- paste0(sc_magical_dir, "Output/")
 overall_magical_results <- read.table(paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
-innate_cell_types_with_underscore <- gsub(" ", "_", innate_cell_types)
-innate_magical_results <- overall_magical_results[overall_magical_results$Cell_Type %in% innate_cell_types_with_underscore,]
-innate_magical_genes <- unique(innate_magical_results$Gene_symbol)
-hvl_upregulated_sc_genes_in_bulk_0.05_magical <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% innate_magical_genes,]
+adaptive_cell_types_with_underscore <- gsub(" ", "_", adaptive_cell_types)
+adaptive_magical_results <- overall_magical_results[overall_magical_results$Cell_Type %in% adaptive_cell_types_with_underscore,]
+adaptive_magical_genes <- unique(adaptive_magical_results$Gene_symbol)
+hvl_upregulated_sc_genes_in_bulk_0.05_magical <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% adaptive_magical_genes,]
 
 # Upregulated, alpha = 0.1. Eh, maybe a little better but not much - too few genes.
-hvl_upregulated_sc_genes_in_bulk_0.1_magical <- hvl_upregulated_sc_genes_in_bulk_0.1[hvl_upregulated_sc_genes_in_bulk_0.1$Gene %in% innate_magical_genes,]
+hvl_upregulated_sc_genes_in_bulk_0.1_magical <- hvl_upregulated_sc_genes_in_bulk_0.1[hvl_upregulated_sc_genes_in_bulk_0.1$Gene %in% adaptive_magical_genes,]
 
 # Fill out HVL matrices for ALL genes (combined cell types) for motif overlap (script 4)
 hvl_upregulated_sc_genes_in_bulk_combined_cell_types_0.05 <- fill_in_sc_deg_info_for_time_series(sc_pseudobulk_deg_combined_cell_types_table, high_placebo_counts, high_placebo_metadata,
@@ -307,7 +318,7 @@ ggplot(data = hvl_upregulated_sc_genes_in_bulk_0.05, aes(x = Day, y = Gene, size
   scale_color_gradientn(colors = c("aquamarine4", "aquamarine"), na.value = "grey") +
   theme_minimal() +
   labs(
-    title = "Fold Change of Upregulated Genes (at Day 28) from Innate Immune Cells Across Course of Infection",
+    title = "Fold Change of Upregulated Genes (at Day 28) from adaptive Immune Cells Across Course of Infection",
     x = "Day (Post Exposure)",
     y = "Gene (Cell Types)",
     size = "Fold Change (Absolute Value)",

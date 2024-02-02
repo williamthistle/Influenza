@@ -2,7 +2,7 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-innate_deg_heatmap_table <- data.frame("CD16 Mono" = numeric(), "CD14 Mono" = numeric(), "cDC" = numeric(), "pDC" = numeric(), "NK" = numeric(),check.names = FALSE)
+innate_deg_heatmap_table <- data.frame("CD14 Mono" = numeric(), "CD16 Mono" = numeric(), "NK" = numeric(), "cDC" = numeric(), "pDC" = numeric(), check.names = FALSE)
 
 # Positive
 for(cell_type in colnames(innate_deg_heatmap_table)) {
@@ -68,4 +68,18 @@ for(cell_type in colnames(innate_deg_heatmap_table)) {
   }
 }
 
-pheatmap::pheatmap(as.matrix(innate_deg_heatmap_table), cluster_row=FALSE, cluster_col=FALSE, fontsize_col=14, filename = "test.png")
+pheatmap::pheatmap(as.matrix(innate_deg_heatmap_table), cluster_row=FALSE, cluster_col=FALSE, fontsize_col=14, 
+                   main = "Fold Change for Top DEGs in Innate Immune Cell Types", filename = "C:/Users/willi/Desktop/innate_scRNA_deg_heatmap.png")
+
+mat_df <- as.data.frame(as.table(as.matrix(innate_deg_heatmap_table)))
+
+ggplot(mat_df, aes(x = Var2, y = Var1, fill = Freq)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", na.value = "grey80") +
+  scale_y_discrete(limits = rev(levels(mat_df$Var1))) +
+  theme_minimal() +
+  labs(title = "Fold Change for Top DEGs in Innate Immune Cell Types",
+       x = "Cell Type",
+       y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) +
+  theme(text=element_text(size=14)) + coord_fixed(ratio = 0.1)
+
