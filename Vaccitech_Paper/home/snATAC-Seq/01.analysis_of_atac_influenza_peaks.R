@@ -97,3 +97,42 @@ for(snATAC_cell_type in snATAC_cell_types) {
 
 # saveRDS(neg_fmd_list, file = paste0(snATAC_peak_annotated_dir, "neg_fmd.RDS"))
 # neg_fmd_list <- readRDS(paste0(snATAC_peak_annotated_dir, "neg_fmd.RDS"))
+
+# Run FMD (pos and neg, promoter regions)
+pos_fmd_promoter_list <- list()
+for(snATAC_cell_type in snATAC_cell_types) {
+  snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
+  pos_fmd_promoter_list[[snATAC_cell_type_for_file_name]] <- list()
+  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+    pos_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_upregulated_annotated.tsv")
+    if(file.exists(pos_differential_analysis_results_file) && file.size(pos_differential_analysis_results_file) != 1 && file.size(pos_differential_analysis_results_file) != 75) {
+      pos_differential_analysis_results_file <- read.table(pos_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+      pos_differential_analysis_results_file <- subset(pos_differential_analysis_results_file, distanceToTSS >= -2000 & distanceToTSS <= 500)
+      pos_genes <- unique(pos_differential_analysis_results_file$SYMBOL)
+      pos_results <- run_fmd_on_snATAC(pos_genes)
+      pos_fmd_promoter_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- pos_results
+    }
+  }
+}
+
+# saveRDS(pos_fmd_promoter_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
+# pos_fmd_promoter_list <- readRDS(paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
+
+neg_fmd_promoter_list <- list()
+for(snATAC_cell_type in snATAC_cell_types) {
+  snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
+  neg_fmd_promoter_list[[snATAC_cell_type_for_file_name]] <- list()
+  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+    neg_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_downregulated_annotated.tsv")
+    if(file.exists(neg_differential_analysis_results_file) && file.size(neg_differential_analysis_results_file) != 1 && file.size(neg_differential_analysis_results_file) != 75) {
+      neg_differential_analysis_results_file <- read.table(neg_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+      neg_differential_analysis_results_file <- subset(neg_differential_analysis_results_file, distanceToTSS >= -2000 & distanceToTSS <= 500)
+      neg_genes <- unique(neg_differential_analysis_results_file$SYMBOL)
+      neg_results <- run_fmd_on_snATAC(neg_genes)
+      neg_fmd_promoter_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- neg_results
+    }
+  }
+}
+
+# saveRDS(neg_fmd_promoter_list, file = paste0(snATAC_peak_annotated_dir, "neg_fmd_promoter.RDS"))
+# neg_fmd_promoter_list <- readRDS(paste0(snATAC_peak_annotated_dir, "neg_fmd_promoter.RDS"))
