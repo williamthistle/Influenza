@@ -103,7 +103,7 @@ pos_fmd_promoter_list <- list()
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
   pos_fmd_promoter_list[[snATAC_cell_type_for_file_name]] <- list()
-  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+  for(fc in c(0.1)) {
     pos_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_upregulated_annotated.tsv")
     if(file.exists(pos_differential_analysis_results_file) && file.size(pos_differential_analysis_results_file) != 1 && file.size(pos_differential_analysis_results_file) != 75) {
       pos_differential_analysis_results_file <- read.table(pos_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
@@ -115,14 +115,14 @@ for(snATAC_cell_type in snATAC_cell_types) {
   }
 }
 
-# saveRDS(pos_fmd_promoter_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
+saveRDS(pos_fmd_promoter_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
 # pos_fmd_promoter_list <- readRDS(paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
 
 neg_fmd_promoter_list <- list()
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
   neg_fmd_promoter_list[[snATAC_cell_type_for_file_name]] <- list()
-  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+  for(fc in c(0.1)) {
     neg_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_downregulated_annotated.tsv")
     if(file.exists(neg_differential_analysis_results_file) && file.size(neg_differential_analysis_results_file) != 1 && file.size(neg_differential_analysis_results_file) != 75) {
       neg_differential_analysis_results_file <- read.table(neg_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
@@ -134,5 +134,5 @@ for(snATAC_cell_type in snATAC_cell_types) {
   }
 }
 
-# saveRDS(neg_fmd_promoter_list, file = paste0(snATAC_peak_annotated_dir, "neg_fmd_promoter.RDS"))
+saveRDS(neg_fmd_promoter_list, file = paste0(snATAC_peak_annotated_dir, "neg_fmd_promoter.RDS"))
 # neg_fmd_promoter_list <- readRDS(paste0(snATAC_peak_annotated_dir, "neg_fmd_promoter.RDS"))
