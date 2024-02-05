@@ -77,7 +77,8 @@ for(snATAC_cell_type in snATAC_cell_types) {
   }
 }
 
-saveRDS(pos_fmd_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd.RDS"))
+# saveRDS(pos_fmd_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd.RDS"))
+# pos_fmd_list <- readRDS(paste0(snATAC_peak_annotated_dir, "pos_fmd.RDS"))
 
 neg_fmd_list <- list()
 for(snATAC_cell_type in snATAC_cell_types) {
@@ -94,4 +95,5 @@ for(snATAC_cell_type in snATAC_cell_types) {
   }
 }
 
-saveRDS(neg_fmd_list, file = paste0(snATAC_peak_annotated_dir, "neg_fmd.RDS"))
+# saveRDS(neg_fmd_list, file = paste0(snATAC_peak_annotated_dir, "neg_fmd.RDS"))
+# neg_fmd_list <- readRDS(paste0(snATAC_peak_annotated_dir, "neg_fmd.RDS"))
