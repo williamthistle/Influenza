@@ -102,3 +102,23 @@ for(marker in mintchip_markers) {
 }
 
 saveRDS(neg_fmd_list, file = paste0(mintchip_fmd_dir, "neg_fmd_V2.RDS"))
+
+# Create peak annotation plot
+peak_annotation_plots <- list()
+for(marker in mintchip_markers) {
+  if(marker %in% c("H3K27Ac", "H3K4me3", "H3K27me3")) {
+    fc <- 0.1
+  } else {
+    fc <- 0.3
+  }
+  differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/all/", marker, "_DESeq2_FC_", fc, ".tsv")
+  differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
+  differential_analysis_results <- differential_analysis_results[,c(1,2,3,4,5)]
+  differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
+  peak_annotation_plots[[marker]] <- differential_analysis_results
+}
+
+plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = "Distribution of Genomic Features for MintChIP Data")
+
+
+      

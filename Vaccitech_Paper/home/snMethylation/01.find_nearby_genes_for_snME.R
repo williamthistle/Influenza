@@ -37,6 +37,7 @@ for(snME_cell_type in snME_cell_types) {
 }
 
 # Run HB on positive (hypermethylated in D28) genes
+# Note - I manually subset me3 to TSS (-3k to 3k), so I should add code to do that automatically below
 pos_fmd_snME_list <- list()
 for(snME_cell_type in snME_cell_types) {
   pos_snME_results_file <- paste0(snME_results_dir, "Closest_Gene_Analysis/", snME_cell_type, "_D28_hypermethylated_annotated_genes.tsv")

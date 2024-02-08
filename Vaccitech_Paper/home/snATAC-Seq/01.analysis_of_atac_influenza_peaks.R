@@ -95,3 +95,23 @@ for(snATAC_cell_type in snATAC_cell_types) {
 }
 
 saveRDS(neg_fmd_list, file = paste0(snATAC_peak_annotated_dir, "neg_fmd.RDS"))
+
+peak_annotation_plots <- list()
+for(snATAC_cell_type in snATAC_cell_types) {
+  snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
+  differential_analysis_results_file <- paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv")
+  differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
+  current_peaks <- differential_analysis_results$Peak_Name
+  chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
+  start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
+  end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
+  differential_analysis_results$seqnames <- chromosomes
+  differential_analysis_results$start <- start_coords
+  differential_analysis_results$end <- end_coords
+  differential_analysis_results <- differential_analysis_results[,c(7,8,9)]
+  differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
+  peak_annotation_plots[[snATAC_cell_type]] <- differential_analysis_results
+}
+
+plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = "Distribution of Genomic Features for snATAC-Seq Data")
+
