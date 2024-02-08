@@ -73,12 +73,14 @@ pheatmap::pheatmap(as.matrix(adaptive_deg_heatmap_table), cluster_row=FALSE, clu
 
 mat_df <- as.data.frame(as.table(as.matrix(adaptive_deg_heatmap_table)))
 
-ggplot(mat_df, aes(x = Var2, y = Var1, fill = Freq)) +
+adaptive_top_deg_plot <- ggplot(mat_df, aes(x = Var2, y = Var1, fill = Freq)) +
   geom_tile(color = "white") +
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", na.value = "grey80") +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", na.value = "grey80", limits = c(-1,1)) +
   scale_y_discrete(limits = rev(levels(mat_df$Var1))) +
   theme_minimal() +
   labs(title = "Fold Change for Top DEGs in Adaptive Immune Cell Types",
        x = "Cell Type",
        y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) +
   theme(text=element_text(size=14)) + coord_fixed(ratio = 0.1)
+
+ggsave("C:/Users/wat2/Desktop/top_adaptive_degs.tiff", plot = adaptive_top_deg_plot, device = "tiff", dpi = 300)

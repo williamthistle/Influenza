@@ -95,6 +95,7 @@ atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_d
                                reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
+# load Vincy's ArchR project: vincy_atac_proj <- loadArchRProject(path = "/Genomics/function/pentacon/wat2/single_cell/analysis/vincy_analysis/ArchR_filtered")
 
 atac_proj <- combine_cell_types_atac(atac_proj)
 atac_proj <- MajorityVote_ATAC(proj = atac_proj)
