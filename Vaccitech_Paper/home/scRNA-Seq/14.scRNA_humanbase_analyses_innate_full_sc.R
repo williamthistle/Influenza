@@ -19,6 +19,9 @@ source(paste0(base_dir, "00.setup.R"))
 pos_innate_genes <- c()
 neg_innate_genes <- c()
 
+pos_innate_genes_by_cell_type <- list()
+neg_innate_genes_by_cell_type <- list()
+
 for(innate_cell_type in innate_cell_types) {
   innate_cell_type_for_file_name <- sub(" ", "_", innate_cell_type)
   current_deg_table <- read.table(paste0(sc_deg_dir, "D28-vs-D_minus_1-degs-", innate_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc.tsv"), sep = "\t", header = TRUE)
@@ -26,6 +29,8 @@ for(innate_cell_type in innate_cell_types) {
   neg_deg_table <- current_deg_table[current_deg_table$avg_log2FC < 0,]
   pos_innate_genes <- c(pos_innate_genes, rownames(pos_deg_table))
   neg_innate_genes <- c(neg_innate_genes, rownames(neg_deg_table))
+  pos_innate_genes_by_cell_type[[innate_cell_type]] <- pos_innate_genes
+  neg_innate_genes_by_cell_type[[innate_cell_type]] <- neg_innate_genes
 }
 
 pos_innate_genes <- unique(pos_innate_genes)
