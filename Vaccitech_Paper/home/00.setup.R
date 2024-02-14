@@ -20,6 +20,7 @@ library(monaLisa)
 library(ComplexHeatmap)
 library(circlize)
 library(chromVARmotifs)
+library(sparklines)
 
 # Load bulk RNA-seq analysis results
 onedrive_dir <- "~"
