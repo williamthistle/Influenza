@@ -13,6 +13,21 @@ fc_direction <- "downregulated"
 
 get_lists_of_commands(analysis_dir, fc_direction)
 
+# UPREGULATED BULK RNA-SEQ
+analysis_dir <- "C:/Users/willi/OneDrive - Princeton University/Vaccitech_Paper/network_comparisons/bulk_upregulated_comparisons/"
+fc_direction <- "upregulated"
+
+get_lists_of_commands(analysis_dir, fc_direction)
+
+# DOWNREGULATED BULK RNA-SEQ
+analysis_dir <- "C:/Users/willi/OneDrive - Princeton University/Vaccitech_Paper/network_comparisons/bulk_downregulated_comparisons/"
+fc_direction <- "downregulated"
+
+get_lists_of_commands(analysis_dir, fc_direction)
+
+
+
+
 
 
 
