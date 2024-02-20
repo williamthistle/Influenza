@@ -171,7 +171,7 @@ get_modules_for_downstream_analysis <- function(humanbase_file_path) {
 }
 
 
-get_lists_of_commands <- function(analysis_dir, direction = "upregulated") {
+get_lists_of_commands <- function(analysis_dir, direction = "upregulated", search_token = NULL) {
   # Create output dirs
   output_dir <- paste0(analysis_dir, "output/")
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
@@ -182,6 +182,10 @@ get_lists_of_commands <- function(analysis_dir, direction = "upregulated") {
   # Get list of files we're going to analyze
   analyzed_files <- list.files(analysis_dir)
   analyzed_files <- analyzed_files[!analyzed_files %in% "output"]
+  # Subset files based on search token if present
+  if(!is.null(search_token)) {
+    analyzed_files <- analyzed_files[grep(search_token, analyzed_files)]
+  }
   # Grab common suffix for files and list of prefixes
   common_suffix <- unique(sub(paste0(".*_([^_]+_", direction, ".tsv)$"), "\\1", analyzed_files))
   common_suffix_without_file_ext <- tools::file_path_sans_ext(common_suffix)

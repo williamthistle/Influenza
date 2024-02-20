@@ -25,11 +25,17 @@ fc_direction <- "downregulated"
 
 get_lists_of_commands(analysis_dir, fc_direction)
 
+# UPREGULATED snME
+analysis_dir <- "C:/Users/wat2/OneDrive - Princeton University/Vaccitech_Paper/network_comparisons/snME_upregulated_comparisons/"
+fc_direction <- "upregulated"
 
+get_lists_of_commands(analysis_dir, fc_direction, "snME")
 
+# UPREGULATED snME
+analysis_dir <- "C:/Users/wat2/OneDrive - Princeton University/Vaccitech_Paper/network_comparisons/snME_downregulated_comparisons/"
+fc_direction <- "downregulated"
 
-
-
+get_lists_of_commands(analysis_dir, fc_direction, "snME")
 
 
 
