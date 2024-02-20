@@ -80,7 +80,7 @@ ggplot() +
   scale_color_manual(values=NA) +              
   guides(color=guide_legend("Not Significant", override.aes=list(fill = "grey80", color="black"), order = 999)) +
   theme_minimal() +
-  labs(title = "Fold Change for Top DEGs in Innate Immune Cell Types",
+  labs(title = "Fold Change for Top DEGs in Adaptive Immune Cell Types",
        x = "Cell Type",
        y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) +
   theme(text=element_text(size=14)) + coord_fixed(ratio = 0.1) 
