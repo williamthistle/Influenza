@@ -19,8 +19,26 @@ hvl_upregulated_sc_genes_in_bulk_0.05 <- hvl_upregulated_sc_genes_in_bulk_0.05 %
   mutate(Fold.Change = ifelse(Fold.Change.Direction.Raw == "Negative", -Fold.Change.Abs, Fold.Change.Abs)) %>%
   select(-Fold.Change.Abs)
 
+# Unique genes
+unique_genes <- unique(hvl_upregulated_sc_genes_in_bulk_0.05$Gene)
+
+# Create a new data frame with additional rows
+new_rows <- data.frame(
+  Gene = rep(unique_genes, each = 1),  # Repeat each gene once
+  Day = "Day.Minus.1",
+  Fold.Change.Direction.Raw = "Positive",
+  Fold.Change.Direction = "Not Significant",
+  Adjusted.P.Value = 1,
+  Fold.Change = 0
+)
+
+# Concatenate the original data frame with the new rows
+hvl_upregulated_sc_genes_in_bulk_0.05 <- rbind(hvl_upregulated_sc_genes_in_bulk_0.05, new_rows)
+
 hvl_upregulated_sc_genes_in_bulk_0.05 <- hvl_upregulated_sc_genes_in_bulk_0.05 %>%
   arrange(Gene)
+
+hvl_upregulated_sc_genes_in_bulk_0.05 <- hvl_upregulated_sc_genes_in_bulk_0.05[order(hvl_upregulated_sc_genes_in_bulk_0.05$Gene, match(hvl_upregulated_sc_genes_in_bulk_0.05$Day, c("Day.Minus.1", "Day.2", "Day.5", "Day.8", "Day.28"))), ]
 
 for(current_gene in unique(hvl_upregulated_sc_genes_in_bulk_0.05$Gene)) {
   current_gene_stats <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene == current_gene,]
