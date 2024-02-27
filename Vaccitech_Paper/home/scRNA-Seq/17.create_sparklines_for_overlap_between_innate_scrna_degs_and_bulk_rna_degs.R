@@ -58,4 +58,3 @@ for(current_gene in unique(hvl_upregulated_sc_genes_in_bulk_0.05$Gene)) {
   #webshot(paste0("C:/Users/willi/Desktop/sparkline_test/", current_gene, ".html"), 
   #        file = paste0("C:/Users/willi/Desktop/sparkline_test/", current_gene, ".png"), vwidth = 1000, vheight = 200)
 }
-
