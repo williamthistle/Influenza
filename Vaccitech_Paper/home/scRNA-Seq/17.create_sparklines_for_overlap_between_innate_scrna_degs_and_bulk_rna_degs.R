@@ -58,3 +58,34 @@ for(current_gene in unique(hvl_upregulated_sc_genes_in_bulk_0.05$Gene)) {
   #webshot(paste0("C:/Users/willi/Desktop/sparkline_test/", current_gene, ".html"), 
   #        file = paste0("C:/Users/willi/Desktop/sparkline_test/", current_gene, ".png"), vwidth = 1000, vheight = 200)
 }
+
+
+gene_sequences <- c()
+
+# Iterate over unique genes
+for (gene in unique(hvl_upregulated_sc_genes_in_bulk_0.05$Gene)) {
+  # Subset the dataframe for the current gene
+  gene_data <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene == gene, ]
+  
+  # Initialize an empty vector to store the directions
+  directions <- c()
+  
+  # Iterate over rows for the current gene
+  for (i in 1:(nrow(gene_data) - 1)) {
+    # Check if the fold change is increasing or decreasing
+    direction <- ifelse(gene_data$Fold.Change[i + 1] > gene_data$Fold.Change[i], "UP", "DOWN")
+    directions <- c(directions, direction)
+  }
+  
+  # Combine the directions and store in the vector
+  gene_sequence <- paste(directions, collapse = " ")
+  gene_sequences <- c(gene_sequences, gene_sequence)
+}
+
+# Create a new dataframe with gene names and sequences
+result <- data.frame(Gene = unique(hvl_upregulated_sc_genes_in_bulk_0.05$Gene), Fold.Change.Sequence = gene_sequences)
+
+result <- result %>% 
+  arrange(Fold.Change.Sequence)
+
+print(result)
