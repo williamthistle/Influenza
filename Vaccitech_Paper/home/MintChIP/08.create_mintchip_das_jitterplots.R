@@ -1,7 +1,7 @@
 all_mintchip_das_table <- data.frame(Marker = character(), Site = character(), log2FC = numeric())
 
 for(marker in mintchip_markers) {
-  full_mintchip_das <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_DESeq2_FC_0.tsv"),
+  full_mintchip_das <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_DESeq2_FC_0.1.tsv"),
                                     sep = "\t", header = TRUE)
   full_mintchip_das_for_cell_type <- data.frame(Marker = marker, Site = full_mintchip_das$coordinates, log2FC = full_mintchip_das$Fold)
   all_mintchip_das_table <- rbind(all_mintchip_das_table, full_mintchip_das_for_cell_type)
@@ -17,12 +17,12 @@ marker_order <- c("H3K27me3", "H3K27Ac", "H3K4me3", "H3K36me3", "H3K9me3", "H3K4
 all_mintchip_das_table$Marker <- factor(all_mintchip_das_table$Marker, levels = marker_order)
 all_mintchip_das_table$direction <- factor(all_mintchip_das_table$direction, levels = c("Upregulated", "Downregulated"))
 
-all_sc_degs_plot <- ggplot(all_mintchip_das_table, aes(Marker, log2FC, color = direction)) +
+mintchip_das_plot <- ggplot(all_mintchip_das_table, aes(Marker, log2FC, color = direction)) +
   geom_jitter() + theme_minimal(base_size = 14) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + xlab("Cell Type") +
   ylab("log2FC (Site Expression)") + ggtitle("Mint-ChIP DASs by Marker (28 Days Post-Exposure vs Pre-Exposure)") +
   theme(plot.title = element_text(hjust = 0.5)) + guides(color=guide_legend(title="Fold Change Direction"))
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "scrna_deg_jitterplot.tiff"), plot = all_sc_degs_plot, device='tiff', dpi=300)
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "mintchip_das_jitterplot.tiff"), plot = mintchip_das_plot, device='tiff', dpi=300)
 
 
