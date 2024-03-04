@@ -153,7 +153,13 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Select subset of counts associated with subjects
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
-  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  if(sample_type == "placebo" && test_time == "2_D5" && baseline_time == "2_D_minus_1") {
+    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
+                                                 NK.cells.resting + Monocytes)
+  } else {
+    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  }
+
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
   # Grab results with no lfcThreshold set
