@@ -52,6 +52,13 @@ script_base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 bulk_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Data/")
 bulk_results_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/")
 metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Overall_Metadata/")
+
+# Read in bulk RNA-seq cell type proportions
+cibersort_cell_type_proportions <- read.table(paste0(bulk_data_dir, "cibertsortX_rsem_genes_count.processed.tsv"), sep = "\t", header = TRUE)
+# Rename Mixture to aliquot_id for merging
+cibersort_cell_type_proportions$aliquot_id <- cibersort_cell_type_proportions$Mixture
+cibersort_cell_type_proportions <- cibersort_cell_type_proportions[,-c(1)]
+
 source(paste0(script_base_dir, "extra_functions/bulk_RNA_analysis_helper.R"))
 source(paste0(script_base_dir, "extra_functions/Compendium_Functions.R"))
 source(paste0(script_base_dir, "extra_functions/humanbase_functions.R"))
@@ -94,6 +101,8 @@ totalRNA_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RN
 
 txdb_hg38 <- TxDb.Hsapiens.UCSC.hg38.knownGene
 txdb_hg19 <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+
 
 # Read in Mint-ChIP metadata
 mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)

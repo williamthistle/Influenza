@@ -35,6 +35,15 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   all_metadata$age <<- as.factor(all_metadata$age)
   # Only keep metadata for bulk RNA-seq aliquots
   bulk_metadata <<- all_metadata[all_metadata$bulkRNA_seq == TRUE,]
+  
+  # Add cell type proportion content
+  rows_to_merge <- bulk_metadata$aliquot_id
+  bulk_metadata <<- merge(bulk_metadata[bulk_metadata$aliquot_id %in% rows_to_merge, ], 
+                                 cibersort_cell_type_proportions[cibersort_cell_type_proportions$aliquot_id %in% rows_to_merge, ], 
+                                 by = "aliquot_id", 
+                                 all.x = TRUE, 
+                                 all.y = TRUE)
+  
   # Divide metadata into placebo and vaccinated
   placebo_metadata <<- bulk_metadata[bulk_metadata$treatment == "PLACEBO",]
   vaccinated_metadata <<- bulk_metadata[bulk_metadata$treatment == "MVA-NP+M1",]
