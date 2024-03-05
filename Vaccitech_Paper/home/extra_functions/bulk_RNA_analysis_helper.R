@@ -154,7 +154,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
   if(sample_type == "placebo" && test_time == "2_D5" && baseline_time == "2_D_minus_1") {
-    metadata_subset$Monocytes <- scale(metadata_subset$Monocytes)
+    # metadata_subset$Monocytes <- scale(metadata_subset$Monocytes)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Monocytes)
   } else if(sample_type == "placebo" && test_time == "2_D8" && baseline_time == "2_D_minus_1") {
