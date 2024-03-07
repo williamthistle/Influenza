@@ -2,8 +2,18 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+remove_text_in_parentheses <- function(input_string) {
+  output_string <- gsub("\\([^\\)]+\\)", "", input_string)
+  return(trimws(output_string))
+}
+
+
 # Load RDS files
 hvl_upregulated_sc_genes_in_bulk_0.05 <- readRDS(paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_0.05.RDS"))
+
+# Remove cell types
+hvl_upregulated_sc_genes_in_bulk_0.05 <- hvl_upregulated_sc_genes_in_bulk_0.05 %>%
+  mutate(Gene = sapply(Gene, remove_text_in_parentheses))
 
 # Change Positive / Negative to Significant
 hvl_upregulated_sc_genes_in_bulk_0.05$Fold.Change.Direction <- replace(hvl_upregulated_sc_genes_in_bulk_0.05$Fold.Change.Direction,
@@ -14,7 +24,7 @@ hvl_upregulated_sc_genes_in_bulk_0.05$Fold.Change.Direction <- replace(hvl_upreg
                                                                        hvl_upregulated_sc_genes_in_bulk_0.05$Fold.Change.Direction == "Negative",
                                                                        "Significant")
 
-# Change absolute fold change to include direction of fold change (and rename column to remover Abs)
+# Change absolute fold change to include direction of fold change (and rename column to remove Abs)
 hvl_upregulated_sc_genes_in_bulk_0.05 <- hvl_upregulated_sc_genes_in_bulk_0.05 %>%
   mutate(Fold.Change = ifelse(Fold.Change.Direction.Raw == "Negative", -Fold.Change.Abs, Fold.Change.Abs)) %>%
   select(-Fold.Change.Abs)
