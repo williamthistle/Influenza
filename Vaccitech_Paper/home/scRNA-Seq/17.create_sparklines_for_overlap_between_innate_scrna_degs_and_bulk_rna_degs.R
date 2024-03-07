@@ -99,3 +99,53 @@ result <- result %>%
   arrange(Fold.Change.Sequence)
 
 print(result)
+
+hvl_upregulated_sc_genes_in_bulk_0.05$Day <- factor(hvl_upregulated_sc_genes_in_bulk_0.05$Day, levels = c("Day.Minus.1",
+                                                                                                          "Day.2", "Day.5",
+                                                                                                          "Day.8", "Day.28"))
+
+# Line plot for all genes
+ggplot(data=hvl_upregulated_sc_genes_in_bulk_0.05, aes(x=Day, y=Fold.Change, group = Gene, color = Gene)) +
+  geom_line() +
+  geom_point()
+
+# Line plot for up up down down genes
+up_up_down_down_genes <- result[result$Fold.Change.Sequence == "UP UP DOWN DOWN",]$Gene
+hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% up_up_down_down_genes,]
+
+ggplot(data=hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset, aes(x=Day, y=Fold.Change, group = Gene, color = Gene)) +
+  geom_line() +
+  geom_point()
+
+# Line plot for up down up up genes
+up_down_up_up_genes <- result[result$Fold.Change.Sequence == "UP DOWN UP UP",]$Gene
+hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% up_down_up_up_genes,]
+
+ggplot(data=hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset, aes(x=Day, y=Fold.Change, group = Gene, color = Gene)) +
+  geom_line() +
+  geom_point()
+
+# Line plot for up down down up genes
+up_down_down_up_genes <- result[result$Fold.Change.Sequence == "UP DOWN DOWN UP",]$Gene
+hvl_upregulated_sc_genes_in_bulk_0.05_up_down_down_up_subset <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% up_down_down_up_genes,]
+
+ggplot(data=hvl_upregulated_sc_genes_in_bulk_0.05_up_down_down_up_subset, aes(x=Day, y=Fold.Change, group = Gene, color = Gene)) +
+  geom_line() +
+  geom_point()
+
+# Line plot for up down up down genes
+up_down_up_down_genes <- result[result$Fold.Change.Sequence == "UP DOWN UP DOWN",]$Gene
+hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_down_subset <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% up_down_up_down_genes,]
+
+ggplot(data=hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_down_subset, aes(x=Day, y=Fold.Change, group = Gene, color = Gene)) +
+  geom_line() +
+  geom_point()
+
+# Line plot for up up down up genes
+up_up_down_up_genes <- result[result$Fold.Change.Sequence == "UP UP DOWN UP",]$Gene
+hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_up_subset <- hvl_upregulated_sc_genes_in_bulk_0.05[hvl_upregulated_sc_genes_in_bulk_0.05$Gene %in% up_up_down_up_genes,]
+
+ggplot(data=hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_up_subset, aes(x=Day, y=Fold.Change, group = Gene, color = Gene)) +
+  geom_line() +
+  geom_point()
+
