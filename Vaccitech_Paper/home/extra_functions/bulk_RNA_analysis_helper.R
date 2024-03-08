@@ -241,7 +241,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
 run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_time, test_cond, baseline_cond, output_dir, output_name_prefix=NA) {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
   # Select the relevant time point from our metadata
-  metadata_subset <- metadata[metadata$time_point == test_time,]  
+  metadata_subset <- metadata[metadata$time_point == test_time,]
   # Select subset of counts associated with subjects
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
