@@ -2,142 +2,54 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+# HVL
 
+# Period 1 (D2 vs D minus 1) - No significant changes
+high_placebo_period_1_D2_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "1_D2", "1_D_minus_1")
 
-bulk_cell_types <- c("B.cells.naive", "T.cells.CD8", "T.cells.CD4.naive", "T.cells.CD4.memory.resting", "T.cells.regulatory..Tregs.", "NK.cells.resting",
-                     "Monocytes", "Mast.cells.resting", "Neutrophils")
+# Period 1 (D8 vs D minus 1) - No significant changes
+high_placebo_period_1_D8_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "1_D8", "1_D_minus_1")
 
+# Period 1 (D28 vs D minus 1) - No significant changes
+high_placebo_period_1_D28_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "1_D28", "1_D_minus_1")
 
+# Period 2 (D minus 1 vs D minus 2) - No significant changes
+high_placebo_period_2_D_minus_2_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D_minus_1", "2_D_minus_2")
 
+# Period 2 (D2 vs D minus 1) - No significant changes
+high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D2", "2_D_minus_1")
 
+# Period 2 (D5 vs D minus 1) - T.cells.regulatory..Tregs., NK.cells.resting, and Monocytes are all significant
+high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D5", "2_D_minus_1")
 
-### EVALUATE CELL TYPE PROPORTIONS FOR 2 D2 vs 2 D MINUS 1
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D2" | high_placebo_metadata$time_point == "2_D_minus_1",]
-# Remove subjects that only have one time point (not both)
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata <- high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata[high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata$subject_id  
-                                                                                                                                           %in% names(table(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata$subject_id)[table(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata$subject_id) == 2]),]
-# Find unadjusted p-values for each cell type of interest
-# We use coin::wilcox_test because it handles ties (which happen when there are 0s in the cell type proportions)
-# Unfortunately, we can't use loops because of the way the function call works (I think)
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c()
+# Period 2 (D8 vs D minus 1) - T.cells.CD4.memory.resting, NK.cells.resting, and Neutrophils are all significant
+high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D8", "2_D_minus_1")
 
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(B.cells.naive ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD8 ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD4.naive ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD4.memory.resting ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.regulatory..Tregs. ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(NK.cells.resting ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Monocytes ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Mast.cells.resting ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Neutrophils ~ time_point, data = high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_metadata)))
+# Period 2 (D28 vs D minus 1) - No significant changes
+high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D28", "2_D_minus_1")
 
-# Nothing significant
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values_adjusted <- p.adjust(high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_p_values, method = "BH")
+# LVL
 
-### EVALUATE CELL TYPE PROPORTIONS FOR 2 D5 vs 2 D MINUS 1
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D5" | high_placebo_metadata$time_point == "2_D_minus_1",]
-# Remove subjects that only have one time point (not both)
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata <- high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata[high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata$subject_id  
-                                                                                                                                           %in% names(table(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata$subject_id)[table(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata$subject_id) == 2]),]
-# Find unadjusted p-values for each cell type of interest
-# We use coin::wilcox_test because it handles ties (which happen when there are 0s in the cell type proportions)
-# Unfortunately, we can't use loops because of the way the function call works (I think)
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c()
+# Period 1 (D2 vs D minus 1) - No significant changes
+low_placebo_period_1_D2_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(low_placebo_metadata, bulk_cell_types, "1_D2", "1_D_minus_1")
 
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(B.cells.naive ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD8 ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD4.naive ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD4.memory.resting ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.regulatory..Tregs. ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(NK.cells.resting ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Monocytes ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Mast.cells.resting ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Neutrophils ~ time_point, data = high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_metadata)))
+# Period 1 (D8 vs D minus 1) - No significant changes
+low_placebo_period_1_D8_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(low_placebo_metadata, bulk_cell_types, "1_D8", "1_D_minus_1")
 
-# T.cells.regulatory..Tregs., NK.cells.resting, and Monocytes are all significant
-high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values_adjusted <- p.adjust(high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_p_values, method = "BH")
+# Period 1 (D28 vs D minus 1) - No significant changes
+low_placebo_period_1_D28_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(low_placebo_metadata, bulk_cell_types, "1_D28", "1_D_minus_1")
 
-### EVALUATE CELL TYPE PROPORTIONS FOR 2 D8 vs 2 D MINUS 1
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D8" | high_placebo_metadata$time_point == "2_D_minus_1",]
-# Remove subjects that only have one time point (not both)
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata <- high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata[high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata$subject_id  
-                                                                                                                                           %in% names(table(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata$subject_id)[table(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata$subject_id) == 2]),]
-# Find unadjusted p-values for each cell type of interest
-# We use coin::wilcox_test because it handles ties (which happen when there are 0s in the cell type proportions)
-# Unfortunately, we can't use loops because of the way the function call works (I think)
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c()
+# Period 2 (D minus 1 vs D minus 2) - No significant changes
+low_placebo_period_2_D_minus_2_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(low_placebo_metadata, bulk_cell_types, "2_D_minus_1", "2_D_minus_2")
 
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(B.cells.naive ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD8 ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD4.naive ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD4.memory.resting ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.regulatory..Tregs. ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(NK.cells.resting ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Monocytes ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Mast.cells.resting ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Neutrophils ~ time_point, data = high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_metadata)))
+# Period 2 (D2 vs D minus 1) - No significant changes
+low_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(low_placebo_metadata, bulk_cell_types, "2_D2", "2_D_minus_1")
 
-# T.cells.CD4.memory.resting, NK.cells.resting, and Neutrophils are all significant
-high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values_adjusted <- p.adjust(high_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_p_values, method = "BH")
+# Period 2 (D5 vs D minus 1) - No significant changes
+low_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(low_placebo_metadata, bulk_cell_types, "2_D5", "2_D_minus_1")
 
-### EVALUATE CELL TYPE PROPORTIONS FOR 2 D28 vs 2 D MINUS 1
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D28" | high_placebo_metadata$time_point == "2_D_minus_1",]
-# Remove subjects that only have one time point (not both)
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata <- high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata[high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata$subject_id  
-                                                                                                                                           %in% names(table(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata$subject_id)[table(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata$subject_id) == 2]),]
-# Find unadjusted p-values for each cell type of interest
-# We use coin::wilcox_test because it handles ties (which happen when there are 0s in the cell type proportions)
-# Unfortunately, we can't use loops because of the way the function call works (I think)
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c()
+# Period 2 (D8 vs D minus 1) - No significant changes
+low_placebo_period_2_D8_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(low_placebo_metadata, bulk_cell_types, "2_D8", "2_D_minus_1")
 
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(B.cells.naive ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD8 ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD4.naive ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.CD4.memory.resting ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(T.cells.regulatory..Tregs. ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(NK.cells.resting ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Monocytes ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Mast.cells.resting ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values <- c(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values,
-                                                                         coin::pvalue(coin::wilcox_test(Neutrophils ~ time_point, data = high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_metadata)))
-
-# Nothing significant
-high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values_adjusted <- p.adjust(high_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_p_values, method = "BH")
-
-
-
+# Period 2 (D28 vs D minus 1) - No significant changes
+low_placebo_period_2_D28_vs_D_minus_1_cell_type_proportion_changes <- evalute_bulk_cell_type_proportion_changes(low_placebo_metadata, bulk_cell_types, "2_D28", "2_D_minus_1")

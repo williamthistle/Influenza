@@ -59,6 +59,9 @@ cibersort_cell_type_proportions <- read.table(paste0(bulk_data_dir, "cibertsortX
 cibersort_cell_type_proportions$aliquot_id <- cibersort_cell_type_proportions$Mixture
 cibersort_cell_type_proportions <- cibersort_cell_type_proportions[,-c(1)]
 
+bulk_cell_types <- c("B.cells.naive", "T.cells.CD8", "T.cells.CD4.naive", "T.cells.CD4.memory.resting", "T.cells.regulatory..Tregs.", "NK.cells.resting",
+                     "Monocytes", "Mast.cells.resting", "Neutrophils")
+
 source(paste0(script_base_dir, "extra_functions/bulk_RNA_analysis_helper.R"))
 source(paste0(script_base_dir, "extra_functions/Compendium_Functions.R"))
 source(paste0(script_base_dir, "extra_functions/humanbase_functions.R"))

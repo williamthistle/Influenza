@@ -903,3 +903,27 @@ read_motif_table <- function(current_dir, analysis_type, pct, fc_threshold, dire
   matching_file <- read.table(paste0(current_dir, matching_file), sep = "\t", header = TRUE)
   return(matching_file)
 }
+
+# Evaluate bulk cell type proportion changes from CIBERSORTx
+evalute_bulk_cell_type_proportion_changes <- function(metadata, bulk_cell_types, test_time, baseline_time) {
+  metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
+  # Remove subjects that only have one time point (not both)
+  metadata_subset <- metadata_subset[metadata_subset$subject_id %in% names(table(metadata_subset$subject_id)[table(metadata_subset$subject_id) == 2]),]
+  # Find unadjusted p-values for each cell type of interest
+  # We use coin::wilcox_test because it handles ties (which happen when there are 0s in the cell type proportions)
+  # Unfortunately, we can't use loops because of the way the function call works (I think)
+  cell_type_proportion_p_values <- c()
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(B.cells.naive ~ time_point, data = metadata_subset)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(T.cells.CD8 ~ time_point, data = metadata_subset)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(T.cells.CD4.naive ~ time_point, data = metadata_subset)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(T.cells.CD4.memory.resting ~ time_point, data = metadata_subset)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(T.cells.regulatory..Tregs. ~ time_point, data = metadata_subset)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(NK.cells.resting ~ time_point, data = metadata_subset)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(Monocytes ~ time_point, data = metadata_subset)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(Mast.cells.resting ~ time_point, data = metadata_subset)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(Neutrophils ~ time_point, data = metadata_subset)))
+  # Adjust for multiple hypothesis testing
+  cell_type_proportion_p_values_adjusted <- p.adjust(cell_type_proportion_p_values, method = "BH")
+  names(cell_type_proportion_p_values_adjusted) <- bulk_cell_types
+  return(cell_type_proportion_p_values_adjusted)
+}
