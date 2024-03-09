@@ -2,12 +2,6 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-remove_text_in_parentheses <- function(input_string) {
-  output_string <- gsub("\\([^\\)]+\\)", "", input_string)
-  return(trimws(output_string))
-}
-
-
 # Load RDS files
 hvl_upregulated_sc_genes_in_bulk_0.05 <- readRDS(paste0(bulk_results_dir, "hvl_upregulated_sc_genes_found_in_bulk/hvl_upregulated_sc_genes_in_bulk_0.05.RDS"))
 

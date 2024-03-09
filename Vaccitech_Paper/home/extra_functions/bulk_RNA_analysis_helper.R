@@ -160,12 +160,6 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   } else if(sample_type == "placebo" && test_time == "2_D8" && baseline_time == "2_D_minus_1") {
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Neutrophils)
-  } else if(sample_type == "placebo" && test_time == "2_D2" && baseline_time == "2_D_minus_1") {
-    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
-                                                 Monocytes + Neutrophils)
-  } else if(sample_type == "placebo" && test_time == "2_D28" && baseline_time == "2_D_minus_1") {
-    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
-                                                 Monocytes + Neutrophils)
   } else {
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   }
@@ -776,7 +770,7 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_motif
 
 
 
-fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, output_dir, sc_fc_direction, alpha = 0.05) {
+fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, output_dir, sc_fc_direction, alpha = 0.05, filter_D28 = TRUE) {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
   final_df <- data.frame(Gene = character(), Day = character(), Fold.Change.Abs = numeric(), 
                                          Fold.Change.Direction.Raw = character(), Fold.Change.Direction = character(), 
@@ -789,18 +783,38 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, ou
   }
   
   # Find bulk RNA-seq validated genes
-  high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
-                                                                                             "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
+  if(filter_D28) {
+    high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
+                                                                                          "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
+    high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D28_vs_D_minus_1_results
+  } else {
+    high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
+                                                                                          "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
+    high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
+                                                                                          "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = 0.99999)
+  }
   high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
-  filtered_sc_trained_immunity_genes <- intersect(possible_genes,
-                                                                   rownames(high_placebo_period_2_D28_vs_D_minus_1_results))
+  high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered[[1]]
+
+  if(filter_D28) {
+    filtered_sc_trained_immunity_genes <- intersect(possible_genes,
+                                                    rownames(high_placebo_period_2_D28_vs_D_minus_1_results))
+  } else {
+    filtered_sc_trained_immunity_genes <- intersect(possible_genes,
+                                                    rownames(high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered))
+  }
   
   # Verify that FC in bulk agrees with FC in SC (if not, discard)
   final_filtered_sc_trained_immunity_genes <- c()
   
   for(gene in filtered_sc_trained_immunity_genes) {
     sc_fc <- sc_gene_df[sc_gene_df$Gene_Name == gene,]$sc_log2FC
-    bulk_fc <- high_placebo_period_2_D28_vs_D_minus_1_results[rownames(high_placebo_period_2_D28_vs_D_minus_1_results) == gene,]$log2FoldChange
+    if(filter_D28) {
+      bulk_fc <- high_placebo_period_2_D28_vs_D_minus_1_results[rownames(high_placebo_period_2_D28_vs_D_minus_1_results) == gene,]$log2FoldChange
+    } else {
+      bulk_fc <- high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered[rownames(high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered) == gene,]$log2FoldChange
+    }
+
     if(all(sign(sc_fc) == sign(bulk_fc))) {
       final_filtered_sc_trained_immunity_genes <- c(final_filtered_sc_trained_immunity_genes, gene)
     } else {
@@ -845,7 +859,7 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, ou
     final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, cell_types, high_placebo_period_2_D8_vs_D_minus_1_results, 
                                                           high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered, "D8"))
     final_df <- rbind(final_df, grab_deg_info_for_sc_gene(current_gene, cell_types, high_placebo_period_2_D28_vs_D_minus_1_results, 
-                                                          high_placebo_period_2_D28_vs_D_minus_1_results, "D28"))
+                                                          high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered, "D28"))
   }
   final_df$Day <- replace(final_df$Day, final_df$Day == "D2", "Day.2")
   final_df$Day <- replace(final_df$Day, final_df$Day == "D5", "Day.5")
@@ -926,4 +940,9 @@ evalute_bulk_cell_type_proportion_changes <- function(metadata, bulk_cell_types,
   cell_type_proportion_p_values_adjusted <- p.adjust(cell_type_proportion_p_values, method = "BH")
   names(cell_type_proportion_p_values_adjusted) <- bulk_cell_types
   return(cell_type_proportion_p_values_adjusted)
+}
+
+remove_text_in_parentheses <- function(input_string) {
+  output_string <- gsub("\\([^\\)]+\\)", "", input_string)
+  return(trimws(output_string))
 }
