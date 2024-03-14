@@ -8,10 +8,12 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   viral_load_file <<- paste0(metadata_dir, "bulk_RNA_viral_load.tsv")
   viral_load <<- read.table(viral_load_file, header = TRUE, sep = "\t")
   viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
-  viral_load_primary <<- viral_load_primary[viral_load_primary$TRT01A == "PLACEBO",]
   viral_load_primary$AVAL <<- as.numeric(viral_load_primary$AVAL)
   # Organize by viral load (high to low)
   viral_load_primary <<- viral_load_primary[order(viral_load_primary$AVAL, decreasing = TRUE),]
+  # Separate viral loads into vaccinated / placebo
+  vaccinated_viral_load_primary <<- viral_load_primary[viral_load_primary$TRT01A == "MVA-NP+M1",]
+  placebo_viral_load_primary <<- viral_load_primary[viral_load_primary$TRT01A == "PLACEBO",]
   # Take gene_id column from gene_counts and use contents as the rownames of gene_counts
   gene.row.names <<- as.character(gene_counts$gene_id)
   gene_counts <<- gene_counts[,2:ncol(gene_counts)]
@@ -114,7 +116,7 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   # Grab subject IDs for main 23 subjects
   placebo_full_time_series_subjects <<- unique(placebo_full_time_series_metadata$subject_id)
   # Reorder subject IDs according to viral load (high to low)
-  placebo_full_time_series_subjects <<- placebo_full_time_series_subjects[order(match(placebo_full_time_series_subjects,viral_load_primary$SUBJID))]
+  placebo_full_time_series_subjects <<- placebo_full_time_series_subjects[order(match(placebo_full_time_series_subjects,placebo_viral_load_primary$SUBJID))]
   # Top 13 will be high viral load and bottom 10 will be low viral load 
   high_viral_load_subjects <<- placebo_full_time_series_subjects[1:13]
   low_viral_load_subjects <<- tail(placebo_full_time_series_subjects, n = 10)

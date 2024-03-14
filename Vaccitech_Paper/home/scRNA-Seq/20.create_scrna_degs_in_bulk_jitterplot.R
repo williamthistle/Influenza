@@ -121,3 +121,30 @@ result <- result %>%
 
 print(result)
 
+hvl_upregulated_sc_genes_in_bulk_unfiltered_with_pre_exposure$Day <- factor(hvl_upregulated_sc_genes_in_bulk_unfiltered_with_pre_exposure$Day, levels = c("Day.Minus.1",
+                                                                                                          "Day.2", "Day.5",
+                                                                                                          "Day.8", "Day.28"))
+
+# UP UP DOWN DOWN PLOT
+up_up_down_down_genes <- result[result$Fold.Change.Sequence == "UP UP DOWN DOWN",]$Gene
+hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset <- hvl_upregulated_sc_genes_in_bulk_unfiltered_with_pre_exposure[hvl_upregulated_sc_genes_in_bulk_unfiltered_with_pre_exposure$Gene %in% up_up_down_down_genes,]
+
+sig_genes <- hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset[hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset$Fold.Change.Direction == "Significant",]$Gene
+
+hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset <- hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset[hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset$Gene %in% sig_genes,]
+
+ggplot(data=hvl_upregulated_sc_genes_in_bulk_0.05_up_up_down_down_subset, aes(x=Day, y=Fold.Change, group = Gene, color = Gene)) +
+  geom_line() +
+  geom_point()
+
+# UP DOWN UP UP PLOT
+up_down_up_up_genes <- result[result$Fold.Change.Sequence == "UP DOWN UP UP",]$Gene
+hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset <- hvl_upregulated_sc_genes_in_bulk_unfiltered_with_pre_exposure[hvl_upregulated_sc_genes_in_bulk_unfiltered_with_pre_exposure$Gene %in% up_down_up_up_genes,]
+
+sig_genes <- hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset[hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset$Fold.Change.Direction == "Significant",]$Gene
+
+hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset <- hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset[hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset$Gene %in% sig_genes,]
+
+ggplot(data=hvl_upregulated_sc_genes_in_bulk_0.05_up_down_up_up_subset, aes(x=Day, y=Fold.Change, group = Gene, color = Gene)) +
+  geom_line() +
+  geom_point()
