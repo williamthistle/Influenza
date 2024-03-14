@@ -1,13 +1,29 @@
 # RNA
-test <- read.table("C:/Users/wat2/Desktop/RNA_cell_type_proportion_time_point.csv", sep = ",", header = TRUE)
+scRNA_cell_type_proportions <- read.table("C:/Users/willi/Desktop/RNA_cell_type_proportion_time_point.csv", sep = ",", header = TRUE)
+scRNA_cell_type_proportions$Condition <- factor(scRNA_cell_type_proportions$Condition, levels = c("D_minus_1", "D28"))
 
-manova_results <- manova(cbind(CD16_Mono, T_Naive, CD14_Mono, CD4_Memory, Platelet, B, cDC, NK_MAGICAL, MAIT, CD8_Memory, pDC, Proliferating, HSPC) ~ Condition, data = test)
-#one.way <- aov(CD16_Mono ~ Condition, data = test)
-#one.way <- aov(CD14_Mono ~ Condition, data = test)
-#one.way <- aov(NK_MAGICAL ~ Condition, data = test)
+cell_type_proportion_p_values <- c()
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD16_Mono ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(T_Naive ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD14_Mono ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD4_Memory ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(B ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(cDC ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(NK_MAGICAL ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(MAIT ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD8_Memory ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(pDC ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(Proliferating ~ Condition, data = scRNA_cell_type_proportions)))
+cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(HSPC ~ Condition, data = scRNA_cell_type_proportions)))
+# Adjust for multiple hypothesis testing
+cell_type_proportion_p_values_adjusted <- p.adjust(cell_type_proportion_p_values, method = "BH")
+# names(cell_type_proportion_p_values_adjusted) <- bulk_cell_types
 
-# Only CD14 Mono has any significance (HVL) - no significance otherwise
-kruskal.test(CD4_Memory ~ Condition, data = test)
+
+
+
+
+
 
 # Get ready for stacked barplot
 results <- aggregate(cbind(CD16_Mono, T_Naive, CD14_Mono, CD4_Memory, Platelet, B, cDC, NK_MAGICAL, MAIT, CD8_Memory, pDC, Proliferating, HSPC) ~ Condition, data = test, sum)
