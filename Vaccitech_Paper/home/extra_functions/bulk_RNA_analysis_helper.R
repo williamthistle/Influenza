@@ -4,7 +4,7 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   gene_counts <<- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
   all_metadata_file <<- paste0(metadata_dir, "all_metadata_sheet.tsv")
   all_metadata <<- read.table(all_metadata_file, header = TRUE, sep = "\t")
-  # Currently, only capturing viral load for placebo subjects
+  # Read in viral load
   viral_load_file <<- paste0(metadata_dir, "bulk_RNA_viral_load.tsv")
   viral_load <<- read.table(viral_load_file, header = TRUE, sep = "\t")
   viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
@@ -46,9 +46,19 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
                                  all.x = TRUE, 
                                  all.y = TRUE)
   
-  # Divide metadata into placebo and vaccinated
+  # Divide metadata into placebo and vaccinated (and add qPCRAUC viral load values)
   placebo_metadata <<- bulk_metadata[bulk_metadata$treatment == "PLACEBO",]
+  names(placebo_viral_load_primary)[names(placebo_viral_load_primary) == 'SUBJID'] <<- 'subject_id'
+  kept_columns <- colnames(placebo_metadata)
+  kept_columns <- c(kept_columns, "AVAL")
+  placebo_metadata <<- merge(placebo_metadata,  placebo_viral_load_primary, by = "subject_id", all.x = TRUE)
+  placebo_metadata <<- placebo_metadata[,kept_columns]
   vaccinated_metadata <<- bulk_metadata[bulk_metadata$treatment == "MVA-NP+M1",]
+  names(vaccinated_viral_load_primary)[names(vaccinated_viral_load_primary) == 'SUBJID'] <<- 'subject_id'
+  kept_columns <- colnames(vaccinated_metadata)
+  kept_columns <- c(kept_columns, "AVAL")
+  vaccinated_metadata <<- merge(vaccinated_metadata, vaccinated_viral_load_primary, by = "subject_id", all.x = TRUE)
+  vaccinated_metadata <<- vaccinated_metadata[,kept_columns]
   # Find placebo-associated and vaccinated-associated gene_counts
   kept_aliquots <<- placebo_metadata$aliquot_id
   placebo_counts <<- gene_counts[kept_aliquots]
@@ -110,7 +120,7 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   both_vaccinated_metadata <<- vaccinated_metadata[both_vaccinated_aliquots,]
   t_cell_for_metadata <<- both_vaccinated_metadata$subject_id %in% high_t_cell_response_subjects
   t_cell_for_metadata <<- replace(t_cell_for_metadata, t_cell_for_metadata == TRUE, "HIGH")
-  t_cell_for_metadata <<- replace(t_cell_for_metadata, t_cell_for_metadata == "FALSE", "LOW")
+  t_cell_for_metadata <<- replace(t_cell_for_metadata, t_cell_for_metadata == FALSE, "LOW")
   both_vaccinated_metadata$t_cell_response <<- t_cell_for_metadata
   ### PLACEBO ###
   # Grab subject IDs for main 23 subjects
@@ -134,9 +144,9 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   both_placebo_metadata <<- placebo_metadata[both_placebo_aliquots,]
   viral_load_for_metadata <<- both_placebo_metadata$subject_id %in% high_viral_load_subjects
   viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == TRUE, "HIGH")
-  viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == "FALSE", "LOW")
+  viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == FALSE, "LOW")
   both_placebo_metadata$viral_load <<- viral_load_for_metadata
-  # Remove questionable low viral load individual
+  # Remove questionable low viral load individual (0 qPCRAUC) from placebo
   removed_low_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id == "f18c54d93cef4a4e",])
   placebo_metadata <<- placebo_metadata[!(placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
   placebo_counts <<- placebo_counts[,!(colnames(placebo_counts) %in% removed_low_viral_aliquots)]
@@ -144,6 +154,8 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   both_placebo_counts <<- both_placebo_counts[,!(colnames(both_placebo_counts) %in% removed_low_viral_aliquots)]
   low_placebo_metadata <<- low_placebo_metadata[!(low_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
   low_placebo_counts <<- low_placebo_counts[,!(colnames(low_placebo_counts) %in% removed_low_viral_aliquots)]
+  # Remove questionable low viral load individuals (0 qPCRAUC) from vaccinated
+  # removed_low_viral_aliquots <- rownames(vaccinated_metadata[vaccinated_metadata$AVAL == 0,])
 }
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {
