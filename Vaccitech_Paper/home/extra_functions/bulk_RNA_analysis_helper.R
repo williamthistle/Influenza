@@ -126,7 +126,7 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   # Grab subject IDs for main 23 subjects
   placebo_full_time_series_subjects <<- unique(placebo_full_time_series_metadata$subject_id)
   # Reorder subject IDs according to viral load (high to low)
-  placebo_full_time_series_subjects <<- placebo_full_time_series_subjects[order(match(placebo_full_time_series_subjects,placebo_viral_load_primary$SUBJID))]
+  placebo_full_time_series_subjects <<- placebo_full_time_series_subjects[order(match(placebo_full_time_series_subjects,placebo_viral_load_primary$subject_id))]
   # Top 13 will be high viral load and bottom 10 will be low viral load 
   high_viral_load_subjects <<- placebo_full_time_series_subjects[1:13]
   low_viral_load_subjects <<- tail(placebo_full_time_series_subjects, n = 10)
