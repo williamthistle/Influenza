@@ -41,10 +41,10 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   # Add cell type proportion content
   rows_to_merge <- bulk_metadata$aliquot_id
   bulk_metadata <<- merge(bulk_metadata[bulk_metadata$aliquot_id %in% rows_to_merge, ], 
-                                 cibersort_cell_type_proportions[cibersort_cell_type_proportions$aliquot_id %in% rows_to_merge, ], 
-                                 by = "aliquot_id", 
-                                 all.x = TRUE, 
-                                 all.y = TRUE)
+                          cibersort_cell_type_proportions[cibersort_cell_type_proportions$aliquot_id %in% rows_to_merge, ], 
+                          by = "aliquot_id", 
+                          all.x = TRUE, 
+                          all.y = TRUE)
   
   # Divide metadata into placebo and vaccinated (and add qPCRAUC viral load values)
   placebo_metadata <<- bulk_metadata[bulk_metadata$treatment == "PLACEBO",]
@@ -164,6 +164,17 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   both_vaccinated_counts <<- both_vaccinated_counts[,!(colnames(both_vaccinated_counts) %in% removed_low_viral_aliquots)]
   low_vaccinated_metadata <<- low_vaccinated_metadata[!(low_vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
   low_vaccinated_counts <<- low_vaccinated_counts[,!(colnames(low_vaccinated_counts) %in% removed_low_viral_aliquots)]
+  # Subset to HVL and LVL for vaccinated (based on thresholds in placebo)
+  # Grab high viral load vaccinated counts and metadata
+  hvl_threshold <- min(high_placebo_metadata$AVAL)
+  lvl_threshold <- max(low_placebo_metadata$AVAL)
+  hvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL >= hvl_threshold,])
+  hvl_vaccinated_counts <<- vaccinated_counts[,hvl_vaccinated_aliquots]
+  hvl_vaccinated_metadata <<- vaccinated_metadata[hvl_vaccinated_aliquots,]
+  # Grab lvl viral load vaccinated counts and metadata
+  lvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL <= lvl_threshold,])
+  lvl_vaccinated_counts <<- vaccinated_counts[,lvl_vaccinated_aliquots]
+  lvl_vaccinated_metadata <<- vaccinated_metadata[lvl_vaccinated_aliquots,]
 }
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {
@@ -175,17 +186,23 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Select subset of counts associated with subjects
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
-  if(sample_type == "placebo" && test_time == "2_D5" && baseline_time == "2_D_minus_1") {
+  if(sample_type == "placebo" && test_time == "2_D5" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
     # metadata_subset$Monocytes <- scale(metadata_subset$Monocytes)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Monocytes)
-  } else if(sample_type == "placebo" && test_time == "2_D8" && baseline_time == "2_D_minus_1") {
+  } else if(sample_type == "placebo" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Neutrophils)
+  } else if(sample_type == "vaccinated" && test_time == "2_D5" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
+    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
+                                                 Monocytes) 
+  } else if(sample_type == "vaccinated" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
+    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
+                                                 Monocytes + Neutrophils)
   } else {
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   }
-
+  
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
   # Grab results with no lfcThreshold set
@@ -318,8 +335,8 @@ run_deseq2_LRT <- function(counts, metadata) {
   LRT_metadata <- LRT_metadata[LRT_metadata$subject_id  %in% names(table(LRT_metadata$subject_id)[table(LRT_metadata$subject_id) == 5]),]
   LRT_counts <- counts[rownames(LRT_metadata)]
   LRT_analysis <- DESeqDataSetFromMatrix(countData = LRT_counts,
-                                                               colData = LRT_metadata,
-                                                               design = ~ subject_id + time_point)
+                                         colData = LRT_metadata,
+                                         design = ~ subject_id + time_point)
   LRT_analysis <- DESeq(LRT_analysis, test = "LRT", reduced = ~ subject_id)
   LRT_analysis_results <- results(LRT_analysis, alpha = 0.05)
   LRT_analysis_results <- LRT_analysis_results[order(LRT_analysis_results$padj),]
@@ -618,7 +635,7 @@ fill_in_info_for_magical_output <- function(overall_magical_df, das_dir, sc_pseu
     gene_fcs <- c(gene_fcs, gene_fc)
     # Capture site FC
     site_info <- read.table(paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_sc_filtered_pct_0.01.tsv"), sep = "\t",
-                                                      header = TRUE)
+                            header = TRUE)
     current_peak_name <- paste0(current_circuit$Peak_chr, "-", current_circuit$Peak_start, "-", current_circuit$Peak_end)
     site_info <- site_info[rownames(site_info) == current_peak_name,]
     site_fc <- site_info$avg_log2FC
@@ -795,8 +812,8 @@ fill_in_info_for_magical_tf_output <- function(overall_magical_df, overall_motif
 fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, output_dir, sc_fc_direction, alpha = 0.05, filter_D28 = TRUE) {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
   final_df <- data.frame(Gene = character(), Day = character(), Fold.Change.Abs = numeric(), 
-                                         Fold.Change.Direction.Raw = character(), Fold.Change.Direction = character(), 
-                                         Adjusted.P.Value = numeric())
+                         Fold.Change.Direction.Raw = character(), Fold.Change.Direction = character(), 
+                         Adjusted.P.Value = numeric())
   # Grab possible genes
   if(sc_fc_direction == "up") {
     possible_genes <- unique(sc_gene_df[sc_gene_df$sc_log2FC > 0,]$Gene_Name)
@@ -813,11 +830,11 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, ou
     high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
                                                                                           "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = alpha)
     high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
-                                                                                          "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = 0.99999)
+                                                                                                     "2_D28", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D28_vs_D_minus_1_alpha_", alpha, "/"), "high", alpha = 0.99999)
   }
   high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
   high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered[[1]]
-
+  
   if(filter_D28) {
     filtered_sc_trained_immunity_genes <- intersect(possible_genes,
                                                     rownames(high_placebo_period_2_D28_vs_D_minus_1_results))
@@ -836,7 +853,7 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, ou
     } else {
       bulk_fc <- high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered[rownames(high_placebo_period_2_D28_vs_D_minus_1_results_unfiltered) == gene,]$log2FoldChange
     }
-
+    
     if(all(sign(sc_fc) == sign(bulk_fc))) {
       final_filtered_sc_trained_immunity_genes <- c(final_filtered_sc_trained_immunity_genes, gene)
     } else {
@@ -859,15 +876,15 @@ fill_in_sc_deg_info_for_time_series <- function(sc_gene_df, counts, metadata, ou
   high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
   # WITHOUT ALPHA SET
   high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
-                                                                                       "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
+                                                                                                  "2_D2", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D2_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D2_vs_D_minus_1_results_unfiltered[[1]]
   
   high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
-                                                                                       "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
+                                                                                                  "2_D5", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D5_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D5_vs_D_minus_1_results_unfiltered[[1]]
   
   high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- run_deseq_bulk_analysis_time_series("placebo", counts, metadata,
-                                                                                       "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
+                                                                                                  "2_D8", "2_D_minus_1", paste0(output_dir, "high_placebo_period_2_D8_vs_D_minus_1_alpha_0.99999/"), "high", alpha = 0.99999)
   high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered <- high_placebo_period_2_D8_vs_D_minus_1_results_unfiltered[[1]]
   
   # Parse our list of genes
@@ -906,8 +923,8 @@ grab_deg_info_for_sc_gene <- function(current_gene, cell_types, current_deseq2_r
     adjusted.p.value <- gene_result$padj
   }
   return(data.frame(Gene = paste0(cell_types, " ", current_gene), Day = current_day, Fold.Change.Abs = fold.change.abs, 
-                         Fold.Change.Direction.Raw = fold.change.direction.raw, Fold.Change.Direction = fold.change.direction, 
-                         Adjusted.P.Value = adjusted.p.value))
+                    Fold.Change.Direction.Raw = fold.change.direction.raw, Fold.Change.Direction = fold.change.direction, 
+                    Adjusted.P.Value = adjusted.p.value))
 }
 
 # Reads motif table (necessary now because file names include total peak counts)
@@ -922,7 +939,7 @@ read_motif_table <- function(current_dir, analysis_type, pct, fc_threshold, dire
   } else {
     fc_threshold <- paste0("_-", fc_threshold, "_")
   }
-
+  
   direction <- paste0("_", direction, "_")
   tokens <- c(analysis_type, pct, fc_threshold, direction)
   
@@ -930,8 +947,8 @@ read_motif_table <- function(current_dir, analysis_type, pct, fc_threshold, dire
   check_all_tokens <- function(file, tokens) {
     all(sapply(tokens, function(token) grepl(token, file)))
   }
-
-
+  
+  
   # Filter files that contain all tokens
   matching_file <- files[ sapply(files, check_all_tokens, tokens) ]
   
@@ -941,7 +958,7 @@ read_motif_table <- function(current_dir, analysis_type, pct, fc_threshold, dire
 }
 
 # Evaluate bulk cell type proportion changes from CIBERSORTx
-evalute_bulk_cell_type_proportion_changes <- function(metadata, bulk_cell_types, test_time, baseline_time) {
+evaluate_bulk_cell_type_proportion_changes <- function(metadata, bulk_cell_types, test_time, baseline_time) {
   metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
   # Remove subjects that only have one time point (not both)
   metadata_subset <- metadata_subset[metadata_subset$subject_id %in% names(table(metadata_subset$subject_id)[table(metadata_subset$subject_id) == 2]),]
