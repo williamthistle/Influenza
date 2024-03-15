@@ -51,13 +51,13 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   names(placebo_viral_load_primary)[names(placebo_viral_load_primary) == 'SUBJID'] <<- 'subject_id'
   kept_columns <- colnames(placebo_metadata)
   kept_columns <- c(kept_columns, "AVAL")
-  placebo_metadata <<- merge(placebo_metadata,  placebo_viral_load_primary, by = "subject_id", all.x = TRUE)
+  placebo_metadata <<- merge(placebo_metadata,  placebo_viral_load_primary, by = "subject_id")
   placebo_metadata <<- placebo_metadata[,kept_columns]
   vaccinated_metadata <<- bulk_metadata[bulk_metadata$treatment == "MVA-NP+M1",]
   names(vaccinated_viral_load_primary)[names(vaccinated_viral_load_primary) == 'SUBJID'] <<- 'subject_id'
   kept_columns <- colnames(vaccinated_metadata)
   kept_columns <- c(kept_columns, "AVAL")
-  vaccinated_metadata <<- merge(vaccinated_metadata, vaccinated_viral_load_primary, by = "subject_id", all.x = TRUE)
+  vaccinated_metadata <<- merge(vaccinated_metadata, vaccinated_viral_load_primary, by = "subject_id")
   vaccinated_metadata <<- vaccinated_metadata[,kept_columns]
   # Find placebo-associated and vaccinated-associated gene_counts
   kept_aliquots <<- placebo_metadata$aliquot_id
@@ -154,8 +154,16 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   both_placebo_counts <<- both_placebo_counts[,!(colnames(both_placebo_counts) %in% removed_low_viral_aliquots)]
   low_placebo_metadata <<- low_placebo_metadata[!(low_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
   low_placebo_counts <<- low_placebo_counts[,!(colnames(low_placebo_counts) %in% removed_low_viral_aliquots)]
-  # Remove questionable low viral load individuals (0 qPCRAUC) from vaccinated
-  # removed_low_viral_aliquots <- rownames(vaccinated_metadata[vaccinated_metadata$AVAL == 0,])
+  # Remove questionable low viral load individuals (NA or 0 qPCRAUC) from vaccinated
+  vaccinated_metadata <<- vaccinated_metadata[!is.na(vaccinated_metadata$AVAL),]
+  removed_low_viral_aliquots <- rownames(vaccinated_metadata[vaccinated_metadata$AVAL == 0,])
+  removed_low_viral_subjects <- unique(vaccinated_metadata[vaccinated_metadata$AVAL == 0,]$subject_id)
+  vaccinated_metadata <<- vaccinated_metadata[!(vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
+  vaccinated_counts <<- vaccinated_counts[,!(colnames(vaccinated_counts) %in% removed_low_viral_aliquots)]
+  both_vaccinated_metadata <<-  both_vaccinated_metadata[!(both_vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
+  both_vaccinated_counts <<- both_vaccinated_counts[,!(colnames(both_vaccinated_counts) %in% removed_low_viral_aliquots)]
+  low_vaccinated_metadata <<- low_vaccinated_metadata[!(low_vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
+  low_vaccinated_counts <<- low_vaccinated_counts[,!(colnames(low_vaccinated_counts) %in% removed_low_viral_aliquots)]
 }
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {
