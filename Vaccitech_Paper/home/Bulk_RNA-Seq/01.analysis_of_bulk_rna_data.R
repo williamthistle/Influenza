@@ -120,6 +120,14 @@ raw_hvl_vaccinated_period_2_D8_vs_D_minus_1_results <- hvl_vaccinated_period_2_D
 hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
                                                                                       "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
 raw_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
+# 2 D28 vs 2 D minus 1 with random 13 subjects selected (to match subject size in placebo set)
+set.seed(1)
+random_hvl_vaccinated_subjects <- sample(unique(hvl_vaccinated_metadata$subject_id), 13)
+random_hvl_vaccinated_aliquots <- rownames(hvl_vaccinated_metadata[hvl_vaccinated_metadata$subject_id %in% random_hvl_vaccinated_subjects,])
+random_hvl_vaccinated_counts <- hvl_vaccinated_counts[,random_hvl_vaccinated_aliquots]
+random_hvl_vaccinated_metadata <- hvl_vaccinated_metadata[random_hvl_vaccinated_aliquots,]
+
+
 
 #### PERIOD 2 LOW VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
