@@ -165,12 +165,12 @@ ggplot(comparing_placebo_vs_vaccinated_D28_df, aes(x=placebo_fc, y=vaccinated_fc
   geom_smooth(method=lm)
 
 # More general framework for correlation
-first <- unfiltered_high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
-second <- unfiltered_hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
+first <- high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
+second <- hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 
 # Checking sc DEGs
-first <- first[rownames(first) %in% sc_pseudobulk_deg_table$Gene_Name,]
-second <- second[rownames(second) %in% sc_pseudobulk_deg_table$Gene_Name,]
+#first <- first[rownames(first) %in% sc_pseudobulk_deg_table$Gene_Name,]
+#second <- second[rownames(second) %in% sc_pseudobulk_deg_table$Gene_Name,]
 # Checking genes that don't overlap from vaccinated
 #overlapping_genes <- setdiff(rownames(second), rownames(first))
 #first <- unfiltered_high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
