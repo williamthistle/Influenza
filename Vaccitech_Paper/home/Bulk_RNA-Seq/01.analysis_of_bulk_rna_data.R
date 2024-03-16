@@ -111,7 +111,7 @@ hvl_vaccinated_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_
                                                                                      "2_D5", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D5_vs_D_minus_1/"), "high")
 raw_hvl_vaccinated_period_2_D5_vs_D_minus_1_results <- hvl_vaccinated_period_2_D5_vs_D_minus_1_results[[1]]
 
-# 2 D8 vs 2 D minus 1 - 1020/300/157/93/33/19/1 DEGs
+# 2 D8 vs 2 D minus 1 - 896/305/178/105/30/14/1 DEGs
 hvl_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
                                                                                      "2_D8", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "high")
 raw_hvl_vaccinated_period_2_D8_vs_D_minus_1_results <- hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
@@ -164,12 +164,88 @@ ggplot(comparing_placebo_vs_vaccinated_D28_df, aes(x=placebo_fc, y=vaccinated_fc
   geom_point()+
   geom_smooth(method=lm)
 
+# More general framework for correlation
+first <- unfiltered_high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
+second <- unfiltered_hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
+
+# Checking sc DEGs
+first <- first[rownames(first) %in% sc_pseudobulk_deg_table$Gene_Name,]
+second <- second[rownames(second) %in% sc_pseudobulk_deg_table$Gene_Name,]
+# Checking genes that don't overlap from vaccinated
+#overlapping_genes <- setdiff(rownames(second), rownames(first))
+#first <- unfiltered_high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
+#second <- unfiltered_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
+
+overlapping_genes <- intersect(rownames(first), rownames(second))
+print(length(overlapping_genes))
+compare_first_df <- first[rownames(first) %in% overlapping_genes,]
+compare_second_df <- second[rownames(second) %in% overlapping_genes,]
+compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
+compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
+
+comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
+                                           second_fc = compare_second_df$log2FoldChange)
+# Calculate correlation
+cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+
+# Plot correlation
+ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+
+
+# Run correlation for FC in all genes
+unfiltered_high_placebo_period_2_D_minus_2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                            "2_D_minus_2", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D_minus_1_vs_D_minus_2/"), "high", alpha = 0.999999)
+unfiltered_high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                     "2_D2", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "high", alpha = 0.999999)
+unfiltered_high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                     "2_D5", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "high", alpha = 0.999999)
+unfiltered_high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                     "2_D8", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "high", alpha = 0.999999)
+unfiltered_high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+                                                                                     "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "high", alpha = 0.999999)
+unfiltered_hvl_vaccinated_period_2_D_minus_2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
+                                                                                                         "2_D_minus_2", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D_minus_1_vs_D_minus_2/"), "high", alpha = 0.999999)
+unfiltered_hvl_vaccinated_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
+                                                                                       "2_D2", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "high", alpha = 0.999999)
+unfiltered_hvl_vaccinated_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
+                                                                                       "2_D5", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "high", alpha = 0.999999)
+unfiltered_hvl_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
+                                                                                       "2_D8", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "high", alpha = 0.999999)
+unfiltered_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
+                                                                                       "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "high", alpha = 0.999999)
+
+unfiltered_low_placebo_period_2_D_minus_2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+                                                                                                       "2_D_minus_2", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D_minus_1_vs_D_minus_2/"), "low", alpha = 0.999999)
+unfiltered_low_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+                                                                                                "2_D2", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "low", alpha = 0.999999)
+unfiltered_low_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+                                                                                                "2_D5", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "low", alpha = 0.999999)
+unfiltered_low_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+                                                                                                "2_D8", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "low", alpha = 0.999999)
+unfiltered_low_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+                                                                                                 "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "low", alpha = 0.999999)
+unfiltered_lvl_vaccinated_period_2_D_minus_2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
+                                                                                                         "2_D_minus_2", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_vaccinated_period_2_D_minus_1_vs_D_minus_2/"), "low", alpha = 0.999999)
+unfiltered_lvl_vaccinated_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
+                                                                                                  "2_D2", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "low", alpha = 0.999999)
+unfiltered_lvl_vaccinated_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
+                                                                                                  "2_D5", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "low", alpha = 0.999999)
+unfiltered_lvl_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
+                                                                                                  "2_D8", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "low", alpha = 0.999999)
+unfiltered_lvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
+                                                                                                   "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "low", alpha = 0.999999)
+
+
+
+
 # HVL PLACEBO VS HVL VACCINATED
-# Many more DEGs for D8 vs D28 instead of D28 vs D28 (expected, but nice to see)
+# 150 DEGs for D28 (placebo) vs D28 (vaccinated)
 
 high_placebo_metadata_for_comparison <- high_placebo_metadata[high_placebo_metadata$time_point == "2_D28",]
 high_placebo_metadata_for_comparison$status <- "placebo"
-hvl_vaccinated_metadata_for_comparison <- hvl_vaccinated_metadata[hvl_vaccinated_metadata$time_point == "2_D8",]
+hvl_vaccinated_metadata_for_comparison <- hvl_vaccinated_metadata[hvl_vaccinated_metadata$time_point == "2_D28",]
 hvl_vaccinated_metadata_for_comparison$status <- "vaccinated"
 hvl_placebo_and_vaccinated_metadata <- rbind(high_placebo_metadata_for_comparison, hvl_vaccinated_metadata_for_comparison)
 hvl_placebo_and_vaccinated_counts <- cbind(high_placebo_counts, hvl_vaccinated_counts)
@@ -183,7 +259,7 @@ current_analysis <- DESeqDataSetFromMatrix(countData = hvl_placebo_and_vaccinate
                                            colData = hvl_placebo_and_vaccinated_metadata_subset, 
                                            design = ~ sex + age + status)
 current_analysis <- DESeq(current_analysis)
-current_analysis_results <- results(current_analysis, contrast = c("status", "placebo", "vaccinated"), alpha = 0.05, lfcThreshold = 0.1)
+current_analysis_results <- results(current_analysis, contrast = c("status", "placebo", "vaccinated"), alpha = 0.05)
 current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
 current_analysis_results <- subset(current_analysis_results, padj < 0.05)
 
@@ -392,3 +468,7 @@ low_placebo_period_2_LRT_analysis <- DESeq(low_placebo_period_2_LRT_analysis, te
 low_placebo_period_2_LRT_analysis_results <- results(low_placebo_period_2_LRT_analysis, alpha = 0.05)
 low_placebo_period_2_LRT_analysis_results <- low_placebo_period_2_LRT_analysis_results[order(low_placebo_period_2_LRT_analysis_results$padj),]
 low_placebo_period_2_LRT_analysis_results <- subset(low_placebo_period_2_LRT_analysis_results, padj < 0.05)
+
+
+
+

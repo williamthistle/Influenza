@@ -179,6 +179,11 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
+  if(alpha > 0.9) {
+    alpha_for_subsetting_df <- 1.5
+  } else {
+    alpha_for_subsetting_df <- alpha
+  }
   # Select the two relevant time points from our metadata
   metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
   # Remove subjects that only have one time point (not both)
@@ -198,7 +203,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
                                                  Monocytes) 
   } else if(sample_type == "vaccinated" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
-                                                 Monocytes + Neutrophils)
+                                                 Neutrophils)
   } else {
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   }
@@ -208,7 +213,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Grab results with no lfcThreshold set
   current_analysis_results_none <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha)
   current_analysis_results_none <- current_analysis_results_none[order(current_analysis_results_none$padj),]
-  current_analysis_results_none <- subset(current_analysis_results_none, padj < alpha)
+  current_analysis_results_none <- subset(current_analysis_results_none, padj < alpha_for_subsetting_df)
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_none), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_none.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
@@ -217,7 +222,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Grab results with lfcThreshold = 0.1
   current_analysis_results_0.1 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.1)
   current_analysis_results_0.1 <- current_analysis_results_0.1[order(current_analysis_results_0.1$padj),]
-  current_analysis_results_0.1 <- subset(current_analysis_results_0.1, padj < alpha)
+  current_analysis_results_0.1 <- subset(current_analysis_results_0.1, padj < alpha_for_subsetting_df)
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_0.1), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
@@ -226,7 +231,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Grab results with lfcThreshold = 0.2
   current_analysis_results_0.2 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.2)
   current_analysis_results_0.2 <- current_analysis_results_0.2[order(current_analysis_results_0.2$padj),]
-  current_analysis_results_0.2 <- subset(current_analysis_results_0.2, padj < alpha)
+  current_analysis_results_0.2 <- subset(current_analysis_results_0.2, padj < alpha_for_subsetting_df)
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_0.2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_0.2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
@@ -235,7 +240,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Grab results with lfcThreshold = 0.3
   current_analysis_results_0.3 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.3)
   current_analysis_results_0.3 <- current_analysis_results_0.3[order(current_analysis_results_0.3$padj),]
-  current_analysis_results_0.3 <- subset(current_analysis_results_0.3, padj < alpha)
+  current_analysis_results_0.3 <- subset(current_analysis_results_0.3, padj < alpha_for_subsetting_df)
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_0.3), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_0.3.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
@@ -244,7 +249,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Grab results with lfcThreshold = 0.585 (1.5 fold increase)
   current_analysis_results_0.585 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 0.585)
   current_analysis_results_0.585 <- current_analysis_results_0.585[order(current_analysis_results_0.585$padj),]
-  current_analysis_results_0.585 <- subset(current_analysis_results_0.585, padj < alpha)
+  current_analysis_results_0.585 <- subset(current_analysis_results_0.585, padj < alpha_for_subsetting_df)
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_0.585), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
@@ -253,7 +258,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Grab results with lfcThreshold = 1
   current_analysis_results_1 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 1)
   current_analysis_results_1 <- current_analysis_results_1[order(current_analysis_results_1$padj),]
-  current_analysis_results_1 <- subset(current_analysis_results_1, padj < alpha)
+  current_analysis_results_1 <- subset(current_analysis_results_1, padj < alpha_for_subsetting_df)
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_1), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
@@ -262,7 +267,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Grab results with lfcThreshold = 2
   current_analysis_results_2 <- results(current_analysis, contrast = c("time_point", test_time, baseline_time), alpha = alpha, lfcThreshold = 2)
   current_analysis_results_2 <- current_analysis_results_2[order(current_analysis_results_2$padj),]
-  current_analysis_results_2 <- subset(current_analysis_results_2, padj < alpha)
+  current_analysis_results_2 <- subset(current_analysis_results_2, padj < alpha_for_subsetting_df)
   if(is.na(output_name_prefix)) {
     write.table(rownames(current_analysis_results_2), paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, "_fc_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   } else {
