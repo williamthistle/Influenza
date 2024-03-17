@@ -183,17 +183,12 @@ ggplot(comparing_placebo_vs_vaccinated_D28_df, aes(x=placebo_fc, y=vaccinated_fc
 # Weird: using vac-only DEGS for HVL and testing for correlation in LVL results in 0.56 - higher than expected?
 # Kind of suggests that these HVL genes are consistent even in LVL
 # Check placebo DEGs! 
-first <- unfiltered_high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
-second <- unfiltered_hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
+first <- high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
+second <- hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
+unfiltered_first <- unfiltered_high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
+unfiltered_second <- unfiltered_hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
 
-# Checking sc DEGs
-#first <- first[rownames(first) %in% sc_pseudobulk_deg_table$Gene_Name,]
-#second <- second[rownames(second) %in% sc_pseudobulk_deg_table$Gene_Name,]
-# Checking genes that don't overlap from vaccinated
-#overlapping_genes <- setdiff(rownames(second), rownames(first))
-#first <- unfiltered_high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
-#second <- unfiltered_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
-
+# 1: Check overlapping DEGs
 overlapping_genes <- intersect(rownames(second), rownames(first))
 print(length(overlapping_genes))
 compare_first_df <- first[rownames(first) %in% overlapping_genes,]
@@ -210,7 +205,84 @@ cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_f
 # Plot correlation
 ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
   geom_point()+
-  geom_smooth(method=lm)
+  geom_smooth(method=lm) + xlab("Placebo FC") + ylab("Vaccinated FC")
+
+# 2. Check placebo DEGs
+placebo_degs <- rownames(first)
+print(length(placebo_degs))
+compare_first_df <- unfiltered_first[rownames(unfiltered_first) %in% placebo_degs,]
+compare_second_df <- unfiltered_second[rownames(unfiltered_second) %in% placebo_degs,]
+compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
+compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
+compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
+
+comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
+                                           second_fc = compare_second_df$log2FoldChange)
+# Calculate correlation
+cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+
+# Plot correlation
+ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
+  geom_point()+
+  geom_smooth(method=lm) + xlab("Placebo FC") + ylab("Vaccinated FC")
+
+# 3. Check vaccinated DEGs
+vaccinated_degs <- rownames(second)
+print(length(vaccinated_degs))
+compare_first_df <- unfiltered_first[rownames(unfiltered_first) %in% vaccinated_degs,]
+compare_second_df <- unfiltered_second[rownames(unfiltered_second) %in% vaccinated_degs,]
+compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
+compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
+compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
+
+comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
+                                           second_fc = compare_second_df$log2FoldChange)
+# Calculate correlation
+cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+
+# Plot correlation
+ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
+  geom_point()+
+  geom_smooth(method=lm) + xlab("Placebo FC") + ylab("Vaccinated FC")
+
+
+# 4. Check SC DEGs
+sc_first <- unfiltered_first[rownames(unfiltered_first) %in% sc_pseudobulk_deg_table$Gene_Name,]
+sc_second <- unfiltered_second[rownames(unfiltered_second) %in% sc_pseudobulk_deg_table$Gene_Name,]
+overlapping_genes <- intersect(rownames(sc_second), rownames(sc_first))
+print(length(overlapping_genes))
+sc_second <- sc_second[rownames(sc_second) %in% rownames(sc_first),]
+sc_first <- sc_first[order(rownames(sc_first)),]
+sc_second <- sc_second[order(rownames(sc_second)),]
+
+comparing_first_vs_second_df <- data.frame(gene_name = rownames(sc_first), first_fc = sc_first$log2FoldChange,
+                                           second_fc = sc_second$log2FoldChange)
+# Calculate correlation
+cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+
+# Plot correlation
+ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
+  geom_point()+
+  geom_smooth(method=lm) + xlab("Placebo FC") + ylab("Vaccinated FC")
+
+# 5. Check all genes
+overlapping_genes <- intersect(rownames(unfiltered_second), rownames(unfiltered_first))
+print(length(overlapping_genes))
+compare_first_df <- unfiltered_first[rownames(unfiltered_first) %in% overlapping_genes,]
+compare_second_df <- unfiltered_second[rownames(unfiltered_second) %in% overlapping_genes,]
+compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
+compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
+compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
+
+comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
+                                           second_fc = compare_second_df$log2FoldChange)
+# Calculate correlation
+cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+
+# Plot correlation
+ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
+  geom_point()+
+  geom_smooth(method=lm) + xlab("Placebo FC") + ylab("Vaccinated FC")
 
 
 # Run correlation for FC in all genes
