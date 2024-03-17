@@ -183,10 +183,10 @@ ggplot(comparing_placebo_vs_vaccinated_D28_df, aes(x=placebo_fc, y=vaccinated_fc
 # Weird: using vac-only DEGS for HVL and testing for correlation in LVL results in 0.56 - higher than expected?
 # Kind of suggests that these HVL genes are consistent even in LVL
 # Check placebo DEGs! 
-first <- high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
-second <- hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
-unfiltered_first <- unfiltered_high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
-unfiltered_second <- unfiltered_hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
+first <- low_placebo_period_2_D28_vs_D_minus_1_results[[1]]
+second <- lvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
+unfiltered_first <- unfiltered_low_placebo_period_2_D28_vs_D_minus_1_results[[1]]
+unfiltered_second <- unfiltered_lvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 
 # 1: Check overlapping DEGs
 overlapping_genes <- intersect(rownames(second), rownames(first))
@@ -200,7 +200,9 @@ compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
 comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
                                            second_fc = compare_second_df$log2FoldChange)
 # Calculate correlation
-cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+print(correlation_val$estimate)
+print(correlation_val$p.value)
 
 # Plot correlation
 ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
@@ -212,6 +214,7 @@ placebo_degs <- rownames(first)
 print(length(placebo_degs))
 compare_first_df <- unfiltered_first[rownames(unfiltered_first) %in% placebo_degs,]
 compare_second_df <- unfiltered_second[rownames(unfiltered_second) %in% placebo_degs,]
+compare_first_df <- compare_first_df[rownames(compare_first_df) %in% rownames(compare_second_df),]
 compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
 compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
 compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
@@ -219,7 +222,9 @@ compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
 comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
                                            second_fc = compare_second_df$log2FoldChange)
 # Calculate correlation
-cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+print(correlation_val$estimate)
+print(correlation_val$p.value)
 
 # Plot correlation
 ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
@@ -231,6 +236,7 @@ vaccinated_degs <- rownames(second)
 print(length(vaccinated_degs))
 compare_first_df <- unfiltered_first[rownames(unfiltered_first) %in% vaccinated_degs,]
 compare_second_df <- unfiltered_second[rownames(unfiltered_second) %in% vaccinated_degs,]
+compare_first_df <- compare_first_df[rownames(compare_first_df) %in% rownames(compare_second_df),]
 compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
 compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
 compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
@@ -238,7 +244,9 @@ compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
 comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
                                            second_fc = compare_second_df$log2FoldChange)
 # Calculate correlation
-cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+print(correlation_val$estimate)
+print(correlation_val$p.value)
 
 # Plot correlation
 ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
@@ -258,7 +266,9 @@ sc_second <- sc_second[order(rownames(sc_second)),]
 comparing_first_vs_second_df <- data.frame(gene_name = rownames(sc_first), first_fc = sc_first$log2FoldChange,
                                            second_fc = sc_second$log2FoldChange)
 # Calculate correlation
-cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+print(correlation_val$estimate)
+print(correlation_val$p.value)
 
 # Plot correlation
 ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
@@ -277,7 +287,9 @@ compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
 comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
                                            second_fc = compare_second_df$log2FoldChange)
 # Calculate correlation
-cor(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+print(correlation_val$estimate)
+print(correlation_val$p.value)
 
 # Plot correlation
 ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
