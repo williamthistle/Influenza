@@ -127,6 +127,12 @@ random_hvl_vaccinated_aliquots <- rownames(hvl_vaccinated_metadata[hvl_vaccinate
 random_hvl_vaccinated_counts <- hvl_vaccinated_counts[,random_hvl_vaccinated_aliquots]
 random_hvl_vaccinated_metadata <- hvl_vaccinated_metadata[random_hvl_vaccinated_aliquots,]
 
+random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", random_hvl_vaccinated_counts, random_hvl_vaccinated_metadata,
+                                                                                        "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "random_hvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
+# First entry: 5771/3393
+# Second entry: 3773/1301
+# Third entry: 4278/1328
+raw_random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 
 
 #### PERIOD 2 LOW VIRAL LOAD ####
@@ -157,6 +163,7 @@ save.image(paste0(bulk_results_dir, "bulk_RNA_analysis.RData"))
 
 # Compare fold changes for overlapping genes between vaccinated and placebo for D28
 overlapping_genes <- intersect(rownames(raw_hvl_vaccinated_period_2_D28_vs_D_minus_1_results), rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results))
+
 compare_placebo_D28_df <- raw_high_placebo_period_2_D28_vs_D_minus_1_results[rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results) %in% overlapping_genes,]
 compare_vaccinated_D28_df <- raw_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[rownames(raw_hvl_vaccinated_period_2_D28_vs_D_minus_1_results) %in% overlapping_genes,]
 compare_placebo_D28_df <- compare_placebo_D28_df[order(rownames(compare_placebo_D28_df)),]
@@ -173,8 +180,8 @@ ggplot(comparing_placebo_vs_vaccinated_D28_df, aes(x=placebo_fc, y=vaccinated_fc
   geom_smooth(method=lm)
 
 # More general framework for correlation
-first <- high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
-second <- hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
+first <- unfiltered_high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
+second <- unfiltered_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 
 # Checking sc DEGs
 #first <- first[rownames(first) %in% sc_pseudobulk_deg_table$Gene_Name,]
@@ -184,7 +191,7 @@ second <- hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 #first <- unfiltered_high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
 #second <- unfiltered_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 
-overlapping_genes <- intersect(rownames(first), rownames(second))
+overlapping_genes <- intersect(rownames(second), rownames(first))
 print(length(overlapping_genes))
 compare_first_df <- first[rownames(first) %in% overlapping_genes,]
 compare_second_df <- second[rownames(second) %in% overlapping_genes,]
