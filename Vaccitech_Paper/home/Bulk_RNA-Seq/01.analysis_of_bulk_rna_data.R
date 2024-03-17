@@ -180,8 +180,11 @@ ggplot(comparing_placebo_vs_vaccinated_D28_df, aes(x=placebo_fc, y=vaccinated_fc
   geom_smooth(method=lm)
 
 # More general framework for correlation
-first <- unfiltered_high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
-second <- unfiltered_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
+# Weird: using vac-only DEGS for HVL and testing for correlation in LVL results in 0.56 - higher than expected?
+# Kind of suggests that these HVL genes are consistent even in LVL
+# Check placebo DEGs! 
+first <- unfiltered_high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
+second <- unfiltered_hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
 
 # Checking sc DEGs
 #first <- first[rownames(first) %in% sc_pseudobulk_deg_table$Gene_Name,]
@@ -195,6 +198,7 @@ overlapping_genes <- intersect(rownames(second), rownames(first))
 print(length(overlapping_genes))
 compare_first_df <- first[rownames(first) %in% overlapping_genes,]
 compare_second_df <- second[rownames(second) %in% overlapping_genes,]
+compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
 compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
 compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
 
