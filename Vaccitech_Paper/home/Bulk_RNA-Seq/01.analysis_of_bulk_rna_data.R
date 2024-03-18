@@ -183,8 +183,8 @@ ggplot(comparing_placebo_vs_vaccinated_D28_df, aes(x=placebo_fc, y=vaccinated_fc
 # Weird: using vac-only DEGS for HVL and testing for correlation in LVL results in 0.56 - higher than expected?
 # Kind of suggests that these HVL genes are consistent even in LVL
 # Check placebo DEGs! 
-first <- low_placebo_period_2_D28_vs_D_minus_1_results[[1]]
-second <- lvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
+first <- high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
+second <- hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
 unfiltered_first <- unfiltered_low_placebo_period_2_D28_vs_D_minus_1_results[[1]]
 unfiltered_second <- unfiltered_lvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 

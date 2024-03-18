@@ -196,12 +196,14 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Monocytes)
   } else if(sample_type == "placebo" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
+    metadata_subset$Neutrophils <- scale(metadata_subset$Neutrophils)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Neutrophils)
   } else if(sample_type == "vaccinated" && test_time == "2_D5" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Monocytes) 
   } else if(sample_type == "vaccinated" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
+    metadata_subset$Neutrophils <- scale(metadata_subset$Neutrophils)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Neutrophils)
   } else {
