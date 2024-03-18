@@ -255,6 +255,7 @@ ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) +
 
 
 # 4. Check SC DEGs
+# TODO: Check correlation with 1) log and 2) scaling
 sc_first <- unfiltered_first[rownames(unfiltered_first) %in% sc_pseudobulk_deg_table$Gene_Name,]
 sc_second <- unfiltered_second[rownames(unfiltered_second) %in% sc_pseudobulk_deg_table$Gene_Name,]
 overlapping_genes <- intersect(rownames(sc_second), rownames(sc_first))
