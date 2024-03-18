@@ -179,6 +179,12 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
+  print(sample_type)
+  print(test_time)
+  print(baseline_time)
+  print(output_dir)
+  print(output_name_prefix)
+  print(alpha)
   if(alpha > 0.9) {
     alpha_for_subsetting_df <- 1.5
   } else {
@@ -192,23 +198,28 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
   if(sample_type == "placebo" && test_time == "2_D5" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
+    print("Processing placebo day 5 HVL")
     # metadata_subset$Monocytes <- scale(metadata_subset$Monocytes)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Monocytes)
   } else if(sample_type == "placebo" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
-  #metadata_subset$Neutrophils <- scale(metadata_subset$Neutrophils)
-    #metadata_subset$Neutrophils <- log(metadata_subset$Neutrophils + 0.01)
+    print("Processing placebo day 8 HVL")
+    #metadata_subset$Neutrophils <- scale(metadata_subset$Neutrophils)
+    metadata_subset$Neutrophils <- log(metadata_subset$Neutrophils + 0.01)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Neutrophils)
   } else if(sample_type == "vaccinated" && test_time == "2_D5" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
+    print("Processing vaccinated day 5 HVL")
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Monocytes) 
   } else if(sample_type == "vaccinated" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
-    metadata_subset$Neutrophils <- scale(metadata_subset$Neutrophils)
-    #metadata_subset$Neutrophils <- log(metadata_subset$Neutrophils + 0.01)
+    print("Processing vaccinated day 8 HVL")
+    #metadata_subset$Neutrophils <- scale(metadata_subset$Neutrophils)
+    metadata_subset$Neutrophils <- log(metadata_subset$Neutrophils + 0.01)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
                                                  Neutrophils)
   } else {
+    print("Processing other")
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   }
   
