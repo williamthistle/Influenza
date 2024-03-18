@@ -54,7 +54,7 @@ bulk_results_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/
 metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Overall_Metadata/")
 
 # Read in bulk RNA-seq cell type proportions
-cibersort_cell_type_proportions <- read.table(paste0(bulk_data_dir, "cibertsortX_rsem_genes_count.processed.tsv"), sep = "\t", header = TRUE)
+cibersort_cell_type_proportions <- read.table(paste0(bulk_data_dir, "cibertsortX_rsem_genes_count.processed.CPM.tsv"), sep = "\t", header = TRUE)
 # Rename Mixture to aliquot_id for merging
 cibersort_cell_type_proportions$aliquot_id <- cibersort_cell_type_proportions$Mixture
 cibersort_cell_type_proportions <- cibersort_cell_type_proportions[,-c(1)]
