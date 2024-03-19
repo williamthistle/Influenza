@@ -67,6 +67,7 @@ high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_se
 raw_high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
 
 # 2 D28 vs 2 D minus 1 - 1394/34/3/2/2/0/0 DEGs
+# When I remove weird HVL subject, I get 1521/38/4/3/2/0/0 DEGs
 high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
                                                                           "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "high")
 raw_high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[1]]

@@ -147,6 +147,7 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == FALSE, "LOW")
   both_placebo_metadata$viral_load <<- viral_load_for_metadata
   # Remove questionable high viral load individual (weird outlier on PCA) from placebo
+  # This subject is weird but he's biologically weird, so I don't think we have any justification for removing him
   #questionable_hvl_subjects <- c("318475c9c36293a5")
   #questionable_hvl_subjects <- c("318475c9c36293a5", "6c1530685b22079f")
   #removed_high_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id %in% questionable_hvl_subjects,])
@@ -989,10 +990,17 @@ read_motif_table <- function(current_dir, analysis_type, pct, fc_threshold, dire
 }
 
 # Evaluate bulk cell type proportion changes from CIBERSORTx
-evaluate_bulk_cell_type_proportion_changes <- function(metadata, bulk_cell_types, test_time, baseline_time) {
+evaluate_bulk_cell_type_proportion_changes <- function(metadata, bulk_cell_types, test_time, baseline_time, absolute_score = FALSE) {
   metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
   # Remove subjects that only have one time point (not both)
   metadata_subset <- metadata_subset[metadata_subset$subject_id %in% names(table(metadata_subset$subject_id)[table(metadata_subset$subject_id) == 2]),]
+  #if(absolute_score) {
+  #  cols_to_divide <- 23:44
+    # Iterate over each row and divide values in specified columns by 'Absolute.score..sig.score.'
+  #  for (i in 1:nrow(metadata_subset)) {
+  #    metadata_subset[i, cols_to_divide] <- metadata_subset[i, cols_to_divide] / metadata_subset[i, "Absolute.score..sig.score."]
+  #  }
+  # }
   # Find unadjusted p-values for each cell type of interest
   # We use coin::wilcox_test because it handles ties (which happen when there are 0s in the cell type proportions)
   # Unfortunately, we can't use loops because of the way the function call works (I think)
