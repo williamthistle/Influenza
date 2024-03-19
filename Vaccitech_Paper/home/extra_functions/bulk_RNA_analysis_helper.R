@@ -146,6 +146,16 @@ setup_bulk_analysis=function(metadata_dir, data_dir) {
   viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == TRUE, "HIGH")
   viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == FALSE, "LOW")
   both_placebo_metadata$viral_load <<- viral_load_for_metadata
+  # Remove questionable high viral load individual (weird outlier on PCA) from placebo
+  #questionable_hvl_subjects <- c("318475c9c36293a5")
+  #questionable_hvl_subjects <- c("318475c9c36293a5", "6c1530685b22079f")
+  #removed_high_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id %in% questionable_hvl_subjects,])
+  #placebo_metadata <<- placebo_metadata[!(placebo_metadata$subject_id %in% questionable_hvl_subjects),]
+  #placebo_counts <<- placebo_counts[,!(colnames(placebo_counts) %in% removed_high_viral_aliquots)]
+  #both_placebo_metadata <<-  both_placebo_metadata[!(both_placebo_metadata$subject_id %in% questionable_hvl_subjects),]
+  #both_placebo_counts <<- both_placebo_counts[,!(colnames(both_placebo_counts) %in% removed_high_viral_aliquots)]
+  #high_placebo_metadata <<- high_placebo_metadata[!(high_placebo_metadata$subject_id %in% questionable_hvl_subjects),]
+  #high_placebo_counts <<- high_placebo_counts[,!(colnames(high_placebo_counts) %in% removed_high_viral_aliquots)]
   # Remove questionable low viral load individual (0 qPCRAUC) from placebo
   removed_low_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id == "f18c54d93cef4a4e",])
   placebo_metadata <<- placebo_metadata[!(placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
@@ -204,10 +214,10 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
                                                  Monocytes)
   } else if(sample_type == "placebo" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
     print("Processing placebo day 8 HVL")
-    metadata_subset$Neutrophils <- log(metadata_subset$Neutrophils + 0.01)
+    #metadata_subset$Neutrophils <- log(metadata_subset$Neutrophils + 0.01)
     #metadata_subset$Monocytes <- log(metadata_subset$Monocytes + 0.01)
     #metadata_subset$NK.cells.resting <- log(metadata_subset$NK.cells.resting + 0.01)
-    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + Neutrophils)
+    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   } else if(sample_type == "vaccinated" && test_time == "2_D5" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
     print("Processing vaccinated day 5 HVL")
     metadata_subset$Monocytes <- log(metadata_subset$Monocytes + 0.01)
