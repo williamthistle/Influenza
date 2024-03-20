@@ -208,18 +208,18 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Select subset of counts associated with subjects
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
-  #metadata_subset$Absolute.score..sig.score. <- log(metadata_subset$Absolute.score..sig.score.)
-  #current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
-  base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
-  base_model <- estimateSizeFactors(base_model)
-  dat  <- counts(base_model, normalized = TRUE)
-  idx  <- rowMeans(dat) > 1
-  dat  <- dat[idx, ]
-  mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
-  mod0 <- model.matrix(~ subject_id, colData(base_model))
-  svseq <- svaseq(dat, mod, mod0, n.sv = 1)
-  metadata_subset$SV1 <- svseq$sv[,1]
-  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
+  metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
+  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
+  #base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  #base_model <- estimateSizeFactors(base_model)
+  #dat  <- counts(base_model, normalized = TRUE)
+  #idx  <- rowMeans(dat) > 1
+  #dat  <- dat[idx, ]
+  #mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
+  #mod0 <- model.matrix(~ subject_id, colData(base_model))
+  #svseq <- svaseq(dat, mod, mod0, n.sv = 1)
+  #metadata_subset$SV1 <- svseq$sv[,1]
+  #current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
   
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
