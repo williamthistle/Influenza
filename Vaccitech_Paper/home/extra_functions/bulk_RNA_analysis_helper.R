@@ -209,6 +209,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
   metadata_subset$Absolute.score..sig.score. <- log(metadata_subset$Absolute.score..sig.score.)
+  metadata_subset$Monocytes <- log(metadata_subset$Monocytes)
   current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
