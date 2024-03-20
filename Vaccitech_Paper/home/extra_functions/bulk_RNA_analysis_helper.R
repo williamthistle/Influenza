@@ -209,7 +209,6 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
   metadata_subset$Absolute.score..sig.score. <- log(metadata_subset$Absolute.score..sig.score.)
-  metadata_subset$Monocytes <- log(metadata_subset$Monocytes)
   current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
@@ -999,4 +998,78 @@ evaluate_bulk_cell_type_proportion_changes <- function(metadata, bulk_cell_types
 remove_text_in_parentheses <- function(input_string) {
   output_string <- gsub("\\([^\\)]+\\)", "", input_string)
   return(trimws(output_string))
+}
+
+compare_absolute_score_and_sv <- function(counts, metadata, test_time, baseline_time) {
+  metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
+  # Remove subjects that only have one time point (not both)
+  metadata_subset <- metadata_subset[metadata_subset$subject_id  %in% names(table(metadata_subset$subject_id)[table(metadata_subset$subject_id) == 2]),]
+  # Select subset of counts associated with subjects
+  counts_subset <- counts[rownames(metadata_subset)]
+  # Run base analysis with no correction
+  base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  base_run <- DESeq(base_model)
+  base_res <- run_fc_thresholding(base_run, test_time, baseline_time)
+  # Run analysis with log transformed absolute score
+  metadata_subset$Absolute.score..sig.score. <- log(metadata_subset$Absolute.score..sig.score.)
+  absolute_score_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
+  absolute_score_run <- DESeq(absolute_score_model)
+  absolute_score_res <- run_fc_thresholding(absolute_score_run, test_time, baseline_time)
+  # Run analysis with SV1
+  base_model <- estimateSizeFactors(base_model)
+  dat  <- counts(base_model, normalized = TRUE)
+  idx  <- rowMeans(dat) > 1
+  dat  <- dat[idx, ]
+  mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
+  mod0 <- model.matrix(~ subject_id, colData(base_model))
+  svseq <- svaseq(dat, mod, mod0, n.sv = 1)
+  metadata_subset$SV1 <- svseq$sv[,1]
+  sv_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + SV1)
+  sv_run <- DESeq(sv_model)
+  sv_res <- run_fc_thresholding(sv_run, test_time, baseline_time)
+  # Check correlation between SV1 and other numeric covariates
+  metadata_subset_for_cor <- metadata_subset[,23:50]
+  SV1_cors <- metadata_subset_for_cor %>% 
+    correlate() %>% 
+    focus(SV1) %>%
+    filter(!is.na(SV1)) %>%
+    arrange(SV1)
+  # Return everything
+  return(list(base_res, absolute_score_res, sv_res, SV1_cors))
+}
+
+run_fc_thresholding <- function(run, test_time, baseline_time) {
+  # No FC threshold
+  fc_0 <- results(run, contrast = c("time_point", test_time, baseline_time), alpha = 0.05)
+  fc_0 <- fc_0[order(fc_0$padj),]
+  fc_0 <- subset(fc_0, padj < 0.05)
+  # lfcThreshold = 0.1
+  fc_0.1 <- results(run, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.1)
+  fc_0.1 <- fc_0.1[order(fc_0.1$padj),]
+  fc_0.1 <- subset(fc_0.1, padj < 0.05)
+  # lfcThreshold = 0.2
+  fc_0.2 <- results(run, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.2)
+  fc_0.2 <- fc_0.2[order(fc_0.2$padj),]
+  fc_0.2 <- subset(fc_0.2, padj < 0.05)
+  # lfcThreshold = 0.3
+  fc_0.3 <- results(run, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.3)
+  fc_0.3 <- fc_0.3[order(fc_0.3$padj),]
+  fc_0.3 <- subset(fc_0.3, padj < 0.05)
+  # lfcThreshold = 0.585
+  fc_0.585 <- results(run, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 0.585)
+  fc_0.585 <- fc_0.585[order(fc_0.585$padj),]
+  fc_0.585 <- subset(fc_0.585, padj < 0.05)
+  # lfcThreshold = 1
+  fc_1 <- results(run, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 1)
+  fc_1 <- fc_1[order(fc_1$padj),]
+  fc_1 <- subset(fc_1, padj < 0.05)
+  # lfcThreshold = 2
+  fc_2 <- results(run, contrast = c("time_point", test_time, baseline_time), alpha = 0.05, lfcThreshold = 2)
+  fc_2 <- fc_2[order(fc_2$padj),]
+  fc_2 <- subset(fc_2, padj < 0.05)
+  # Raw (no p-value filtering)
+  fc_unfiltered <- results(run, contrast = c("time_point", test_time, baseline_time), alpha = 0.99999)
+  fc_unfiltered <- fc_unfiltered[order(fc_unfiltered$padj),]
+  fc_unfiltered <- subset(fc_unfiltered, padj < 1.5)
+  return(list(fc_0, fc_0.1, fc_0.2, fc_0.3, fc_0.585, fc_1, fc_2, fc_unfiltered))
 }
