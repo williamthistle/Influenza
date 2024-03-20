@@ -208,7 +208,12 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Select subset of counts associated with subjects
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
-  metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
+  median_value <- median(metadata_subset$Absolute.score..sig.score.)
+  
+  # Replace values below median with "LOW" and above median with "HIGH"
+  metadata_subset$Absolute.score..sig.score. <- ifelse(metadata_subset$Absolute.score..sig.score. < median_value, "LOW", ifelse(metadata_subset$Absolute.score..sig.score. > median_value, "HIGH", metadata_subset$Absolute.score..sig.score. ))
+  
+  #metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
   current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
   #base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   #base_model <- estimateSizeFactors(base_model)

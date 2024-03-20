@@ -20,7 +20,7 @@ library(monaLisa)
 library(ComplexHeatmap)
 library(circlize)
 library(chromVARmotifs)
-library(sparklines)
+#library(sparklines)
 library(sva)
 library(corrr)
 
