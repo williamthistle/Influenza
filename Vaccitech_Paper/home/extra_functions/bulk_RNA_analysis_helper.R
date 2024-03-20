@@ -208,33 +208,8 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   # Select subset of counts associated with subjects
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
-  if(sample_type == "placebo" && test_time == "2_D5" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
-    print("Processing placebo day 5 HVL")
-    metadata_subset$Monocytes <- log(metadata_subset$Monocytes + 0.01)
-    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
-                                                 Monocytes)
-  } else if(sample_type == "placebo" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
-    print("Processing placebo day 8 HVL")
-    #metadata_subset$Neutrophils <- log(metadata_subset$Neutrophils + 0.01)
-    #metadata_subset$Monocytes <- log(metadata_subset$Monocytes + 0.01)
-    #metadata_subset$NK.cells.resting <- log(metadata_subset$NK.cells.resting + 0.01)
-    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
-  } else if(sample_type == "vaccinated" && test_time == "2_D5" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
-    print("Processing vaccinated day 5 HVL")
-    metadata_subset$Monocytes <- log(metadata_subset$Monocytes + 0.01)
-    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + 
-                                                 Monocytes) 
-  } else if(sample_type == "vaccinated" && test_time == "2_D8" && baseline_time == "2_D_minus_1" && output_name_prefix == "high") {
-    print("Processing vaccinated day 8 HVL")
-    metadata_subset$Neutrophils <- log(metadata_subset$Neutrophils + 0.01)
-    #metadata_subset$Monocytes <- log(metadata_subset$Monocytes + 0.01)
-    #metadata_subset$NK.cells.resting <- log(metadata_subset$NK.cells.resting + 0.01)
-    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point + Neutrophils)
-  } else {
-    print("Processing other")
-    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
-  }
-  
+  metadata_subset$Absolute.score..sig.score. <- log(metadata_subset$Absolute.score..sig.score.)
+  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
   # Grab results with no lfcThreshold set

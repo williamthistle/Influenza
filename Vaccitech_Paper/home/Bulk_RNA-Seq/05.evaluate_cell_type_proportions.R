@@ -17,7 +17,7 @@ high_placebo_period_1_D28_vs_D_minus_1_cell_type_proportion_changes <- evaluate_
 high_placebo_period_2_D_minus_2_vs_D_minus_1_cell_type_proportion_changes <- evaluate_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D_minus_1", "2_D_minus_2", absolute_score = TRUE)
 
 # Period 2 (D2 vs D minus 1) - No significant changes
-high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_changes <- evaluate_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D2", "2_D_minus_1", absolute_score = TRUE)
+high_placebo_period_2_D2_vs_D_minus_1_cell_type_proportion_changes <- evaluate_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D2", "2_D_minus_1")
 
 # Period 2 (D5 vs D minus 1) - T.cells.regulatory..Tregs., NK.cells.resting, and Monocytes are all significant
 high_placebo_period_2_D5_vs_D_minus_1_cell_type_proportion_changes <- evaluate_bulk_cell_type_proportion_changes(high_placebo_metadata, bulk_cell_types, "2_D5", "2_D_minus_1", absolute_score = TRUE)
