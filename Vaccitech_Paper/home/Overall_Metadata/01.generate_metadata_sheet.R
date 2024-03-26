@@ -1,4 +1,5 @@
-library(data.table)
+base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
+source(paste0(base_dir, "00.setup.R"))
 
 # Function to find total number of each sex in dataframe
 find_sex_count = function(curr_df) {
@@ -39,52 +40,20 @@ find_age_count = function(curr_df) {
   return(ages)
 }
 
-base_dir <- "~/GitHub/Influenza/"
-source(paste0(base_dir, "bulk_RNA_analysis_helper.R"))
-setup_bulk_analysis()
-
-scRNA_data_list <- paste0(base_dir, "scRNA/scRNA_data_list.txt")
-scATAC_data_list <- paste0(base_dir, "scATAC/scATAC_data_list.txt")
-multiome_data_list <- paste0(base_dir, "multiome/multiome_data_list.txt")
-bulkRNA_data_list <- paste0(base_dir, "bulkRNA/bulkRNA_data_list.txt")
-mintchip_data_list <- paste0(base_dir, "mintchip/mintchip_data_list.txt")
-miRNA_data_list <- paste0(base_dir, "miRNA/miRNA_data_list.txt")
-totalRNA_data_list <- paste0(base_dir, "totalRNA/totalRNA_data_list.txt")
-snme_data_list <- paste0(base_dir, "snME/snME_data_list.txt")
-bulk_methylation_metadata_file <- paste0(base_dir, "Bulk_Methylation_Sample_Metadata.csv")
-scRNA_qc_file <- paste0(base_dir, "ECHO_FLU_Vaccitech_PBMC_scrnaseq_coded_qc_report_WT.csv")
-multiome_qc_file <- paste0(base_dir, "Stanford_FLU_combined_qc_metric_coded_09015022_qc_data.csv")
-overall_metadata_file <- paste0(base_dir, "20220609_metadataECHO_Vaccitech_Coded.csv")
-# Read in tables
-scRNA_data <- read.table(scRNA_data_list)$V1
-scRNA_data <- scRNA_data[1:length(scRNA_data) - 1]
-scATAC_data <- read.table(scATAC_data_list)$V1
-scATAC_data <- scATAC_data[1:length(scATAC_data) - 1]
-multiome_data <- read.table(multiome_data_list)$V1
-multiome_data <- multiome_data[1:length(multiome_data) - 1]
-bulkRNA_data <- read.table(bulkRNA_data_list)$V1
-mintchip_data <- read.table(mintchip_data_list)$V1
-miRNA_data <- read.table(miRNA_data_list)$V1
-totalRNA_data <- read.table(totalRNA_data_list)$V1
-snme_data <- read.table(snme_data_list)$V1
-bulk_methylation_data <- read.table(bulk_methylation_metadata_file, sep = ",", header = TRUE)$Sample.ID
-scRNA_qc <- read.csv(scRNA_qc_file)
-multiome_qc <- read.csv(multiome_qc_file)
-overall_metadata <- read.csv(overall_metadata_file)
 all_metadata_sheet_df <- data.frame(aliquot_id = character(), subject_id = character(), scRNA_seq = character(),
                                       scATAC_seq = character(), multiome = character(), bulkRNA_seq = character(),
                                       mintchip = character(), miRNA = character(), totalRNA = character(), snME = character(),
                                       bulk_methylation = character(), has_metadata = character(), specimen_prep = character(), 
                                       treatment = character(), period = character(), time_point = character(), sex = character(), age = character(), 
                                       race = character(), passed_qc_scRNA_seq = character(), passed_qc_multiome = character(),
-                                      viral_load = character())
+                                      viral_load = numeric(), viral_load_category = character())
 # scRNA-seq
 for(scRNA_entry in scRNA_data) {
   # Add aliquot ID to current row
   current_row <- c()
   current_row <- append(current_row, scRNA_entry)
   # Add subject ID to current row
-  current_sample = overall_metadata[overall_metadata$X_aliquot_id == scRNA_entry,]
+  current_sample <- overall_metadata[overall_metadata$X_aliquot_id == scRNA_entry,]
   if(nrow(current_sample) > 0) {
     current_row <- append(current_row, current_sample$SUBJECT_ID)
   } else {
@@ -129,12 +98,25 @@ for(scRNA_entry in scRNA_data) {
   # Append N/A for multiome QC for now
   current_row <- append(current_row, "N/A")
   # Add viral load info
-  if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-    current_row <- append(current_row, "high")
-  } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-    current_row <- append(current_row, "low")
+  if(length(current_sample$SUBJECT_ID) > 0) {
+    current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+    if(nrow(current_viral_load) > 0) {
+      current_viral_load_val <- current_viral_load$AVAL
+      current_row <- append(current_row, current_viral_load_val)
+      if(current_viral_load_val >= hvl_threshold) {
+        current_row <- append(current_row, "high")
+      } else if(current_viral_load_val <= lvl_threshold) {
+        current_row <- append(current_row, "low")
+      } else {
+        current_row <- append(current_row, "moderate")
+      }
+    } else {
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
+    }
   } else {
-    current_row <- append(current_row, "neither")
+    current_row <- append(current_row, -1)
+    current_row <- append(current_row, "N/A")
   }
   all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
 }
@@ -190,12 +172,25 @@ for(scATAC_entry in scATAC_data) {
     # Append N/A for multiome QC for now
     current_row <- append(current_row, "N/A")
     # Add viral load info
-    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-      current_row <- append(current_row, "high")
-    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-      current_row <- append(current_row, "low")
+    if(length(current_sample$SUBJECT_ID) > 0) {
+      current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+      if(nrow(current_viral_load) > 0) {
+        current_viral_load_val <- current_viral_load$AVAL
+        current_row <- append(current_row, current_viral_load_val)
+        if(current_viral_load_val >= hvl_threshold) {
+          current_row <- append(current_row, "high")
+        } else if(current_viral_load_val <= lvl_threshold) {
+          current_row <- append(current_row, "low")
+        } else {
+          current_row <- append(current_row, "moderate")
+        }
+      } else {
+        current_row <- append(current_row, -1)
+        current_row <- append(current_row, "N/A")
+      }
     } else {
-      current_row <- append(current_row, "neither")
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
     }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
@@ -259,12 +254,25 @@ for(multiome_entry in multiome_data) {
       current_row <- append(current_row, "N/A")
     }
     # Add viral load info
-    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-      current_row <- append(current_row, "high")
-    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-      current_row <- append(current_row, "low")
+    if(length(current_sample$SUBJECT_ID) > 0) {
+      current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+      if(nrow(current_viral_load) > 0) {
+        current_viral_load_val <- current_viral_load$AVAL
+        current_row <- append(current_row, current_viral_load_val)
+        if(current_viral_load_val >= hvl_threshold) {
+          current_row <- append(current_row, "high")
+        } else if(current_viral_load_val <= lvl_threshold) {
+          current_row <- append(current_row, "low")
+        } else {
+          current_row <- append(current_row, "moderate")
+        }
+      } else {
+        current_row <- append(current_row, -1)
+        current_row <- append(current_row, "N/A")
+      }
     } else {
-      current_row <- append(current_row, "neither")
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
     }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
@@ -321,12 +329,26 @@ for(bulkRNA_entry in bulkRNA_data) {
     # Add N/A for scRNA_seq QC and multiome QC
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
-    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-      current_row <- append(current_row, "high")
-    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-      current_row <- append(current_row, "low")
+    # Add viral load info
+    if(length(current_sample$SUBJECT_ID) > 0) {
+      current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+      if(nrow(current_viral_load) > 0) {
+        current_viral_load_val <- current_viral_load$AVAL
+        current_row <- append(current_row, current_viral_load_val)
+        if(current_viral_load_val >= hvl_threshold) {
+          current_row <- append(current_row, "high")
+        } else if(current_viral_load_val <= lvl_threshold) {
+          current_row <- append(current_row, "low")
+        } else {
+          current_row <- append(current_row, "moderate")
+        }
+      } else {
+        current_row <- append(current_row, -1)
+        current_row <- append(current_row, "N/A")
+      }
     } else {
-      current_row <- append(current_row, "neither")
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
     }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
@@ -385,12 +407,26 @@ for(mintchip_entry in mintchip_data) {
     # Add N/A for scRNA_seq QC and multiome QC
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
-    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-      current_row <- append(current_row, "high")
-    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-      current_row <- append(current_row, "low")
+    # Add viral load info
+    if(length(current_sample$SUBJECT_ID) > 0) {
+      current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+      if(nrow(current_viral_load) > 0) {
+        current_viral_load_val <- current_viral_load$AVAL
+        current_row <- append(current_row, current_viral_load_val)
+        if(current_viral_load_val >= hvl_threshold) {
+          current_row <- append(current_row, "high")
+        } else if(current_viral_load_val <= lvl_threshold) {
+          current_row <- append(current_row, "low")
+        } else {
+          current_row <- append(current_row, "moderate")
+        }
+      } else {
+        current_row <- append(current_row, -1)
+        current_row <- append(current_row, "N/A")
+      }
     } else {
-      current_row <- append(current_row, "neither")
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
     }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
@@ -450,12 +486,26 @@ for(miRNA_entry in miRNA_data) {
     # Add N/A for scRNA_seq QC and multiome QC
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
-    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-      current_row <- append(current_row, "high")
-    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-      current_row <- append(current_row, "low")
+    # Add viral load info
+    if(length(current_sample$SUBJECT_ID) > 0) {
+      current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+      if(nrow(current_viral_load) > 0) {
+        current_viral_load_val <- current_viral_load$AVAL
+        current_row <- append(current_row, current_viral_load_val)
+        if(current_viral_load_val >= hvl_threshold) {
+          current_row <- append(current_row, "high")
+        } else if(current_viral_load_val <= lvl_threshold) {
+          current_row <- append(current_row, "low")
+        } else {
+          current_row <- append(current_row, "moderate")
+        }
+      } else {
+        current_row <- append(current_row, -1)
+        current_row <- append(current_row, "N/A")
+      }
     } else {
-      current_row <- append(current_row, "neither")
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
     }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
@@ -516,12 +566,26 @@ for(totalRNA_entry in totalRNA_data) {
     # Add N/A for scRNA_seq QC and multiome QC
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
-    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-      current_row <- append(current_row, "high")
-    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-      current_row <- append(current_row, "low")
+    # Add viral load info
+    if(length(current_sample$SUBJECT_ID) > 0) {
+      current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+      if(nrow(current_viral_load) > 0) {
+        current_viral_load_val <- current_viral_load$AVAL
+        current_row <- append(current_row, current_viral_load_val)
+        if(current_viral_load_val >= hvl_threshold) {
+          current_row <- append(current_row, "high")
+        } else if(current_viral_load_val <= lvl_threshold) {
+          current_row <- append(current_row, "low")
+        } else {
+          current_row <- append(current_row, "moderate")
+        }
+      } else {
+        current_row <- append(current_row, -1)
+        current_row <- append(current_row, "N/A")
+      }
     } else {
-      current_row <- append(current_row, "neither")
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
     }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
@@ -583,12 +647,26 @@ for(snme_entry in snme_data) {
     # Add N/A for scRNA_seq QC and multiome QC
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
-    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-      current_row <- append(current_row, "high")
-    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-      current_row <- append(current_row, "low")
+    # Add viral load info
+    if(length(current_sample$SUBJECT_ID) > 0) {
+      current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+      if(nrow(current_viral_load) > 0) {
+        current_viral_load_val <- current_viral_load$AVAL
+        current_row <- append(current_row, current_viral_load_val)
+        if(current_viral_load_val >= hvl_threshold) {
+          current_row <- append(current_row, "high")
+        } else if(current_viral_load_val <= lvl_threshold) {
+          current_row <- append(current_row, "low")
+        } else {
+          current_row <- append(current_row, "moderate")
+        }
+      } else {
+        current_row <- append(current_row, -1)
+        current_row <- append(current_row, "N/A")
+      }
     } else {
-      current_row <- append(current_row, "neither")
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
     }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
@@ -650,12 +728,26 @@ for(bulk_methylation_entry in bulk_methylation_data) {
     # Add N/A for scRNA_seq QC and multiome QC
     current_row <- append(current_row, "N/A")
     current_row <- append(current_row, "N/A")
-    if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% high_viral_load_subjects) {
-      current_row <- append(current_row, "high")
-    } else if(length(current_sample$SUBJECT_ID) > 0 && current_sample$SUBJECT_ID %in% low_viral_load_subjects) {
-      current_row <- append(current_row, "low")
+    # Add viral load info
+    if(length(current_sample$SUBJECT_ID) > 0) {
+      current_viral_load <- viral_load_primary[viral_load_primary$SUBJID == current_sample$SUBJECT_ID,]
+      if(nrow(current_viral_load) > 0) {
+        current_viral_load_val <- current_viral_load$AVAL
+        current_row <- append(current_row, current_viral_load_val)
+        if(current_viral_load_val >= hvl_threshold) {
+          current_row <- append(current_row, "high")
+        } else if(current_viral_load_val <= lvl_threshold) {
+          current_row <- append(current_row, "low")
+        } else {
+          current_row <- append(current_row, "moderate")
+        }
+      } else {
+        current_row <- append(current_row, -1)
+        current_row <- append(current_row, "N/A")
+      }
     } else {
-      current_row <- append(current_row, "neither")
+      current_row <- append(current_row, -1)
+      current_row <- append(current_row, "N/A")
     }
     all_metadata_sheet_df[nrow(all_metadata_sheet_df) + 1,] = current_row
   }
@@ -676,17 +768,17 @@ all_metadata_sheet_df$age[all_metadata_sheet_df$age >= 48 & all_metadata_sheet_d
 
 # Write complete metadata DF to file
 all_metadata_sheet_df <- all_metadata_sheet_df[order(all_metadata_sheet_df$subject_id),]
-write.table(all_metadata_sheet_df, paste0(base_dir, "all_metadata_sheet.tsv"), sep = "\t",
+write.table(all_metadata_sheet_df, paste0(metadata_dir, "all_metadata_sheet.tsv"), sep = "\t",
             row.names = FALSE, quote = FALSE)
 
 # Write placebo metadata DF to file
 placebo_metadata_sheet_df <- all_metadata_sheet_df[all_metadata_sheet_df$treatment == "PLACEBO",]
-write.table(placebo_metadata_sheet_df, paste0(base_dir, "placebo_metadata_sheet.tsv"), sep = "\t",
+write.table(placebo_metadata_sheet_df, paste0(metadata_dir, "placebo_metadata_sheet.tsv"), sep = "\t",
             row.names = FALSE, quote = FALSE)
 
 # Write vaccinated metadata DF to file
 vaccinated_metadata_sheet_df <- all_metadata_sheet_df[all_metadata_sheet_df$treatment == "MVA-NP+M1",]
-write.table(vaccinated_metadata_sheet_df, paste0(base_dir, "vaccinated_metadata_sheet.tsv"), sep = "\t",
+write.table(vaccinated_metadata_sheet_df, paste0(metadata_dir, "vaccinated_metadata_sheet.tsv"), sep = "\t",
             row.names = FALSE, quote = FALSE)
 
 

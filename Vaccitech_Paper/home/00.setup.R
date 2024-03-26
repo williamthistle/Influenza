@@ -107,10 +107,38 @@ totalRNA_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RN
 txdb_hg38 <- TxDb.Hsapiens.UCSC.hg38.knownGene
 txdb_hg19 <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
-
-
 # Read in Mint-ChIP metadata
 mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
+
+# Read in data lists for printing subject overview
+scRNA_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Metadata/scRNA_data_list.txt")
+scATAC_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snATAC-Seq/Metadata/snATAC_data_list.txt")
+multiome_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMultiome/Metadata/multiome_data_list.txt")
+bulkRNA_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Metadata/bulkRNA_data_list.txt")
+mintchip_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/mintchip_data_list.txt")
+miRNA_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Metadata/miRNA_data_list.txt")
+totalRNA_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Metadata/totalRNA_data_list.txt")
+snme_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMethylation/Metadata/snME_data_list.txt")
+bulk_methylation_metadata_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_Methylation/Metadata/Bulk_Methylation_Sample_Metadata.csv")
+scRNA_qc_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Metadata/ECHO_FLU_Vaccitech_PBMC_scrnaseq_coded_qc_report_WT.csv")
+multiome_qc_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMultiome/Metadata/Stanford_FLU_combined_qc_metric_coded_09015022_qc_data.csv")
+overall_metadata_file <- paste0(metadata_dir, "Vaccitech_Original_Metadata_Sheet.csv")
+# Read in tables
+scRNA_data <- read.table(scRNA_data_list)$V1
+scRNA_data <- scRNA_data[1:length(scRNA_data) - 1]
+scATAC_data <- read.table(scATAC_data_list)$V1
+scATAC_data <- scATAC_data[1:length(scATAC_data) - 1]
+multiome_data <- read.table(multiome_data_list)$V1
+multiome_data <- multiome_data[1:length(multiome_data) - 1]
+bulkRNA_data <- read.table(bulkRNA_data_list)$V1
+mintchip_data <- read.table(mintchip_data_list)$V1
+miRNA_data <- read.table(miRNA_data_list)$V1
+totalRNA_data <- read.table(totalRNA_data_list)$V1
+snme_data <- read.table(snme_data_list)$V1
+bulk_methylation_data <- read.table(bulk_methylation_metadata_file, sep = ",", header = TRUE)$Sample.ID
+scRNA_qc <- read.csv(scRNA_qc_file)
+multiome_qc <- read.csv(multiome_qc_file)
+overall_metadata <- read.csv(overall_metadata_file)
 
 # Tables containing DEG results for single cell RNA-seq processing (HVL)
 # Includes genes that passed pseudobulk filtering (remove platelets)
@@ -130,8 +158,6 @@ lvl_sc_pseudobulk_deg_table <- lvl_sc_pseudobulk_deg_table[lvl_sc_pseudobulk_deg
 lvl_sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(sc_deg_lvl_combined_cell_types_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 lvl_sc_pseudobulk_deg_combined_cell_types_table <- lvl_sc_pseudobulk_deg_combined_cell_types_table[lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type != "Platelet",]
 lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type[lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == "NK_MAGICAL"] <- "NK"
-
-
 
 rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
 
