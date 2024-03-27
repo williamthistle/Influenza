@@ -47,6 +47,7 @@ summarize_stats <- function(current_table) {
   
   ## Total
   print("TOTAL SAMPLES")
+  print(current_table)
   print(nrow(current_table))
   
   ## Sex

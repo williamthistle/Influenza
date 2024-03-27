@@ -171,6 +171,51 @@ get_modules_for_downstream_analysis <- function(humanbase_file_path) {
 }
 
 
+get_module_genes_for_downstream_analysis <- function(humanbase_file_path) {
+  module_data <- list()
+  # Table parsed into parts (using \t\t\t\t\t as delimiter)
+  parsed_table <- list()
+  
+  # Read the file as table_lines
+  table_lines <- readLines(humanbase_file_path)
+  
+  # Initialize an empty string to store the current component
+  current_component <- ""
+  
+  # Loop through each line
+  for (line in table_lines) {
+    if (line == "\t\t\t\t\t") {
+      # If the line is the separator, add the current component to the list
+      if (nchar(current_component) > 0) {
+        parsed_table <- append(parsed_table, list(current_component))
+      }
+      # Reset the current component
+      current_component <- ""
+    } else {
+      # Append the line to the current component
+      current_component <- paste(current_component, line, sep = "\n")
+    }
+  }
+  
+  # Add the last component to the list
+  if (nchar(current_component) > 0) {
+    parsed_table <- append(parsed_table, list(current_component))
+  }
+  # Info about overall genes for each module
+  overall_module_data <- read.table(text = parsed_table[[2]], header = TRUE, sep = "\t")
+  overall_module_data <- overall_module_data[,1:2]
+  
+  # Get list of modules with >= 15 genes
+  for(current_row in 1:nrow(overall_module_data)) {
+    current_module <- overall_module_data[current_row,]$CLUSTER_NAME
+    current_genes <- overall_module_data[current_row,]$CLUSTER_GENES
+    current_genes <- strsplit(current_genes, ",")[[1]]
+    module_data[[current_module]] <- current_genes
+  }
+  return(module_data)
+}
+
+
 get_lists_of_commands <- function(analysis_dir, direction = "upregulated", search_token = NULL) {
   # Create output dirs
   output_dir <- paste0(analysis_dir, "output/")
