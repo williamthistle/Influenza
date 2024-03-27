@@ -113,7 +113,7 @@ Cell_type_combined[idx] <- "Proliferating"
 #Cell_type_combined[idx] <- "T Naive"
 #idx <- grep("CD8 Naive", Cell_type_combined)
 #Cell_type_combined[idx] <- "T Naive"
-#idx <- grep("Treg", Cell_type_combined)
+idx <- grep("Treg", Cell_type_combined)
 Cell_type_combined[idx] <- "CD4 Memory"
 sc_obj$predicted.id <- Cell_type_combined
 sc_obj <- MajorityVote_RNA(sc_obj)
@@ -122,10 +122,10 @@ sc_obj <- MajorityVote_RNA(sc_obj)
 cluster_info <- capture_cluster_info(sc_obj)
 
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
-#sc_obj <- combine_cell_types_magical(sc_obj)
+sc_obj <- combine_cell_types_magical(sc_obj)
 
-# If I do this here, I don't think I need to do it again for HVL
-messy_clusters <- c(33)
+# Remove messy clusters
+messy_clusters <- c(31)
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj_minus_clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
@@ -134,7 +134,7 @@ sc_obj_minus_clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
-print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Cluster_test_2.png",
+print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Cluster.png",
                group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
                log_flag = log_flag)
 print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
