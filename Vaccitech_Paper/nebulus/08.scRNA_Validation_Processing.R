@@ -125,7 +125,7 @@ cluster_info <- capture_cluster_info(sc_obj)
 sc_obj <- combine_cell_types_magical(sc_obj)
 
 # Remove messy clusters
-messy_clusters <- c(31)
+messy_clusters <- c(25)
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj_minus_clusters <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
@@ -154,18 +154,18 @@ print_UMAP_RNA(sc_obj_minus_clusters, file_name = "Final_RNA_UMAP_by_Sex.png",
                log_flag = log_flag)
 
 # HVL WORK
-idxPass <- which(sc_obj$viral_load %in% "high")
-cellsPass <- names(sc_obj$orig.ident[idxPass])
-hvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+idxPass <- which(sc_obj_minus_clusters$viral_load_category %in% "high")
+cellsPass <- names(sc_obj_minus_clusters$orig.ident[idxPass])
+hvl_sc_obj <- subset(x = sc_obj_minus_clusters, subset = cell_name %in% cellsPass)
 
-hvl_sc_obj <- MajorityVote_RNA(hvl_sc_obj)
+#hvl_sc_obj <- MajorityVote_RNA(hvl_sc_obj)
 
-hvl_cluster_info <- capture_cluster_info(hvl_sc_obj)
+#hvl_cluster_info <- capture_cluster_info(hvl_sc_obj)
 
-messy_clusters <- c(32)
-idxPass <- which(Idents(hvl_sc_obj) %in% messy_clusters)
-cellsPass <- names(hvl_sc_obj$orig.ident[-idxPass])
-hvl_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+#messy_clusters <- c(32)
+#idxPass <- which(Idents(hvl_sc_obj) %in% messy_clusters)
+#cellsPass <- names(hvl_sc_obj$orig.ident[-idxPass])
+#hvl_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
 
 print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
@@ -187,10 +187,10 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by
                log_flag = log_flag)
 
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
-hvl_sc_obj <- combine_cell_types_magical(hvl_sc_obj)
+#hvl_sc_obj <- combine_cell_types_magical(hvl_sc_obj)
 
 # Record cell type proportions
-create_magical_cell_type_proportion_file(hvl_sc_obj, "/Genomics/ogtr04/wat2/", "time_point", high_viral_load_samples, d28_samples, male_samples)
+create_magical_cell_type_proportion_file(hvl_sc_obj, "/Genomics/ogtr04/wat2/", "time_point", high_viral_load_samples, d28_samples, male_samples, token = "vacc")
 
 # save(hvl_sc_obj, file = paste0(RNA_output_dir, analysis_name, ".hvl.new.batch.inference.final.RNA.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.hvl.new.batch.inference.final.RNA.rds"))
@@ -210,6 +210,7 @@ if (!dir.exists(MAGICAL_read_counts_dir)) {dir.create(MAGICAL_read_counts_dir)}
 MAGICAL_genes_dir <- paste0(MAGICAL_file_dir, "scRNA_Genes/")
 if (!dir.exists(MAGICAL_genes_dir)) {dir.create(MAGICAL_genes_dir)}
 
+# TODO: Need to debug with new version of Seurat
 write.table(hvl_sc_obj@assays$RNA@counts@Dimnames[[1]], file = paste0(MAGICAL_genes_dir, "HVL_RNA_genes.tsv"),
             quote = FALSE, row.names = TRUE, col.names = FALSE, sep = "\t")
 
