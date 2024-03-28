@@ -5,12 +5,12 @@ for(cell_type in unique(sc_pseudobulk_deg_table$Cell_Type)) {
   cell_type_for_file_name <- sub(" ", "_", cell_type)
   cell_type_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type == cell_type,]
   write.table(cell_type_sc_pseudobulk_deg_table, 
-              file = paste0("C:/Users/willi/Desktop/sc_DEGs/", cell_type_for_file_name, "_pseudobulk_corrected_DEGs.tsv"), 
+              file = paste0("C:/Users/wat2/Desktop/sc_DEGs/", cell_type_for_file_name, "_pseudobulk_corrected_DEGs.tsv"), 
               sep = "\t", quote = FALSE, row.names = FALSE)
   full_sc_degs <- read.table(paste0(sc_deg_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc.tsv"),
                                     sep = "\t", header = TRUE)
   write.table(full_sc_degs, 
-              file = paste0("C:/Users/willi/Desktop/sc_DEGs/", cell_type_for_file_name, "_full_sc_DEGs.tsv"), 
+              file = paste0("C:/Users/wat2/Desktop/sc_DEGs/", cell_type_for_file_name, "_full_sc_DEGs.tsv"), 
               sep = "\t", quote = FALSE)
   hvl_sc_degs_table_for_cell_type <- data.frame(Cell_Type = cell_type, Gene = rownames(full_sc_degs), log2FC = full_sc_degs$avg_log2FC)
   hvl_sc_degs_table <- rbind(hvl_sc_degs_table, hvl_sc_degs_table_for_cell_type)
