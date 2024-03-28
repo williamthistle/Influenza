@@ -59,7 +59,7 @@ for(cell_type in correlation_cell_types) {
   # Check correlation for primary significant SC genes (pseudobulk_corrected) in validation set
   primary_sc_pseudobulk_corrected_degs <- rownames(cell_type_sc_pseudobulk_corrected_degs)
   print(paste0("Number of SC DEGs (pseudobulk corrected) in primary data is: ", length(primary_sc_pseudobulk_corrected_degs)))
-  compare_first_df <- primary_sc_pseudobulk_corrected_degs
+  compare_first_df <- cell_type_sc_pseudobulk_corrected_degs
   compare_second_df <- unfiltered_cell_type_validation_sc_degs[rownames(unfiltered_cell_type_validation_sc_degs) %in% primary_sc_pseudobulk_corrected_degs,]
   compare_first_df <- compare_first_df[rownames(compare_first_df) %in% rownames(compare_second_df),]
   compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
