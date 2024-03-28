@@ -24,6 +24,7 @@ library(chromVARmotifs)
 library(sva)
 library(corrr)
 library(enrichR)
+library(smplot2)
 
 # Load bulk RNA-seq analysis results
 onedrive_dir <- "~"
