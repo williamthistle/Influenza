@@ -32,3 +32,16 @@ b_memory_downregulated_modules <- get_module_genes_for_downstream_analysis(paste
 # B Naive
 b_naive_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "B_Naive_Upregulated.tsv"))
 b_naive_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "B_Naive_Downregulated.tsv"))
+
+# 
+# dbs <- listEnrichrDbs()
+go_dbs <- c("GO_Biological_Process_2023", "GO_Cellular_Component_2023", "GO_Molecular_Function_2023")
+pathway_dbs <- c("Reactome_2022")
+
+go_results <- enrichr(cd14_mono_upregulated_modules[[1]], go_dbs)
+pathway_results <- enrichr(cd14_mono_upregulated_modules[[1]], pathway_dbs)
+  
+# Sleep for 1 second so we don't overload enrichR server with requests
+Sys.sleep(1)
+
+  
