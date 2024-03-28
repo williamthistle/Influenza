@@ -193,7 +193,7 @@ print_UMAP_RNA(hvl_sc_obj, file_name = "HVL_Final_Combined_Cell_Type_RNA_UMAP_by
 create_magical_cell_type_proportion_file(hvl_sc_obj, "/Genomics/ogtr04/wat2/", "time_point", high_viral_load_samples, d28_samples, male_samples, token = "vacc")
 
 # save(hvl_sc_obj, file = paste0(RNA_output_dir, analysis_name, ".hvl.new.batch.inference.final.RNA.rds"))
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.hvl.new.batch.inference.final.RNA.rds"))
+# load(paste0(RNA_output_dir, "validation_analysis_5_subject_10_sample.hvl.new.batch.inference.final.RNA.rds"))
 
 # Update NK_MAGICAL to be NK for MAGICAL cell types
 cell_type_combined <- hvl_sc_obj$magical_cell_types
