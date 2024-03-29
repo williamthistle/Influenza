@@ -3,7 +3,7 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 # I picked my 9 favorite cell types so I can have a 3x3 grid of correlation plots
-correlation_cell_types <- c("CD4_Memory", "CD8_Memory", "cDC", "NK", "CD14_Mono", "CD16_Mono", "MAIT", "B_naive", "B_memory")
+correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC", "NK", "CD4_Memory", "CD8_Memory", "MAIT", "B_naive", "B_memory")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -13,6 +13,11 @@ for(cell_type in correlation_cell_types) {
   sc_correlations[[cell_type]] <- list()
   sc_correlation_plots[[cell_type]] <- list()
   cell_type_no_underscore <- gsub("_", " ", cell_type)
+  if(cell_type_no_underscore == "B memory") {
+    cell_type_no_underscore <- "B Memory"
+  } else if(cell_type_no_underscore == "B naive") {
+    cell_type_no_underscore <- "B Naive"
+  }
   # Unfiltered SC
   unfiltered_cell_type_sc_degs <- read.table(paste0(sc_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
                                              sep = "\t", header = TRUE)
@@ -50,11 +55,9 @@ for(cell_type in correlation_cell_types) {
   sc_correlations[[cell_type]][["sc_primary_vs_sc_validation"]] <- correlation_val
   
   # Plot correlation
-  sc_correlation_plots[[cell_type]][["sc_primary_vs_sc_validation"]] <- ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
-    geom_point() +
-    geom_smooth(method=lm) + xlab("Primary FC") + ylab("Validation FC")
-  
-  
+  sc_correlation_plots[[cell_type]][["sc_primary_vs_sc_validation"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
+    geom_point(size = 2) +
+    sm_statCorr() + xlab("Primary FC") + ylab("Validation FC") + labs(title = cell_type_no_underscore)
   
   # Check correlation for primary significant SC genes (pseudobulk_corrected) in validation set
   primary_sc_pseudobulk_corrected_degs <- rownames(cell_type_sc_pseudobulk_corrected_degs)
@@ -75,9 +78,9 @@ for(cell_type in correlation_cell_types) {
   sc_correlations[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_validation"]] <- correlation_val
   
   # Plot correlation
-  sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_validation"]] <- ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
-    geom_point() +
-    geom_smooth(method=lm) + xlab("Primary FC") + ylab("Validation FC")
+  sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_validation"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
+    geom_point(size = 2) +
+    sm_statCorr() + xlab("Primary FC") + ylab("Validation FC") + labs(title = cell_type_no_underscore) +  xlim(-1.5, 1.5) + ylim(-1.5, 1.5) +
   
   
   
@@ -128,5 +131,16 @@ for(cell_type in correlation_cell_types) {
     geom_point() +
     geom_smooth(method=lm) + xlab("Primary FC") + ylab("Validation FC")
 }
+
+pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
+n <- length(pseudobulk_corrected_plots)
+nCol <- floor(sqrt(n))
+do.call("grid.arrange", c(pseudobulk_corrected_plots, ncol=nCol))
+
+test <- list(pseudobulk_corrected_plots[[1]], pseudobulk_corrected_plots[[2]], pseudobulk_corrected_plots[[3]])
+
+do.call("grid.arrange", c(test, ncol=nCol))
+
+ggsave("C:/Users/willi/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 16.9, width = 10)
 
 
