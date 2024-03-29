@@ -29,7 +29,7 @@ sample_metadata <- read.table("~/all_metadata_sheet.tsv", sep = "\t", header = T
 sample_metadata <- sample_metadata[sample_metadata$aliquot_id %in% sample_id_list,]
 sample_metadata_for_SPEEDI_df <- sample_metadata
 rownames(sample_metadata_for_SPEEDI_df) <- sample_metadata_for_SPEEDI_df$aliquot_id
-sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[c("subject_id", "time_point", "sex", "viral_load_category")]
+sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[c("subject_id", "time_point", "sex", "viral_load_category", "treatment")]
 sample_metadata_for_SPEEDI_df$time_point[sample_metadata_for_SPEEDI_df$time_point == 'D-1'] <- 'D_minus_1'
 
 # Break down metadata by category
