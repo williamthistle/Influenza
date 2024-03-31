@@ -116,7 +116,7 @@ capture_cluster_info <- function(sc_obj, find_doublet_info = FALSE) {
     idxPass <- which(filtered_cluster$viral_load_category %in% "high")
     cellsPass <- names(filtered_cluster$orig.ident[idxPass])
     num_cells_high <- c(num_cells_high, length(cellsPass))
-    if(length(cellsPass) > 1) {
+    if(length(cellsPass) > 100) {
       filtered_cluster_high <- subset(x = filtered_cluster, subset = cell_name %in% cellsPass)
       cluster_mean_mito_high <- c(cluster_mean_mito_high, mean(filtered_cluster_high$percent.mt))
       cluster_mean_nFeature_high <- c(cluster_mean_nFeature_high, mean(filtered_cluster_high$nFeature_RNA))
@@ -138,7 +138,7 @@ capture_cluster_info <- function(sc_obj, find_doublet_info = FALSE) {
     idxPass <- which(filtered_cluster$viral_load_category %in% "low")
     cellsPass <- names(filtered_cluster$orig.ident[idxPass])
     num_cells_low <- c(num_cells_low, length(cellsPass))
-    if(length(cellsPass) > 1) {
+    if(length(cellsPass) > 100) {
       filtered_cluster_low <- subset(x = filtered_cluster, subset = cell_name %in% cellsPass)
       cluster_mean_mito_low <- c(cluster_mean_mito_low, mean(filtered_cluster_low$percent.mt))
       cluster_mean_nFeature_low <- c(cluster_mean_nFeature_low, mean(filtered_cluster_low$nFeature_RNA))
