@@ -34,10 +34,10 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
   # Determine which cell types we're using and create relevant output dir (normal or MAGICAL output)
   if(magical_cell_types) {
     cell_types <- unique(sc_obj$magical_cell_types)
-    analysis_dir <- paste0(analysis_dir, "NORMAL/")
-  } else {
-    cell_types <- unique(sc_obj$  predicted_celltype_majority_vote)
     analysis_dir <- paste0(analysis_dir, "MAGICAL/")
+  } else {
+    cell_types <- unique(sc_obj$predicted_celltype_majority_vote)
+    analysis_dir <- paste0(analysis_dir, "NORMAL/")
   }
   
   if (!dir.exists(analysis_dir)) {dir.create(analysis_dir, recursive = TRUE)}
