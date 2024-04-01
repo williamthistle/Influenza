@@ -52,6 +52,21 @@ print_UMAP_stage_1 <- function(sc_obj, sample_count, plot_dir, date) {
   print_UMAP(sc_obj, sample_count, "sample", plot_dir, paste0("pre.clusters_by_sample_", date, ".png"))
 }
 
+print_final_UMAPs <- function(sc_obj, output_dir, token = "Default") {
+  print_UMAP_RNA(sc_obj, file_name = paste0(token, "_RNA_UMAP_by_Majority_Vote_Cell_Type.png"),
+                 group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir)
+  print_UMAP_RNA(sc_obj, file_name = paste0(token, "_RNA_UMAP_by_Cluster.png"),
+                 group_by_category = "seurat_clusters", output_dir = RNA_output_dir)
+  print_UMAP_RNA(sc_obj, file_name = paste0(token, "_RNA_UMAP_by_Raw_Predicted_Cell_Type.png"),
+                 group_by_category = "predicted.id", output_dir = RNA_output_dir)
+  print_UMAP_RNA(sc_obj, file_name = paste0(token, "_RNA_UMAP_by_Sample.png"),
+                 group_by_category = "sample", output_dir = RNA_output_dir)
+  print_UMAP_RNA(sc_obj, file_name = paste0(token, "_RNA_UMAP_by_Day.png"),
+                 group_by_category = "time_point", output_dir = RNA_output_dir)
+  print_UMAP_RNA(sc_obj, file_name = paste0(token, "_RNA_UMAP_by_Sex.png"),
+                 group_by_category = "sex", output_dir = RNA_output_dir)
+}
+
 print_pheatmap_predicted_id <- function(sc_obj, plot_dir, date, all_viral_load_samples, high_viral_load_samples, low_viral_load_samples) {
   # Let's also use Vincy's code to create a nice heatmap of cell type proportions
   sc_obj$sample <- factor(sc_obj$sample, levels = all_viral_load_samples)

@@ -152,217 +152,60 @@ print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
-# HVL WORK
+# Separate into relevant subsets
+
+# HVL
 idxPass <- which(sc_obj$viral_load_category %in% "high")
 cellsPass <- names(sc_obj$orig.ident[idxPass])
 hvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
-# HVL PLACEBO WORK
+# HVL PLACEBO
 idxPass <- which(hvl_sc_obj$treatment %in% "PLACEBO")
 cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
 hvl_placebo_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
 
-print_UMAP_RNA(hvl_placebo_sc_obj, file_name = "HVL_Placebo_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
-               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(hvl_placebo_sc_obj, file_name = "HVL_Placebo_Cell_Type_RNA_UMAP_by_Cluster.png",
-               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(hvl_placebo_sc_obj, file_name = "HVL_Placebo_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
-               group_by_category = "predicted.id", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(hvl_placebo_sc_obj, file_name = "HVL_Placebo_Cell_Type_RNA_UMAP_by_Sample.png",
-               group_by_category = "sample", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(hvl_placebo_sc_obj, file_name = "HVL_Placebo_Cell_Type_RNA_UMAP_by_Day.png",
-               group_by_category = "time_point", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(hvl_placebo_sc_obj, file_name = "HVL_Placebo_Cell_Type_RNA_UMAP_by_Sex.png",
-               group_by_category = "sex", output_dir = RNA_output_dir,
-               log_flag = log_flag)
+# HVL VACCINATED
+idxPass <- which(hvl_sc_obj$treatment %in% "MVA-NP+M1")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_vaccinated_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
 
-# Record cell type proportions
-create_magical_cell_type_proportion_file(hvl_sc_obj, "/Genomics/ogtr04/wat2/", "time_point", high_viral_load_samples, d28_samples, male_samples, token = "vacc")
-
-# save(hvl_sc_obj, file = paste0(RNA_output_dir, analysis_name, ".hvl.new.batch.inference.final.RNA.rds"))
-# load(paste0(RNA_output_dir, "validation_analysis_5_subject_10_sample.hvl.new.batch.inference.final.RNA.rds"))
-
-# Update NK_MAGICAL to be NK for MAGICAL cell types
-cell_type_combined <- hvl_placebo_sc_obj$magical_cell_types
-idx <- grep("NK", cell_type_combined)
-cell_type_combined[idx] <- "NK"
-hvl_placebo_sc_obj$magical_cell_types <- cell_type_combined
-
-MAGICAL_file_dir <- paste0(RNA_output_dir, "MAGICAL/")
-if (!dir.exists(MAGICAL_file_dir)) {dir.create(MAGICAL_file_dir)}
-MAGICAL_cell_metadata_dir <- paste0(MAGICAL_file_dir, "scRNA_Cell_Metadata/")
-if (!dir.exists(MAGICAL_cell_metadata_dir)) {dir.create(MAGICAL_cell_metadata_dir)}
-MAGICAL_read_counts_dir <- paste0(MAGICAL_file_dir, "scRNA_Read_Counts/")
-if (!dir.exists(MAGICAL_read_counts_dir)) {dir.create(MAGICAL_read_counts_dir)}
-MAGICAL_genes_dir <- paste0(MAGICAL_file_dir, "scRNA_Genes/")
-if (!dir.exists(MAGICAL_genes_dir)) {dir.create(MAGICAL_genes_dir)}
-
-# TODO: Need to debug with new version of Seurat
-write.table(hvl_sc_obj@assays$RNA@counts@Dimnames[[1]], file = paste0(MAGICAL_genes_dir, "HVL_RNA_genes.tsv"),
-            quote = FALSE, row.names = TRUE, col.names = FALSE, sep = "\t")
-
-for(cell_type in unique(hvl_sc_obj$magical_cell_types)) {
-  print(cell_type)
-  cell_type_for_file_name <- sub(" ", "_", cell_type)
-  
-  #RNA assay cell read counts
-  cell_index=which(hvl_sc_obj$magical_cell_types==cell_type)
-  cell_type_scRNA_counts = as(hvl_sc_obj@assays$RNA@counts[, cell_index], "dgTMatrix")
-  saveRDS(cell_type_scRNA_counts, file= paste0(MAGICAL_read_counts_dir, cell_type_for_file_name, "_HVL_RNA_read_counts.rds"))
-  
-  # Cell metadata
-  cell_type_scRNA_meta = hvl_sc_obj@meta.data[cell_index,]
-  write.table(data.frame(rownames(cell_type_scRNA_meta), cell_type_scRNA_meta$magical_cell_types, cell_type_scRNA_meta$sample, cell_type_scRNA_meta$time_point),
-              file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_HVL_RNA_cell_metadata.tsv"),
-              quote = FALSE, row.names = TRUE, col.names = FALSE,  sep = "\t")
-}
-  
-HVL_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id/")
-if (!dir.exists(HVL_differential_genes_dir)) {dir.create(HVL_differential_genes_dir, recursive = TRUE)}
-run_differential_expression_controlling_for_subject_id(hvl_placebo_sc_obj, HVL_differential_genes_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(hvl_placebo_sc_obj$predicted_celltype_majority_vote))
-HVL_differential_genes_MAGICAL_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/HVL_controlling_for_subject_id_MAGICAL/")
-if (!dir.exists(HVL_differential_genes_MAGICAL_dir)) {dir.create(HVL_differential_genes_MAGICAL_dir, recursive = TRUE)}
-run_differential_expression_controlling_for_subject_id(hvl_placebo_sc_obj, HVL_differential_genes_MAGICAL_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(hvl_placebo_sc_obj$magical_cell_types))
-
-create_magical_cell_type_proportion_file(hvl_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
-hvl_pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/HVL_RNA/")
-if (!dir.exists(hvl_pseudobulk_rna_dir)) {dir.create(hvl_pseudobulk_rna_dir, recursive = TRUE)}
-create_magical_cell_type_pseudobulk_files(hvl_sc_obj, hvl_pseudobulk_rna_dir)
-
-# LVL WORK
-idxPass <- which(sc_obj$viral_load %in% "low")
+# LVL
+idxPass <- which(sc_obj$viral_load_category %in% "low")
 cellsPass <- names(sc_obj$orig.ident[idxPass])
 lvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
-lvl_sc_obj <- MajorityVote_RNA(lvl_sc_obj)
+# LVL PLACEBO
+idxPass <- which(lvl_sc_obj$treatment %in% "PLACEBO")
+cellsPass <- names(lvl_sc_obj$orig.ident[idxPass])
+lvl_placebo_sc_obj <- subset(x = lvl_sc_obj, subset = cell_name %in% cellsPass)
 
-lvl_cluster_info <- capture_cluster_info(lvl_sc_obj)
+# LVL VACCINATED
+idxPass <- which(lvl_sc_obj$treatment %in% "MVA-NP+M1")
+cellsPass <- names(lvl_sc_obj$orig.ident[idxPass])
+lvl_vaccinated_sc_obj <- subset(x = lvl_sc_obj, subset = cell_name %in% cellsPass)
 
-messy_clusters <- c(30)
-idxPass <- which(Idents(lvl_sc_obj) %in% messy_clusters)
-cellsPass <- names(lvl_sc_obj$orig.ident[-idxPass])
-lvl_sc_obj <- subset(x = lvl_sc_obj, subset = cell_name %in% cellsPass)
+# Print UMAPs for each subset
+print_final_UMAPs(hvl_sc_obj, RNA_output_dir, "HVL")
+print_final_UMAPs(lvl_sc_obj, RNA_output_dir, "LVL")
+print_final_UMAPs(hvl_placebo_sc_obj, RNA_output_dir, "HVL_PLACEBO")
+print_final_UMAPs(hvl_vaccinated_sc_obj, RNA_output_dir, "HVL_VACCINATED")
+print_final_UMAPs(lvl_placebo_sc_obj, RNA_output_dir, "LVL_PLACEBO")
+print_final_UMAPs(lvl_vaccinated_sc_obj, RNA_output_dir, "LVL_VACCINATED")
 
-print_UMAP_RNA(lvl_sc_obj, file_name = "lvl_Final_Combined_Cell_Type_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
-               group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(lvl_sc_obj, file_name = "lvl_Final_Combined_Cell_Type_RNA_UMAP_by_Cluster.png",
-               group_by_category = "seurat_clusters", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(lvl_sc_obj, file_name = "lvl_Final_Combined_Cell_Type_RNA_UMAP_by_Raw_Predicted_Cell_Type.png",
-               group_by_category = "predicted.id", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(lvl_sc_obj, file_name = "lvl_Final_Combined_Cell_Type_RNA_UMAP_by_Sample.png",
-               group_by_category = "sample", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(lvl_sc_obj, file_name = "lvl_Final_Combined_Cell_Type_RNA_UMAP_by_Day.png",
-               group_by_category = "time_point", output_dir = RNA_output_dir,
-               log_flag = log_flag)
-print_UMAP_RNA(lvl_sc_obj, file_name = "lvl_Final_Combined_Cell_Type_RNA_UMAP_by_Sex.png",
-               group_by_category = "sex", output_dir = RNA_output_dir,
-               log_flag = log_flag)
+# Record cell type proportions for each subset
+create_RNA_cell_type_proportion_file(hvl_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples, token = "HVL")
+create_RNA_cell_type_proportion_file(lvl_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples, token = "LVL")
+create_RNA_cell_type_proportion_file(hvl_placebo_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples, token = "HVL_PLACEBO")
+create_RNA_cell_type_proportion_file(lvl_placebo_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples, token = "LVL_PLACEBO")
+create_RNA_cell_type_proportion_file(hvl_vaccinated_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples, token = "HVL_VACCINATED")
+create_RNA_cell_type_proportion_file(lvl_vaccinated_sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples, token = "LVL_VACCINATED")
 
-# Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
-lvl_sc_obj <- combine_cell_types_magical(lvl_sc_obj)
+# Create MAGICAL input files for each relevant subset
+create_magical_input_files(hvl_placebo_sc_obj, paste0(RNA_output_dir, "MAGICAL_HVL_PLACEBO_", date, "/"))
+create_magical_input_files(lvl_placebo_sc_obj, paste0(RNA_output_dir, "MAGICAL_LVL_PLACEBO_", date, "/"))
+create_magical_input_files(hvl_vaccinated_sc_obj, paste0(RNA_output_dir, "MAGICAL_HVL_VACCINATED_", date, "/"))
 
-# Record cell type proportions
-create_magical_cell_type_proportion_file(lvl_sc_obj, "/Genomics/ogtr04/wat2/", "time_point", high_viral_load_samples, d28_samples, male_samples, token = "LVL")
-
-# save(lvl_sc_obj, file = paste0(RNA_output_dir, analysis_name, ".lvl.new.batch.inference.final.RNA.rds"))
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.lvl.new.batch.inference.final.RNA.rds"))
-
-# Update NK_MAGICAL to be NK for MAGICAL cell types
-cell_type_combined <- lvl_sc_obj$magical_cell_types
-idx <- grep("NK", cell_type_combined)
-cell_type_combined[idx] <- "NK"
-lvl_sc_obj$magical_cell_types <- cell_type_combined
-
-MAGICAL_file_dir <- paste0(RNA_output_dir, "MAGICAL/")
-if (!dir.exists(MAGICAL_file_dir)) {dir.create(MAGICAL_file_dir)}
-MAGICAL_cell_metadata_dir <- paste0(MAGICAL_file_dir, "scRNA_Cell_Metadata/")
-if (!dir.exists(MAGICAL_cell_metadata_dir)) {dir.create(MAGICAL_cell_metadata_dir)}
-MAGICAL_read_counts_dir <- paste0(MAGICAL_file_dir, "scRNA_Read_Counts/")
-if (!dir.exists(MAGICAL_read_counts_dir)) {dir.create(MAGICAL_read_counts_dir)}
-MAGICAL_genes_dir <- paste0(MAGICAL_file_dir, "scRNA_Genes/")
-if (!dir.exists(MAGICAL_genes_dir)) {dir.create(MAGICAL_genes_dir)}
-
-write.table(lvl_sc_obj@assays$RNA@counts@Dimnames[[1]], file = paste0(MAGICAL_genes_dir, "lvl_RNA_genes.tsv"),
-            quote = FALSE, row.names = TRUE, col.names = FALSE, sep = "\t")
-
-for(cell_type in unique(lvl_sc_obj$magical_cell_types)) {
-  print(cell_type)
-  cell_type_for_file_name <- sub(" ", "_", cell_type)
-  
-  #RNA assay cell read counts
-  cell_index=which(lvl_sc_obj$magical_cell_types==cell_type)
-  cell_type_scRNA_counts = as(lvl_sc_obj@assays$RNA@counts[, cell_index], "dgTMatrix")
-  saveRDS(cell_type_scRNA_counts, file= paste0(MAGICAL_read_counts_dir, cell_type_for_file_name, "_lvl_RNA_read_counts.rds"))
-  
-  # Cell metadata
-  cell_type_scRNA_meta = lvl_sc_obj@meta.data[cell_index,]
-  write.table(data.frame(rownames(cell_type_scRNA_meta), cell_type_scRNA_meta$magical_cell_types, cell_type_scRNA_meta$sample, cell_type_scRNA_meta$time_point),
-              file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_lvl_RNA_cell_metadata.tsv"),
-              quote = FALSE, row.names = TRUE, col.names = FALSE,  sep = "\t")
-}
-
-lvl_differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/lvl_controlling_for_subject_id/")
-if (!dir.exists(lvl_differential_genes_dir)) {dir.create(lvl_differential_genes_dir, recursive = TRUE)}
-run_differential_expression_controlling_for_subject_id(lvl_sc_obj, lvl_differential_genes_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(lvl_sc_obj$predicted_celltype_majority_vote))
-lvl_differential_genes_MAGICAL_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/lvl_controlling_for_subject_id_MAGICAL/")
-if (!dir.exists(lvl_differential_genes_MAGICAL_dir)) {dir.create(lvl_differential_genes_MAGICAL_dir, recursive = TRUE)}
-run_differential_expression_controlling_for_subject_id(lvl_sc_obj, lvl_differential_genes_MAGICAL_dir, sample_metadata_for_SPEEDI_df, "time_point", unique(lvl_sc_obj$magical_cell_types))
-
-create_magical_cell_type_proportion_file(lvl_sc_obj, RNA_output_dir, "time_point", low_viral_load_samples, d28_samples, male_samples)
-lvl_pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/lvl_RNA/")
-if (!dir.exists(lvl_pseudobulk_rna_dir)) {dir.create(lvl_pseudobulk_rna_dir, recursive = TRUE)}
-create_magical_cell_type_pseudobulk_files(lvl_sc_obj, lvl_pseudobulk_rna_dir)
-
-### ETC ###
-
-# Find markers for each cluster
-run_differential_expression_cluster(hvl_sc_obj, RNA_output_dir)
-
-# Run differential expression for each cell type within each group of interest
-#differential_genes_dir <- paste0(RNA_output_dir, "diff_genes/", date, "/alg_4/")
-#if (!dir.exists(differential_genes_dir)) {dir.create(differential_genes_dir, recursive = TRUE)}
-#run_differential_expression_group(sc_obj, differential_genes_dir, "time_point")
-#run_differential_expression_group(sc_obj, differential_genes_dir, "viral_load") # NOT RUN YET
-#run_differential_expression_group(sc_obj, differential_genes_dir, "sex")  # NOT RUN YET
-
-#create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir, "time_point", high_viral_load_samples, d28_samples, male_samples)
-#create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"viral_load", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
-#create_magical_cell_type_proportion_file(sc_obj, RNA_output_dir,"sex", high_viral_load_samples, d28_samples, male_samples)  # NOT RUN YET
-
-#pseudobulk_rna_dir <- paste0(RNA_output_dir, "pseudobulk_rna/", date, "/")
-#if (!dir.exists(pseudobulk_rna_dir)) {dir.create(pseudobulk_rna_dir, recursive = TRUE)}
-#create_magical_cell_type_pseudobulk_files(sc_obj, pseudobulk_rna_dir)
-
-DefaultAssay(hvl_sc_obj) <- "SCT"
-
-idxPass <- which(hvl_sc_obj$time_point %in% "D28")
-cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
-sc_hvl_sc_obj_d28 <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
-
-idxPass <- which(hvl_sc_obj$time_point %in% "D_minus_1")
-cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
-sc_hvl_sc_obj_d_minus_1 <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
-
-d28_IRAK3_plot <- FeaturePlot(sc_hvl_sc_obj_d28, features = c("IRAK3"))
-ggsave(filename = paste0(RNA_output_dir, "D28_IRAK3.png"), plot = d28_IRAK3_plot, device = "png")
-d_minus_1_IRAK3_plot <- FeaturePlot(sc_hvl_sc_obj_d_minus_1, features = c("IRAK3"))
-ggsave(filename = paste0(RNA_output_dir, "D_minus_1_IRAK3.png"), plot = d_minus_1_IRAK3_plot, device = "png")
-
-
-
-
-
-
-idxPass <- which(hvl_sc_obj$predicted_celltype_majority_vote %in% "Unknown")
-cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
-unknown_hvl_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
-
+# Run differential expression analysis, per cell type, for each relevant subset
+run_differential_expression_controlling_for_subject_id(hvl_placebo_sc_obj, paste0(RNA_output_dir, "DE_HVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = FALSE)
+run_differential_expression_controlling_for_subject_id(lvl_placebo_sc_obj, paste0(RNA_output_dir, "DE_LVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = FALSE)
+run_differential_expression_controlling_for_subject_id(hvl_vaccinated_sc_obj, paste0(RNA_output_dir, "DE_HVL_VACCINATED_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = FALSE)

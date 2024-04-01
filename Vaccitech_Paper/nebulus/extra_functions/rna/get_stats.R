@@ -201,8 +201,8 @@ capture_cluster_info <- function(sc_obj, find_doublet_info = FALSE) {
   }
 }
 
-# Create MAGICAL cell type proportion file
-create_magical_cell_type_proportion_file <- function(sc_obj, analysis_dir, group, high_viral_load_samples, d28_samples, male_samples, token = NULL) {
+# Create RNA cell type proportion file
+create_RNA_cell_type_proportion_file <- function(sc_obj, analysis_dir, group, high_viral_load_samples, d28_samples, male_samples, token = NULL) {
   sample_names <- unique(sc_obj$sample)
   condition_label <- c()
   if(group == "time_point") {
@@ -309,5 +309,35 @@ create_magical_cell_type_pseudobulk_files <- function(sc_obj, analysis_dir, toke
       if (!dir.exists(paste0(analysis_dir, token))) {dir.create(paste0(analysis_dir, token), recursive = TRUE)}
       write.csv(final_cells_pseudobulk_df, paste0(analysis_dir, token, "/pseudo_bulk_RNA_count_", cell_type, ".csv"))
     }
+  }
+}
+
+create_magical_input_files <- function(sc_obj, MAGICAL_file_dir) {
+  if (!dir.exists(MAGICAL_file_dir)) {dir.create(MAGICAL_file_dir)}
+  MAGICAL_cell_metadata_dir <- paste0(MAGICAL_file_dir, "scRNA_Cell_Metadata/")
+  if (!dir.exists(MAGICAL_cell_metadata_dir)) {dir.create(MAGICAL_cell_metadata_dir)}
+  MAGICAL_read_counts_dir <- paste0(MAGICAL_file_dir, "scRNA_Read_Counts/")
+  if (!dir.exists(MAGICAL_read_counts_dir)) {dir.create(MAGICAL_read_counts_dir)}
+  MAGICAL_genes_dir <- paste0(MAGICAL_file_dir, "scRNA_Genes/")
+  if (!dir.exists(MAGICAL_genes_dir)) {dir.create(MAGICAL_genes_dir)}
+  
+  # TODO: Need to debug with new version of Seurat
+  write.table(sc_obj@assays$RNA@counts@Dimnames[[1]], file = paste0(MAGICAL_genes_dir, "HVL_RNA_genes.tsv"),
+              quote = FALSE, row.names = TRUE, col.names = FALSE, sep = "\t")
+  
+  for(cell_type in unique(sc_obj$magical_cell_types)) {
+    print(cell_type)
+    cell_type_for_file_name <- sub(" ", "_", cell_type)
+    
+    #RNA assay cell read counts
+    cell_index=which(sc_obj$magical_cell_types==cell_type)
+    cell_type_scRNA_counts = as(sc_obj@assays$RNA@counts[, cell_index], "dgTMatrix")
+    saveRDS(cell_type_scRNA_counts, file= paste0(MAGICAL_read_counts_dir, cell_type_for_file_name, "_HVL_RNA_read_counts.rds"))
+    
+    # Cell metadata
+    cell_type_scRNA_meta = sc_obj@meta.data[cell_index,]
+    write.table(data.frame(rownames(cell_type_scRNA_meta), cell_type_scRNA_meta$magical_cell_types, cell_type_scRNA_meta$sample, cell_type_scRNA_meta$time_point),
+                file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_HVL_RNA_cell_metadata.tsv"),
+                quote = FALSE, row.names = TRUE, col.names = FALSE,  sep = "\t")
   }
 }

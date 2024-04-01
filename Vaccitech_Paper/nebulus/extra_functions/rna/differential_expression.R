@@ -27,10 +27,21 @@ run_differential_expression_cluster <- function(sc_obj, marker_dir) {
   message("All done!")
 }
 
-run_differential_expression_controlling_for_subject_id <- function(sc_obj, analysis_dir, sample_metadata_for_SPEEDI_df, group, cell_types) {
+run_differential_expression_controlling_for_subject_id <- function(sc_obj, analysis_dir, sample_metadata_for_SPEEDI_df, group, magical_cell_types = FALSE) {
   print(paste0("Performing differential expression for group ", group, " for each cell type (controlling for subject ID)"))
   expected_num_samples <- length(unique(sc_obj$sample))
   
+  # Determine which cell types we're using and create relevant output dir (normal or MAGICAL output)
+  if(magical_cell_types) {
+    cell_types <- unique(sc_obj$magical_cell_types)
+    analysis_dir <- paste0(analysis_dir, "NORMAL/")
+  } else {
+    cell_types <- unique(sc_obj$  predicted_celltype_majority_vote)
+    analysis_dir <- paste0(analysis_dir, "MAGICAL/")
+  }
+  
+  if (!dir.exists(analysis_dir)) {dir.create(analysis_dir, recursive = TRUE)}
+
   if(group == "viral_load_category") {
     first_group <- "high"
     second_group <- "low"
