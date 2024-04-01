@@ -209,3 +209,8 @@ create_magical_input_files(hvl_vaccinated_sc_obj, paste0(RNA_output_dir, "MAGICA
 run_differential_expression_controlling_for_subject_id(hvl_placebo_sc_obj, paste0(RNA_output_dir, "DE_HVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = FALSE)
 run_differential_expression_controlling_for_subject_id(lvl_placebo_sc_obj, paste0(RNA_output_dir, "DE_LVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = FALSE)
 run_differential_expression_controlling_for_subject_id(hvl_vaccinated_sc_obj, paste0(RNA_output_dir, "DE_HVL_VACCINATED_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = FALSE)
+
+run_differential_expression_controlling_for_subject_id(hvl_placebo_sc_obj, paste0(RNA_output_dir, "DE_HVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = TRUE)
+run_differential_expression_controlling_for_subject_id(lvl_placebo_sc_obj, paste0(RNA_output_dir, "DE_LVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = TRUE)
+run_differential_expression_controlling_for_subject_id(hvl_vaccinated_sc_obj, paste0(RNA_output_dir, "DE_HVL_VACCINATED_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = TRUE)
+

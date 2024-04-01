@@ -321,8 +321,8 @@ create_magical_input_files <- function(sc_obj, MAGICAL_file_dir) {
   MAGICAL_genes_dir <- paste0(MAGICAL_file_dir, "scRNA_Genes/")
   if (!dir.exists(MAGICAL_genes_dir)) {dir.create(MAGICAL_genes_dir)}
   
-  # TODO: Need to debug with new version of Seurat
-  write.table(sc_obj@assays$RNA@counts@Dimnames[[1]], file = paste0(MAGICAL_genes_dir, "HVL_RNA_genes.tsv"),
+  # Write out genes
+  write.table(sc_obj@assays$RNA$counts@Dimnames[[1]], file = paste0(MAGICAL_genes_dir, "RNA_genes.tsv"),
               quote = FALSE, row.names = TRUE, col.names = FALSE, sep = "\t")
   
   for(cell_type in unique(sc_obj$magical_cell_types)) {
@@ -331,7 +331,7 @@ create_magical_input_files <- function(sc_obj, MAGICAL_file_dir) {
     
     #RNA assay cell read counts
     cell_index=which(sc_obj$magical_cell_types==cell_type)
-    cell_type_scRNA_counts = as(sc_obj@assays$RNA@counts[, cell_index], "dgTMatrix")
+    cell_type_scRNA_counts = as(sc_obj@assays$RNA$counts[, cell_index], "dgTMatrix")
     saveRDS(cell_type_scRNA_counts, file= paste0(MAGICAL_read_counts_dir, cell_type_for_file_name, "_HVL_RNA_read_counts.rds"))
     
     # Cell metadata
