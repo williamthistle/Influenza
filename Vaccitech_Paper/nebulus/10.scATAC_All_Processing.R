@@ -88,7 +88,7 @@ idx <- which(reference$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL"
 reference <- reference[,-idx]
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(input_dir = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
-atac_proj <- FilterRawData_ATAC(proj = atac_proj, log_flag = TRUE)
+atac_proj <- FilterRawData_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
 atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE)
 atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
 atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_dir = ATAC_output_dir,
