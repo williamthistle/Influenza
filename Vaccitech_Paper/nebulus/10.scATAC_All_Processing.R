@@ -107,8 +107,6 @@ sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_sam
 treatment_metadata <- parse_metadata_for_samples(atac_proj, "treatment", high_viral_load_samples, low_viral_load_samples,
                                                  d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
 
-
-
 atac_proj <- combine_cell_types_atac(atac_proj)
 atac_proj <- MajorityVote_ATAC(proj = atac_proj)
 
@@ -152,71 +150,6 @@ p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cell
 ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
-
-# HVL
-idxPass <- which(atac_proj_minus_clusters$viral_load %in% c("high"))
-cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
-hvl_proj <- atac_proj_minus_clusters[cellsPass, ]
-
-num_cells <- length(hvl_proj$cellNames)
-num_samples <- length(unique(hvl_proj$Sample))
-sample_text <- paste0("(", num_samples, " Samples, ", 
-                      num_cells, " Cells)")
-
-pal <- paletteDiscrete(values = hvl_proj$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = hvl_proj, colorBy = "cellColData", 
-                           name = "Cell_type_voting", embedding = "UMAP", 
-                           pal = pal, force = TRUE, keepAxis = TRUE) + 
-  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
-                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
-                                                         legend.text = ggplot2::element_text(size = 10))
-ggplot2::ggsave(filename = paste0(ATAC_output_dir, "HVL_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
-                plot = p1, device = "png", width = 8, height = 8, 
-                units = "in")
-
-# HVL PLACEBO
-idxPass <- which(hvl_proj$treatment %in% c("PLACEBO"))
-cellsPass <- hvl_proj$cellNames[idxPass]
-hvl_placebo_proj <- hvl_proj[cellsPass, ]
-
-num_cells <- length(hvl_placebo_proj$cellNames)
-num_samples <- length(unique(hvl_placebo_proj$Sample))
-sample_text <- paste0("(", num_samples, " Samples, ", 
-                      num_cells, " Cells)")
-
-pal <- paletteDiscrete(values = hvl_placebo_proj$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = hvl_placebo_proj, colorBy = "cellColData", 
-                           name = "Cell_type_voting", embedding = "UMAP", 
-                           pal = pal, force = TRUE, keepAxis = TRUE) + 
-  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
-                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
-                                                         legend.text = ggplot2::element_text(size = 10))
-ggplot2::ggsave(filename = paste0(ATAC_output_dir, "HVL_PLACEBO_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
-                plot = p1, device = "png", width = 8, height = 8, 
-                units = "in")
-
-# PLACEBO
-idxPass <- which(atac_proj_minus_clusters$treatment %in% c("PLACEBO"))
-cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
-placebo_proj <- atac_proj_minus_clusters[cellsPass, ]
-
-num_cells <- length(placebo_proj$cellNames)
-num_samples <- length(unique(placebo_proj$Sample))
-sample_text <- paste0("(", num_samples, " Samples, ", 
-                      num_cells, " Cells)")
-
-pal <- paletteDiscrete(values = placebo_proj$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = placebo_proj, colorBy = "cellColData", 
-                           name = "Cell_type_voting", embedding = "UMAP", 
-                           pal = pal, force = TRUE, keepAxis = TRUE) + 
-  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
-                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
-                                                         legend.text = ggplot2::element_text(size = 10))
-ggplot2::ggsave(filename = paste0(ATAC_output_dir, "PLACEBO_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
-                plot = p1, device = "png", width = 8, height = 8, 
-                units = "in")
-
-
 
 # Call peaks
 addArchRGenome("hg38")
