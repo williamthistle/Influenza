@@ -79,8 +79,10 @@ cibersort_cell_type_proportions <- read.table(paste0(bulk_rna_data_dir, "ciberts
 cibersort_cell_type_proportions$aliquot_id <- cibersort_cell_type_proportions$Mixture
 cibersort_cell_type_proportions <- cibersort_cell_type_proportions[,-c(1)]
 
+# Set up our bulk RNA-seq analysis
 setup_bulk_rna_analysis(metadata_dir = overall_metadata_dir, data_dir = bulk_rna_data_dir)
 
+# Cell types
 bulk_rna_cell_types <- c("B.cells.naive", "T.cells.CD8", "T.cells.CD4.naive", "T.cells.CD4.memory.resting", "T.cells.regulatory..Tregs.", "NK.cells.resting",
                          "Monocytes", "Mast.cells.resting", "Neutrophils")
 innate_cell_types <- c("CD16 Mono", "CD14 Mono", "cDC", "pDC", "NK", "NK_CD56bright")
