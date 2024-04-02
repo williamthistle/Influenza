@@ -36,6 +36,7 @@ seurat_atac <- addDimRed(
 )
 
 saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "ALL_seurat.RDS"))
+seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "ALL_seurat.RDS"))
 
 # Method to print a well-organized UMAP plot for our snRNA-seq data
 print_UMAP_ATAC_Seurat <- function(sc_obj, file_name, group_by_category = NULL, output_dir = getwd(), log_flag = FALSE) {
@@ -65,7 +66,7 @@ print_UMAP_ATAC_Seurat(seurat_atac, "seurat_atac_test.png", group_by_category = 
 cell_names <- rownames(seurat_atac@meta.data)
 seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name = "cell_name")
 
-messy_clusters <- c("4", "7", "10", "13", "15", "16", "18", "20", "24", "26", "28", "29")
+messy_clusters <- c("1", "13", "14", "16", "21", "23")
 idxPass <- which(seurat_atac$seurat_clusters %in% messy_clusters)
 cellsPass <- names(seurat_atac$orig.ident[-idxPass])
 seurat_atac_minus_clusters <- subset(x = seurat_atac, subset = cell_name %in% cellsPass)

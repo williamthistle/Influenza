@@ -89,15 +89,32 @@ reference <- reference[,-idx]
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(input_dir = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
-atac_proj <- InitialProcessing_ATAC(proj = atac_proj, log_flag = TRUE)
+atac_proj <- InitialProcessing_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
 atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
 atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_dir = ATAC_output_dir,
                                reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
 
+atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
+                                      d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+viral_load_metadata <- parse_metadata_for_samples(atac_proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
+                                                  d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+day_metadata <- parse_metadata_for_samples(atac_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+treatment_metadata <- parse_metadata_for_samples(atac_proj, "treatment", high_viral_load_samples, low_viral_load_samples,
+                                                 d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+
+
+
 atac_proj <- combine_cell_types_atac(atac_proj)
 atac_proj <- MajorityVote_ATAC(proj = atac_proj)
+
+cluster_info <- get_cluster_info(atac_proj)
+
+atac_proj <- override_cluster_label_atac(atac_proj, c(24), "Proliferating")
 
 num_cells <- length(atac_proj$cellNames)
 num_samples <- length(unique(atac_proj$Sample))
@@ -115,21 +132,8 @@ ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
 
-atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
-                                       d28_samples, d_minus_1_samples, male_samples, female_samples)
-viral_load_metadata <- parse_metadata_for_samples(atac_proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
-                                                  d28_samples, d_minus_1_samples, male_samples, female_samples)
-day_metadata <- parse_metadata_for_samples(atac_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
-                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
-sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_samples, low_viral_load_samples,
-                                           d28_samples, d_minus_1_samples, male_samples, female_samples)
-
-cluster_info <- get_cluster_info(atac_proj)
-
 # Remove messy clusters
-# C4 looks like unintegrated cells but it comes from LVL so it won't be relevant for our HVL analysis
-idxPass <- which(atac_proj$seurat_clusters %in% c("4", "7", "10", "13", "15", "16", "18", "20", "24", "26", "28", "29"))
-#idxPass <- which(atac_proj$seurat_clusters %in% c("7", "10", "13", "15", "16", "18", "20", "24", "26", "28", "29"))
+idxPass <- which(atac_proj$seurat_clusters %in% c("1", "13", "14", "16", "21", "23"))
 cellsPass <- atac_proj$cellNames[-idxPass]
 atac_proj_minus_clusters <- atac_proj[cellsPass, ]
 
@@ -145,62 +149,101 @@ p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cell
   ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
                           sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
                                                          legend.text = ggplot2::element_text(size = 10))
-ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters_Test.png"), 
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
 
-# Subset to HVL
-idxPass <- which(atac_proj_minus_clusters$viral_load %in% c("low"))
+# HVL
+idxPass <- which(atac_proj_minus_clusters$viral_load %in% c("high"))
 cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
-LVL_proj_minus_clusters <- atac_proj_minus_clusters[cellsPass, ]
+hvl_proj <- atac_proj_minus_clusters[cellsPass, ]
 
-num_cells <- length(LVL_proj_minus_clusters$cellNames)
-num_samples <- length(unique(LVL_proj_minus_clusters$Sample))
+num_cells <- length(hvl_proj$cellNames)
+num_samples <- length(unique(hvl_proj$Sample))
 sample_text <- paste0("(", num_samples, " Samples, ", 
                       num_cells, " Cells)")
 
-pal <- paletteDiscrete(values = LVL_proj_minus_clusters$Cell_type_voting)
-p1 <- ArchR::plotEmbedding(ArchRProj = LVL_proj_minus_clusters, colorBy = "cellColData", 
+pal <- paletteDiscrete(values = hvl_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = hvl_proj, colorBy = "cellColData", 
                            name = "Cell_type_voting", embedding = "UMAP", 
                            pal = pal, force = TRUE, keepAxis = TRUE) + 
-  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type, Reclustered)\n", 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
                           sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
                                                          legend.text = ggplot2::element_text(size = 10))
-ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters_LVL.png"), 
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "HVL_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
+
+# HVL PLACEBO
+idxPass <- which(hvl_proj$treatment %in% c("PLACEBO"))
+cellsPass <- hvl_proj$cellNames[idxPass]
+hvl_placebo_proj <- hvl_proj[cellsPass, ]
+
+num_cells <- length(hvl_placebo_proj$cellNames)
+num_samples <- length(unique(hvl_placebo_proj$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
+
+pal <- paletteDiscrete(values = hvl_placebo_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = hvl_placebo_proj, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "HVL_PLACEBO_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
+
+# PLACEBO
+idxPass <- which(atac_proj_minus_clusters$treatment %in% c("PLACEBO"))
+cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
+placebo_proj <- atac_proj_minus_clusters[cellsPass, ]
+
+num_cells <- length(placebo_proj$cellNames)
+num_samples <- length(unique(placebo_proj$Sample))
+sample_text <- paste0("(", num_samples, " Samples, ", 
+                      num_cells, " Cells)")
+
+pal <- paletteDiscrete(values = placebo_proj$Cell_type_voting)
+p1 <- ArchR::plotEmbedding(ArchRProj = placebo_proj, colorBy = "cellColData", 
+                           name = "Cell_type_voting", embedding = "UMAP", 
+                           pal = pal, force = TRUE, keepAxis = TRUE) + 
+  ggplot2::ggtitle(paste0("ATAC Data Integration\n(By Majority Vote Cell Type)\n", 
+                          sample_text)) + ggplot2::theme(plot.title = ggplot2::element_text(size = 18), 
+                                                         legend.text = ggplot2::element_text(size = 10))
+ggplot2::ggsave(filename = paste0(ATAC_output_dir, "PLACEBO_ATAC_UMAP_by_Majority_Vote_Cell_Type_Minus_Clusters.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
+
 
 
 # Call peaks
 addArchRGenome("hg38")
-LVL_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(LVL_proj_minus_clusters)
+atac_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(atac_proj_minus_clusters)
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
 # calculations
-LVL_proj_minus_clusters <- addPeakMatrix(LVL_proj_minus_clusters)
+atac_proj_minus_clusters <- addPeakMatrix(atac_proj_minus_clusters)
 
 # Save peak metadata
-LVL_peaks <- getPeakSet(LVL_proj_minus_clusters)
-LVL_peaks_df <- as.data.frame(LVL_peaks@seqnames)
-LVL_peaks_df <- cbind(LVL_peaks_df, as.data.frame(LVL_peaks@ranges))
-LVL_peaks_df <- cbind(LVL_peaks_df, as.data.frame(LVL_peaks@elementMetadata))
-write.table(x = LVL_peaks_df, file = paste0(ATAC_output_dir, "LVL_peaks_info.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+peaks <- getPeakSet(atac_proj_minus_clusters)
+peaks_df <- as.data.frame(peaks@seqnames)
+peaks_df <- cbind(peaks_df, as.data.frame(peaks@ranges))
+peaks_df <- cbind(peaks_df, as.data.frame(peaks@elementMetadata))
+write.table(x = peaks_df, file = paste0(ATAC_output_dir, "peaks_info.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Create Peaks.txt file
-peak_txt_file <- create_peaks_file(LVL_proj_minus_clusters, ATAC_output_dir)
+peak_txt_file <- create_peaks_file(atac_proj_minus_clusters, ATAC_output_dir)
 # Create peak_motif_matches.txt file
-LVL_proj_minus_clusters <- create_peak_motif_matches_file(LVL_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
-# save ArchR project: ArchR::saveArchRProject(ArchRProj = LVL_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "LVL"), load = FALSE, overwrite = TRUE)
-# load ArchR project: LVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "LVL"))
-# Create pseudobulk counts for peaks for each cell type
-# pseudo_bulk_dir <- paste0(ATAC_output_dir, "pseudo_bulk_atac/", date, "/")
-# if (!dir.exists(pseudo_bulk_dir)) {dir.create(pseudo_bulk_dir, recursive = TRUE)}
-# create_pseudobulk_atac(LVL_proj_minus_clusters, pseudo_bulk_dir)
+atac_proj_minus_clusters <- create_peak_motif_matches_file(atac_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
+# save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "minus_clusters"), load = FALSE, overwrite = TRUE)
+# load ArchR project: atac_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "minus_clusters"))
 # Find DASs
-sample_metadata <- LVL_proj_minus_clusters$Sample
+sample_metadata <- atac_proj_minus_clusters$Sample
 for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
   sample_metadata <- gsub(rownames(sample_metadata_for_SPEEDI_df)[j], sample_metadata_for_SPEEDI_df[j,1], sample_metadata)
 }
-LVL_proj_minus_clusters <- addCellColData(ArchRProj = LVL_proj_minus_clusters, data = sample_metadata, cells = LVL_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
+atac_proj_minus_clusters <- addCellColData(ArchRProj = atac_proj_minus_clusters, data = sample_metadata, cells = atac_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
 
 MAGICAL_file_dir <- paste0(ATAC_output_dir, "MAGICAL/")
 if (!dir.exists(MAGICAL_file_dir)) {dir.create(MAGICAL_file_dir)}
@@ -212,14 +255,14 @@ MAGICAL_candidate_peaks_dir <- paste0(MAGICAL_file_dir, "scATAC_Peak_Coordinates
 if (!dir.exists(MAGICAL_candidate_peaks_dir)) {dir.create(MAGICAL_candidate_peaks_dir)}
 MAGICAL_motif_mapping_prior_dir <- paste0(MAGICAL_file_dir, "scATAC_Motif_Mapping_Prior/")
 if (!dir.exists(MAGICAL_motif_mapping_prior_dir)) {dir.create(MAGICAL_motif_mapping_prior_dir)}
-for(cell_type in unique(LVL_proj_minus_clusters$Cell_type_voting)) {
+for(cell_type in unique(atac_proj_minus_clusters$Cell_type_voting)) {
   print(cell_type)
   cell_type_for_file_name <- sub(" ", "_", cell_type)
   # Grab cells associated with cell type
-  idxPass <- which(LVL_proj_minus_clusters$Cell_type_voting %in% cell_type)
-  cellsPass <- LVL_proj_minus_clusters$cellNames[idxPass]
+  idxPass <- which(atac_proj_minus_clusters$Cell_type_voting %in% cell_type)
+  cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
   # Subset ArchR project and peak matrix to associated cells
-  LVL_proj_cell_type_subset <- LVL_proj_minus_clusters[cellsPass,]
+  LVL_proj_cell_type_subset <- atac_proj_minus_clusters[cellsPass,]
   # 1) Cell metadata
   LVL_proj_metadata_df <- data.frame(cell_index = seq(length(LVL_proj_cell_type_subset$cellNames)), 
                                      cell_barcode = LVL_proj_cell_type_subset$cellNames, 
@@ -238,10 +281,10 @@ for(cell_type in unique(LVL_proj_minus_clusters$Cell_type_voting)) {
 }
 
 # 2) Peak set
-current_peaks <- getPeakSet(LVL_proj_minus_clusters)
+current_peaks <- getPeakSet(atac_proj_minus_clusters)
 write.table(current_peaks[,1:13], file = paste0(MAGICAL_candidate_peaks_dir, "LVL_ATAC_peak_coordinates.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
 
-LVL_proj_minus_clusters <- addMotifAnnotations(ArchRProj = LVL_proj_minus_clusters, motifSet = "cisbp", name = "Motif",
+atac_proj_minus_clusters <- addMotifAnnotations(ArchRProj = LVL_proj_minus_clusters, motifSet = "cisbp", name = "Motif",
                                                  force = TRUE)
 # A Motif-Matches-In-Peaks.rds file will be created under the Annotations folder
 peak_motif_mapping <- readRDS(file = paste0(ATAC_output_dir, "LVL/Annotations/Motif-Matches-In-Peaks.rds"))

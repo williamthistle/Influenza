@@ -32,7 +32,7 @@ load_archR_from_input_files <- function(inputFiles, analysis_dir) {
 
 # Add metadata for each sample to ArchR object
 add_sample_metadata_atac <- function(proj, high_viral_load_samples, low_viral_load_samples,
-                                d28_samples, d_minus_1_samples, male_samples, female_samples) {
+                                d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples) {
   # Add viral load metadata to ArchR object
   viral_load_vector <- proj$Sample
   idxSample <- which(proj$Sample %in% high_viral_load_samples)
@@ -54,13 +54,21 @@ add_sample_metadata_atac <- function(proj, high_viral_load_samples, low_viral_lo
   idxSample <- which(proj$Sample %in% female_samples)
   sex_vector[idxSample]<-'F'
   proj <- addCellColData(ArchRProj = proj, data = sex_vector, cells = proj$cellNames, name = "sex", force = TRUE)
+  # Add treatment metadata to ArchR object
+  treatment_vector <- proj$Sample
+  idxSample <- which(proj$Sample %in% placebo_samples)
+  treatment_vector[idxSample]<-'PLACEBO'
+  idxSample <- which(proj$Sample %in% vaccinated_samples)
+  treatment_vector[idxSample]<-'MVA-NP+M1'
+  proj <- addCellColData(ArchRProj = proj, data = treatment_vector, cells = proj$cellNames, name = "treatment", force = TRUE)
   return(proj)
 }
 
 # Create object with sample names and associated metadata value
 # This is probably not an important function for anyone else
 parse_metadata_for_samples <- function(proj, group, high_viral_load_samples, low_viral_load_samples,
-                                       d28_samples, d_minus_1_samples, male_samples, female_samples) {
+                                       d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples,
+                                       vaccinated_samples) {
   current_metadata <- c()
   metadata_names <- unique(proj$Sample)
   for(name in metadata_names) {
@@ -81,6 +89,12 @@ parse_metadata_for_samples <- function(proj, group, high_viral_load_samples, low
         current_metadata <- c(current_metadata, "M")
       } else {
         current_metadata <- c(current_metadata, "F")
+      }
+    } else if(group == "treatment") {
+      if(name %in% placebo_samples) {
+        current_metadata <- c(current_metadata, "PLACEBO")
+      } else {
+        current_metadata <- c(current_metadata, "MVA-NP+M1")
       }
     }
   }

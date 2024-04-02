@@ -106,8 +106,9 @@ add_rna_labels_for_atac_data <- function(proj, analysis_dir, source_rna_file, su
 
 # ATAC data have limited granularity, so we combine some cell types (because we can't easily distinguish between them)
 combine_cell_types_atac <- function(proj) {
+  proj$oldPredictedGroup <- proj$predictedGroup
   # Combine cell types
-  Cell_type_combined = proj$predictedGroup
+  Cell_type_combined <- proj$predictedGroup
   idx <- grep("CD4 T", Cell_type_combined)
   Cell_type_combined[idx] <- "CD4 Memory"
   idx <- grep("CD8 T", Cell_type_combined)
@@ -119,8 +120,8 @@ combine_cell_types_atac <- function(proj) {
   idx <- grep("B", Cell_type_combined)
   Cell_type_combined[idx] <- "B"
   proj <- addCellColData(ArchRProj = proj, data = Cell_type_combined, cells = proj$cellNames, name = "predictedGroup", force = TRUE)
-  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD4 Naive", "T Naive")
-  proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD8 Naive", "T Naive")
+  #proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD4 Naive", "T Naive")
+  #proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "CD8 Naive", "T Naive")
   proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "NK_CD56bright", "NK")
   proj$predictedGroup <- replace(proj$predictedGroup, proj$predictedGroup == "Treg", "CD4 Memory")
   return(proj)
