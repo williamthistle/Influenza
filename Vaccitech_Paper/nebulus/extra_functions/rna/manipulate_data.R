@@ -18,13 +18,11 @@ combine_cell_types_initial <- function(sc_obj, resolution = 1.5) {
 # Combine more cell types (for MAGICAL)
 combine_cell_types_magical <- function(sc_obj) {
   Cell_type_combined <- sc_obj$predicted_celltype_majority_vote
-  levels(Cell_type_combined) <- c(levels(Cell_type_combined), "T Naive", "B")
-  idx <- grep("CD4 Naive", Cell_type_combined)
-  Cell_type_combined[idx] <- "T Naive"
-  idx <- grep("CD8 Naive", Cell_type_combined)
-  Cell_type_combined[idx] <- "T Naive"
-  idx <- grep("Treg", Cell_type_combined)
-  Cell_type_combined[idx] <- "T Naive"
+  levels(Cell_type_combined) <- c(levels(Cell_type_combined), "B")
+  #idx <- grep("CD4 Naive", Cell_type_combined)
+  #Cell_type_combined[idx] <- "T Naive"
+  #idx <- grep("CD8 Naive", Cell_type_combined)
+  #Cell_type_combined[idx] <- "T Naive"
   idx <- grep("NK", Cell_type_combined)
   Cell_type_combined[idx] <- "NK"
   idx <- grep("B", Cell_type_combined)
