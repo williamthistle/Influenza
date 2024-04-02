@@ -83,7 +83,7 @@ setup_bulk_rna_analysis(metadata_dir = overall_metadata_dir, data_dir = bulk_rna
 
 bulk_rna_cell_types <- c("B.cells.naive", "T.cells.CD8", "T.cells.CD4.naive", "T.cells.CD4.memory.resting", "T.cells.regulatory..Tregs.", "NK.cells.resting",
                          "Monocytes", "Mast.cells.resting", "Neutrophils")
-innate_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright")
+innate_cell_types <- c("CD16 Mono", "CD14 Mono", "cDC", "pDC", "NK", "NK_CD56bright")
 adaptive_cell_types <- c("CD4 Naive", "CD8 Naive", "CD4 Memory", "CD8 Memory", "B memory", "MAIT", "B naive", "B")
 scRNA_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright", "CD4 Naive", "CD8 Naive", "CD4 Memory", "CD8 Memory", "B memory", "MAIT", "B naive")
 snME_cell_types <- c("B-Mem", "B-Naive", "Monocyte", "NK-cell2", "Tc-Mem", "Tc-Naive", "Th-Mem", "Th-Naive")
@@ -91,6 +91,7 @@ scATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono"
 mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 
 # scRNA-seq dirs
+
 # HVL
 scRNA_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/")
 scRNA_hvl_placebo_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/DEGs/Normal/")
@@ -107,6 +108,7 @@ scRNA_lvl_placebo_MAGICAL_cell_types_deg_dir <- paste0(onedrive_dir, "Vaccitech_
 scRNA_lvl_placebo_downstream_analysis_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/Downstream_Analysis/")
 
 # scATAC-seq dirs
+
 # HVL
 scATAC_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/")
 scATAC_hvl_placebo_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Placebo/DASs/")
@@ -120,6 +122,7 @@ scATAC_lvl_placebo_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scA
 scATAC_lvl_placebo_das_annotated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Placebo/DASs/Annotated/")
 
 # MAGICAL analysis dirs
+
 # HVL
 MAGICAL_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/")
 MAGICAL_hvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/Placebo/")
