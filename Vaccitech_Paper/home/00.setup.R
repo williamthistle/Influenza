@@ -20,7 +20,6 @@ library(monaLisa)
 library(ComplexHeatmap)
 library(circlize)
 library(chromVARmotifs)
-#library(sparklines)
 library(sva)
 library(corrr)
 library(enrichR)
@@ -72,31 +71,49 @@ source(paste0(script_base_dir, "extra_functions/humanbase_functions.R"))
 source(paste0(script_base_dir, "extra_functions/pseudobulk_analysis_helper.R"))
 source(paste0(script_base_dir, "extra_functions/MAGICAL_functions.R"))
 setup_bulk_analysis(metadata_dir = metadata_dir, data_dir = bulk_data_dir)
+
 sample_metadata <- read.table(paste0(metadata_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
 flu_tokens <- read.table(paste0(metadata_dir, "flu_data_tokens.tsv"), sep = "\t", header = TRUE)
-possible_cell_types <- c("CD4_Naive", "CD8_Naive", "CD4_Memory", "CD8_Memory", "cDC", "HSPC", "pDC", "Platelet", "Plasmablast", "Proliferating", "NK", "NK_CD56bright", "T_Naive", "CD14_Mono", "CD16_Mono", "MAIT", "B", "B_naive", "B_memory")
 innate_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright")
-adaptive_cell_types <- c("CD4 Naive", "CD8 Naive", "CD4 Memory", "CD8 Memory", "B memory", "MAIT", "B naive", "T Naive", "B")
+adaptive_cell_types <- c("CD4 Naive", "CD8 Naive", "CD4 Memory", "CD8 Memory", "B memory", "MAIT", "B naive", "B")
 possible_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 snME_cell_types <- c("B-Mem", "B-Naive", "Monocyte", "NK-cell2", "Tc-Mem", "Tc-Naive", "Th-Mem", "Th-Naive")
-atac_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "T Naive", "MAIT", "Proliferating")
+atac_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "pDC", "cDC", "MAIT", "Proliferating")
 mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
-# Set other dirs
-sc_rna_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/")
-sc_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/DEGs/")
-sc_deg_validation_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/DEGs_validation/")
-sc_deg_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/DEGs_with_ATAC_cell_types/")
 
-sc_rna_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/")
-sc_deg_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/DEGs/")
-sc_deg_lvl_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/DEGs_with_ATAC_cell_types/")
+# scRNA-seq dirs
+scRNA_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/")
+scRNA_hvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/Normal/")
+scRNA_hvl_placebo_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/MAGICAL/")
+scRNA_hvl_vaccinated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/Normal/")
+scRNA_hvl_vaccinated_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/MAGICAL/")
+scRNA_hvl_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/HumanBase/")
 
-sc_magical_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/")
-magical_output_dir <- paste0(sc_magical_dir, "Output/")
-magical_results <- read.table(file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
-sc_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/HumanBase/")
-sc_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snATAC-Seq/Results/HVL/")
-sc_das_annotated_dir <- paste0(sc_das_dir, "diff_peaks/annotated/")
+scRNA_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/")
+scRNA_lvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/Normal/")
+scRNA_lvl_placebo_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/MAGICAL/")
+scRNA_lvl_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/HumanBase/")
+
+# scATAC-seq dirs
+scATAC_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/")
+scATAC_hvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Placebo/")
+scATAC_hvl_placebo_annotated_dir <- paste0(sc_das_dir, "diff_peaks/annotated/")
+scATAC_hvl_vaccinated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Vaccinated/")
+
+scATAC_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/")
+scATAC_lvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Placebo/")
+scATAC_lvl_vaccinated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Vaccinated/")
+
+MAGICAL_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/")
+MAGICAL_hvl_output_dir <- paste0(MAGICAL_hvl_dir, "Output/")
+MAGICAL_hvl_results <- read.table(file = paste0(MAGICAL_hvl_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+MAGICAL_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/LVL/")
+MAGICAL_lvl_output_dir <- paste0(MAGICAL_lvl_dir, "Output/")
+# MAGICAL_lvl_results <- read.table(file = paste0(MAGICAL_lvl_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+
+
+
+
 mintchip_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/")
 mintchip_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/differentially_accessible_sites/")
 homer_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/HOMER/")
@@ -146,9 +163,9 @@ overall_metadata <- read.csv(overall_metadata_file)
 # Tables containing DEG results for single cell RNA-seq processing (HVL)
 # Includes genes that passed pseudobulk filtering (remove platelets)
 # TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
-sc_pseudobulk_deg_table <- read.table(paste0(sc_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_deg_table <- read.table(paste0(scRNA_hvl_placebo_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type != "Platelet",]
-sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(sc_deg_combined_cell_types_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(scRNA_hvl_placebo_combined_cell_types_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type != "Platelet",]
 sc_pseudobulk_deg_combined_cell_types_table$Cell_Type[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == "NK_MAGICAL"] <- "NK"
 innate_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% innate_cell_types,]
@@ -162,7 +179,7 @@ lvl_sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(sc_deg_lvl_
 lvl_sc_pseudobulk_deg_combined_cell_types_table <- lvl_sc_pseudobulk_deg_combined_cell_types_table[lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type != "Platelet",]
 lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type[lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == "NK_MAGICAL"] <- "NK"
 
-rna_cell_metadata <- read.table(paste0(sc_rna_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
+rna_cell_metadata <- read.table(paste0(scRNA_hvl_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
 
 # Tables containing DEG results for single cell RNA-seq processing (LVL)
 # Includes genes that passed pseudobulk filtering (remove platelets)
