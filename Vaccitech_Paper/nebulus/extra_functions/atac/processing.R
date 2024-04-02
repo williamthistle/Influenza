@@ -763,6 +763,57 @@ create_pseudobulk_atac_sample <- function(proj) {
   }
   return(pseudo_bulk)
 }
+
+
+create_magical_input_files_atac <- function(atac_proj, MAGICAL_file_dir) {
+  if (!dir.exists(MAGICAL_file_dir)) {dir.create(MAGICAL_file_dir)}
+  MAGICAL_cell_metadata_dir <- paste0(MAGICAL_file_dir, "scATAC_Cell_Metadata/")
+  if (!dir.exists(MAGICAL_cell_metadata_dir)) {dir.create(MAGICAL_cell_metadata_dir)}
+  MAGICAL_peak_counts_dir <- paste0(MAGICAL_file_dir, "scATAC_Read_Counts/")
+  if (!dir.exists(MAGICAL_peak_counts_dir)) {dir.create(MAGICAL_peak_counts_dir)}
+  MAGICAL_candidate_peaks_dir <- paste0(MAGICAL_file_dir, "scATAC_Peak_Coordinates/")
+  if (!dir.exists(MAGICAL_candidate_peaks_dir)) {dir.create(MAGICAL_candidate_peaks_dir)}
+  MAGICAL_motif_mapping_prior_dir <- paste0(MAGICAL_file_dir, "scATAC_Motif_Mapping_Prior/")
+  if (!dir.exists(MAGICAL_motif_mapping_prior_dir)) {dir.create(MAGICAL_motif_mapping_prior_dir)}
+
+  for(cell_type in unique(atac_proj$Cell_type_voting)) {
+    print(cell_type)
+    cell_type_for_file_name <- sub(" ", "_", cell_type)
+    # Grab cells associated with cell type
+    idxPass <- which(atac_proj$Cell_type_voting %in% cell_type)
+    cellsPass <- atac_proj$cellNames[idxPass]
+    # Subset ArchR project and peak matrix to associated cells
+    atac_proj_cell_type_subset <- atac_proj[cellsPass,]
+    # 1) Cell metadata
+    atac_proj_metadata_df <- data.frame(cell_index = seq(length(atac_proj_cell_type_subset$cellNames)), 
+                                       cell_barcode = atac_proj_cell_type_subset$cellNames, 
+                                       cell_type = atac_proj_cell_type_subset$Cell_type_voting, 
+                                       sample = atac_proj_cell_type_subset$Sample, 
+                                       condition = atac_proj_cell_type_subset$time_point)
+    write.table(atac_proj_metadata_df, file = paste0(MAGICAL_cell_metadata_dir, cell_type_for_file_name, "_ATAC_cell_metadata.tsv"), sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # 2) ATAC assay cell count
+    atac_peak_matrix_cell_type_subset <- getMatrixFromProject(ArchRProj = atac_proj_cell_type_subset, useMatrix = "PeakMatrix", useSeqnames = NULL,
+                                                             verbose = TRUE,binarize = FALSE,threads = getArchRThreads(),
+                                                             logFile = createLogFile("getMatrixFromProject"))
+    
+    final_peak_matrix <- atac_peak_matrix_cell_type_subset@assays@data@listData$PeakMatrix
+    final_peak_matrix <- final_peak_matrix[, atac_proj_cell_type_subset$cellNames]
+    saveRDS(final_peak_matrix, file= paste0(MAGICAL_peak_counts_dir, cell_type_for_file_name, "_ATAC_read_counts.rds"))
+  }
+  
+  # 2) Peak set
+  current_peaks <- getPeakSet(atac_proj)
+  write.table(current_peaks[,1:13], file = paste0(MAGICAL_candidate_peaks_dir, "ATAC_peak_coordinates.tsv"), quote = FALSE, col.names = FALSE,  sep = "\t")
+  
+  atac_proj <- addMotifAnnotations(ArchRProj = atac_proj, motifSet = "cisbp", name = "Motif",
+                                                  force = TRUE)
+  # A Motif-Matches-In-Peaks.rds file will be created under the Annotations folder
+  peak_motif_mapping <- readRDS(file = paste0(ATAC_output_dir, "ArchROutput/Annotations/Motif-Matches-In-Peaks.rds"))
+  write.table(lapply(summary(peak_motif_mapping@assays@data@listData$matches), as.numeric), 
+              file=paste0(MAGICAL_motif_mapping_prior_dir, "ATAC_motif_mapping_prior.tsv"),
+              quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
+}
+
   
 
 peakAnnoEnrichment_mine <- function(seMarker = NULL, ArchRProj = NULL, peakAnnotation = NULL, 
