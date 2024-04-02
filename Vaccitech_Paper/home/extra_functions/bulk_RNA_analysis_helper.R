@@ -1,5 +1,5 @@
 # Method to set up bulk analysis
-setup_bulk_analysis=function(metadata_dir, data_dir) {
+setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   # Read in count and metadata files
   gene_counts <<- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
   all_metadata_file <<- paste0(metadata_dir, "all_metadata_sheet.tsv")

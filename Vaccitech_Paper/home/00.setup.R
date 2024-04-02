@@ -48,91 +48,110 @@ if(length(laptop_use == 1)) {
 onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
 
+# Misc settings
 set.seed(get_speedi_seed())
 options(max.print=10000)
 
+# Gene databases for hg19 (MintChIP) and hg38 (everything else)
+txdb_hg19 <- TxDb.Hsapiens.UCSC.hg19.knownGene
+txdb_hg38 <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+# Set base script dir 
 script_base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
-bulk_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Data/")
-bulk_results_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/")
-metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Overall_Metadata/")
 
-# Read in bulk RNA-seq cell type proportions
-cibersort_cell_type_proportions <- read.table(paste0(bulk_data_dir, "cibertsortX_rsem_genes_count.processed.CPM.tsv"), sep = "\t", header = TRUE)
-# Rename Mixture to aliquot_id for merging
-cibersort_cell_type_proportions$aliquot_id <- cibersort_cell_type_proportions$Mixture
-cibersort_cell_type_proportions <- cibersort_cell_type_proportions[,-c(1)]
-
-bulk_cell_types <- c("B.cells.naive", "T.cells.CD8", "T.cells.CD4.naive", "T.cells.CD4.memory.resting", "T.cells.regulatory..Tregs.", "NK.cells.resting",
-                     "Monocytes", "Mast.cells.resting", "Neutrophils")
-
+# Source various scripts
 source(paste0(script_base_dir, "extra_functions/bulk_RNA_analysis_helper.R"))
 source(paste0(script_base_dir, "extra_functions/Compendium_Functions.R"))
 source(paste0(script_base_dir, "extra_functions/humanbase_functions.R"))
 source(paste0(script_base_dir, "extra_functions/pseudobulk_analysis_helper.R"))
 source(paste0(script_base_dir, "extra_functions/MAGICAL_functions.R"))
-setup_bulk_analysis(metadata_dir = metadata_dir, data_dir = bulk_data_dir)
 
-sample_metadata <- read.table(paste0(metadata_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
-flu_tokens <- read.table(paste0(metadata_dir, "flu_data_tokens.tsv"), sep = "\t", header = TRUE)
+# Set overall metadata dir
+overall_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Overall_Metadata/")
+
+# Set bulk RNA-seq dirs
+bulk_rna_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Data/")
+bulk_rna_results_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/")
+
+# Read in bulk RNA-seq cell type proportions
+cibersort_cell_type_proportions <- read.table(paste0(bulk_rna_data_dir, "cibertsortX_rsem_genes_count.processed.CPM.tsv"), sep = "\t", header = TRUE)
+# Rename Mixture to aliquot_id for merging
+cibersort_cell_type_proportions$aliquot_id <- cibersort_cell_type_proportions$Mixture
+cibersort_cell_type_proportions <- cibersort_cell_type_proportions[,-c(1)]
+
+setup_bulk_rna_analysis(metadata_dir = overall_metadata_dir, data_dir = bulk_rna_data_dir)
+
+bulk_rna_cell_types <- c("B.cells.naive", "T.cells.CD8", "T.cells.CD4.naive", "T.cells.CD4.memory.resting", "T.cells.regulatory..Tregs.", "NK.cells.resting",
+                         "Monocytes", "Mast.cells.resting", "Neutrophils")
 innate_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright")
 adaptive_cell_types <- c("CD4 Naive", "CD8 Naive", "CD4 Memory", "CD8 Memory", "B memory", "MAIT", "B naive", "B")
-possible_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
+scRNA_cell_types <- c("CD16 Mono","CD14 Mono","cDC","pDC","NK","NK_CD56bright", "CD4 Naive", "CD8 Naive", "CD4 Memory", "CD8 Memory", "B memory", "MAIT", "B naive")
 snME_cell_types <- c("B-Mem", "B-Naive", "Monocyte", "NK-cell2", "Tc-Mem", "Tc-Naive", "Th-Mem", "Th-Naive")
-atac_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "pDC", "cDC", "MAIT", "Proliferating")
+scATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "pDC", "cDC", "MAIT", "Proliferating")
 mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 
 # scRNA-seq dirs
+# HVL
 scRNA_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/")
-scRNA_hvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/Normal/")
-scRNA_hvl_placebo_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/MAGICAL/")
-scRNA_hvl_vaccinated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/Normal/")
-scRNA_hvl_vaccinated_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/MAGICAL/")
-scRNA_hvl_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/HumanBase/")
+scRNA_hvl_placebo_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/DEGs/Normal/")
+scRNA_hvl_placebo_MAGICAL_cell_types_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/DEGs/MAGICAL/")
+scRNA_hvl_placebo_downstream_analysis_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/Downstream_Analysis/")
+scRNA_hvl_vaccinated_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/DEGs/Normal/")
+scRNA_hvl_vaccinated_MAGICAL_cell_types_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/DEGs/MAGICAL/")
+scRNA_hvl_vaccinated_downstream_analysis_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/Downstream_Analysis/")
 
+# LVL
 scRNA_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/")
-scRNA_lvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/Normal/")
-scRNA_lvl_placebo_combined_cell_types_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/MAGICAL/")
-scRNA_lvl_humanbase_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/HumanBase/")
+scRNA_lvl_placebo_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/DEGs/Normal/")
+scRNA_lvl_placebo_MAGICAL_cell_types_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/DEGs/MAGICAL/")
+scRNA_lvl_placebo_downstream_analysis_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/Downstream_Analysis/")
 
 # scATAC-seq dirs
+# HVL
 scATAC_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/")
-scATAC_hvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Placebo/")
-scATAC_hvl_placebo_annotated_dir <- paste0(sc_das_dir, "diff_peaks/annotated/")
-scATAC_hvl_vaccinated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Vaccinated/")
+scATAC_hvl_placebo_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Placebo/DASs/")
+scATAC_hvl_placebo_das_annotated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Placebo/DASs/Annotated/")
+scATAC_hvl_vaccinated_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Vaccinated/DASs/")
+scATAC_hvl_vaccinated_das_annotated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Vaccinated/DASs/Annotated/")
 
+# LVL
 scATAC_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/")
-scATAC_lvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Placebo/")
-scATAC_lvl_vaccinated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Vaccinated/")
+scATAC_lvl_placebo_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Placebo/DASs/")
+scATAC_lvl_placebo_das_annotated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Placebo/DASs/Annotated/")
 
+# MAGICAL analysis dirs
+# HVL
 MAGICAL_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/")
-MAGICAL_hvl_output_dir <- paste0(MAGICAL_hvl_dir, "Output/")
-MAGICAL_hvl_results <- read.table(file = paste0(MAGICAL_hvl_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+MAGICAL_hvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/Placebo/")
+MAGICAL_hvl_placebo_output_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/Placebo/Output/")
+MAGICAL_hvl_vaccinated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/Vaccinated/")
+MAGICAL_hvl_vaccinated_output_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/HVL/Vaccinated/Output/")
+
+# LVL
 MAGICAL_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/LVL/")
-MAGICAL_lvl_output_dir <- paste0(MAGICAL_lvl_dir, "Output/")
-# MAGICAL_lvl_results <- read.table(file = paste0(MAGICAL_lvl_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+MAGICAL_lvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/LVL/Placebo/")
+MAGICAL_lvl_placebo_output_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/LVL/Placebo/Output/")
 
-
-
-
+# MintChIP analysis dirs
 mintchip_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/")
 mintchip_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/differentially_accessible_sites/")
 homer_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/HOMER/")
+
+# snME analysis dirs
 snME_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMethylation/Data/")
 snME_results_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMethylation/Results/")
+
+# miRNA analysis dirs
 miRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Data/")
 miRNA_metadata_dir <-paste0(onedrive_dir, "Vaccitech_Paper/Analyses/miRNA/Metadata/")
+
+# total RNA analysis dirs
 totalRNA_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Data/")
 totalRNA_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Total_RNA/Metadata/")
 
-txdb_hg38 <- TxDb.Hsapiens.UCSC.hg38.knownGene
-txdb_hg19 <- TxDb.Hsapiens.UCSC.hg19.knownGene
-
-# Read in Mint-ChIP metadata
-mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
-
-# Read in data lists for printing subject overview
+# Read in data lists for creating comprehensive metadata sheet
 scRNA_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Metadata/scRNA_data_list.txt")
-scATAC_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snATAC-Seq/Metadata/snATAC_data_list.txt")
+scATAC_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Metadata/snATAC_data_list.txt")
 multiome_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMultiome/Metadata/multiome_data_list.txt")
 bulkRNA_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Metadata/bulkRNA_data_list.txt")
 mintchip_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/mintchip_data_list.txt")
@@ -142,8 +161,7 @@ snme_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMethylation/M
 bulk_methylation_metadata_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_Methylation/Metadata/Bulk_Methylation_Sample_Metadata.csv")
 scRNA_qc_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Metadata/ECHO_FLU_Vaccitech_PBMC_scrnaseq_coded_qc_report_WT.csv")
 multiome_qc_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMultiome/Metadata/Stanford_FLU_combined_qc_metric_coded_09015022_qc_data.csv")
-overall_metadata_file <- paste0(metadata_dir, "Vaccitech_Original_Metadata_Sheet.csv")
-# Read in tables
+original_unfiltered_metadata_file <- paste0(metadata_dir, "Vaccitech_Original_Metadata_Sheet.csv")
 scRNA_data <- read.table(scRNA_data_list)$V1
 scRNA_data <- scRNA_data[1:length(scRNA_data) - 1]
 scATAC_data <- read.table(scATAC_data_list)$V1
@@ -158,28 +176,45 @@ snme_data <- read.table(snme_data_list)$V1
 bulk_methylation_data <- read.table(bulk_methylation_metadata_file, sep = ",", header = TRUE)$Sample.ID
 scRNA_qc <- read.csv(scRNA_qc_file)
 multiome_qc <- read.csv(multiome_qc_file)
-overall_metadata <- read.csv(overall_metadata_file)
+original_unfiltered_metadata <- read.csv(original_unfiltered_metadata_file)
 
-# Tables containing DEG results for single cell RNA-seq processing (HVL)
-# Includes genes that passed pseudobulk filtering (remove platelets)
-# TODO: Remove genes that have different sign for sc FC and pseudobulk FC? Not relevant for my current SC dataset at least
-sc_pseudobulk_deg_table <- read.table(paste0(scRNA_hvl_placebo_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type != "Platelet",]
-sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(scRNA_hvl_placebo_combined_cell_types_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type != "Platelet",]
-sc_pseudobulk_deg_combined_cell_types_table$Cell_Type[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == "NK_MAGICAL"] <- "NK"
-innate_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% innate_cell_types,]
-adaptive_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type %in% adaptive_cell_types,]
-innate_sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type %in% innate_cell_types,]
-adaptive_sc_pseudobulk_deg_combined_cell_types_table <- sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type %in% adaptive_cell_types,]
+# Read in metadata and/or data for different assays
 
-lvl_sc_pseudobulk_deg_table <- read.table(paste0(sc_deg_lvl_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-lvl_sc_pseudobulk_deg_table <- lvl_sc_pseudobulk_deg_table[lvl_sc_pseudobulk_deg_table$Cell_Type != "Platelet",]
-lvl_sc_pseudobulk_deg_combined_cell_types_table <- read.table(paste0(sc_deg_lvl_combined_cell_types_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
-lvl_sc_pseudobulk_deg_combined_cell_types_table <- lvl_sc_pseudobulk_deg_combined_cell_types_table[lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type != "Platelet",]
-lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type[lvl_sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == "NK_MAGICAL"] <- "NK"
+# Overall metadata
+all_metadata <- read.table(paste0(overall_metadata_dir, "all_metadata_sheet.tsv"), sep = "\t", header = TRUE)
+flu_ID_tokens <- read.table(paste0(overall_metadata_dir, "flu_data_tokens.tsv"), sep = "\t", header = TRUE)
 
-rna_cell_metadata <- read.table(paste0(scRNA_hvl_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
+# MintChIP
+mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
+
+# MAGICAL
+MAGICAL_hvl_placebo_results <- read.table(file = paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+# MAGICAL_hvl_vaccinated_results <- read.table(file = paste0(MAGICAL_hvl_vaccinated_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+# MAGICAL_lvl_placebo_results <- read.table(file = paste0(MAGICAL_lvl_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+
+# scRNA-seq - TODO: verify that SC and pseudobulk FC are in same direction
+# HVL
+scRNA_hvl_placebo_degs <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type != "Platelet",]
+scRNA_hvl_placebo_MAGICAL_cell_types_degs <-  read.table(paste0(scRNA_hvl_placebo_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+scRNA_hvl_placebo_MAGICAL_cell_types_degs <- scRNA_hvl_placebo_MAGICAL_cell_types_degs[scRNA_hvl_placebo_MAGICAL_cell_types_degs$Cell_Type != "Platelet",]
+# TODO: Fix this!
+scRNA_hvl_placebo_cell_metadata <- read.table(paste0(scRNA_hvl_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
+
+scRNA_hvl_vaccinated_degs <- read.table(paste0(scRNA_hvl_vaccinated_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+scRNA_hvl_vaccinated_degs <- scRNA_hvl_vaccinated_degs[scRNA_hvl_vaccinated_degs$Cell_Type != "Platelet",]
+scRNA_hvl_vaccinated_MAGICAL_cell_types_degs <-  read.table(paste0(scRNA_hvl_vaccinated_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+scRNA_hvl_vaccinated_MAGICAL_cell_types_degs <- scRNA_hvl_vaccinated_MAGICAL_cell_types_degs[scRNA_hvl_vaccinated_MAGICAL_cell_types_degs$Cell_Type != "Platelet",]
+
+# LVL
+scRNA_lvl_placebo_degs <- read.table(paste0(scRNA_lvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+scRNA_lvl_placebo_degs <- scRNA_lvl_placebo_degs[scRNA_lvl_placebo_degs$Cell_Type != "Platelet",]
+scRNA_lvl_placebo_MAGICAL_cell_types_degs <-  read.table(paste0(scRNA_lvl_placebo_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+scRNA_lvl_placebo_MAGICAL_cell_types_degs <- scRNA_lvl_placebo_MAGICAL_cell_types_degs[scRNA_lvl_placebo_MAGICAL_cell_types_degs$Cell_Type != "Platelet",]
+
+
+
+
 
 # Tables containing DEG results for single cell RNA-seq processing (LVL)
 # Includes genes that passed pseudobulk filtering (remove platelets)
