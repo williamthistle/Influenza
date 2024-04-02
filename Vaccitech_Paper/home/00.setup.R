@@ -96,16 +96,16 @@ mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H
 
 # HVL
 scRNA_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/")
-scRNA_hvl_placebo_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/DEGs/Normal/")
+scRNA_hvl_placebo_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/DEGs/NORMAL/")
 scRNA_hvl_placebo_MAGICAL_cell_types_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/DEGs/MAGICAL/")
 scRNA_hvl_placebo_downstream_analysis_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Placebo/Downstream_Analysis/")
-scRNA_hvl_vaccinated_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/DEGs/Normal/")
+scRNA_hvl_vaccinated_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/DEGs/NORMAL/")
 scRNA_hvl_vaccinated_MAGICAL_cell_types_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/DEGs/MAGICAL/")
 scRNA_hvl_vaccinated_downstream_analysis_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/HVL/Vaccinated/Downstream_Analysis/")
 
 # LVL
 scRNA_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/")
-scRNA_lvl_placebo_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/DEGs/Normal/")
+scRNA_lvl_placebo_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/DEGs/NORMAL/")
 scRNA_lvl_placebo_MAGICAL_cell_types_deg_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/DEGs/MAGICAL/")
 scRNA_lvl_placebo_downstream_analysis_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Results/LVL/Placebo/Downstream_Analysis/")
 
@@ -166,7 +166,7 @@ snme_data_list <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMethylation/M
 bulk_methylation_metadata_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_Methylation/Metadata/Bulk_Methylation_Sample_Metadata.csv")
 scRNA_qc_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scRNA-Seq/Metadata/ECHO_FLU_Vaccitech_PBMC_scrnaseq_coded_qc_report_WT.csv")
 multiome_qc_file <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/snMultiome/Metadata/Stanford_FLU_combined_qc_metric_coded_09015022_qc_data.csv")
-original_unfiltered_metadata_file <- paste0(metadata_dir, "Vaccitech_Original_Metadata_Sheet.csv")
+original_unfiltered_metadata_file <- paste0(overall_metadata_dir, "Vaccitech_Original_Metadata_Sheet.csv")
 scRNA_data <- read.table(scRNA_data_list)$V1
 scRNA_data <- scRNA_data[1:length(scRNA_data) - 1]
 scATAC_data <- read.table(scATAC_data_list)$V1
