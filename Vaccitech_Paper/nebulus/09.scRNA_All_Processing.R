@@ -129,6 +129,12 @@ cluster_info <- capture_cluster_info(sc_obj)
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 sc_obj <- combine_cell_types_magical(sc_obj)
 
+# Test
+messy_clusters <- c(17)
+idxPass <- which(Idents(sc_obj) %in% messy_clusters)
+cellsPass <- names(sc_obj$orig.ident[-idxPass])
+sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
 # Print UMAPs for all subjects (HVL and LVL)
 print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
