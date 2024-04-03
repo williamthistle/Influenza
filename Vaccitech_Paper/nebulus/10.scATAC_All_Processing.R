@@ -3,8 +3,8 @@ source("~/00.setup.R")
 home_dir <- "/Genomics/ogtr04/wat2/"
 
 ### SHORTCUT ###
-# HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "HVL"))
-# seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
+# HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "minus_clusters"))
+seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "seurat_minus_clusters.RDS"))
 
 ################## SETUP ##################
 data_path <- paste0(home_dir, "single_cell/data")
@@ -185,7 +185,6 @@ placebo_atac_proj <- atac_proj_minus_clusters[cellsPass,]
 
 idxPass <- which(placebo_atac_proj$viral_load %in% "high")
 cellsPass <- placebo_atac_proj$cellNames[idxPass]
-# Subset ArchR project and peak matrix to associated cells
 placebo_hvl_atac_proj <- placebo_atac_proj[cellsPass,]
 
 create_magical_input_files_atac(placebo_hvl_atac_proj, paste0(ATAC_output_dir, "MAGICAL_HVL_PLACEBO_", date, "/"))
@@ -235,15 +234,43 @@ seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name 
 # saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "seurat_minus_clusters.RDS"))
 # seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "seurat_minus_clusters.RDS"))
 
+# Separate into relevant subsets
 
+sc_obj <- seurat_atac
 
+# HVL
+idxPass <- which(sc_obj$viral_load %in% "high")
+cellsPass <- names(sc_obj$orig.ident[idxPass])
+hvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
-differential_peaks_dir <- paste0(ATAC_output_dir, "diff_peaks/", date, "/seurat_peaks/")
-if (!dir.exists(differential_peaks_dir)) {dir.create(differential_peaks_dir, recursive = TRUE)}
+# HVL PLACEBO
+idxPass <- which(hvl_sc_obj$treatment %in% "PLACEBO")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_placebo_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
 
-cell_types <- unique(seurat_atac$predicted_celltype_majority_vote)
+# HVL VACCINATED
+idxPass <- which(hvl_sc_obj$treatment %in% "MVA-NP+M1")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_vaccinated_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
 
-run_differential_expression_controlling_for_subject_id_atac(seurat_atac, differential_peaks_dir, sample_metadata_for_SPEEDI_df, "time_point", cell_types)
+# LVL
+idxPass <- which(sc_obj$viral_load %in% "low")
+cellsPass <- names(sc_obj$orig.ident[idxPass])
+lvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
+# LVL PLACEBO
+idxPass <- which(lvl_sc_obj$treatment %in% "PLACEBO")
+cellsPass <- names(lvl_sc_obj$orig.ident[idxPass])
+lvl_placebo_sc_obj <- subset(x = lvl_sc_obj, subset = cell_name %in% cellsPass)
+
+# LVL VACCINATED
+idxPass <- which(lvl_sc_obj$treatment %in% "MVA-NP+M1")
+cellsPass <- names(lvl_sc_obj$orig.ident[idxPass])
+lvl_vaccinated_sc_obj <- subset(x = lvl_sc_obj, subset = cell_name %in% cellsPass)
+
+run_differential_expression_controlling_for_subject_id_atac(hvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_HVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
+run_differential_expression_controlling_for_subject_id_atac(lvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_LVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
+run_differential_expression_controlling_for_subject_id_atac(hvl_vaccinated_sc_obj, paste0(ATAC_output_dir, "DE_HVL_VACCINATED_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
 
 # Add GC content
 seurat_atac <- RegionStats(seurat_atac, genome = BSgenome.Hsapiens.UCSC.hg38)

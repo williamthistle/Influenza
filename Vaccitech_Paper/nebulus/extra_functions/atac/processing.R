@@ -928,17 +928,49 @@ find_rows_with_threshold <- function(matrix_data, metadata_df, threshold = 0.05)
 }
 
 # Run differential expression for Seurat ATAC object 
-run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, analysis_dir, sample_metadata_for_SPEEDI_df, group, cell_types) {
+run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, analysis_dir, sample_metadata_for_SPEEDI_df, group) {
   print(paste0("Performing differential expression for group ", group, " for each cell type (controlling for subject ID)"))
-  for(current_cell_type in cell_types) {
+  
+  if (!dir.exists(analysis_dir)) {dir.create(analysis_dir, recursive = TRUE)}
+  
+  expected_num_samples <- length(unique(sc_obj$Sample))
+  
+  cell_types <- unique(sc_obj$Cell_type_voting)
+  
+  if(group == "viral_load") {
+    first_group <- "high"
+    second_group <- "low"
+  } else if(group == "time_point") {
+    first_group <- "D28"
+    second_group <- "D_minus_1"
+  } else if(group == "sex") {
+    first_group <- "M"
+    second_group <- "F"
+  }
+  
+  # Make reading data parallel
+  if (Sys.getenv("SLURM_NTASKS_PER_NODE") == "") {
+    n.cores <- as.numeric(detectCores())
+  } else {
+    n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
+  }
+  
+  n.cores <- 16
+  
+  message(paste0("Number of cores: ", n.cores))
+  
+  registerDoMC(n.cores)
+  message("Begin parallelizing...")
+  
+  compiled_output <- foreach(
+    i = 1:length(cell_types),
+    .packages = c("Seurat", "base")
+  ) %dopar% {
+    current_cell_type <- cell_types[[i]]
     print(current_cell_type)
+    cell_type_for_file_name <- sub(" ", "_", current_cell_type)
     # Grab indices for current cell type
-    if(current_cell_type %in% unique(sc_obj$predicted_celltype_majority_vote)) {
-      idxPass <- which(sc_obj$predicted_celltype_majority_vote %in% current_cell_type)
-    } else {
-      idxPass <- which(sc_obj$magical_cell_types %in% current_cell_type)
-      print("This cell type is for MAGICAL processing")
-    }
+    idxPass <- which(sc_obj$predicted_celltype_majority_vote %in% current_cell_type)
     if(length(idxPass) == 0) {
       print("No cells found, so skipping cell type")
     } else {
@@ -958,19 +990,15 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
         first_group <- "M"
         second_group <- "F"
       }
-      cell_type_for_file_name <- sub(" ", "_", current_cell_type)
-      # Perform SC DE (pct 0.01 and log2fc threshold 0.1)
-      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = c('nCount_peaks', 'subject_id'), ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0.1, min.pct = 0.01)
+      # Perform SC DE
+      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = c('nCount_peaks', 'subject_id'), ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0)
       # Save unfiltered DE results
-      write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_unfiltered_pct_0.01.tsv"), quote = FALSE, sep = "\t")
-      # Filter DE results (p-value < 0.05) and write to file
-      current_de <- current_de[current_de$p_val < 0.05,]
-      write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_filtered_pct_0.01.tsv"), quote = FALSE, sep = "\t")
-      # Write positive and negative peaks to file
-      pos_current_de <- current_de[current_de$avg_log2FC > 0,]
-      write.table(pos_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_filtered_pct_0.01_pos.tsv"), quote = FALSE, sep = "\t")
-      neg_current_de <- current_de[current_de$avg_log2FC < 0,]
-      write.table(neg_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_filtered_pct_0.01_neg.tsv"), quote = FALSE, sep = "\t")
+      write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_unfiltered.tsv"), quote = FALSE, sep = "\t")
+      # Filter DE results and write to file
+      current_de_filtered <- current_de[current_de$p_val < 0.05,]
+      current_de_filtered <- current_de_filtered[abs(current_de_filtered$avg_log2FC) >= 0.1,]
+      current_de_filtered <- current_de_filtered[current_de_filtered$pct.1 >= 0.01 | current_de_filtered$pct.2 >= 0.01, ]
+      write.table(current_de_filtered, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_pct_0.01.tsv"), quote = FALSE, sep = "\t")
       # Run pseudobulk DE
       pseudobulk_counts <- create_pseudobulk_counts_atac_seurat(cells_subset)
       pseudobulk_metadata <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$subject_id %in% cells_subset$subject_id,]
@@ -986,32 +1014,18 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
       # Filter DE results (p-value < 0.05) and write to file
       pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
       pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
-      write.table(pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk_filtered.tsv"), quote = FALSE, sep = "\t")
-      # Write positive and negative peaks to file
-      pos_pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange > 0,]
-      write.table(pos_pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk_filtered_pos.tsv"), quote = FALSE, sep = "\t")
-      neg_pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$log2FoldChange < 0,]
-      write.table(neg_pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk_filtered_neg.tsv"), quote = FALSE, sep = "\t")
-      # We want to look at pct = 0.03 and 0.05 as well, just to see whether signal is better
-      pct_thresholds <- c(0.01, 0.03, 0.05)
+      write.table(pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk.tsv"), quote = FALSE, sep = "\t")
+      # We want to look at pct = 0.05 and 0.1 as well, just to see whether signal is better
+      pct_thresholds <- c(0.01, 0.05, 0.1)
       for(pct_threshold in pct_thresholds) {
         # This DF will store those peaks which were found to be significant in both SC and pseudobulk
         overlapping_peak_de <- data.frame(Cell_Type = character(), Peak_Name = character(), sc_pval = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
                                           pseudo_bulk_log2FC = character())
         if(pct_threshold != 0.01) {
-          current_de_with_current_pct <- current_de[current_de$pct.1 >= pct_threshold | current_de$pct.2 >= pct_threshold,]
-          # Save unfiltered DE results
-          write.table(current_de_with_current_pct, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_unfiltered_pct_", pct_threshold, ".tsv"), quote = FALSE, sep = "\t")
-          # Filter DE results (p-value < 0.05) and write to file
-          current_de_with_current_pct <- current_de_with_current_pct[current_de_with_current_pct$p_val < 0.05,]
-          write.table(current_de_with_current_pct, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_filtered_pct_", pct_threshold, ".tsv"), quote = FALSE, sep = "\t")
-          # Write positive and negative peaks to file
-          pos_current_de <- current_de_with_current_pct[current_de_with_current_pct$avg_log2FC > 0,]
-          write.table(pos_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_filtered_pct_", pct_threshold, "_pos.tsv"), quote = FALSE, sep = "\t")
-          neg_current_de <- current_de_with_current_pct[current_de_with_current_pct$avg_log2FC < 0,]
-          write.table(neg_current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_filtered_pct_", pct_threshold, "_neg.tsv"), quote = FALSE, sep = "\t")
+          current_de_with_current_pct <- current_de_filtered[current_de_filtered$pct.1 >= pct_threshold | current_de_filtered$pct.2 >= pct_threshold,]
+          write.table(current_de_with_current_pct, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_pct_", pct_threshold, ".tsv"), quote = FALSE, sep = "\t")
         } else {
-          current_de_with_current_pct <- current_de
+          current_de_with_current_pct <- current_de_filtered
         }
         final_peaks <- intersect(rownames(current_de_with_current_pct), rownames(pseudobulk_analysis_results))
         # Record information about remaining genes in overlapping_peak_de
@@ -1027,12 +1041,7 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
         # Make sure that FC sign matches between SC and pseudo analysis
         overlapping_peak_de <- overlapping_peak_de[sign(overlapping_peak_de$sc_log2FC) == sign(overlapping_peak_de$pseudo_bulk_log2FC),]
         # Write both positive and negative peaks to file
-        write.table(overlapping_peak_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_overlapping_peak_pct_", pct_threshold, ".tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
-        # Write positive and negative peaks to file
-        pos_overlapping_peak_de <- overlapping_peak_de[overlapping_peak_de$sc_log2FC > 0,]
-        write.table(pos_overlapping_peak_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_overlapping_peak_pct_", pct_threshold, "_pos.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
-        neg_overlapping_peak_de <- overlapping_peak_de[overlapping_peak_de$sc_log2FC < 0,]
-        write.table(neg_overlapping_peak_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_overlapping_peak_pct_", pct_threshold, "_neg.tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
+        write.table(overlapping_peak_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_final_pct_", pct_threshold, ".tsv"), quote = FALSE, sep = "\t", row.names = FALSE)
       }
     }
   }

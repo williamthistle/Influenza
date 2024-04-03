@@ -129,8 +129,8 @@ cluster_info <- capture_cluster_info(sc_obj)
 # Combine cell types for MAGICAL and other analyses that require ATAC-seq (granularity isn't as good for ATAC-seq)
 sc_obj <- combine_cell_types_magical(sc_obj)
 
-# Test
-messy_clusters <- c(17)
+# Remove messy clusters
+messy_clusters <- c(17, 29)
 idxPass <- which(Idents(sc_obj) %in% messy_clusters)
 cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)

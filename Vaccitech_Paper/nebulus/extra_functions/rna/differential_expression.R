@@ -60,7 +60,7 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
     n.cores <- as.numeric(Sys.getenv("SLURM_NTASKS_PER_NODE"))
   }
   
-  n.cores <- 12
+  n.cores <- 16
   
   message(paste0("Number of cores: ", n.cores))
   
