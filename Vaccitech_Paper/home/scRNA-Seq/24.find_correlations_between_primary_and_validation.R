@@ -133,7 +133,7 @@ for(cell_type in correlation_cell_types) {
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/wat2/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 16.9, width = 10)
+ggsave("C:/Users/willi/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 10, width = 10)
 
 # Other plotting attempts
 #n <- length(pseudobulk_corrected_plots)
