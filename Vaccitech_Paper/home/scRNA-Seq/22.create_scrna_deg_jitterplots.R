@@ -1,8 +1,10 @@
 # HVL
-hvl_jitterplot_data <- sc_pseudobulk_deg_table
+hvl_jitterplot_data <- scRNA_hvl_placebo_degs
 
-# hvl_jitterplot_data <- subset(hvl_jitterplot_data, !(Cell_Type == "HSPC"))
-# hvl_jitterplot_data <- subset(hvl_jitterplot_data, !(Cell_Type == "NK_CD56bright"))
+hvl_jitterplot_data <- subset(hvl_jitterplot_data, !(Cell_Type == "HSPC"))
+hvl_jitterplot_data <- subset(hvl_jitterplot_data, !(Cell_Type == "NK_CD56bright"))
+hvl_jitterplot_data <- subset(hvl_jitterplot_data, !(Cell_Type == "pDC"))
+hvl_jitterplot_data <- subset(hvl_jitterplot_data, !(Cell_Type == "Proliferating"))
 
 
 hvl_jitterplot_data <- hvl_jitterplot_data %>%
@@ -14,8 +16,7 @@ pos_all_sc_degs <- hvl_jitterplot_data[hvl_jitterplot_data$sc_log2FC > 0,]
 neg_all_sc_degs <- hvl_jitterplot_data[hvl_jitterplot_data$sc_log2FC < 0,]
 
 
-
-cell_type_order <- c("HSPC", "CD4 Naive", "NK_CD56bright", "pDC", "CD8 Naive", "cDC", "MAIT", "CD16 Mono", "B Memory", "B Naive", "CD4 Memory", "CD14 Mono", "NK", "CD8 Memory")
+cell_type_order <- c("CD16 Mono", "CD8 Naive", "B Memory", "cDC", "MAIT", "B Naive", "CD4 Naive", "NK", "CD14 Mono", "CD4 Memory", "CD8 Memory")
 hvl_jitterplot_data$Cell_Type <- factor(hvl_jitterplot_data$Cell_Type, levels = cell_type_order)
 hvl_jitterplot_data$direction <- factor(hvl_jitterplot_data$direction, levels = c("Upregulated", "Downregulated"))
 
@@ -26,7 +27,7 @@ all_sc_degs_plot <- ggplot(hvl_jitterplot_data, aes(Cell_Type, sc_log2FC, color 
   ylab("log2FC (Gene Expression)") + ggtitle("scRNA DEGs by Cell Type (28 Days Post-Exposure vs Pre-Exposure)") +
   theme(plot.title = element_text(hjust = 0.5)) + guides(color=guide_legend(title="Fold Change Direction"))
 
-ggsave(filename = paste0("C:/Users/wat2/Desktop/", "scrna_pseudobulk_deg_jitterplot.tiff"), plot = all_sc_degs_plot, device='tiff', dpi=300)
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "scrna_pseudobulk_deg_jitterplot.tiff"), plot = all_sc_degs_plot, device='tiff', dpi=300)
 
 # LVL
 lvl_sc_degs_table <- data.frame(Cell_Type = character(), Gene = character(), log2FC = numeric())

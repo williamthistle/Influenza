@@ -29,7 +29,7 @@ sample_metadata <- read.table("~/all_metadata_sheet.tsv", sep = "\t", header = T
 sample_metadata <- sample_metadata[sample_metadata$aliquot_id %in% sample_id_list,]
 sample_metadata_for_SPEEDI_df <- sample_metadata
 rownames(sample_metadata_for_SPEEDI_df) <- sample_metadata_for_SPEEDI_df$aliquot_id
-sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[c("subject_id", "time_point", "sex", "viral_load_category", "treatment")]
+sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[c("subject_id", "time_point", "sex", "viral_load_category", "treatment", "age")]
 sample_metadata_for_SPEEDI_df$time_point[sample_metadata_for_SPEEDI_df$time_point == 'D-1'] <- 'D_minus_1'
 
 # Break down metadata by category
@@ -158,6 +158,14 @@ print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Sex.png",
                group_by_category = "sex", output_dir = RNA_output_dir,
                log_flag = log_flag)
 
+# Add age as metadata (doing this after the fact because I forgot)
+sample_metadata <- sc_obj$sample
+for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
+  sample_metadata <- gsub(rownames(sample_metadata_for_SPEEDI_df)[j], sample_metadata_for_SPEEDI_df[j,18], sample_metadata)
+}
+
+sc_obj$age <- sample_metadata
+
 # Separate into relevant subsets
 
 # HVL
@@ -174,6 +182,16 @@ hvl_placebo_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
 idxPass <- which(hvl_sc_obj$treatment %in% "MVA-NP+M1")
 cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
 hvl_vaccinated_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+# HVL D28
+idxPass <- which(hvl_sc_obj$time_point %in% "D28")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_D28_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
+
+# HVL D MINUS 1
+idxPass <- which(hvl_sc_obj$time_point %in% "D_minus_1")
+cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
+hvl_D_minus_1_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
 
 # LVL
 idxPass <- which(sc_obj$viral_load_category %in% "low")
@@ -220,3 +238,6 @@ run_differential_expression_controlling_for_subject_id(hvl_placebo_sc_obj, paste
 run_differential_expression_controlling_for_subject_id(lvl_placebo_sc_obj, paste0(RNA_output_dir, "DE_LVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = TRUE)
 run_differential_expression_controlling_for_subject_id(hvl_vaccinated_sc_obj, paste0(RNA_output_dir, "DE_HVL_VACCINATED_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point", magical_cell_types = TRUE)
 
+# Run differential expression analysis, per cell type, for TREATMENT in high viral load
+run_differential_expression_controlling_for_subject_id(hvl_D28_sc_obj, paste0(RNA_output_dir, "DE_HVL_VACCINATED_VS_PLACEBO_D28_", date, "/"), sample_metadata_for_SPEEDI_df, "treatment", magical_cell_types = FALSE)
+run_differential_expression_controlling_for_subject_id(hvl_D_minus_1_sc_obj, paste0(RNA_output_dir, "DE_HVL_VACCINATED_VS_PLACEBO_D_minus_1_", date, "/"), sample_metadata_for_SPEEDI_df, "treatment", magical_cell_types = FALSE)

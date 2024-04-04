@@ -61,6 +61,7 @@ script_base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 
 # Source various scripts
 source(paste0(script_base_dir, "extra_functions/bulk_RNA_analysis_helper.R"))
+source(paste0(script_base_dir, "extra_functions/sc_analysis_helper.R"))
 source(paste0(script_base_dir, "extra_functions/Compendium_Functions.R"))
 source(paste0(script_base_dir, "extra_functions/humanbase_functions.R"))
 source(paste0(script_base_dir, "extra_functions/pseudobulk_analysis_helper.R"))
@@ -207,36 +208,41 @@ scRNA_hvl_placebo_MAGICAL_cell_types_degs <- scRNA_hvl_placebo_MAGICAL_cell_type
 scRNA_hvl_placebo_MAGICAL_cell_types_degs <- scRNA_hvl_placebo_MAGICAL_cell_types_degs[scRNA_hvl_placebo_MAGICAL_cell_types_degs$sc_log2FC * scRNA_hvl_placebo_MAGICAL_cell_types_degs$pseudo_bulk_log2FC > 0, ]
 
 # TODO: Fix this!
-scRNA_hvl_placebo_cell_metadata <- read.table(paste0(scRNA_hvl_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
+# scRNA_hvl_placebo_cell_metadata <- read.table(paste0(scRNA_hvl_dir, "HVL_RNA_cell_metadata.tsv"), sep = "\t", comment.char = "", header = TRUE)
 
 scRNA_hvl_vaccinated_degs <- read.table(paste0(scRNA_hvl_vaccinated_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 scRNA_hvl_vaccinated_degs <- scRNA_hvl_vaccinated_degs[scRNA_hvl_vaccinated_degs$Cell_Type != "Platelet",]
+scRNA_hvl_vaccinated_degs <- scRNA_hvl_vaccinated_degs[scRNA_hvl_vaccinated_degs$sc_log2FC * scRNA_hvl_vaccinated_degs$pseudo_bulk_log2FC > 0, ]
+# TODO: Uncomment this
 scRNA_hvl_vaccinated_MAGICAL_cell_types_degs <-  read.table(paste0(scRNA_hvl_vaccinated_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 scRNA_hvl_vaccinated_MAGICAL_cell_types_degs <- scRNA_hvl_vaccinated_MAGICAL_cell_types_degs[scRNA_hvl_vaccinated_MAGICAL_cell_types_degs$Cell_Type != "Platelet",]
+scRNA_hvl_vaccinated_MAGICAL_cell_types_degs <- scRNA_hvl_vaccinated_MAGICAL_cell_types_degs[scRNA_hvl_vaccinated_MAGICAL_cell_types_degs$sc_log2FC * scRNA_hvl_vaccinated_MAGICAL_cell_types_degs$pseudo_bulk_log2FC > 0, ]
 
 # LVL
 scRNA_lvl_placebo_degs <- read.table(paste0(scRNA_lvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 scRNA_lvl_placebo_degs <- scRNA_lvl_placebo_degs[scRNA_lvl_placebo_degs$Cell_Type != "Platelet",]
+scRNA_lvl_placebo_degs <- scRNA_lvl_placebo_degs[scRNA_lvl_placebo_degs$sc_log2FC * scRNA_lvl_placebo_degs$pseudo_bulk_log2FC > 0, ]
 scRNA_lvl_placebo_MAGICAL_cell_types_degs <-  read.table(paste0(scRNA_lvl_placebo_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 scRNA_lvl_placebo_MAGICAL_cell_types_degs <- scRNA_lvl_placebo_MAGICAL_cell_types_degs[scRNA_lvl_placebo_MAGICAL_cell_types_degs$Cell_Type != "Platelet",]
+scRNA_lvl_placebo_MAGICAL_cell_types_degs <- scRNA_lvl_placebo_MAGICAL_cell_types_degs[scRNA_lvl_placebo_MAGICAL_cell_types_degs$sc_log2FC * scRNA_lvl_placebo_MAGICAL_cell_types_degs$pseudo_bulk_log2FC > 0, ]
 
 # Peak related tables
-sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
-sc_motifs <- read.table(paste0(sc_das_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
-atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_ATAC_cell_metadata.tsv"), sep = "\t", comment.char = "")
+#sc_peaks <- read.table(paste0(sc_das_dir, "HVL_peaks_info.txt"), sep = "\t", header = TRUE)
+#sc_motifs <- read.table(paste0(sc_das_dir, "peak_motif_matches.txt"), sep = "\t", header = TRUE)
+#atac_cell_metadata <- read.table(paste0(sc_das_dir, "HVL_ATAC_cell_metadata.tsv"), sep = "\t", comment.char = "")
 
 # Create more lenient versions of sc_peaks (adds 250 or 500 to start / end of coordinates)
-colnames(sc_peaks)[1] <- "seqnames"
-sc_peaks_lenient <- sc_peaks
-sc_peaks_lenient$start <- sc_peaks_lenient$start - 250 
-sc_peaks_lenient$end <- sc_peaks_lenient$end + 250
-sc_peaks_more_lenient <- sc_peaks
-sc_peaks_more_lenient$start <- sc_peaks_lenient$start - 250 
-sc_peaks_more_lenient$end <- sc_peaks_lenient$end + 250
+#colnames(sc_peaks)[1] <- "seqnames"
+#sc_peaks_lenient <- sc_peaks
+#sc_peaks_lenient$start <- sc_peaks_lenient$start - 250 
+#sc_peaks_lenient$end <- sc_peaks_lenient$end + 250
+#sc_peaks_more_lenient <- sc_peaks
+#sc_peaks_more_lenient$start <- sc_peaks_lenient$start - 250 
+#sc_peaks_more_lenient$end <- sc_peaks_lenient$end + 250
 
-sc_peaks_granges <- makeGRangesFromDataFrame(df = sc_peaks, keep.extra.columns = TRUE)
-sc_peaks_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_lenient, keep.extra.columns = TRUE)
-sc_peaks_more_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_more_lenient, keep.extra.columns = TRUE)
+#sc_peaks_granges <- makeGRangesFromDataFrame(df = sc_peaks, keep.extra.columns = TRUE)
+#sc_peaks_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_lenient, keep.extra.columns = TRUE)
+#sc_peaks_more_lenient_granges <- makeGRangesFromDataFrame(df = sc_peaks_more_lenient, keep.extra.columns = TRUE)
 
 # snME related tables
 snME_dms <- read.table(paste0(snME_data_dir, "snME_dms_processed.tsv"), sep = "\t", header = TRUE)

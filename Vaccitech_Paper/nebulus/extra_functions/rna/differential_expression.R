@@ -51,6 +51,9 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
   } else if(group == "sex") {
     first_group <- "M"
     second_group <- "F"
+  } else if(group == "treatment") {
+    first_group <- "MVA-NP+M1"
+    second_group <- "PLACEBO"
   }
   
   # Make reading data parallel
@@ -91,7 +94,11 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
         DefaultAssay(cells_subset) <- "SCT"
         Idents(cells_subset) <- group
         # Run SC DE with no thresholding and write to file
-        current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = 'subject_id', ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0, assay = "SCT", recorrect_umi = FALSE)
+        if(group != "treatment") {
+          current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = 'subject_id', ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0, assay = "SCT", recorrect_umi = FALSE)
+        } else {
+          current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = "age", ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0, assay = "SCT", recorrect_umi = FALSE)
+        }
         write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_unfiltered.tsv"), quote = FALSE, sep = "\t")
         # Filter results and write to file
         current_de <- current_de[current_de$p_val_adj < 0.05,]
@@ -106,7 +113,11 @@ run_differential_expression_controlling_for_subject_id <- function(sc_obj, analy
         pseudobulk_metadata <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$subject_id %in% cells_subset$subject_id,]
         pseudobulk_metadata$aliquots <- rownames(pseudobulk_metadata)
         pseudobulk_metadata <- pseudobulk_metadata[match(colnames(pseudobulk_counts), pseudobulk_metadata$aliquots),]
-        pseudobulk_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = pseudobulk_counts, colData = pseudobulk_metadata, design = stats::formula(paste("~ subject_id + ",group)))
+        if(group != "treatment") {
+          pseudobulk_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = pseudobulk_counts, colData = pseudobulk_metadata, design = stats::formula(paste("~ subject_id + ",group)))
+        } else {
+          pseudobulk_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = pseudobulk_counts, colData = pseudobulk_metadata, design = stats::formula(paste("~ age + treatment")))
+        }
         pseudobulk_analysis <- DESeq2::DESeq(pseudobulk_analysis)
         pseudobulk_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(pseudobulk_analysis), n=1)
         print(pseudobulk_analysis_results_contrast)
