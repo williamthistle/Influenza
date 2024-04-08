@@ -1,3 +1,7 @@
+# Setup environment
+base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
+source(paste0(base_dir, "00.setup.R"))
+
 # HVL
 hvl_jitterplot_data <- scRNA_hvl_placebo_degs
 

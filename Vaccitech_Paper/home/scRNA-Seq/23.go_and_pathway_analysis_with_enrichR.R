@@ -16,6 +16,26 @@ remove_token <- function(term) {
   return(sub(" \\(GO:[0-9]+\\)$", "", term))
 }
 
+create_enrichment_plot <- function(results, cutoff = 0.05) {
+  # Subset the dataframe based on the cutoff
+  subset_df <- results[results$Adjusted.P.value < cutoff, ]
+  
+  # Count the number of genes for each row
+  subset_df$Num_Genes <- sapply(subset_df$Genes, count_genes)
+  
+  # Remove the token from terms
+  subset_df$Term <- remove_token(subset_df$Term)
+  
+  subset_df$Term <- factor(subset_df$Term, levels = subset_df$Term)
+  
+  # Create the barplot
+  ggplot(subset_df, aes(x = Num_Genes, y = fct_rev(Term), fill = Adjusted.P.value)) +
+    geom_bar(stat = "identity") +
+    scale_fill_gradient(low = "red", high = "blue") +  # Reversed color scale
+    labs(x = "Number of Genes", y = "Term") +
+    guides(fill = guide_colorbar(reverse = TRUE))  # Reverse the legend
+}
+
 # CD14 Mono
 cd14_mono_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD14 Mono",]
 cd14_mono_upregulated_genes <- cd14_mono_genes[cd14_mono_genes$sc_log2FC > 0,]$Gene_Name
@@ -55,30 +75,12 @@ pathway_dbs <- c("Reactome_2022")
 
 go_results <- enrichr(cd14_mono_upregulated_genes, go_dbs)
 pathway_results <- enrichr(cd14_mono_upregulated_genes, pathway_dbs)
+
+create_enrichment_plot(pathway_results[[1]])
   
 # Sleep for 1 second so we don't overload enrichR server with requests
 Sys.sleep(1)
 
 
-# Adjusted.P.value cutoff
-cutoff <- 0.05
 
-
-# Subset the dataframe based on the cutoff
-subset_df <- go_results[[1]][go_results[[1]]$Adjusted.P.value <= cutoff, ]
-
-# Count the number of genes for each row
-subset_df$Num_Genes <- sapply(subset_df$Genes, count_genes)
-
-# Remove the token from terms
-subset_df$Term <- remove_token(subset_df$Term)
-
-subset_df$Term <- factor(subset_df$Term, levels = subset_df$Term)
-
-# Create the barplot
-ggplot(subset_df, aes(x = Num_Genes, y = fct_rev(Term), fill = Adjusted.P.value)) +
-  geom_bar(stat = "identity") +
-  scale_fill_gradient(low = "red", high = "blue") +  # Reversed color scale
-  labs(x = "Number of Genes", y = "Term") +
-  guides(fill = guide_colorbar(reverse = TRUE))  # Reverse the legend
   
