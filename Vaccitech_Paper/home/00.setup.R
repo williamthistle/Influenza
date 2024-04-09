@@ -24,6 +24,7 @@ library(sva)
 library(corrr)
 library(enrichR)
 library(smplot2)
+library(tidyverse)
 
 # Load bulk RNA-seq analysis results
 onedrive_dir <- "~"
