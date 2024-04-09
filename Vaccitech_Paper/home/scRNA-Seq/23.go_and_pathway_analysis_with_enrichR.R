@@ -112,6 +112,15 @@ cd8_memory_enrichr_downregulated_results <- get_enrichr_results(cd8_memory_downr
 cd8_naive_enrichr_upregulated_results <- get_enrichr_results(cd8_naive_upregulated_genes)
 cd8_naive_enrichr_downregulated_results <- get_enrichr_results(cd8_naive_downregulated_genes)
 
+mait_enrichr_upregulated_results <- get_enrichr_results(mait_upregulated_genes)
+mait_enrichr_downregulated_results <- get_enrichr_results(mait_downregulated_genes)
+
+b_memory_enrichr_upregulated_results <- get_enrichr_results(b_memory_upregulated_genes)
+b_memory_enrichr_downregulated_results <- get_enrichr_results(b_memory_downregulated_genes)
+
+b_naive_enrichr_upregulated_results <- get_enrichr_results(b_naive_upregulated_genes)
+b_naive_enrichr_downregulated_results <- get_enrichr_results(b_naive_downregulated_genes)
+
 
 
 
