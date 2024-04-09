@@ -30,10 +30,12 @@ create_enrichment_plot <- function(results, cutoff = 0.05) {
   
   # Create the barplot
   ggplot(subset_df, aes(x = Num_Genes, y = fct_rev(Term), fill = Adjusted.P.value)) +
+    theme_bw() +
     geom_bar(stat = "identity") +
     scale_fill_gradient(low = "red", high = "blue") +  # Reversed color scale
     labs(x = "Number of Genes", y = "Term") +
-    guides(fill = guide_colorbar(reverse = TRUE))  # Reverse the legend
+    guides(fill = guide_colorbar(reverse = TRUE)) +  # Reverse the legend  
+    scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
 }
 
 get_enrichr_results <- function(gene_list) {
