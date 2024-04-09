@@ -36,45 +36,85 @@ create_enrichment_plot <- function(results, cutoff = 0.05) {
     guides(fill = guide_colorbar(reverse = TRUE))  # Reverse the legend
 }
 
+get_enrichr_results <- function(gene_list) {
+  # Set up databases
+  # Use dbs <- listEnrichrDbs() to get full list of databases
+  dbs <- c("GO_Biological_Process_2023", "GO_Cellular_Component_2023", "GO_Molecular_Function_2023", "Reactome_2022")
+  
+  # Get results
+  results <- enrichr(gene_list, dbs)
+  results[[1]] <- results[[1]][results[[1]]$Adjusted.P.value < 0.05,]
+  results[[2]] <- results[[2]][results[[2]]$Adjusted.P.value < 0.05,]
+  results[[3]] <- results[[3]][results[[3]]$Adjusted.P.value < 0.05,]
+  results[[4]] <- results[[4]][results[[4]]$Adjusted.P.value < 0.05,]
+  return(results)
+}
+
 # CD14 Mono
 cd14_mono_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD14 Mono",]
 cd14_mono_upregulated_genes <- cd14_mono_genes[cd14_mono_genes$sc_log2FC > 0,]$Gene_Name
 cd14_mono_downregulated_genes <- cd14_mono_genes[cd14_mono_genes$sc_log2FC < 0,]$Gene_Name
 # CD16 Mono
-cd16_mono_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "CD16_Mono_Upregulated.tsv"))
-cd16_mono_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "CD16_Mono_Downregulated.tsv"))
+cd16_mono_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD16 Mono",]
+cd16_mono_upregulated_genes <- cd16_mono_genes[cd16_mono_genes$sc_log2FC > 0,]$Gene_Name
+cd16_mono_downregulated_genes <- cd16_mono_genes[cd16_mono_genes$sc_log2FC < 0,]$Gene_Name
 # NK
-nk_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "NK_Upregulated.tsv"))
-nk_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "NK_Downregulated.tsv"))
+nk_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "NK",]
+nk_upregulated_genes <- nk_genes[nk_genes$sc_log2FC > 0,]$Gene_Name
+nk_downregulated_genes <- nk_genes[nk_genes$sc_log2FC < 0,]$Gene_Name
 # cDC
-cDC_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "cDC_Upregulated.tsv"))
-cDC_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "cDC_Downregulated.tsv"))
+cDC_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "cDC",]
+cDC_upregulated_genes <- cDC_genes[cDC_genes$sc_log2FC > 0,]$Gene_Name
+cDC_downregulated_genes <- cDC_genes[cDC_genes$sc_log2FC < 0,]$Gene_Name
 # CD4 Memory
-cd4_memory_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "CD4_Memory_Upregulated.tsv"))
-cd4_memory_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "CD4_Memory_Downregulated.tsv"))
+cd4_memory_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD4 Memory",]
+cd4_memory_upregulated_genes <- cd4_memory_genes[cd4_memory_genes$sc_log2FC > 0,]$Gene_Name
+cd4_memory_downregulated_genes <- cd4_memory_genes[cd4_memory_genes$sc_log2FC < 0,]$Gene_Name
 # CD8 Memory
-cd8_memory_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "CD8_Memory_Upregulated.tsv"))
-cd8_memory_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "CD8_Memory_Downregulated.tsv"))
+cd8_memory_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD8 Memory",]
+cd8_memory_upregulated_genes <- cd8_memory_genes[cd8_memory_genes$sc_log2FC > 0,]$Gene_Name
+cd8_memory_downregulated_genes <- cd8_memory_genes[cd8_memory_genes$sc_log2FC < 0,]$Gene_Name
 # CD8 Naive
-cd8_naive_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "CD8_Naive_Upregulated.tsv"))
-cd8_naive_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "CD8_Naive_Downregulated.tsv"))
+cd8_naive_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD8 Naive",]
+cd8_naive_upregulated_genes <- cd8_naive_genes[cd8_naive_genes$sc_log2FC > 0,]$Gene_Name
+cd8_naive_downregulated_genes <- cd8_naive_genes[cd8_naive_genes$sc_log2FC < 0,]$Gene_Name
 # MAIT
-mait_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "MAIT_Upregulated.tsv"))
-mait_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "MAIT_Downregulated.tsv"))
+mait_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "MAIT",]
+mait_upregulated_genes <- mait_genes[mait_genes$sc_log2FC > 0,]$Gene_Name
+mait_downregulated_genes <- mait_genes[mait_genes$sc_log2FC < 0,]$Gene_Name
 # B Memory
-b_memory_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "B_Memory_Upregulated.tsv"))
-b_memory_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "B_Memory_Downregulated.tsv"))
+b_memory_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "B memory",]
+b_memory_upregulated_genes <- b_memory_genes[b_memory_genes$sc_log2FC > 0,]$Gene_Name
+b_memory_downregulated_genes <- b_memory_genes[b_memory_genes$sc_log2FC < 0,]$Gene_Name
 # B Naive
-b_naive_upregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "B_Naive_Upregulated.tsv"))
-b_naive_downregulated_modules <- get_module_genes_for_downstream_analysis(paste0(sc_humanbase_dir, "B_Naive_Downregulated.tsv"))
+b_naive_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "B naive",]
+b_naive_upregulated_genes <- b_naive_genes[b_naive_genes$sc_log2FC > 0,]$Gene_Name
+b_naive_downregulated_genes <- b_naive_genes[b_naive_genes$sc_log2FC < 0,]$Gene_Name
 
-# 
-# dbs <- listEnrichrDbs()
-go_dbs <- c("GO_Biological_Process_2023", "GO_Cellular_Component_2023", "GO_Molecular_Function_2023")
-pathway_dbs <- c("Reactome_2022")
+cd14_mono_enrichr_upregulated_results <- get_enrichr_results(cd14_mono_upregulated_genes)
+cd14_mono_enrichr_downregulated_results <- get_enrichr_results(cd14_mono_downregulated_genes)
 
-go_results <- enrichr(cd14_mono_upregulated_genes, go_dbs)
-pathway_results <- enrichr(cd14_mono_upregulated_genes, pathway_dbs)
+cd16_mono_enrichr_upregulated_results <- get_enrichr_results(cd16_mono_upregulated_genes)
+cd16_mono_enrichr_downregulated_results <- get_enrichr_results(cd16_mono_downregulated_genes)
+
+nk_enrichr_upregulated_results <- get_enrichr_results(nk_upregulated_genes)
+nk_enrichr_downregulated_results <- get_enrichr_results(nk_downregulated_genes)
+
+cDC_enrichr_upregulated_results <- get_enrichr_results(cDC_upregulated_genes)
+cDC_enrichr_downregulated_results <- get_enrichr_results(cDC_downregulated_genes)
+
+cd4_memory_enrichr_upregulated_results <- get_enrichr_results(cd4_memory_upregulated_genes)
+cd4_memory_enrichr_downregulated_results <- get_enrichr_results(cd4_memory_downregulated_genes)
+
+cd8_memory_enrichr_upregulated_results <- get_enrichr_results(cd8_memory_upregulated_genes)
+cd8_memory_enrichr_downregulated_results <- get_enrichr_results(cd8_memory_downregulated_genes)
+
+cd8_naive_enrichr_upregulated_results <- get_enrichr_results(cd8_naive_upregulated_genes)
+cd8_naive_enrichr_downregulated_results <- get_enrichr_results(cd8_naive_downregulated_genes)
+
+
+
+
 
 create_enrichment_plot(pathway_results[[1]])
   
