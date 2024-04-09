@@ -50,6 +50,13 @@ get_enrichr_results <- function(gene_list) {
   return(results)
 }
 
+count_genes <- function(x) {
+  matches <- gregexpr(";", x)
+  count <- sapply(matches, function(match) sum(match != -1))
+  return(count + 1)
+}
+
+
 # CD14 Mono
 cd14_mono_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD14 Mono",]
 cd14_mono_upregulated_genes <- cd14_mono_genes[cd14_mono_genes$sc_log2FC > 0,]$Gene_Name
@@ -121,12 +128,22 @@ b_memory_enrichr_downregulated_results <- get_enrichr_results(b_memory_downregul
 b_naive_enrichr_upregulated_results <- get_enrichr_results(b_naive_upregulated_genes)
 b_naive_enrichr_downregulated_results <- get_enrichr_results(b_naive_downregulated_genes)
 
+cd14_test <- cd14_mono_enrichr_upregulated_results[[1]]
+cd14_test$Gene_Count <- sapply(cd14_test$Genes, count_genes)
+cd14_test <- cd14_test[cd14_test$Gene_Count >= 5,]
+create_enrichment_plot(cd14_test)
+
+cd16_test <- cd16_mono_enrichr_downregulated_results[[1]]
+cd16_test$Gene_Count <- sapply(cd16_test$Genes, count_genes)
+cd16_test <- cd16_test[cd16_test$Gene_Count >= 5,]
+create_enrichment_plot(cd16_test)
+
+create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[1]])
+ 
+create_enrichment_plot(cd16_mono_enrichr_upregulated_results[[1]])
 
 
 
-
-create_enrichment_plot(pathway_results[[1]])
-  
 # Sleep for 1 second so we don't overload enrichR server with requests
 Sys.sleep(1)
 
