@@ -188,11 +188,11 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   lvl_vaccinated_metadata <<- vaccinated_metadata[lvl_vaccinated_aliquots,]
   # Subset to full list of HVL and LVL for placebo
   larger_list_high_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL >= hvl_threshold,])
-  larger_list_high_counts <<- placebo_counts[,larger_list_high_placebo_aliquots]
-  larger_list_high_metadata <<- placebo_metadata[larger_list_high_placebo_aliquots,]
+  larger_list_high_placebo_counts <<- placebo_counts[,larger_list_high_placebo_aliquots]
+  larger_list_high_placebo_metadata <<- placebo_metadata[larger_list_high_placebo_aliquots,]
   larger_list_low_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL <= lvl_threshold,])
-  larger_list_low_counts <<- placebo_counts[,larger_list_low_placebo_aliquots]
-  larger_list_low_metadata <<- placebo_metadata[larger_list_low_placebo_aliquots,]
+  larger_list_low_placebo_counts <<- placebo_counts[,larger_list_low_placebo_aliquots]
+  larger_list_low_placebo_metadata <<- placebo_metadata[larger_list_low_placebo_aliquots,]
 }
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {
@@ -218,20 +218,20 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   median_value <- median(metadata_subset$Absolute.score..sig.score.)
   
   # Replace values below median with "LOW" and above median with "HIGH"
-  metadata_subset$Absolute.score..sig.score. <- ifelse(metadata_subset$Absolute.score..sig.score. < median_value, "LOW", ifelse(metadata_subset$Absolute.score..sig.score. > median_value, "HIGH", metadata_subset$Absolute.score..sig.score. ))
-  metadata_subset$Absolute.score..sig.score. <- factor(metadata_subset$Absolute.score..sig.score., levels = c("LOW", "HIGH"))
+  #metadata_subset$Absolute.score..sig.score. <- ifelse(metadata_subset$Absolute.score..sig.score. < median_value, "LOW", ifelse(metadata_subset$Absolute.score..sig.score. > median_value, "HIGH", metadata_subset$Absolute.score..sig.score. ))
+  #metadata_subset$Absolute.score..sig.score. <- factor(metadata_subset$Absolute.score..sig.score., levels = c("LOW", "HIGH"))
   #metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
-  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
-  #base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
-  #base_model <- estimateSizeFactors(base_model)
-  #dat  <- counts(base_model, normalized = TRUE)
-  #idx  <- rowMeans(dat) > 1
-  #dat  <- dat[idx, ]
-  #mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
-  #mod0 <- model.matrix(~ subject_id, colData(base_model))
-  #svseq <- svaseq(dat, mod, mod0, n.sv = 1)
-  #metadata_subset$SV1 <- svseq$sv[,1]
-  #current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
+  #current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
+  base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  base_model <- estimateSizeFactors(base_model)
+  dat  <- counts(base_model, normalized = TRUE)
+  idx  <- rowMeans(dat) > 1
+  dat  <- dat[idx, ]
+  mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
+  mod0 <- model.matrix(~ subject_id, colData(base_model))
+  svseq <- svaseq(dat, mod, mod0, n.sv = 1)
+  metadata_subset$SV1 <- svseq$sv[,1]
+  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
   
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
