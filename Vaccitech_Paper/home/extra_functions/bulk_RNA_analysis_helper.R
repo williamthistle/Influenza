@@ -186,6 +186,13 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   lvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL <= lvl_threshold,])
   lvl_vaccinated_counts <<- vaccinated_counts[,lvl_vaccinated_aliquots]
   lvl_vaccinated_metadata <<- vaccinated_metadata[lvl_vaccinated_aliquots,]
+  # Subset to full list of HVL and LVL for placebo
+  larger_list_high_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL >= hvl_threshold,])
+  larger_list_high_counts <<- placebo_counts[,larger_list_high_placebo_aliquots]
+  larger_list_high_metadata <<- placebo_metadata[larger_list_high_placebo_aliquots,]
+  larger_list_low_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL <= lvl_threshold,])
+  larger_list_low_counts <<- placebo_counts[,larger_list_low_placebo_aliquots]
+  larger_list_low_metadata <<- placebo_metadata[larger_list_low_placebo_aliquots,]
 }
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {

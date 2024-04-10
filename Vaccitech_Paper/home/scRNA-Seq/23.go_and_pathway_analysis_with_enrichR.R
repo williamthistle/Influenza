@@ -13,7 +13,9 @@ count_genes <- function(gene_string) {
 
 # Function to remove the token from terms
 remove_token <- function(term) {
-  return(sub(" \\(GO:[0-9]+\\)$", "", term))
+  term <- sub(" \\(GO:[0-9]+\\)$", "", term)
+  term <- gsub(" R-HSA-\\d+", "", term)
+  return(term)
 }
 
 create_enrichment_plot <- function(results, cutoff = 0.05) {
@@ -113,9 +115,11 @@ cDC_enrichr_upregulated_results <- get_enrichr_results(cDC_upregulated_genes)
 cDC_enrichr_downregulated_results <- get_enrichr_results(cDC_downregulated_genes)
 
 cd4_memory_enrichr_upregulated_results <- get_enrichr_results(cd4_memory_upregulated_genes)
+# Not uninteresting pathways, but maybe not enough space
 cd4_memory_enrichr_downregulated_results <- get_enrichr_results(cd4_memory_downregulated_genes)
 
 cd8_memory_enrichr_upregulated_results <- get_enrichr_results(cd8_memory_upregulated_genes)
+# Not uninteresting pathways, but maybe not enough space - maybe discuss downregulated pathways in both CD4 and CD8? Shared?
 cd8_memory_enrichr_downregulated_results <- get_enrichr_results(cd8_memory_downregulated_genes)
 
 cd8_naive_enrichr_upregulated_results <- get_enrichr_results(cd8_naive_upregulated_genes)
@@ -144,7 +148,7 @@ create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[1]])
  
 create_enrichment_plot(cd16_mono_enrichr_upregulated_results[[1]])
 
-
+create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[4]])
 
 # Sleep for 1 second so we don't overload enrichR server with requests
 Sys.sleep(1)
