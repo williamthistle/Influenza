@@ -195,7 +195,7 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   larger_list_low_placebo_metadata <<- placebo_metadata[larger_list_low_placebo_aliquots,]
 }
 
-run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05) {
+run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05, apply_sv_correction = TRUE) {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
   print(sample_type)
   print(test_time)
@@ -222,16 +222,20 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   #metadata_subset$Absolute.score..sig.score. <- factor(metadata_subset$Absolute.score..sig.score., levels = c("LOW", "HIGH"))
   #metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
   #current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
-  base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
-  base_model <- estimateSizeFactors(base_model)
-  dat  <- counts(base_model, normalized = TRUE)
-  idx  <- rowMeans(dat) > 1
-  dat  <- dat[idx, ]
-  mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
-  mod0 <- model.matrix(~ subject_id, colData(base_model))
-  svseq <- svaseq(dat, mod, mod0, n.sv = 1)
-  metadata_subset$SV1 <- svseq$sv[,1]
-  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
+  if(apply_sv_correction) {
+    base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+    base_model <- estimateSizeFactors(base_model)
+    dat  <- counts(base_model, normalized = TRUE)
+    idx  <- rowMeans(dat) > 1
+    dat  <- dat[idx, ]
+    mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
+    mod0 <- model.matrix(~ subject_id, colData(base_model))
+    svseq <- svaseq(dat, mod, mod0, n.sv = 1)
+    metadata_subset$SV1 <- svseq$sv[,1]
+    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
+  } else {
+    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  }
   
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
