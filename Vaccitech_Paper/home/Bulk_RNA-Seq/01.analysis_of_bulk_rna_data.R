@@ -13,15 +13,15 @@ source(paste0(base_dir, "00.setup.R"))
 #### PERIOD 1 HIGH VIRAL LOAD ####
 # We expect ~0 DEGs because placebo was used (no actual vaccination)
 # 0/0/0/0/0/0/0 DEGs
-high_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_high_placebo_counts, larger_list_high_placebo_metadata,
                                                                                 "1_D2", "1_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_1_D2_vs_D_minus_1/"), "high")
 raw_high_placebo_period_1_D2_vs_D_minus_1_results <- high_placebo_period_1_D2_vs_D_minus_1_results[[1]]
-# 0/0/0/0/0/0/0 DEGs
-high_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+# 5/0/0/0/0/0/0 DEGs
+high_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_high_placebo_counts, larger_list_high_placebo_metadata,
                                                                                 "1_D8", "1_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_period_1_D8_vs_D_minus_1/"), "high")
 raw_high_placebo_period_1_D8_vs_D_minus_1_results <- high_placebo_period_1_D8_vs_D_minus_1_results[[1]]
-# 16/1/1/1/1/1/1 DEGs
-high_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+# 103/1/1/1/1/1/1 DEGs
+high_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_high_placebo_counts, larger_list_high_placebo_metadata,
                                                                                 "1_D28", "1_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_period_1_D28_vs_D_minus_1/"), "high")
 raw_high_placebo_period_1_D28_vs_D_minus_1_results <- high_placebo_period_1_D28_vs_D_minus_1_results[[1]]
 #### PERIOD 1 LOW VIRAL LOAD ####
@@ -122,18 +122,18 @@ hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time
                                                                                       "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
 raw_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 # 2 D28 vs 2 D minus 1 with random 13 subjects selected (to match subject size in placebo set)
-set.seed(1)
-random_hvl_vaccinated_subjects <- sample(unique(hvl_vaccinated_metadata$subject_id), 13)
-random_hvl_vaccinated_aliquots <- rownames(hvl_vaccinated_metadata[hvl_vaccinated_metadata$subject_id %in% random_hvl_vaccinated_subjects,])
-random_hvl_vaccinated_counts <- hvl_vaccinated_counts[,random_hvl_vaccinated_aliquots]
-random_hvl_vaccinated_metadata <- hvl_vaccinated_metadata[random_hvl_vaccinated_aliquots,]
+#set.seed(1)
+#random_hvl_vaccinated_subjects <- sample(unique(hvl_vaccinated_metadata$subject_id), 13)
+#random_hvl_vaccinated_aliquots <- rownames(hvl_vaccinated_metadata[hvl_vaccinated_metadata$subject_id %in% random_hvl_vaccinated_subjects,])
+#random_hvl_vaccinated_counts <- hvl_vaccinated_counts[,random_hvl_vaccinated_aliquots]
+#random_hvl_vaccinated_metadata <- hvl_vaccinated_metadata[random_hvl_vaccinated_aliquots,]
 
-random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", random_hvl_vaccinated_counts, random_hvl_vaccinated_metadata,
-                                                                                        "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "random_hvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
+#random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", random_hvl_vaccinated_counts, random_hvl_vaccinated_metadata,
+#                                                                                        "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "random_hvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
 # First entry: 5771/3393
 # Second entry: 3773/1301
 # Third entry: 4278/1328
-raw_random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
+#raw_random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
 
 
 #### PERIOD 2 LOW VIRAL LOAD ####

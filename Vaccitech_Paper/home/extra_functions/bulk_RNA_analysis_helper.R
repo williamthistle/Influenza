@@ -218,20 +218,20 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   median_value <- median(metadata_subset$Absolute.score..sig.score.)
   
   # Replace values below median with "LOW" and above median with "HIGH"
-  #metadata_subset$Absolute.score..sig.score. <- ifelse(metadata_subset$Absolute.score..sig.score. < median_value, "LOW", ifelse(metadata_subset$Absolute.score..sig.score. > median_value, "HIGH", metadata_subset$Absolute.score..sig.score. ))
-  #metadata_subset$Absolute.score..sig.score. <- factor(metadata_subset$Absolute.score..sig.score., levels = c("LOW", "HIGH"))
+  metadata_subset$Absolute.score..sig.score. <- ifelse(metadata_subset$Absolute.score..sig.score. < median_value, "LOW", ifelse(metadata_subset$Absolute.score..sig.score. > median_value, "HIGH", metadata_subset$Absolute.score..sig.score. ))
+  metadata_subset$Absolute.score..sig.score. <- factor(metadata_subset$Absolute.score..sig.score., levels = c("LOW", "HIGH"))
   #metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
-  #current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
-  base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
-  base_model <- estimateSizeFactors(base_model)
-  dat  <- counts(base_model, normalized = TRUE)
-  idx  <- rowMeans(dat) > 1
-  dat  <- dat[idx, ]
-  mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
-  mod0 <- model.matrix(~ subject_id, colData(base_model))
-  svseq <- svaseq(dat, mod, mod0, n.sv = 1)
-  metadata_subset$SV1 <- svseq$sv[,1]
-  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
+  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
+  #base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+  #base_model <- estimateSizeFactors(base_model)
+  #dat  <- counts(base_model, normalized = TRUE)
+  #idx  <- rowMeans(dat) > 1
+  #dat  <- dat[idx, ]
+  #mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
+  #mod0 <- model.matrix(~ subject_id, colData(base_model))
+  #svseq <- svaseq(dat, mod, mod0, n.sv = 1)
+  #metadata_subset$SV1 <- svseq$sv[,1]
+  #current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
   
   current_analysis <- DESeq(current_analysis)
   save(current_analysis, file = paste0(output_dir, test_time, "_vs_", baseline_time, "_", sample_type, ".rds"))
@@ -1043,7 +1043,7 @@ compare_absolute_score_and_sv <- function(counts, metadata, test_time, baseline_
   base_run <- DESeq(base_model)
   base_res <- run_fc_thresholding(base_run, test_time, baseline_time)
   # Run analysis with log transformed absolute score
-  metadata_subset$Absolute.score..sig.score. <- log(metadata_subset$Absolute.score..sig.score.)
+  metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
   absolute_score_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
   absolute_score_run <- DESeq(absolute_score_model)
   absolute_score_res <- run_fc_thresholding(absolute_score_run, test_time, baseline_time)
@@ -1060,7 +1060,7 @@ compare_absolute_score_and_sv <- function(counts, metadata, test_time, baseline_
   sv_run <- DESeq(sv_model)
   sv_res <- run_fc_thresholding(sv_run, test_time, baseline_time)
   # Check correlation between SV1 and other numeric covariates
-  metadata_subset_for_cor <- metadata_subset[,23:50]
+  metadata_subset_for_cor <- metadata_subset[,23:51]
   SV1_cors <- metadata_subset_for_cor %>% 
     correlate() %>% 
     focus(SV1) %>%
