@@ -27,15 +27,15 @@ raw_high_placebo_period_1_D28_vs_D_minus_1_results <- high_placebo_period_1_D28_
 #### PERIOD 1 LOW VIRAL LOAD ####
 # We expect ~0 DEGs because placebo was used (no actual vaccination)
 # 1/1/1/1/1/0/0 DEGs
-low_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_1_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_low_placebo_counts, larger_list_low_placebo_metadata,
                                                                          "1_D2", "1_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_1_D2_vs_D_minus_1/"), "low")
 raw_low_placebo_period_1_D2_vs_D_minus_1_results <- low_placebo_period_1_D2_vs_D_minus_1_results[[1]]
 # 0/0/0/0/0/0/0 DEGs
-low_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_low_placebo_counts, larger_list_low_placebo_metadata,
                                                                          "1_D8", "1_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_1_D8_vs_D_minus_1/"), "low")
 raw_low_placebo_period_1_D8_vs_D_minus_1_results <- low_placebo_period_1_D8_vs_D_minus_1_results[[1]]
 # 63/19/0/0/0/0/0 DEGs
-low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_1_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_low_placebo_counts, larger_list_low_placebo_metadata,
                                                                           "1_D28", "1_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_1_D28_vs_D_minus_1/"), "low")
 raw_low_placebo_period_1_D28_vs_D_minus_1_results <- low_placebo_period_1_D28_vs_D_minus_1_results[[1]]
 
@@ -47,51 +47,53 @@ raw_low_placebo_period_1_D28_vs_D_minus_1_results <- low_placebo_period_1_D28_vs
 # Could it be a single patient (or two) messing everything up?
 # Is it just inflammation from getting blood drawn?
 # If so, why would this signal exist for HVL and not LVL?
-high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_high_placebo_counts, larger_list_high_placebo_metadata,
                                                                                 "2_D_minus_1", "2_D_minus_2", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D_minus_1_vs_D_minus_2/"), "high")
 raw_high_placebo_period_2_D_minus_1_vs_D_minus_2_results <- high_placebo_period_2_D_minus_1_vs_D_minus_2_results[[1]]
 
-# 2 D2 vs 2 D minus 1 - 1384/299/17/4/0/0/0 DEGs
-high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+# 2 D2 vs 2 D minus 1 - 2/0/0/0/0/0/0 DEGs
+high_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_high_placebo_counts, larger_list_high_placebo_metadata,
                                                                          "2_D2", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "high")
 raw_high_placebo_period_2_D2_vs_D_minus_1_results <- high_placebo_period_2_D2_vs_D_minus_1_results[[1]]
 
-# 2 D5 vs 2 D minus 1 - 5276/3432/2230/1556/600/228/51 DEGs
-high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+# 2 D5 vs 2 D minus 1 - 3799/2337/1501/1024/403/178/41 DEGs
+high_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_high_placebo_counts, larger_list_high_placebo_metadata,
                                                                          "2_D5", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D5_vs_D_minus_1/"), "high")
+
+
 raw_high_placebo_period_2_D5_vs_D_minus_1_results <- high_placebo_period_2_D5_vs_D_minus_1_results[[1]]
 
-# 2 D8 vs 2 D minus 1 - 3314/1940/1210/813/269/59/8 DEGs
-high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+# 2 D8 vs 2 D minus 1 - 5295/3026/1817/1184/418/119/11 DEGs
+high_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_high_placebo_counts, larger_list_high_placebo_metadata,
                                                                          "2_D8", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D8_vs_D_minus_1/"), "high")
 raw_high_placebo_period_2_D8_vs_D_minus_1_results <- high_placebo_period_2_D8_vs_D_minus_1_results[[1]]
 
 # 2 D28 vs 2 D minus 1 - 1394/34/3/2/2/0/0 DEGs
 # When I remove weird HVL subject, I get 1521/38/4/3/2/0/0 DEGs
-high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", high_placebo_counts, high_placebo_metadata,
+high_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_high_placebo_counts, larger_list_high_placebo_metadata,
                                                                           "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "hvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "high")
 raw_high_placebo_period_2_D28_vs_D_minus_1_results <- high_placebo_period_2_D28_vs_D_minus_1_results[[1]]
 
 #### PERIOD 2 LOW VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 0/0/0/0/0/0/0 DEGs found
-low_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_low_placebo_counts, larger_list_low_placebo_metadata,
                                                                                "2_D_minus_1", "2_D_minus_2", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D_minus_1_vs_D_minus_2/"), "low")
 raw_low_placebo_period_2_D_minus_1_vs_D_minus_2_results <- low_placebo_period_2_D_minus_1_vs_D_minus_2_results[[1]]
 # 2 D2 vs 2 D minus 1 - 2/1/1/1/1/1/1 DEGs
-low_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_low_placebo_counts, larger_list_low_placebo_metadata,
                                                                         "2_D2", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "low")
 raw_low_placebo_period_2_D2_vs_D_minus_1_results <- low_placebo_period_2_D2_vs_D_minus_1_results[[1]]
 # 2 D5 vs 2 D minus 1 - 1/1/1/0/0/0/0 DEGs
-low_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_low_placebo_counts, larger_list_low_placebo_metadata,
                                                                         "2_D5", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D5_vs_D_minus_1/"), "low")
 raw_low_placebo_period_2_D5_vs_D_minus_1_results <- low_placebo_period_2_D5_vs_D_minus_1_results[[1]]
 # 2 D8 vs 2 D minus 1 - 0/0/0/0/0/0/0 DEGs
-low_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_low_placebo_counts, larger_list_low_placebo_metadata,
                                                                         "2_D8", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D8_vs_D_minus_1/"), "low")
 raw_low_placebo_period_2_D8_vs_D_minus_1_results <- low_placebo_period_2_D8_vs_D_minus_1_results[[1]]
 # 2 D28 vs 2 D minus 1 - 647/74/0/0/0/0/0 DEGs
-low_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", low_placebo_counts, low_placebo_metadata,
+low_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", larger_list_low_placebo_counts, larger_list_low_placebo_metadata,
                                                                          "2_D28", "2_D_minus_1", paste0(bulk_results_dir, "lvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "low")
 raw_low_placebo_period_2_D28_vs_D_minus_1_results <- low_placebo_period_2_D28_vs_D_minus_1_results[[1]]
 
