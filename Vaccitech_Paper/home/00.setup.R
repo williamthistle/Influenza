@@ -68,6 +68,7 @@ source(paste0(script_base_dir, "extra_functions/Compendium_Functions.R"))
 source(paste0(script_base_dir, "extra_functions/humanbase_functions.R"))
 source(paste0(script_base_dir, "extra_functions/pseudobulk_analysis_helper.R"))
 source(paste0(script_base_dir, "extra_functions/MAGICAL_functions.R"))
+source(paste0(script_base_dir, "extra_functions/wayne_classifier.R"))
 
 # Set overall metadata dir
 overall_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Overall_Metadata/")

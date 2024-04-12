@@ -21,8 +21,7 @@ getBestIndex=function(gres, se=F){
 #test_frac <- 0.1
 #bootstrap_report <- T
 
-
-cv_report <- function(X, y, nfold = 5, se = F, alp = 0.9, n_bootstrap = 100, test_frac = 0.1, bootstrap_report = T, task = "regression", contrast = c("Control", "LatePost")){
+cv_report <- function(X, y, nfold = 5, se = F, alp = 0.9, n_bootstrap = 100, test_frac = 0.1, bootstrap_report = T, task = "classification_multi", contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28")){
   #generate test, train
   ########################################################
   
@@ -72,7 +71,7 @@ cv_report <- function(X, y, nfold = 5, se = F, alp = 0.9, n_bootstrap = 100, tes
   
   
   if (task == "regression"){
-    print("regrgession")
+    print("regression")
   }else if (task == "classification"){
     print("classification")
     
@@ -83,7 +82,7 @@ cv_report <- function(X, y, nfold = 5, se = F, alp = 0.9, n_bootstrap = 100, tes
     }#for i
     
   }else if (task == "classification_multi"){
-    print("classification mutli")
+    print("classification_multi")
     
     #convert y
     #############################
