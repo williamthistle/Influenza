@@ -107,14 +107,35 @@ matching_all_placebo_second_period_label <- as.vector(matching_all_placebo_secon
 
 contrast <- c("2_D_minus_1", "2_D28")
 matching_all_placebo_cv_report <- cv_report(matching_all_placebo_second_period_counts, matching_all_placebo_second_period_label, task = "classification", contrast = contrast)
-matching_all_placebo_cv_report_predictions <- as.data.frame(matching_all_placebo_cv_report[[1]])
-matching_all_placebo_cv_report_predictions$label <- matching_all_placebo_second_period_label
-matching_all_placebo_cv_report_predictions$AVAL <- matching_all_placebo_second_period_metadata$AVAL
-colnames(matching_all_placebo_cv_report_predictions) <- c("time_2_D_minus_1", "time_2_D8", "time_2_D28", "correct_label", "AVAL")
+matching_all_placebo_cv_report_predictions <- data.frame(predictions = matching_all_placebo_cv_report[[1]], 
+                                                         correct_label = matching_all_placebo_second_period_label,
+                                                         AVAL = matching_all_placebo_second_period_metadata$AVAL)
 
 matching_all_placebo_cv_report_predictions_d_minus_1 <- matching_all_placebo_cv_report_predictions[matching_all_placebo_cv_report_predictions$correct_label == "2_D_minus_1",]
 
-ggplot(data = matching_all_placebo_cv_report_predictions_d_minus_1, mapping = aes(x = time_2_D_minus_1, y = AVAL)) +
+ggplot(data = matching_all_placebo_cv_report_predictions_d_minus_1, mapping = aes(x = predictions, y = AVAL)) +
+  geom_point(size = 2) +
+  sm_statCorr() + xlab("Misclassification Prob") + ylab("Viral Load") + labs(title = "Day")
+
+# All samples (binary)
+matching_all_samples_second_period_metadata <- rbind(matching_all_placebo_second_period_metadata, matching_all_vaccinated_second_period_metadata)
+matching_all_samples_second_period_counts <- rbind(matching_all_placebo_second_period_counts, matching_all_vaccinated_second_period_counts)
+matching_all_samples_second_period_metadata <- matching_all_samples_second_period_metadata[matching_all_samples_second_period_metadata$time_point != "2_D8",]
+
+matching_all_samples_second_period_counts <- matching_all_samples_second_period_counts[,rownames(matching_all_samples_second_period_metadata)]
+
+matching_all_samples_second_period_label <- as.vector(matching_all_samples_second_period_metadata$time_point)
+
+contrast <- c("2_D_minus_1", "2_D8", "2_D28")
+matching_all_samples_cv_report <- cv_report(matching_all_samples_second_period_counts, matching_all_samples_second_period_label, task = "classification_multi", contrast = contrast)
+matching_all_samples_cv_report_predictions <- as.data.frame(matching_all_samples_cv_report[[1]])
+matching_all_samples_cv_report_predictions$label <- matching_all_samples_second_period_label
+matching_all_samples_cv_report_predictions$AVAL <- matching_all_samples_second_period_metadata$AVAL
+colnames(matching_all_samples_cv_report_predictions) <- c("time_2_D_minus_1", "time_2_D8", "time_2_D28", "correct_label", "AVAL")
+
+matching_all_samples_cv_report_predictions_d_minus_1 <- matching_all_samples_cv_report_predictions[matching_all_samples_cv_report_predictions$correct_label == "2_D_minus_1",]
+
+ggplot(data = matching_all_samples_cv_report_predictions_d_minus_1, mapping = aes(x = time_2_D28, y = AVAL)) +
   geom_point(size = 2) +
   sm_statCorr() + xlab("Misclassification Prob") + ylab("Viral Load") + labs(title = "Day")
 
