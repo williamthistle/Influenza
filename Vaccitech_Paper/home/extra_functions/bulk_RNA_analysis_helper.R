@@ -1120,3 +1120,155 @@ run_fc_thresholding <- function(run, test_time, baseline_time) {
   fc_unfiltered <- subset(fc_unfiltered, padj < 1.5)
   return(list(fc_0, fc_0.1, fc_0.2, fc_0.3, fc_0.585, fc_1, fc_2, fc_unfiltered))
 }
+
+# Wayne approach
+
+apply_wayne_classifier <- function(counts, metadata, contrast) {
+  all_results <- list()
+  # Subset to relevant counts for samples
+  counts <- counts[,rownames(metadata)]
+  rownames(counts) <- gsub("-", "_", rownames(counts))
+  counts <- t(counts)
+  # Record correct labels
+  label <- as.vector(metadata$time_point)
+  
+  # Set up task
+  if(length(contrast) == 2) {
+    task <- "classification"
+  } else {
+    task <- "classification_multi"
+  }
+  
+  # Perform classification task
+  current_cv_report <- cv_report(counts, label, task = task, contrast = contrast)
+  all_results[[1]] <- current_cv_report
+  # Grab predictions and add metadata
+  predictions <- as.data.frame(current_cv_report[[1]])
+  predictions$label <- label
+  predictions$AVAL <- metadata$AVAL
+  predictions$sample <- rownames(metadata)
+  
+  # Rename columns appropriately
+  prediction_colnames <- paste("time_", contrast, sep="")
+  if(task == "classification_multi") {
+    colnames(predictions) <- c(prediction_colnames, "correct_label", "AVAL", "sample")
+  } else {
+    colnames(predictions) <- c("prediction_prob", "correct_label", "AVAL", "sample")
+    predictions[[prediction_colnames[1]]] <- 1 - predictions$prediction_prob
+    predictions[[prediction_colnames[2]]] <- predictions$prediction_prob
+  }
+  
+  # Subset to controls
+  predictions_control_subset <- predictions[predictions$correct_label == contrast[1],]
+  predictions_control_subset_log_transformed_aval <- predictions_control_subset
+  predictions_control_subset_log_transformed_aval$AVAL <- log(predictions_control_subset_log_transformed_aval$AVAL)
+  
+  # Get info for barplot
+  predictions_control_subset_barplot <- predictions_control_subset
+  
+  # Put in correct format for ggplot2
+  predictions_control_subset_barplot <- predictions_control_subset_barplot %>% 
+    pivot_longer(
+      cols = prediction_colnames,
+      names_to = "time_point",
+      values_to = "probability"
+    )
+  
+  # Set up ordering of time points
+  barplot_time_point_order <- rev(prediction_colnames)
+  predictions_control_subset_barplot$time_point <- factor(predictions_control_subset_barplot$time_point,
+                                                          levels = barplot_time_point_order)
+  
+  # Set up ordering of samples
+  sample_order <- predictions_control_subset_barplot[predictions_control_subset_barplot$time_point == prediction_colnames[1],]
+  sample_order <- sample_order[order(sample_order$probability, decreasing = TRUE), ]$sample
+  predictions_control_subset_barplot$sample <- factor(predictions_control_subset_barplot$sample,
+                                                                                   levels = sample_order)
+  
+  # Set up legend
+  barplot_time_point_order_for_legend <- gsub("time_2_D28|time_1_D28", "28 Days Post", barplot_time_point_order)
+  barplot_time_point_order_for_legend <- gsub("time_2_D8|time_1_D8", "8 Days Post", barplot_time_point_order_for_legend)
+  barplot_time_point_order_for_legend <- gsub("time_2_D5|time_1_D5", "5 Days Post", barplot_time_point_order_for_legend)
+  barplot_time_point_order_for_legend <- gsub("time_2_D2|time_1_D2", "2 Days Post", barplot_time_point_order_for_legend)
+  barplot_time_point_order_for_legend <- gsub("time_2_D_minus_1|time_1_D_minus_1", "Control", barplot_time_point_order_for_legend)
+  
+  # Create barplot
+  predictions_control_subset_barplot <- ggplot(data = predictions_control_subset_barplot, aes(fill=time_point, y=probability, x=sample)) + 
+    geom_bar(position="fill", stat="identity") +  theme(axis.text.x=element_blank(),
+                                                        axis.ticks.x=element_blank()) + 
+    xlab("All Control Samples") + ylab("Probability") + guides(fill=guide_legend(title="Time Points")) + 
+    scale_fill_discrete(labels=barplot_time_point_order_for_legend)
+  
+  all_results[[2]] <- predictions_control_subset_barplot
+  
+  # Create correlation plots for viral load
+  end_coord <- length(barplot_time_point_order) - 1
+  j <- 3
+  for(i in 1:end_coord) {
+    # We do both viral load and log(viral load) since I'm not sure which is better
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "AVAL")) +
+      geom_point(size = 2) +
+      sm_statCorr() + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("Viral Load")
+    all_results[[j]] <- cor_plot
+    
+    j <- j + 1
+    
+    cor_plot_logged <- ggplot(data = predictions_control_subset_log_transformed_aval, mapping = aes_string(x = barplot_time_point_order[[i]], y = "AVAL")) +
+      geom_point(size = 2) +
+      sm_statCorr() + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("Viral Load (Log)")
+    all_results[[j]] <- cor_plot_logged
+    
+    j <- j + 1
+  }
+  
+  return(all_results)
+}
+
+# Create classifier based on multiclassPairs method
+create_multiclassPairs_classifier_for_bulk_data <- function(counts, metadata) {
+  counts <- counts[,rownames(metadata)]
+  rownames(counts) <- gsub("-", "_", rownames(counts))
+  time_points <- metadata$time_point
+  classes <- as.vector(unique(time_points))
+  
+  # Create classifier object
+  classifier_object <- ReadData(Data = counts,
+                                Labels = time_points,
+                                verbose = TRUE)
+  
+  # Get list of filtered genes
+  filtered_genes <- filter_genes_TSP(data_object = classifier_object,
+                                     filter = "one_vs_one",
+                                     platform_wise = FALSE,
+                                     featureNo = 1000,
+                                     UpDown = TRUE,
+                                     verbose = TRUE)
+  
+  # Train classifier
+  classifier <- train_one_vs_rest_TSP(data_object = classifier_object,
+                                      filtered_genes = filtered_genes,
+                                      k_range = 5:50,
+                                      include_pivot = FALSE,
+                                      one_vs_one_scores = TRUE,
+                                      platform_wise_scores = FALSE,
+                                      seed = get_speedi_seed(),
+                                      verbose = TRUE)
+  
+  # Test classifier on training data
+  results_train <- predict_one_vs_rest_TSP(classifier = classifier,
+                                           Data = classifier_object,
+                                           tolerate_missed_genes = TRUE,
+                                           weighted_votes = TRUE,
+                                           classes = classes,
+                                           verbose = TRUE)
+  
+  # Check that predictions are accurate
+  results_train$max_score == time_points
+  
+  caret::confusionMatrix(data = factor(results_train$max_score, 
+                                       levels = unique(classifier_object$data$Labels)),
+                         reference = factor(classifier_object$data$Labels, 
+                                            levels = unique(classifier_object$data$Labels)),
+                         mode="everything")
+  return(list(classifier, results_train))
+}
