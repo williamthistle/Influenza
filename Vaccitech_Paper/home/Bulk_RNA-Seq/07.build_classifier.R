@@ -54,6 +54,14 @@ matching_all_samples_2_D28_binary_metadata <- matching_all_samples_2_D28_binary_
 matching_all_samples_2_D28_binary_metadata <- matching_all_samples_2_D28_binary_metadata[matching_all_samples_2_D28_binary_metadata$time_point != "2_D8",]
 matching_all_samples_2_D28_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_samples_2_D28_binary_metadata, contrast = c("2_D_minus_1", "2_D28"))
 
+matching_all_samples_2_D8_binary_metadata <- matching_all_samples_second_period_metadata
+matching_all_samples_2_D8_binary_metadata <- matching_all_samples_2_D8_binary_metadata[matching_all_samples_2_D8_binary_metadata$time_point != "2_D_minus_2",]
+matching_all_samples_2_D8_binary_metadata <- matching_all_samples_2_D8_binary_metadata[matching_all_samples_2_D8_binary_metadata$time_point != "2_D2",]
+matching_all_samples_2_D8_binary_metadata <- matching_all_samples_2_D8_binary_metadata[matching_all_samples_2_D8_binary_metadata$time_point != "2_D5",]
+matching_all_samples_2_D8_binary_metadata <- matching_all_samples_2_D8_binary_metadata[matching_all_samples_2_D8_binary_metadata$time_point != "2_D28",]
+matching_all_samples_2_D8_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_samples_2_D8_binary_metadata, contrast = c("2_D_minus_1", "2_D8"))
+
+
 
 
 
