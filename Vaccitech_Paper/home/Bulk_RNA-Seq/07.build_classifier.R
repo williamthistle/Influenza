@@ -12,24 +12,24 @@ matching_all_placebo_second_period_metadata <- placebo_metadata[placebo_metadata
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D_minus_2",]
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D2",]
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D5",]
-matching_all_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized, matching_all_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
+matching_all_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
 
 # All matched vaccine (period 2)
 matching_all_vaccinated_second_period_metadata <- vaccinated_metadata[vaccinated_metadata$period == "2",]
 matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[matching_all_vaccinated_second_period_metadata$time_point != "2_D_minus_2",]
 matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[matching_all_vaccinated_second_period_metadata$time_point != "2_D2",]
 matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[matching_all_vaccinated_second_period_metadata$time_point != "2_D5",]
-matching_all_vaccinated_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized, matching_all_vaccinated_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
+matching_all_vaccinated_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_vaccinated_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
 
 # All matched samples (period 2)
 matching_all_samples_second_period_metadata <- rbind(matching_all_placebo_second_period_metadata, matching_all_vaccinated_second_period_metadata)
-matching_all_samples_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized, matching_all_samples_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
+matching_all_samples_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_samples_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
 
 # All matched vaccine (period 1)
 matching_all_vaccinated_first_period_metadata <- vaccinated_metadata[vaccinated_metadata$period == "1",]
 matching_all_vaccinated_first_period_metadata <- matching_all_vaccinated_first_period_metadata[matching_all_vaccinated_first_period_metadata$time_point != "1_D2",]
 matching_all_vaccinated_first_period_metadata <- matching_all_vaccinated_first_period_metadata[matching_all_vaccinated_first_period_metadata$time_point != "1_D28",]
-matching_all_vaccinated_first_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized, matching_all_vaccinated_first_period_metadata, contrast = c("1_D_minus_1", "1_D8"))
+matching_all_vaccinated_first_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_vaccinated_first_period_metadata, contrast = c("1_D_minus_1", "1_D8"))
 
 
 
