@@ -31,106 +31,31 @@ matching_all_vaccinated_first_period_metadata <- matching_all_vaccinated_first_p
 matching_all_vaccinated_first_period_metadata <- matching_all_vaccinated_first_period_metadata[matching_all_vaccinated_first_period_metadata$time_point != "1_D28",]
 matching_all_vaccinated_first_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_vaccinated_first_period_metadata, contrast = c("1_D_minus_1", "1_D8"))
 
-
-
-
-matching_all_vaccinated_first_period_counts <- gene_counts_normalized_without_scale[,rownames(matching_all_vaccinated_first_period_metadata)]
-rownames(matching_all_vaccinated_first_period_counts) <- gsub("-", "_", rownames(matching_all_vaccinated_first_period_counts))
-matching_all_vaccinated_first_period_counts <- t(matching_all_vaccinated_first_period_counts)
-matching_all_vaccinated_first_period_label <- as.vector(matching_all_vaccinated_first_period_metadata$time_point)
-
-contrast <- c("1_D_minus_1", "1_D8")
-matching_all_vaccinated_cv_report <- cv_report(matching_all_vaccinated_first_period_counts, matching_all_vaccinated_first_period_label, task = "classification", contrast = contrast)
-matching_all_vaccinated_cv_report_predictions <- as.data.frame(matching_all_vaccinated_cv_report[[1]])
-matching_all_vaccinated_cv_report_predictions$label <- matching_all_vaccinated_first_period_label
-matching_all_vaccinated_cv_report_predictions$AVAL <- matching_all_vaccinated_first_period_metadata$AVAL
-matching_all_vaccinated_cv_report_predictions$sample <- rownames(matching_all_vaccinated_first_period_metadata)
-colnames(matching_all_vaccinated_cv_report_predictions) <- c("prediction_prob", "correct_label", "AVAL", "sample")
-
-matching_all_vaccinated_cv_report_predictions$time_1_D_minus_1 <- 1 - matching_all_vaccinated_cv_report_predictions$prediction_prob
-matching_all_vaccinated_cv_report_predictions$time_1_D8 <- matching_all_vaccinated_cv_report_predictions$prediction_prob 
-
-matching_all_vaccinated_cv_report_predictions_d_minus_1 <- matching_all_vaccinated_cv_report_predictions[matching_all_vaccinated_cv_report_predictions$correct_label == "1_D_minus_1",]
-matching_all_vaccinated_cv_report_predictions_d8 <- matching_all_vaccinated_cv_report_predictions[matching_all_vaccinated_cv_report_predictions$correct_label == "1_D8",]
-
-matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot <- matching_all_vaccinated_cv_report_predictions_d_minus_1
-matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot <- matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot[,-c(1,2,3)]
-
-matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot <- matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot %>% 
-  pivot_longer(
-    cols = c("time_1_D_minus_1", "time_1_D8"),
-    names_to = "time_point",
-    values_to = "probability"
-  )
-
-matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot$time_point <- factor(matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot$time_point,
-                                                                                     levels = c("time_1_D8", "time_1_D_minus_1"))
-
-sample_order <- matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot[matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot$time_point == "time_1_D_minus_1",]
-sample_order <- sample_order[order(sample_order$probability, decreasing = TRUE), ]$sample
-matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot$sample <- factor(matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot$sample,
-                                                                                 levels = sample_order)
-
-matched_vaccinated_barplot <- ggplot(data = matching_all_vaccinated_cv_report_predictions_d_minus_1_barplot, aes(fill=time_point, y=probability, x=sample)) + 
-  geom_bar(position="fill", stat="identity") +  theme(axis.text.x=element_blank(),
-                                                      axis.ticks.x=element_blank()) + 
-  xlab("All Control Samples") + ylab("Probability") + guides(fill=guide_legend(title="Time Points")) + 
-  scale_fill_discrete(labels=c("8 Days Post", "Control"))
-
-ggsave(filename = "C:/Users/wat2/Desktop/matched_vaccinated.png", plot = matched_vaccinated_barplot)
-
-ggplot(data = matching_all_vaccinated_cv_report_predictions_d_minus_1, mapping = aes(x = time_1_D8, y = AVAL)) +
-  geom_point(size = 2) +
-  sm_statCorr() + xlab("Probability of Misclassification as 8 Days Post Vaccination") + ylab("Viral Load")
-
-ggplot(data = matching_all_vaccinated_cv_report_predictions_d_minus_1, mapping = aes(x = time_1_D8, y = log(AVAL))) +
-  geom_point(size = 2) +
-  sm_statCorr() + xlab("Probability of Misclassification as 8 Days Post Vaccination") + ylab("Viral Load (Log)")
-
 # All matched placebo (binary)
-matching_all_placebo_second_period_metadata <- placebo_metadata[placebo_metadata$period == "2",]
-matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D_minus_2",]
-matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D2",]
-matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D5",]
-matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D8",]
+matching_all_placebo_2_D28_binary_metadata <- placebo_metadata[placebo_metadata$period == "2",]
+matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_metadata[matching_all_placebo_2_D28_binary_metadata$time_point != "2_D_minus_2",]
+matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_metadata[matching_all_placebo_2_D28_binary_metadata$time_point != "2_D2",]
+matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_metadata[matching_all_placebo_2_D28_binary_metadata$time_point != "2_D5",]
+matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_metadata[matching_all_placebo_2_D28_binary_metadata$time_point != "2_D8",]
+matching_all_placebo_2_D28_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D28_binary_metadata, contrast = c("2_D_minus_1", "2_D28"))
 
-matching_all_placebo_second_period_counts <- gene_counts_normalized[,rownames(matching_all_placebo_second_period_metadata)]
-rownames(matching_all_placebo_second_period_counts) <- gsub("-", "_", rownames(matching_all_placebo_second_period_counts))
-matching_all_placebo_second_period_counts <- t(matching_all_placebo_second_period_counts)
-matching_all_placebo_second_period_label <- as.vector(matching_all_placebo_second_period_metadata$time_point)
-
-contrast <- c("2_D_minus_1", "2_D28")
-matching_all_placebo_cv_report <- cv_report(matching_all_placebo_second_period_counts, matching_all_placebo_second_period_label, task = "classification", contrast = contrast)
-matching_all_placebo_cv_report_predictions <- data.frame(predictions = matching_all_placebo_cv_report[[1]], 
-                                                         correct_label = matching_all_placebo_second_period_label,
-                                                         AVAL = matching_all_placebo_second_period_metadata$AVAL)
-
-matching_all_placebo_cv_report_predictions_d_minus_1 <- matching_all_placebo_cv_report_predictions[matching_all_placebo_cv_report_predictions$correct_label == "2_D_minus_1",]
-
-ggplot(data = matching_all_placebo_cv_report_predictions_d_minus_1, mapping = aes(x = predictions, y = AVAL)) +
-  geom_point(size = 2) +
-  sm_statCorr() + xlab("Misclassification Prob") + ylab("Viral Load") + labs(title = "Day")
+matching_all_placebo_2_D8_binary_metadata <- placebo_metadata[placebo_metadata$period == "2",]
+matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D_minus_2",]
+matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D2",]
+matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D5",]
+matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D28",]
+matching_all_placebo_2_D8_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D8_binary_metadata, contrast = c("2_D_minus_1", "2_D8"))
 
 # All samples (binary)
-matching_all_samples_second_period_metadata <- rbind(matching_all_placebo_second_period_metadata, matching_all_vaccinated_second_period_metadata)
-matching_all_samples_second_period_counts <- rbind(matching_all_placebo_second_period_counts, matching_all_vaccinated_second_period_counts)
-matching_all_samples_second_period_metadata <- matching_all_samples_second_period_metadata[matching_all_samples_second_period_metadata$time_point != "2_D8",]
+matching_all_samples_2_D28_binary_metadata <- matching_all_samples_second_period_metadata
+matching_all_samples_2_D28_binary_metadata <- matching_all_samples_2_D28_binary_metadata[matching_all_samples_2_D28_binary_metadata$time_point != "2_D_minus_2",]
+matching_all_samples_2_D28_binary_metadata <- matching_all_samples_2_D28_binary_metadata[matching_all_samples_2_D28_binary_metadata$time_point != "2_D2",]
+matching_all_samples_2_D28_binary_metadata <- matching_all_samples_2_D28_binary_metadata[matching_all_samples_2_D28_binary_metadata$time_point != "2_D5",]
+matching_all_samples_2_D28_binary_metadata <- matching_all_samples_2_D28_binary_metadata[matching_all_samples_2_D28_binary_metadata$time_point != "2_D8",]
+matching_all_samples_2_D28_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_samples_2_D28_binary_metadata, contrast = c("2_D_minus_1", "2_D28"))
 
-matching_all_samples_second_period_counts <- matching_all_samples_second_period_counts[rownames(matching_all_samples_second_period_metadata),]
 
-matching_all_samples_second_period_label <- as.vector(matching_all_samples_second_period_metadata$time_point)
 
-contrast <- c("2_D_minus_1", "2_D28")
-matching_all_samples_cv_report <- cv_report(matching_all_samples_second_period_counts, matching_all_samples_second_period_label, task = "classification", contrast = contrast)
-matching_all_placebo_cv_report_predictions <- data.frame(predictions = matching_all_samples_cv_report[[1]], 
-                                                         correct_label = matching_all_samples_second_period_label,
-                                                         AVAL = matching_all_samples_second_period_metadata$AVAL)
-
-matching_all_placebo_cv_report_predictions_d_minus_1 <- matching_all_placebo_cv_report_predictions[matching_all_placebo_cv_report_predictions$correct_label == "2_D_minus_1",]
-
-ggplot(data = matching_all_placebo_cv_report_predictions_d_minus_1, mapping = aes(x = predictions, y = AVAL)) +
-  geom_point(size = 2) +
-  sm_statCorr() + xlab("Misclassification Prob") + ylab("Viral Load") + labs(title = "Day")
 
 # Other approaches
 
