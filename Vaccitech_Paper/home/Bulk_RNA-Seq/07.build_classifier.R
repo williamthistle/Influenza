@@ -8,7 +8,7 @@ source(paste0(base_dir, "00.setup.R"))
 # High placebo
 high_placebo_second_period_metadata <- high_placebo_metadata[high_placebo_metadata$period == "2",]
 high_placebo_second_period_metadata <- high_placebo_second_period_metadata[high_placebo_second_period_metadata$time_point != "2_D_minus_2",]
-high_placebo_second_period_counts <- gene_counts_normalized[,rownames(high_placebo_second_period_metadata)]
+high_placebo_second_period_counts <- gene_counts_normalized_without_scale[,rownames(high_placebo_second_period_metadata)]
 rownames(high_placebo_second_period_counts) <- gsub("-", "_", rownames(high_placebo_second_period_counts))
 high_placebo_second_period_counts <- t(high_placebo_second_period_counts)
 high_placebo_second_period_label <- as.vector(high_placebo_second_period_metadata$time_point)
@@ -33,7 +33,7 @@ matching_all_placebo_second_period_metadata <- matching_all_placebo_second_perio
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D2",]
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D5",]
 
-matching_all_placebo_second_period_counts <- gene_counts_normalized[,rownames(matching_all_placebo_second_period_metadata)]
+matching_all_placebo_second_period_counts <- gene_counts_normalized_without_scale[,rownames(matching_all_placebo_second_period_metadata)]
 rownames(matching_all_placebo_second_period_counts) <- gsub("-", "_", rownames(matching_all_placebo_second_period_counts))
 matching_all_placebo_second_period_counts <- t(matching_all_placebo_second_period_counts)
 matching_all_placebo_second_period_label <- as.vector(matching_all_placebo_second_period_metadata$time_point)
@@ -46,10 +46,9 @@ matching_all_placebo_cv_report_predictions$AVAL <- matching_all_placebo_second_p
 colnames(matching_all_placebo_cv_report_predictions) <- c("time_2_D_minus_1", "time_2_D8", "time_2_D28", "correct_label", "AVAL")
 
 matching_all_placebo_cv_report_predictions_d_minus_1 <- matching_all_placebo_cv_report_predictions[matching_all_placebo_cv_report_predictions$correct_label == "2_D_minus_1",]
+matching_all_placebo_cv_report_predictions_d8 <- matching_all_placebo_cv_report_predictions[matching_all_placebo_cv_report_predictions$correct_label == "2_D8",]
 
-test <- matching_all_placebo_cv_report_predictions_d_minus_1[matching_all_placebo_cv_report_predictions_d_minus_1$AVAL >= hvl_threshold,]
-
-ggplot(data = test, mapping = aes(x = time_2_D8, y = AVAL)) +
+ggplot(data = matching_all_placebo_cv_report_predictions_d_minus_1, mapping = aes(x = time_2_D28, y = AVAL)) +
   geom_point(size = 2) +
   sm_statCorr() + xlab("Misclassification Prob") + ylab("Viral Load") + labs(title = "Day")
 
@@ -59,7 +58,7 @@ matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second
 matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[matching_all_vaccinated_second_period_metadata$time_point != "2_D2",]
 matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[matching_all_vaccinated_second_period_metadata$time_point != "2_D5",]
 
-matching_all_vaccinated_second_period_counts <- gene_counts_normalized[,rownames(matching_all_vaccinated_second_period_metadata)]
+matching_all_vaccinated_second_period_counts <- gene_counts_normalized_without_scale[,rownames(matching_all_vaccinated_second_period_metadata)]
 rownames(matching_all_vaccinated_second_period_counts) <- gsub("-", "_", rownames(matching_all_vaccinated_second_period_counts))
 matching_all_vaccinated_second_period_counts <- t(matching_all_vaccinated_second_period_counts)
 matching_all_vaccinated_second_period_label <- as.vector(matching_all_vaccinated_second_period_metadata$time_point)
@@ -72,6 +71,7 @@ matching_all_vaccinated_cv_report_predictions$AVAL <- matching_all_vaccinated_se
 colnames(matching_all_vaccinated_cv_report_predictions) <- c("time_2_D_minus_1", "time_2_D8", "time_2_D28", "correct_label", "AVAL")
 
 matching_all_vaccinated_cv_report_predictions_d_minus_1 <- matching_all_vaccinated_cv_report_predictions[matching_all_vaccinated_cv_report_predictions$correct_label == "2_D_minus_1",]
+matching_all_vaccinated_cv_report_predictions_d8 <- matching_all_vaccinated_cv_report_predictions[matching_all_vaccinated_cv_report_predictions$correct_label == "2_D8",]
 
 ggplot(data = matching_all_vaccinated_cv_report_predictions_d_minus_1, mapping = aes(x = time_2_D28, y = AVAL)) +
   geom_point(size = 2) +
@@ -90,6 +90,8 @@ matching_all_samples_cv_report_predictions$AVAL <- matching_all_samples_second_p
 colnames(matching_all_samples_cv_report_predictions) <- c("time_2_D_minus_1", "time_2_D8", "time_2_D28", "correct_label", "AVAL")
 
 matching_all_samples_cv_report_predictions_d_minus_1 <- matching_all_samples_cv_report_predictions[matching_all_samples_cv_report_predictions$correct_label == "2_D_minus_1",]
+matching_all_samples_cv_report_predictions_d8 <- matching_all_samples_cv_report_predictions[matching_all_samples_cv_report_predictions$correct_label == "2_D8",]
+matching_all_samples_cv_report_predictions_d28 <- matching_all_samples_cv_report_predictions[matching_all_samples_cv_report_predictions$correct_label == "2_D28",]
 
 ggplot(data = matching_all_samples_cv_report_predictions_d_minus_1, mapping = aes(x = time_2_D28, y = AVAL)) +
   geom_point(size = 2) +

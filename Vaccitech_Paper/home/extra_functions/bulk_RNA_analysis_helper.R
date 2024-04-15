@@ -3,9 +3,16 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   # Read in count and metadata files
   gene_counts <<- fread(paste0(data_dir, "rsem_genes_count.processed.txt"), header = T, sep = "\t")
   gene_counts_normalized <<- fread(paste0(data_dir, "rsem_genes_count.processed.normalized.txt"), header = T, sep = "\t")
+  gene_counts_normalized_without_scale <<- fread(paste0(data_dir, "rsem_genes_count.processed.normalized.without.scale.txt"), header = T, sep = "\t")
+  
   gene_counts_normalized <<- as.data.frame(gene_counts_normalized)
   rownames(gene_counts_normalized) <<- gene_counts_normalized$gene_id
   gene_counts_normalized <<- gene_counts_normalized[,-c(1)]
+  
+  gene_counts_normalized_without_scale <<- as.data.frame(gene_counts_normalized_without_scale)
+  rownames(gene_counts_normalized_without_scale) <<- gene_counts_normalized_without_scale$gene_id
+  gene_counts_normalized_without_scale <<- gene_counts_normalized_without_scale[,-c(1)]
+  
   all_metadata_file <<- paste0(metadata_dir, "all_metadata_sheet.tsv")
   all_metadata <<- read.table(all_metadata_file, header = TRUE, sep = "\t")
   # Read in viral load
