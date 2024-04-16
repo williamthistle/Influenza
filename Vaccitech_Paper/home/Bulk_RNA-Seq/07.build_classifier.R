@@ -3,9 +3,9 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 # High placebo
-high_placebo_second_period_metadata <- high_placebo_metadata[high_placebo_metadata$period == "2",]
-high_placebo_second_period_metadata <- high_placebo_second_period_metadata[high_placebo_second_period_metadata$time_point != "2_D_minus_2",]
-high_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, high_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
+hvl_placebo_second_period_metadata <- hvl_placebo_metadata[hvl_placebo_metadata$period == "2",]
+hvl_placebo_second_period_metadata <- hvl_placebo_second_period_metadata[hvl_placebo_second_period_metadata$time_point != "2_D_minus_2",]
+hvl_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, hvl_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
 
 # All matched placebo (period 2)
 matching_all_placebo_second_period_metadata <- placebo_metadata[placebo_metadata$period == "2",]
@@ -39,12 +39,12 @@ matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_
 matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_metadata[matching_all_placebo_2_D28_binary_metadata$time_point != "2_D8",]
 matching_all_placebo_2_D28_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D28_binary_metadata, contrast = c("2_D_minus_1", "2_D28"))
 
-matching_all_placebo_2_D8_binary_metadata <- placebo_metadata[placebo_metadata$period == "2",]
-matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D_minus_2",]
-matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D2",]
-matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D5",]
-matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D28",]
-matching_all_placebo_2_D8_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D8_binary_metadata, contrast = c("2_D_minus_1", "2_D8"))
+matching_all_placebo_2_D_minus_2_binary_metadata <- placebo_metadata[placebo_metadata$period == "2",]
+matching_all_placebo_2_D_minus_2_binary_metadata <- matching_all_placebo_2_D_minus_2_binary_metadata[matching_all_placebo_2_D_minus_2_binary_metadata$time_point != "2_D8",]
+matching_all_placebo_2_D_minus_2_binary_metadata <- matching_all_placebo_2_D_minus_2_binary_metadata[matching_all_placebo_2_D_minus_2_binary_metadata$time_point != "2_D2",]
+matching_all_placebo_2_D_minus_2_binary_metadata <- matching_all_placebo_2_D_minus_2_binary_metadata[matching_all_placebo_2_D_minus_2_binary_metadata$time_point != "2_D5",]
+matching_all_placebo_2_D_minus_2_binary_metadata <- matching_all_placebo_2_D_minus_2_binary_metadata[matching_all_placebo_2_D_minus_2_binary_metadata$time_point != "2_D28",]
+matching_all_placebo_2_D_minus_2_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D_minus_2_binary_metadata, contrast = c("2_D_minus_1", "2_D_minus_2"))
 
 # All matched vaccinated (binary)
 matching_all_vaccinated_2_D28_binary_metadata <- vaccinated_metadata[vaccinated_metadata$period == "2",]
@@ -76,6 +76,16 @@ matching_all_samples_2_D8_binary_metadata <- matching_all_samples_2_D8_binary_me
 matching_all_samples_2_D8_binary_metadata <- matching_all_samples_2_D8_binary_metadata[matching_all_samples_2_D8_binary_metadata$time_point != "2_D28",]
 matching_all_samples_2_D8_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_samples_2_D8_binary_metadata, contrast = c("2_D_minus_1", "2_D8"))
 
+matching_all_samples_2_D_minus_2_binary_metadata <- matching_all_samples_second_period_metadata
+matching_all_samples_2_D_minus_2_binary_metadata <- matching_all_samples_2_D_minus_2_binary_metadata[matching_all_samples_2_D_minus_2_binary_metadata$time_point != "2_D8",]
+matching_all_samples_2_D_minus_2_binary_metadata <- matching_all_samples_2_D_minus_2_binary_metadata[matching_all_samples_2_D_minus_2_binary_metadata$time_point != "2_D2",]
+matching_all_samples_2_D_minus_2_binary_metadata <- matching_all_samples_2_D_minus_2_binary_metadata[matching_all_samples_2_D_minus_2_binary_metadata$time_point != "2_D5",]
+matching_all_samples_2_D_minus_2_binary_metadata <- matching_all_samples_2_D_minus_2_binary_metadata[matching_all_samples_2_D_minus_2_binary_metadata$time_point != "2_D28",]
+matching_all_samples_2_D_minus_2_binary_metadata <- matching_all_samples_2_D_minus_2_binary_metadata[matching_all_samples_2_D_minus_2_binary_metadata$subject_id  %in% names(table(matching_all_samples_2_D_minus_2_binary_metadata$subject_id)[table(matching_all_samples_2_D_minus_2_binary_metadata$subject_id) == 2]),]
+
+matching_all_samples_2_D_minus_2_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_samples_2_D_minus_2_binary_metadata, contrast = c("2_D_minus_1", "2_D_minus_2"))
+
+
 
 
 
@@ -84,34 +94,34 @@ matching_all_samples_2_D8_binary_wayne_classifier <- apply_wayne_classifier(gene
 
 
 # HIGH PLACEBO
-high_placebo_second_period_metadata <- high_placebo_metadata[high_placebo_metadata$period == "2",]
-# high_placebo_second_period_metadata <- high_placebo_second_period_metadata[high_placebo_second_period_metadata$time_point != "2_D_minus_2",]
-high_placebo_second_period_training <- create_classifier_for_bulk_data(gene_counts_normalized, high_placebo_second_period_metadata)
-high_placebo_second_period_training_results <- high_placebo_second_period_training[[2]]
+hvl_placebo_second_period_metadata <- hvl_placebo_metadata[hvl_placebo_metadata$period == "2",]
+# hvl_placebo_second_period_metadata <- hvl_placebo_second_period_metadata[hvl_placebo_second_period_metadata$time_point != "2_D_minus_2",]
+hvl_placebo_second_period_training <- create_classifier_for_bulk_data(gene_counts_normalized, hvl_placebo_second_period_metadata)
+hvl_placebo_second_period_training_results <- hvl_placebo_second_period_training[[2]]
 
-high_placebo_second_period_training_results_2_D_minus_1 <- high_placebo_second_period_training_results[high_placebo_second_period_training_results$max_score == "2_D_minus_1",]
-high_placebo_2_D_minus_1_metadata <- high_placebo_second_period_metadata[high_placebo_second_period_metadata$time_point == "2_D_minus_1",]
-high_placebo_second_period_training_results_2_D_minus_1$AVAL <- high_placebo_2_D_minus_1_metadata$AVAL
+hvl_placebo_second_period_training_results_2_D_minus_1 <- hvl_placebo_second_period_training_results[hvl_placebo_second_period_training_results$max_score == "2_D_minus_1",]
+hvl_placebo_2_D_minus_1_metadata <- hvl_placebo_second_period_metadata[hvl_placebo_second_period_metadata$time_point == "2_D_minus_1",]
+hvl_placebo_second_period_training_results_2_D_minus_1$AVAL <- hvl_placebo_2_D_minus_1_metadata$AVAL
 
-colnames(high_placebo_second_period_training_results_2_D_minus_1) <- c("time_2_D2", "time_2_D_minus_2", "time_2_D8", "time_2_D5", "time_2_D_minus_1", "time_2_D28", "max_score", "tie_flag", "AVAL")
+colnames(hvl_placebo_second_period_training_results_2_D_minus_1) <- c("time_2_D2", "time_2_D_minus_2", "time_2_D8", "time_2_D5", "time_2_D_minus_1", "time_2_D28", "max_score", "tie_flag", "AVAL")
 
-ggplot(data = high_placebo_second_period_training_results_2_D_minus_1, mapping = aes(x = time_2_D28, y = AVAL)) +
+ggplot(data = hvl_placebo_second_period_training_results_2_D_minus_1, mapping = aes(x = time_2_D28, y = AVAL)) +
   geom_point(size = 2) +
   sm_statCorr() + xlab("Misclassification Prob") + ylab("Viral Load") + labs(title = "Day")
 
 # LOW PLACEBO
-low_placebo_second_period_metadata <- low_placebo_metadata[low_placebo_metadata$period == "2",]
-# low_placebo_second_period_metadata <- low_placebo_second_period_metadata[low_placebo_second_period_metadata$time_point != "2_D_minus_2",]
-low_placebo_second_period_training <- create_classifier_for_bulk_data(gene_counts_normalized, low_placebo_second_period_metadata)
-low_placebo_second_period_training_results <- low_placebo_second_period_training[[2]]
+lvl_placebo_second_period_metadata <- lvl_placebo_metadata[lvl_placebo_metadata$period == "2",]
+# lvl_placebo_second_period_metadata <- lvl_placebo_second_period_metadata[lvl_placebo_second_period_metadata$time_point != "2_D_minus_2",]
+lvl_placebo_second_period_training <- create_classifier_for_bulk_data(gene_counts_normalized, lvl_placebo_second_period_metadata)
+lvl_placebo_second_period_training_results <- lvl_placebo_second_period_training[[2]]
 
-low_placebo_second_period_training_results_2_D_minus_1 <- low_placebo_second_period_training_results[low_placebo_second_period_training_results$max_score == "2_D_minus_1",]
-low_placebo_2_D_minus_1_metadata <- low_placebo_second_period_metadata[low_placebo_second_period_metadata$time_point == "2_D_minus_1",]
-low_placebo_second_period_training_results_2_D_minus_1$AVAL <- low_placebo_2_D_minus_1_metadata$AVAL
+lvl_placebo_second_period_training_results_2_D_minus_1 <- lvl_placebo_second_period_training_results[lvl_placebo_second_period_training_results$max_score == "2_D_minus_1",]
+lvl_placebo_2_D_minus_1_metadata <- lvl_placebo_second_period_metadata[lvl_placebo_second_period_metadata$time_point == "2_D_minus_1",]
+lvl_placebo_second_period_training_results_2_D_minus_1$AVAL <- lvl_placebo_2_D_minus_1_metadata$AVAL
 
-colnames(low_placebo_second_period_training_results_2_D_minus_1) <- c("time_2_D28", "time_2_D8", "time_2_D_minus_1", "time_2_D_minus_2", "time_2_D5", "time_2_D2", "max_score", "tie_flag", "AVAL")
+colnames(lvl_placebo_second_period_training_results_2_D_minus_1) <- c("time_2_D28", "time_2_D8", "time_2_D_minus_1", "time_2_D_minus_2", "time_2_D5", "time_2_D2", "max_score", "tie_flag", "AVAL")
 
-ggplot(data = low_placebo_second_period_training_results_2_D_minus_1, mapping = aes(x = time_2_D28, y = AVAL)) +
+ggplot(data = lvl_placebo_second_period_training_results_2_D_minus_1, mapping = aes(x = time_2_D28, y = AVAL)) +
   geom_point(size = 2) +
   sm_statCorr() + xlab("Misclassification Prob") + ylab("Viral Load") + labs(title = "Day")
 
