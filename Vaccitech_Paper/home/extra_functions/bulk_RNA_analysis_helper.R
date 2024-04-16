@@ -118,21 +118,21 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   high_t_cell_response_subjects <<- immunogenicity_data$SUBJID[1:7]
   low_t_cell_response_subjects <<- immunogenicity_data$SUBJID[8:14]
   # Grab high t cell response vaccinated counts and metadata
-  high_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% high_t_cell_response_subjects,])
-  high_vaccinated_counts <<- vaccinated_counts[,high_vaccinated_aliquots]
-  high_vaccinated_metadata <<- vaccinated_metadata[high_vaccinated_aliquots,]
-  # Grab low viral load placebo counts and metadata
-  low_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% low_t_cell_response_subjects,])
-  low_vaccinated_counts <<- vaccinated_counts[,low_vaccinated_aliquots]
-  low_vaccinated_metadata <<- vaccinated_metadata[low_vaccinated_aliquots,]
-  # Grab combination of high and low viral load placebo counts and metadata
-  both_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% high_t_cell_response_subjects | vaccinated_metadata$subject_id %in% low_t_cell_response_subjects,])
-  both_vaccinated_counts <<- vaccinated_counts[,both_vaccinated_aliquots]
-  both_vaccinated_metadata <<- vaccinated_metadata[both_vaccinated_aliquots,]
-  t_cell_for_metadata <<- both_vaccinated_metadata$subject_id %in% high_t_cell_response_subjects
+  high_t_cell_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% high_t_cell_response_subjects,])
+  high_t_cell_vaccinated_counts <<- vaccinated_counts[,high_t_cell_vaccinated_aliquots]
+  high_t_cell_vaccinated_metadata <<- vaccinated_metadata[high_t_cell_vaccinated_aliquots,]
+  # Grab low t cell response vaccinated counts and metadata
+  low_t_cell_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% low_t_cell_response_subjects,])
+  low_t_cell_vaccinated_counts <<- vaccinated_counts[,low_t_cell_vaccinated_aliquots]
+  low_t_cell_vaccinated_metadata <<- vaccinated_metadata[low_t_cell_vaccinated_aliquots,]
+  # Grab combination of high and low t cell response vaccinated counts and metadata
+  both_t_cell_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% high_t_cell_response_subjects | vaccinated_metadata$subject_id %in% low_t_cell_response_subjects,])
+  both_t_cell_vaccinated_counts <<- vaccinated_counts[,both_t_cell_vaccinated_aliquots]
+  both_t_cell_vaccinated_metadata <<- vaccinated_metadata[both_t_cell_vaccinated_aliquots,]
+  t_cell_for_metadata <<- both_t_cell_vaccinated_metadata$subject_id %in% high_t_cell_response_subjects
   t_cell_for_metadata <<- replace(t_cell_for_metadata, t_cell_for_metadata == TRUE, "HIGH")
   t_cell_for_metadata <<- replace(t_cell_for_metadata, t_cell_for_metadata == FALSE, "LOW")
-  both_vaccinated_metadata$t_cell_response <<- t_cell_for_metadata
+  both_t_cell_vaccinated_metadata$t_cell_response <<- t_cell_for_metadata
   ### PLACEBO ###
   # Grab subject IDs for main 23 subjects
   placebo_full_time_series_subjects <<- unique(placebo_full_time_series_metadata$subject_id)
@@ -142,54 +142,39 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   high_viral_load_subjects <<- placebo_full_time_series_subjects[1:13]
   low_viral_load_subjects <<- tail(placebo_full_time_series_subjects, n = 10)
   # Grab high viral load placebo counts and metadata
-  high_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% high_viral_load_subjects,])
-  high_placebo_counts <<- placebo_counts[,high_placebo_aliquots]
-  high_placebo_metadata <<- placebo_metadata[high_placebo_aliquots,]
+  hvl_full_time_series_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% high_viral_load_subjects,])
+  hvl_full_time_series_placebo_counts <<- placebo_counts[,hvl_full_time_series_placebo_aliquots]
+  hvl_full_time_series_placebo_metadata <<- placebo_metadata[hvl_full_time_series_placebo_aliquots,]
   # Grab low viral load placebo counts and metadata
-  low_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% low_viral_load_subjects,])
-  low_placebo_counts <<- placebo_counts[,low_placebo_aliquots]
-  low_placebo_metadata <<- placebo_metadata[low_placebo_aliquots,]
+  lvl_full_time_series_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% low_viral_load_subjects,])
+  lvl_full_time_series_placebo_counts <<- placebo_counts[,lvl_full_time_series_placebo_aliquots]
+  lvl_full_time_series_placebo_metadata <<- placebo_metadata[lvl_full_time_series_placebo_aliquots,]
   # Grab combination of high and low viral load placebo counts and metadata
-  both_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% high_viral_load_subjects | placebo_metadata$subject_id %in% low_viral_load_subjects,])
-  both_placebo_counts <<- placebo_counts[,both_placebo_aliquots]
-  both_placebo_metadata <<- placebo_metadata[both_placebo_aliquots,]
-  viral_load_for_metadata <<- both_placebo_metadata$subject_id %in% high_viral_load_subjects
-  viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == TRUE, "HIGH")
-  viral_load_for_metadata <<- replace(viral_load_for_metadata, viral_load_for_metadata == FALSE, "LOW")
-  both_placebo_metadata$viral_load <<- viral_load_for_metadata
-  # Remove questionable high viral load individual (weird outlier on PCA) from placebo
-  # This subject is weird but he's biologically weird, so I don't think we have any justification for removing him
-  #questionable_hvl_subjects <- c("318475c9c36293a5")
-  #questionable_hvl_subjects <- c("318475c9c36293a5", "6c1530685b22079f")
-  #removed_high_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id %in% questionable_hvl_subjects,])
-  #placebo_metadata <<- placebo_metadata[!(placebo_metadata$subject_id %in% questionable_hvl_subjects),]
-  #placebo_counts <<- placebo_counts[,!(colnames(placebo_counts) %in% removed_high_viral_aliquots)]
-  #both_placebo_metadata <<-  both_placebo_metadata[!(both_placebo_metadata$subject_id %in% questionable_hvl_subjects),]
-  #both_placebo_counts <<- both_placebo_counts[,!(colnames(both_placebo_counts) %in% removed_high_viral_aliquots)]
-  #high_placebo_metadata <<- high_placebo_metadata[!(high_placebo_metadata$subject_id %in% questionable_hvl_subjects),]
-  #high_placebo_counts <<- high_placebo_counts[,!(colnames(high_placebo_counts) %in% removed_high_viral_aliquots)]
+  both_full_time_series_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$subject_id %in% high_viral_load_subjects | placebo_metadata$subject_id %in% low_viral_load_subjects,])
+  both_full_time_series_placebo_counts <<- placebo_counts[,both_full_time_series_placebo_aliquots]
+  both_full_time_series_placebo_metadata <<- placebo_metadata[both_full_time_series_placebo_aliquots,]
   # Remove questionable low viral load individual (0 qPCRAUC) from placebo
   removed_low_viral_aliquots <- rownames(placebo_metadata[placebo_metadata$subject_id == "f18c54d93cef4a4e",])
   placebo_metadata <<- placebo_metadata[!(placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
   placebo_counts <<- placebo_counts[,!(colnames(placebo_counts) %in% removed_low_viral_aliquots)]
-  both_placebo_metadata <<-  both_placebo_metadata[!(both_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
-  both_placebo_counts <<- both_placebo_counts[,!(colnames(both_placebo_counts) %in% removed_low_viral_aliquots)]
-  low_placebo_metadata <<- low_placebo_metadata[!(low_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
-  low_placebo_counts <<- low_placebo_counts[,!(colnames(low_placebo_counts) %in% removed_low_viral_aliquots)]
+  both_full_time_series_placebo_metadata <<-  both_full_time_series_placebo_metadata[!(both_full_time_series_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
+  both_full_time_series_placebo_counts <<- both_full_time_series_placebo_counts[,!(colnames(both_full_time_series_placebo_counts) %in% removed_low_viral_aliquots)]
+  lvl_full_time_series_placebo_metadata <<- lvl_full_time_series_placebo_metadata[!(lvl_full_time_series_placebo_metadata$subject_id %in% "f18c54d93cef4a4e"),]
+  lvl_full_time_series_placebo_counts <<- lvl_full_time_series_placebo_counts[,!(colnames(lvl_full_time_series_placebo_counts) %in% removed_low_viral_aliquots)]
   # Remove questionable low viral load individuals (NA or 0 qPCRAUC) from vaccinated
   vaccinated_metadata <<- vaccinated_metadata[!is.na(vaccinated_metadata$AVAL),]
   removed_low_viral_aliquots <- rownames(vaccinated_metadata[vaccinated_metadata$AVAL == 0,])
   removed_low_viral_subjects <- unique(vaccinated_metadata[vaccinated_metadata$AVAL == 0,]$subject_id)
   vaccinated_metadata <<- vaccinated_metadata[!(vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
   vaccinated_counts <<- vaccinated_counts[,!(colnames(vaccinated_counts) %in% removed_low_viral_aliquots)]
-  both_vaccinated_metadata <<-  both_vaccinated_metadata[!(both_vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
-  both_vaccinated_counts <<- both_vaccinated_counts[,!(colnames(both_vaccinated_counts) %in% removed_low_viral_aliquots)]
-  low_vaccinated_metadata <<- low_vaccinated_metadata[!(low_vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
-  low_vaccinated_counts <<- low_vaccinated_counts[,!(colnames(low_vaccinated_counts) %in% removed_low_viral_aliquots)]
+  both_t_cell_vaccinated_metadata <<-  both_t_cell_vaccinated_metadata[!(both_t_cell_vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
+  both_t_cell_vaccinated_counts <<- both_t_cell_vaccinated_counts[,!(colnames(both_t_cell_vaccinated_counts) %in% removed_low_viral_aliquots)]
+  low_t_cell_vaccinated_metadata <<- low_t_cell_vaccinated_metadata[!(low_t_cell_vaccinated_metadata$subject_id %in% removed_low_viral_subjects),]
+  low_t_cell_vaccinated_counts <<- low_t_cell_vaccinated_counts[,!(colnames(low_t_cell_vaccinated_counts) %in% removed_low_viral_aliquots)]
   # Subset to HVL and LVL for vaccinated (based on thresholds in placebo)
   # Grab high viral load vaccinated counts and metadata
-  hvl_threshold <- min(high_placebo_metadata$AVAL)
-  lvl_threshold <- max(low_placebo_metadata$AVAL)
+  hvl_threshold <- min(hvl_full_time_series_placebo_metadata$AVAL)
+  lvl_threshold <- max(lvl_full_time_series_placebo_metadata$AVAL)
   hvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL >= hvl_threshold,])
   hvl_vaccinated_counts <<- vaccinated_counts[,hvl_vaccinated_aliquots]
   hvl_vaccinated_metadata <<- vaccinated_metadata[hvl_vaccinated_aliquots,]
@@ -198,12 +183,12 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   lvl_vaccinated_counts <<- vaccinated_counts[,lvl_vaccinated_aliquots]
   lvl_vaccinated_metadata <<- vaccinated_metadata[lvl_vaccinated_aliquots,]
   # Subset to full list of HVL and LVL for placebo
-  larger_list_high_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL >= hvl_threshold,])
-  larger_list_high_placebo_counts <<- placebo_counts[,larger_list_high_placebo_aliquots]
-  larger_list_high_placebo_metadata <<- placebo_metadata[larger_list_high_placebo_aliquots,]
-  larger_list_low_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL <= lvl_threshold,])
-  larger_list_low_placebo_counts <<- placebo_counts[,larger_list_low_placebo_aliquots]
-  larger_list_low_placebo_metadata <<- placebo_metadata[larger_list_low_placebo_aliquots,]
+  hvl_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL >= hvl_threshold,])
+  hvl_placebo_counts <<- placebo_counts[,hvl_placebo_aliquots]
+  hvl_placebo_metadata <<- placebo_metadata[hvl_placebo_aliquots,]
+  lvl_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL <= lvl_threshold,])
+  lvl_placebo_counts <<- placebo_counts[,lvl_placebo_aliquots]
+  lvl_placebo_metadata <<- placebo_metadata[lvl_placebo_aliquots,]
 }
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05, apply_sv_correction = TRUE) {
