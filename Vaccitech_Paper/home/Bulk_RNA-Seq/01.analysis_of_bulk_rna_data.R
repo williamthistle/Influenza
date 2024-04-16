@@ -79,6 +79,23 @@ lvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_
 lvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
                                                                          "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "low")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ################ VACCINATED (HVL AND LVL) ################
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
 # 1272/458/169/67/3/2/0 DEGs
