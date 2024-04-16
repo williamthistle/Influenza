@@ -198,7 +198,7 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   lvl_placebo_metadata <<- placebo_metadata[lvl_placebo_aliquots,]
 }
 
-run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05, apply_sv_correction = TRUE) {
+run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05, apply_correction = "sv") {
   if (!dir.exists(output_dir)) {dir.create(output_dir)}
   print(sample_type)
   print(test_time)
@@ -225,7 +225,8 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   #metadata_subset$Absolute.score..sig.score. <- factor(metadata_subset$Absolute.score..sig.score., levels = c("LOW", "HIGH"))
   #metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
   #current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
-  if(apply_sv_correction) {
+  if(apply_correction == "sv") {
+    print("Applying SV correction")
     base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
     base_model <- estimateSizeFactors(base_model)
     dat <- counts(base_model, normalized = TRUE)
@@ -237,7 +238,11 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
     svseq <- svaseq(dat, mod, mod0, n.sv = 1)
     metadata_subset$SV1 <- svseq$sv[,1]
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
-  } else {
+  } else if(apply_correction == "absolute_score") {
+    metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
+    current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
+  } else if(apply_correction == "none") {
+    print("Applying no correction")
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
   }
   
