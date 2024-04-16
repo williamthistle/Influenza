@@ -61,29 +61,23 @@ hvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk
 #### PERIOD 2 MODERATE VIRAL LOAD ####
 # No samples
 
-
 #### PERIOD 2 LOW VIRAL LOAD ####
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
-# 0/0/0/0/0/0/0 DEGs found
-lvl_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
+# 2/2/1/1/1/1/1 DEGs found
+lvl_full_time_series_placebo_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
                                                                                "2_D_minus_1", "2_D_minus_2", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D_minus_1_vs_D_minus_2/"), "low")
-raw_lvl_placebo_period_2_D_minus_1_vs_D_minus_2_results <- lvl_placebo_period_2_D_minus_1_vs_D_minus_2_results[[1]]
 # 2 D2 vs 2 D minus 1 - 2/1/1/1/1/1/1 DEGs
-lvl_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
+lvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
                                                                         "2_D2", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D2_vs_D_minus_1/"), "low")
-raw_lvl_placebo_period_2_D2_vs_D_minus_1_results <- lvl_placebo_period_2_D2_vs_D_minus_1_results[[1]]
-# 2 D5 vs 2 D minus 1 - 1/1/1/0/0/0/0 DEGs
-lvl_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
+# 2 D5 vs 2 D minus 1 - 4/4/4/4/4/4/4 DEGs
+lvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
                                                                         "2_D5", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D5_vs_D_minus_1/"), "low")
-raw_lvl_placebo_period_2_D5_vs_D_minus_1_results <- lvl_placebo_period_2_D5_vs_D_minus_1_results[[1]]
-# 2 D8 vs 2 D minus 1 - 0/0/0/0/0/0/0 DEGs
-lvl_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
+# 2 D8 vs 2 D minus 1 - 2/2/2/2/2/2/2 DEGs
+lvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
                                                                         "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D8_vs_D_minus_1/"), "low")
-raw_lvl_placebo_period_2_D8_vs_D_minus_1_results <- lvl_placebo_period_2_D8_vs_D_minus_1_results[[1]]
-# 2 D28 vs 2 D minus 1 - 647/74/0/0/0/0/0 DEGs
-lvl_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
+# 2 D28 vs 2 D minus 1 - 192/14/2/2/1/1/1 DEGs
+lvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
                                                                          "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "low")
-raw_lvl_placebo_period_2_D28_vs_D_minus_1_results <- lvl_placebo_period_2_D28_vs_D_minus_1_results[[1]]
 
 ################ VACCINATED (HVL AND LVL) ################
 # 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
