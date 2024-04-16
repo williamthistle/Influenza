@@ -4,7 +4,7 @@ home_dir <- "/Genomics/ogtr04/wat2/"
 
 ### SHORTCUT ###
 # HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "minus_clusters"))
-seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "seurat_minus_clusters.RDS"))
+# seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "seurat_minus_clusters.RDS"))
 
 ################## SETUP ##################
 data_path <- paste0(home_dir, "single_cell/data")
