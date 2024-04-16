@@ -178,15 +178,22 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   hvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL >= hvl_threshold,])
   hvl_vaccinated_counts <<- vaccinated_counts[,hvl_vaccinated_aliquots]
   hvl_vaccinated_metadata <<- vaccinated_metadata[hvl_vaccinated_aliquots,]
+  # Grab mvl viral load vaccinated counts and metadata
+  mvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL > lvl_threshold & vaccinated_metadata$AVAL < hvl_threshold,])
+  mvl_vaccinated_counts <<- vaccinated_counts[,mvl_vaccinated_aliquots]
+  mvl_vaccinated_metadata <<- vaccinated_metadata[mvl_vaccinated_aliquots,]
   # Grab lvl viral load vaccinated counts and metadata
   lvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL <= lvl_threshold,])
   lvl_vaccinated_counts <<- vaccinated_counts[,lvl_vaccinated_aliquots]
   lvl_vaccinated_metadata <<- vaccinated_metadata[lvl_vaccinated_aliquots,]
-  # Subset to full list of HVL and LVL for placebo
-  hvl_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL >= hvl_threshold,])
+  # Get full list of HVL, MVL, and LVL for placebo
+  hvl_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$AVAL >= hvl_threshold,])
   hvl_placebo_counts <<- placebo_counts[,hvl_placebo_aliquots]
   hvl_placebo_metadata <<- placebo_metadata[hvl_placebo_aliquots,]
-  lvl_placebo_aliquots <- rownames(placebo_metadata[placebo_metadata$AVAL <= lvl_threshold,])
+  mvl_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$AVAL > lvl_threshold & placebo_metadata$AVAL < hvl_threshold,])
+  mvl_placebo_counts <<- placebo_counts[,mvl_placebo_aliquots]
+  mvl_placebo_metadata <<- placebo_metadata[mvl_placebo_aliquots,]
+  lvl_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$AVAL <= lvl_threshold,])
   lvl_placebo_counts <<- placebo_counts[,lvl_placebo_aliquots]
   lvl_placebo_metadata <<- placebo_metadata[lvl_placebo_aliquots,]
 }
@@ -221,11 +228,12 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   if(apply_sv_correction) {
     base_model <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
     base_model <- estimateSizeFactors(base_model)
-    dat  <- counts(base_model, normalized = TRUE)
-    idx  <- rowMeans(dat) > 1
-    dat  <- dat[idx, ]
+    dat <- counts(base_model, normalized = TRUE)
+    idx <- rowMeans(dat) > 1
+    dat <- dat[idx, ]
     mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
     mod0 <- model.matrix(~ subject_id, colData(base_model))
+    print(paste0("Number of surrogate variables recommended: ", num.sv(dat, mod, method = "be")))
     svseq <- svaseq(dat, mod, mod0, n.sv = 1)
     metadata_subset$SV1 <- svseq$sv[,1]
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
