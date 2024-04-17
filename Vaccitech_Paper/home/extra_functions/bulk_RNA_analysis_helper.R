@@ -1206,14 +1206,14 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
     # We do both viral load and log(viral load) since I'm not sure which is better
     cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "AVAL")) +
       geom_point(size = 2) +
-      sm_statCorr() + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("Viral Load")
+      sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("Viral Load")
     all_results[[j]] <- cor_plot
     
     j <- j + 1
     
     cor_plot_logged <- ggplot(data = predictions_control_subset_log_transformed_aval, mapping = aes_string(x = barplot_time_point_order[[i]], y = "AVAL")) +
       geom_point(size = 2) +
-      sm_statCorr() + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("Viral Load (Log)")
+      sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("Viral Load (Log)")
     all_results[[j]] <- cor_plot_logged
     
     j <- j + 1
