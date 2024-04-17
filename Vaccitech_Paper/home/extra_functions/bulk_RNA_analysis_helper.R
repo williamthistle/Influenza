@@ -215,6 +215,8 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   metadata_subset <- metadata[metadata$time_point == test_time | metadata$time_point == baseline_time,]
   # Remove subjects that only have one time point (not both)
   metadata_subset <- metadata_subset[metadata_subset$subject_id  %in% names(table(metadata_subset$subject_id)[table(metadata_subset$subject_id) == 2]),]
+  # Print distribution of time points to make sure we're doing
+  print(table(metadata_subset$time_point))
   # Select subset of counts associated with subjects
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
@@ -234,9 +236,11 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
     dat <- dat[idx, ]
     mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
     mod0 <- model.matrix(~ subject_id, colData(base_model))
-    print(paste0("Number of surrogate variables recommended: ", num.sv(dat, mod, method = "be")))
+    print(paste0("Number of surrogate variables recommended by be: ", num.sv(dat, mod, method = "be")))
+    print(paste0("Number of surrogate variables recommended by leek: ", num.sv(dat, mod, method = "leek")))
     svseq <- svaseq(dat, mod, mod0, n.sv = 1)
     metadata_subset$SV1 <- svseq$sv[,1]
+    #metadata_subset$SV2 <- svseq$sv[,2]
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
   } else if(apply_correction == "absolute_score") {
     metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
