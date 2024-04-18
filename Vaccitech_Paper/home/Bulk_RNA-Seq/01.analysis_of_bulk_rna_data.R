@@ -79,87 +79,65 @@ lvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_
 lvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_full_time_series_placebo_counts, lvl_full_time_series_placebo_metadata,
                                                                          "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "low")
 
+################ PLACEBO MAX NUMBER OF SAMPLES ################
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-################ VACCINATED (HVL AND LVL) ################
-# 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
-# 1272/458/169/67/3/2/0 DEGs
-hvl_vaccinated_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
-                                                                                            "2_D_minus_1", "2_D_minus_2", paste0(bulk_rna_results_dir, "hvl_bulk_vaccinated_period_2_D_minus_1_vs_D_minus_2/"), "high")
-raw_hvl_vaccinated_period_2_D_minus_1_vs_D_minus_2_results <- hvl_vaccinated_period_2_D_minus_1_vs_D_minus_2_results[[1]]
-
-# 2 D2 vs 2 D minus 1 - 0/0/0/0/0/0/0 DEGs
-hvl_vaccinated_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
-                                                                                     "2_D2", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "high")
-raw_hvl_vaccinated_period_2_D2_vs_D_minus_1_results <- hvl_vaccinated_period_2_D2_vs_D_minus_1_results[[1]]
-
-# 2 D5 vs 2 D minus 1 - 72/60/49/45/25/11/0 DEGs
-hvl_vaccinated_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
-                                                                                     "2_D5", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_vaccinated_period_2_D5_vs_D_minus_1/"), "high")
-raw_hvl_vaccinated_period_2_D5_vs_D_minus_1_results <- hvl_vaccinated_period_2_D5_vs_D_minus_1_results[[1]]
-
-# 2 D8 vs 2 D minus 1 - 896/305/178/105/30/14/1 DEGs
-hvl_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
-                                                                                     "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "high")
-raw_hvl_vaccinated_period_2_D8_vs_D_minus_1_results <- hvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
-
-# 2 D28 vs 2 D minus 1 - 5860/2485/580/101/1/0/0 DEGs
-hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
-                                                                                      "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
-raw_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
-# 2 D28 vs 2 D minus 1 with random 13 subjects selected (to match subject size in placebo set)
-#set.seed(1)
-#random_hvl_vaccinated_subjects <- sample(unique(hvl_vaccinated_metadata$subject_id), 13)
-#random_hvl_vaccinated_aliquots <- rownames(hvl_vaccinated_metadata[hvl_vaccinated_metadata$subject_id %in% random_hvl_vaccinated_subjects,])
-#random_hvl_vaccinated_counts <- hvl_vaccinated_counts[,random_hvl_vaccinated_aliquots]
-#random_hvl_vaccinated_metadata <- hvl_vaccinated_metadata[random_hvl_vaccinated_aliquots,]
-
-#random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", random_hvl_vaccinated_counts, random_hvl_vaccinated_metadata,
-#                                                                                        "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "random_hvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
-# First entry: 5771/3393
-# Second entry: 3773/1301
-# Third entry: 4278/1328
-#raw_random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- random_hvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
-
-
+#### PERIOD 2 HIGH VIRAL LOAD ####
+# 2 D8 vs 2 D minus 1 - 3587/2056/1268/816/267/66/8 DEGs
+hvl_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", hvl_placebo_counts, hvl_placebo_metadata,
+                                                                                    "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_placebo_period_2_D8_vs_D_minus_1/"), "high")
+# 2 D28 vs 2 D minus 1 - 77/0/0/0/0/0/0 DEGs
+hvl_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", hvl_placebo_counts, hvl_placebo_metadata,
+                                                                                     "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "high")
+#### PERIOD 2 MODERATE VIRAL LOAD ####
+# 2 D8 vs 2 D minus 1 - 77/0/0/0/0/0/0 DEGs
+mvl_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", mvl_placebo_counts, mvl_placebo_metadata,
+                                                                                    "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_placebo_period_2_D8_vs_D_minus_1/"), "moderate")
+# 2 D28 vs 2 D minus 1 - 77/0/0/0/0/0/0 DEGs
+mvl_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", mvl_placebo_counts, mvl_placebo_metadata,
+                                                                                     "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "moderate")
 #### PERIOD 2 LOW VIRAL LOAD ####
-# 2 D minus 2 vs 2 D minus 1 - should be virtually zero unless some weird stuff happened between blood draws
-# 194/95/46/4/1/0/0 DEGs found
-lvl_vaccinated_period_2_D_minus_1_vs_D_minus_2_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
-                                                                                           "2_D_minus_1", "2_D_minus_2", paste0(bulk_rna_results_dir, "lvl_bulk_vaccinated_period_2_D_minus_1_vs_D_minus_2/"), "low")
-raw_lvl_vaccinated_period_2_D_minus_1_vs_D_minus_2_results <- lvl_vaccinated_period_2_D_minus_1_vs_D_minus_2_results[[1]]
-# 2 D2 vs 2 D minus 1 - 16/14/9/7/3/2/1 DEGs
-lvl_vaccinated_period_2_D2_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
-                                                                                    "2_D2", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_vaccinated_period_2_D2_vs_D_minus_1/"), "low")
-raw_lvl_vaccinated_period_2_D2_vs_D_minus_1_results <- lvl_vaccinated_period_2_D2_vs_D_minus_1_results[[1]]
-# 2 D5 vs 2 D minus 1 - 133/30/4/4/2/1/0 DEGs
-lvl_vaccinated_period_2_D5_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
-                                                                                    "2_D5", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_vaccinated_period_2_D5_vs_D_minus_1/"), "low")
-raw_lvl_vaccinated_period_2_D5_vs_D_minus_1_results <- lvl_vaccinated_period_2_D5_vs_D_minus_1_results[[1]]
-# 2 D8 vs 2 D minus 1 - 202/2/0/0/0/0/0 DEGs
-lvl_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
-                                                                                    "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "low")
-raw_lvl_vaccinated_period_2_D8_vs_D_minus_1_results <- lvl_vaccinated_period_2_D8_vs_D_minus_1_results[[1]]
-# 2 D28 vs 2 D minus 1 - 2386/768/166/23/5/2/1 DEGs
-lvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
-                                                                                     "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "low")
-raw_lvl_vaccinated_period_2_D28_vs_D_minus_1_results <- lvl_vaccinated_period_2_D28_vs_D_minus_1_results[[1]]
+# 2 D8 vs 2 D minus 1 - 2/2/2/2/2/2/2 DEGs
+lvl_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_placebo_counts, lvl_placebo_metadata,
+                                                                                    "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D8_vs_D_minus_1/"), "low")
+# 2 D28 vs 2 D minus 1 - 192/14/2/2/1/1/1 DEGs
+lvl_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", lvl_placebo_counts, lvl_placebo_metadata,
+                                                                                     "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "low")
 
+################ VACCINATED ################
+
+#### PERIOD 1 HIGH VIRAL LOAD ####
+# D8 vs D-1
+hvl_vaccinated_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
+                                                                                       "1_D8", "1_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "high")
+#### PERIOD 1 MODERATE VIRAL LOAD ####
+# D8 vs D-1
+mvl_vaccinated_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", mvl_vaccinated_counts, mvl_vaccinated_metadata,
+                                                                                       "1_D8", "1_D_minus_1", paste0(bulk_rna_results_dir, "mvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "moderate")
+#### PERIOD 1 LOW VIRAL LOAD ####
+# D8 vs D-1
+lvl_vaccinated_period_1_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
+                                                                                       "1_D8", "1_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "low")
+#### PERIOD 2 HIGH VIRAL LOAD ####
+# D8 vs D-1
+hvl_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
+                                                                                       "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "high")
+# D28 vs D-1
+hvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", hvl_vaccinated_counts, hvl_vaccinated_metadata,
+                                                                                        "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "high")
+#### PERIOD 2 MODERATE VIRAL LOAD ####
+# D8 vs D-1
+mvl_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", mvl_vaccinated_counts, mvl_vaccinated_metadata,
+                                                                                       "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "mvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "moderate")
+# D28 vs D-1
+mvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", mvl_vaccinated_counts, mvl_vaccinated_metadata,
+                                                                                        "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "mvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "moderate")
+#### PERIOD 2 LOW VIRAL LOAD ####
+# D8 vs D-1
+lvl_vaccinated_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
+                                                                                       "2_D8", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_vaccinated_period_2_D8_vs_D_minus_1/"), "low")
+# D28 vs D-1
+lvl_vaccinated_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("vaccinated", lvl_vaccinated_counts, lvl_vaccinated_metadata,
+                                                                                        "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "lvl_bulk_vaccinated_period_2_D28_vs_D_minus_1/"), "low")
 # Save results to disk
 save.image(paste0(bulk_rna_results_dir, "bulk_RNA_analysis.RData"))
 

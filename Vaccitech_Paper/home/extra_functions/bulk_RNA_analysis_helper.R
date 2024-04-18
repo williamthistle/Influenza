@@ -240,14 +240,37 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
     print(paste0("Number of surrogate variables recommended by leek: ", num.sv(dat, mod, method = "leek")))
     svseq <- svaseq(dat, mod, mod0, n.sv = 1)
     metadata_subset$SV1 <- svseq$sv[,1]
-    #metadata_subset$SV2 <- svseq$sv[,2]
+    metadata_subset$SV1_discrete <- svseq$sv[,1]
+    median_value <- median(metadata_subset$SV1_discrete)
+    metadata_subset$SV1_discrete <- ifelse(metadata_subset$SV1_discrete < median_value, "LOW", ifelse(metadata_subset$SV1_discrete > median_value, "HIGH", metadata_subset$SV1_discrete ))
+    metadata_subset$SV1_discrete <- factor(metadata_subset$SV1_discrete, levels = c("LOW", "HIGH"))
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
+    sva_model_discrete <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1_discrete + time_point)
+    vsd <- vst(sva_model_discrete, blind = FALSE)
+    pcaData <- plotPCA(vsd, intgroup = c( "subject_id", "time_point", "SV1_discrete", "Absolute.score..sig.score."), pcsToUse = c(1,2), returnData = TRUE)
+    percentVar <- round(100 * attr(pcaData, "percentVar"))
+    sv_plot <- ggplot(pcaData, aes(x = PC1, y = PC2, color = SV1_discrete, shape = time_point)) +
+      geom_point(size = 3) +
+      xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+      ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+      coord_fixed() +
+      ggtitle("PCA with VST data (SV)")
+    subject_plot <- ggplot(pcaData, aes(x = PC1, y = PC2, color = subject_id, shape = time_point)) +
+      geom_point(size = 3) +
+      xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+      ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+      coord_fixed() +
+      ggtitle("PCA with VST data (Subject ID)")
   } else if(apply_correction == "absolute_score") {
     metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
+    sv_plot <- NULL
+    subject_plot <- NULL
   } else if(apply_correction == "none") {
     print("Applying no correction")
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
+    sv_plot <- NULL
+    subject_plot <- NULL
   }
   
   current_analysis <- DESeq(current_analysis)
@@ -324,7 +347,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   } else {
     write.table(rownames(current_analysis_results_unfiltered), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_fc_unfiltered.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
-  return(list(current_analysis_results_none, current_analysis_results_0.1, current_analysis_results_0.2, current_analysis_results_0.3, current_analysis_results_0.585, current_analysis_results_1, current_analysis_results_2, current_analysis_results_unfiltered))
+  return(list(current_analysis_results_none, current_analysis_results_0.1, current_analysis_results_0.2, current_analysis_results_0.3, current_analysis_results_0.585, current_analysis_results_1, current_analysis_results_2, current_analysis_results_unfiltered, sv_plot, subject_plot))
 }
 
 run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_time, test_cond, baseline_cond, output_dir, output_name_prefix=NA) {
