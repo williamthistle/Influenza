@@ -20,6 +20,8 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   viral_load <<- read.table(viral_load_file, header = TRUE, sep = "\t")
   viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
   viral_load_primary$AVAL <<- as.numeric(viral_load_primary$AVAL)
+  # Read in immunogenicity data for vaccinated
+  immunogenicity_data <<- read.table(paste0(metadata_dir, "Immunogenicity_Data.tsv"), sep = "\t", header = TRUE)
   # Organize by viral load (high to low)
   viral_load_primary <<- viral_load_primary[order(viral_load_primary$AVAL, decreasing = TRUE),]
   # Separate viral loads into vaccinated / placebo
@@ -57,7 +59,7 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
                           all.x = TRUE, 
                           all.y = TRUE)
   
-  # Divide metadata into placebo and vaccinated (and add qPCRAUC viral load values)
+  # Divide metadata into placebo and vaccinated (and add qPCRAUC viral load values and t cell info for vaccinated)
   placebo_metadata <<- bulk_metadata[bulk_metadata$treatment == "PLACEBO",]
   names(placebo_viral_load_primary)[names(placebo_viral_load_primary) == 'SUBJID'] <<- 'subject_id'
   kept_columns <- colnames(placebo_metadata)
@@ -70,6 +72,16 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   kept_columns <- c(kept_columns, "AVAL")
   vaccinated_metadata <<- merge(vaccinated_metadata, vaccinated_viral_load_primary, by = "subject_id")
   vaccinated_metadata <<- vaccinated_metadata[,kept_columns]
+  
+  immunogenicity_data_t_cell_subset <<- immunogenicity_data[,c(1,105,106,115,116)]
+  immunogenicity_data_t_cell_subset <<- immunogenicity_data_t_cell_subset[immunogenicity_data_t_cell_subset$SUBJID %in% vaccinated_metadata$subject_id,]
+  immunogenicity_data_t_cell_subset$subject_id <<- immunogenicity_data_t_cell_subset$SUBJID
+  immunogenicity_data_t_cell_subset <<- immunogenicity_data_t_cell_subset[,-c(1)]
+  
+  vaccinated_metadata <<- merge(vaccinated_metadata, 
+                               immunogenicity_data_t_cell_subset, 
+                               by = "subject_id")
+  
   # Find placebo-associated and vaccinated-associated gene_counts
   kept_aliquots <<- placebo_metadata$aliquot_id
   placebo_counts <<- gene_counts[kept_aliquots]
@@ -111,7 +123,7 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
                                                                %in% names(table(vaccinated_metadata$subject_id)
                                                                           [table(vaccinated_metadata$subject_id) == 10]),]
   ### VACCINATED ###
-  immunogenicity_data <<- read.table(paste0(metadata_dir, "Immunogenicity_Data.tsv"), sep = "\t", header = TRUE)
+  # Get high T cell and low T cell response subjects that were profiled with multiomics
   immunogenicity_data <<- immunogenicity_data[immunogenicity_data$SUBJID %in% vaccinated_full_time_series_metadata$subject_id,]
   immunogenicity_data <<- immunogenicity_data[,c(1,105,106,115,116)]
   immunogenicity_data <<- immunogenicity_data[order(immunogenicity_data$Vaccination.Day8_IFNg_NP.Background_SFC.10.6.cells, decreasing = TRUE),]
@@ -247,7 +259,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1 + time_point)
     sva_model_discrete <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + SV1_discrete + time_point)
     vsd <- vst(sva_model_discrete, blind = FALSE)
-    pcaData <- plotPCA(vsd, intgroup = c( "subject_id", "time_point", "SV1_discrete", "Absolute.score..sig.score."), pcsToUse = c(1,2), returnData = TRUE)
+    pcaData <- plotPCA(vsd, intgroup = c( "subject_id", "SV1_discrete", "time_point"), pcsToUse = c(1,2), returnData = TRUE)
     percentVar <- round(100 * attr(pcaData, "percentVar"))
     sv_plot <- ggplot(pcaData, aes(x = PC1, y = PC2, color = SV1_discrete, shape = time_point)) +
       geom_point(size = 3) +
@@ -261,16 +273,36 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
       ylab(paste0("PC2: ", percentVar[2], "% variance")) +
       coord_fixed() +
       ggtitle("PCA with VST data (Subject ID)")
+    if(sample_type == "vaccinated") {
+      metadata_subset$T_cell_discrete <- metadata_subset$Vaccination.Day8_IFNg_NP.Background_SFC.10.6.cells
+      median_value <- median(metadata_subset$Vaccination.Day8_IFNg_NP.Background_SFC.10.6.cells)
+      metadata_subset$T_cell_discrete <- ifelse(metadata_subset$T_cell_discrete < median_value, "LOW", ifelse(metadata_subset$T_cell_discrete > median_value, "HIGH", metadata_subset$T_cell_discrete ))
+      metadata_subset$T_cell_discrete <- factor(metadata_subset$T_cell_discrete, levels = c("LOW", "HIGH"))
+      t_cell_model_discrete <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ T_cell_discrete + time_point)
+      vsd <- vst(t_cell_model_discrete, blind = FALSE)
+      pcaData <- plotPCA(vsd, intgroup = c("T_cell_discrete", "time_point"), pcsToUse = c(1,2), returnData = TRUE)
+      percentVar <- round(100 * attr(pcaData, "percentVar"))
+      t_cell_plot <- ggplot(pcaData, aes(x = PC1, y = PC2, color = T_cell_discrete, shape = time_point)) +
+        geom_point(size = 3) +
+        xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+        ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+        coord_fixed() +
+        ggtitle("PCA with VST data (T Cell)")
+    } else {
+      t_cell_plot <- NULL
+    }
   } else if(apply_correction == "absolute_score") {
     metadata_subset$Absolute.score..sig.score. <- scale(metadata_subset$Absolute.score..sig.score.)
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + Absolute.score..sig.score. + time_point)
     sv_plot <- NULL
     subject_plot <- NULL
+    t_cell_plot <- NULL
   } else if(apply_correction == "none") {
     print("Applying no correction")
     current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ subject_id + time_point)
     sv_plot <- NULL
     subject_plot <- NULL
+    t_cell_plot <- NULL
   }
   
   current_analysis <- DESeq(current_analysis)
@@ -347,7 +379,7 @@ run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test
   } else {
     write.table(rownames(current_analysis_results_unfiltered), paste0(output_dir, test_time, "_vs_", baseline_time, "_", output_name_prefix, "_", sample_type, "_fc_unfiltered.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
-  return(list(current_analysis_results_none, current_analysis_results_0.1, current_analysis_results_0.2, current_analysis_results_0.3, current_analysis_results_0.585, current_analysis_results_1, current_analysis_results_2, current_analysis_results_unfiltered, sv_plot, subject_plot))
+  return(list(current_analysis_results_none, current_analysis_results_0.1, current_analysis_results_0.2, current_analysis_results_0.3, current_analysis_results_0.585, current_analysis_results_1, current_analysis_results_2, current_analysis_results_unfiltered, sv_plot, subject_plot, t_cell_plot))
 }
 
 run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_time, test_cond, baseline_cond, output_dir, output_name_prefix=NA) {
