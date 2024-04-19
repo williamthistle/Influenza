@@ -22,6 +22,7 @@ matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second
 matching_all_vaccinated_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_vaccinated_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
 
 # All matched samples (period 2)
+matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[,-c(51,52,53,54),]
 matching_all_samples_second_period_metadata <- rbind(matching_all_placebo_second_period_metadata, matching_all_vaccinated_second_period_metadata)
 matching_all_samples_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_samples_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
 

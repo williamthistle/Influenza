@@ -4,16 +4,16 @@ source(paste0(base_dir, "00.setup.R"))
 
 bulk_degs_jitter_table <- data.frame(Day = character(), Gene = character(), log2FC = numeric())
 
-all_degs_table_for_d2 <- data.frame(Day = "Day 2", Gene = rownames(raw_high_placebo_period_2_D2_vs_D_minus_1_results), log2FC = raw_high_placebo_period_2_D2_vs_D_minus_1_results$log2FoldChange)
+all_degs_table_for_d2 <- data.frame(Day = "Day 2", Gene = rownames(hvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results[[2]]), log2FC = hvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results[[2]]$log2FoldChange)
 bulk_degs_jitter_table <- rbind(bulk_degs_jitter_table, all_degs_table_for_d2)
 
-all_degs_table_for_d5 <- data.frame(Day = "Day 5", Gene = rownames(raw_high_placebo_period_2_D5_vs_D_minus_1_results), log2FC = raw_high_placebo_period_2_D5_vs_D_minus_1_results$log2FoldChange)
+all_degs_table_for_d5 <- data.frame(Day = "Day 5", Gene = rownames(hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results[[2]]), log2FC = hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results[[2]]$log2FoldChange)
 bulk_degs_jitter_table <- rbind(bulk_degs_jitter_table, all_degs_table_for_d5)
 
-all_degs_table_for_d8 <- data.frame(Day = "Day 8", Gene = rownames(raw_high_placebo_period_2_D8_vs_D_minus_1_results), log2FC = raw_high_placebo_period_2_D8_vs_D_minus_1_results$log2FoldChange)
+all_degs_table_for_d8 <- data.frame(Day = "Day 8", Gene = rownames(hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results[[2]]), log2FC = hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results[[2]]$log2FoldChange)
 bulk_degs_jitter_table <- rbind(bulk_degs_jitter_table, all_degs_table_for_d8)
 
-all_degs_table_for_d28 <- data.frame(Day = "Day 28", Gene = rownames(raw_high_placebo_period_2_D28_vs_D_minus_1_results), log2FC = raw_high_placebo_period_2_D28_vs_D_minus_1_results$log2FoldChange)
+all_degs_table_for_d28 <- data.frame(Day = "Day 28", Gene = rownames(hvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results[[2]]), log2FC = hvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results[[2]]$log2FoldChange)
 bulk_degs_jitter_table <- rbind(bulk_degs_jitter_table, all_degs_table_for_d28)
 
 bulk_degs_jitter_table <- bulk_degs_jitter_table %>%
@@ -29,6 +29,7 @@ bulk_degs_jitter_plot <- ggplot(bulk_degs_jitter_table, aes(Day, log2FC, color =
   geom_jitter() + theme_minimal(base_size = 14) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + xlab("Day (Post-Exposure)") +
   ylab("log2FC (Gene Expression)") + ggtitle("RNA-Seq DEGs by Day Post-Exposure") +
-  theme(plot.title = element_text(hjust = 0.5)) + guides(color=guide_legend(title="Fold Change Direction"))
+  theme(plot.title = element_text(hjust = 0.5)) + guides(color=guide_legend(title="Fold Change Direction")) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black")
 
 ggsave(filename = paste0("C:/Users/willi/Desktop/", "bulk_deg_jitterplot.tiff"), plot = bulk_degs_jitter_plot, device='tiff', dpi=300)

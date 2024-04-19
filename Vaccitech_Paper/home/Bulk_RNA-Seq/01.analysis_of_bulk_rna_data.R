@@ -9,6 +9,8 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+# load(paste0(bulk_rna_results_dir, "bulk_RNA_analysis.RData"))
+
 ################ PLACEBO FULL TIME SERIES ################
 
 #### PERIOD 1 HIGH VIRAL LOAD ####
