@@ -109,6 +109,12 @@ period_2_day_28_hvl_vs_lvl_full_bulk_correlations <- find_bulk_correlations(hvl_
 # Day 28 LVL vs HVL (full)
 period_2_day_28_lvl_vs_hvl_full_bulk_correlations <- find_bulk_correlations(lvl_placebo_period_2_D28_vs_D_minus_1_results, hvl_placebo_period_2_D28_vs_D_minus_1_results)
 
+# Day 5 HVL vs Day 28 HVL
+period_2_day_5_hvl_vs_day_28_hvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, hvl_placebo_period_2_D28_vs_D_minus_1_results)
+
+# Day 8 HVL vs Day 28 HVL
+period_2_day_8_hvl_vs_day_28_hvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results, hvl_placebo_period_2_D28_vs_D_minus_1_results)
+
 ### Placebo vs Vaccinated
 
 # Period 2
@@ -118,4 +124,5 @@ period_2_day_8_placebo_hvl_vs_vaccinated_hvl_bulk_correlations <- find_bulk_corr
 
 # Day 28 Vaccinated HVL vs Day 28 Placebo HVL
 period_2_day_28_vaccinated_hvl_vs_placebo_hvl_bulk_correlations <- find_bulk_correlations(hvl_vaccinated_period_2_D28_vs_D_minus_1_results, hvl_placebo_period_2_D28_vs_D_minus_1_results)
+
 
