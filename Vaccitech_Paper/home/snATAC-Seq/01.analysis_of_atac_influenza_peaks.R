@@ -1,7 +1,7 @@
 # Setup environment
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
-magical_results <- read.table(file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+# magical_results <- read.table(file = paste0(magical_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 
 run_fmd_on_snATAC <- function(gene_list) {
   if(length(gene_list) > 1 & length(gene_list) < 2000) {
@@ -12,16 +12,16 @@ run_fmd_on_snATAC <- function(gene_list) {
   return(current_fmd_result)
 }
 
-snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "T Naive", "MAIT", "Proliferating")
+snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "pDC", "MAIT", "Proliferating")
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Create annotated up and downregulated peak files (annotated)
 # NOTE: Check histogram of fold change for CD16 Mono.
-snATAC_peak_annotated_dir <- paste0(sc_das_dir, "diff_peaks/annotated/")
+snATAC_peak_annotated_dir <- paste0(scATAC_hvl_placebo_das_dir, "annotated/")
 if (!dir.exists(snATAC_peak_annotated_dir)) {dir.create(snATAC_peak_annotated_dir)}
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
-  differential_analysis_results_file <- paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv")
+  differential_analysis_results_file <- paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv")
   differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
   upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC > 0,]
   downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC < 0,]
@@ -59,11 +59,12 @@ for(snATAC_cell_type in snATAC_cell_types) {
                   sep = "\t", quote = FALSE, row.names = FALSE)
     }
   }
-}  
+}
 
 # Run FMD (pos and neg)
 pos_fmd_list <- list()
 for(snATAC_cell_type in snATAC_cell_types) {
+  print(snATAC_cell_type)
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
   pos_fmd_list[[snATAC_cell_type_for_file_name]] <- list()
   for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
@@ -101,7 +102,7 @@ for(snATAC_cell_type in snATAC_cell_types) {
 peak_annotation_plots <- list()
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
-  differential_analysis_results_file <- paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv")
+  differential_analysis_results_file <- paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv")
   differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
   current_peaks <- differential_analysis_results$Peak_Name
   chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)

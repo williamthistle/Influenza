@@ -113,6 +113,14 @@ for(correlation_cell_type in correlation_cell_types) {
 sc_correlation_plots <- lapply(sc_correlations_D28_LVL, function(x) x[[3]])
 ggsave("C:/Users/willi/Desktop/sc_D28_LVL.png", plot = patchwork::wrap_plots(sc_correlation_plots, ncol = 3, nrow = 3), height = 10, width = 10)
 
+relevant_aliquots <- c("91910a04711aa3dd","3731a6247ae23831","2232300b0e3a3d06","76ea83ff9293871a","5fdfdbaeb3c8eee8","981520e7e138d460","bb3d7b309cb5fc58","8338411dc3e181e9","da4fe21a89c8f7f4","41d248a6ec3b87e2","e3e01c75894ef461","4534496c580cb408")
+test <- all_metadata[all_metadata$aliquot_id %in% relevant_aliquots,]
+hvl_placebo_metadata_without_sc_subjects <- subset(hvl_placebo_metadata, !(subject_id %in% test$subject_id))
+hvl_placebo_counts_without_sc_subjects <- hvl_placebo_counts[,rownames(hvl_placebo_metadata_without_sc_subjects)]
+
+hvl_placebo_period_2_D28_vs_D_minus_1_results_without_sc_subjects <- run_deseq_bulk_analysis_time_series("placebo", hvl_placebo_counts_without_sc_subjects, hvl_placebo_metadata_without_sc_subjects,
+                                                                                                         "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "high")
+
 # D28 HVL without SC subjects
 sc_correlations_D28_without_sc_subjects <- list()
 for(correlation_cell_type in correlation_cell_types) {
