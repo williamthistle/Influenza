@@ -8,6 +8,9 @@ correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "NK", "CD4_Memory", "CD8_M
 sc_correlations <- list()
 sc_correlation_plots <- list()
 
+total_overlap <- 0
+total_found <- 0
+
 for(cell_type in correlation_cell_types) {
   print(cell_type)
   sc_correlations[[cell_type]] <- list()
@@ -21,9 +24,12 @@ for(cell_type in correlation_cell_types) {
   # Filtered SC
   cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
                                           sep = "\t", header = TRUE)
+  # cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$sc_pval < 0.01,]
   cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
                                                      sep = "\t", header = TRUE)
   # Check correlation for primary significant SC genes in validation set
+  total_overlap <- total_overlap + length(intersect(cell_type_sc_das$Peak_Name, cell_type_validation_sc_das$Peak_Name))
+  total_found <- total_found + length(cell_type_sc_das$Peak_Name)
   primary_sc_das <- cell_type_sc_das$Peak_Name
   print(paste0("Number of SC das in primary data is: ", length(primary_sc_das)))
   compare_first_df <- cell_type_sc_das
