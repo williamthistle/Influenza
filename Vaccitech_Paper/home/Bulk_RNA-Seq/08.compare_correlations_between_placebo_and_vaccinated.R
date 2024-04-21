@@ -94,11 +94,15 @@ period_2_day_2_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_t
 # Day 5 HVL vs LVL
 period_2_day_5_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results)
 
+# Day 8 HVL vs MVL (full)
+period_2_day_8_hvl_vs_mvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, mvl_placebo_period_2_D8_vs_D_minus_1_results)
+
 # Day 8 HVL vs LVL
 period_2_day_8_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results)
 
 # Day 8 HVL vs LVL (full)
 period_2_day_8_hvl_vs_lvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, lvl_placebo_period_2_D8_vs_D_minus_1_results)
+
 
 # Day 28 HVL vs LVL
 period_2_day_28_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results)

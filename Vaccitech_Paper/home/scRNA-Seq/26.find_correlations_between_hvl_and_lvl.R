@@ -21,26 +21,26 @@ for(cell_type in correlation_cell_types) {
   # Unfiltered SC
   unfiltered_cell_type_sc_degs <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
                                              sep = "\t", header = TRUE)
-  unfiltered_cell_type_validation_sc_degs <- read.table(paste0(scRNA_hvl_vaccinated_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
+  unfiltered_cell_type_lvl_sc_degs <- read.table(paste0(scRNA_lvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
                                                         sep = "\t", header = TRUE)
   # Filtered SC
   cell_type_sc_degs <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc.tsv"),
                                           sep = "\t", header = TRUE)
-  cell_type_validation_sc_degs <- read.table(paste0(scRNA_hvl_vaccinated_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc.tsv"),
+  cell_type_lvl_sc_degs <- read.table(paste0(scRNA_lvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc.tsv"),
                                                      sep = "\t", header = TRUE)
   # Pseudobulk corrected
   cell_type_sc_pseudobulk_corrected_degs <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final.tsv"),
                                   sep = "\t", header = TRUE)
   rownames(cell_type_sc_pseudobulk_corrected_degs) <- cell_type_sc_pseudobulk_corrected_degs$Gene_Name
-  cell_type_validation_sc_pseudobulk_corrected_degs <- read.table(paste0(scRNA_hvl_vaccinated_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final.tsv"),
+  cell_type_lvl_sc_pseudobulk_corrected_degs <- read.table(paste0(scRNA_lvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final.tsv"),
                                              sep = "\t", header = TRUE)
-  rownames(cell_type_validation_sc_pseudobulk_corrected_degs) <- cell_type_validation_sc_pseudobulk_corrected_degs$Gene_Name
+  rownames(cell_type_lvl_sc_pseudobulk_corrected_degs) <- cell_type_lvl_sc_pseudobulk_corrected_degs$Gene_Name
   
-  # Check correlation for primary significant SC genes in validation set
+  # Check correlation for primary significant SC genes in lvl set
   primary_sc_degs <- rownames(cell_type_sc_degs)
   print(paste0("Number of SC DEGs in primary data is: ", length(primary_sc_degs)))
   compare_first_df <- cell_type_sc_degs
-  compare_second_df <- unfiltered_cell_type_validation_sc_degs[rownames(unfiltered_cell_type_validation_sc_degs) %in% primary_sc_degs,]
+  compare_second_df <- unfiltered_cell_type_lvl_sc_degs[rownames(unfiltered_cell_type_lvl_sc_degs) %in% primary_sc_degs,]
   compare_first_df <- compare_first_df[rownames(compare_first_df) %in% rownames(compare_second_df),]
   compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
   compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
@@ -52,18 +52,18 @@ for(cell_type in correlation_cell_types) {
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
   print(correlation_val$estimate)
   print(correlation_val$p.value)
-  sc_correlations[[cell_type]][["sc_primary_vs_sc_validation"]] <- correlation_val
+  sc_correlations[[cell_type]][["sc_primary_vs_sc_lvl"]] <- correlation_val
   
   # Plot correlation
-  sc_correlation_plots[[cell_type]][["sc_primary_vs_sc_validation"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
+  sc_correlation_plots[[cell_type]][["sc_primary_vs_sc_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr() + xlab("Naive FC") + ylab("Vaccinated FC") + labs(title = cell_type_no_underscore)
+    sm_statCorr() + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore)
   
-  # Check correlation for primary significant SC genes (pseudobulk_corrected) in validation set
+  # Check correlation for primary significant SC genes (pseudobulk_corrected) in lvl set
   primary_sc_pseudobulk_corrected_degs <- rownames(cell_type_sc_pseudobulk_corrected_degs)
   print(paste0("Number of SC DEGs (pseudobulk corrected) in primary data is: ", length(primary_sc_pseudobulk_corrected_degs)))
   compare_first_df <- cell_type_sc_pseudobulk_corrected_degs
-  compare_second_df <- unfiltered_cell_type_validation_sc_degs[rownames(unfiltered_cell_type_validation_sc_degs) %in% primary_sc_pseudobulk_corrected_degs,]
+  compare_second_df <- unfiltered_cell_type_lvl_sc_degs[rownames(unfiltered_cell_type_lvl_sc_degs) %in% primary_sc_pseudobulk_corrected_degs,]
   compare_first_df <- compare_first_df[rownames(compare_first_df) %in% rownames(compare_second_df),]
   compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
   compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
@@ -75,20 +75,20 @@ for(cell_type in correlation_cell_types) {
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
   print(correlation_val$estimate)
   print(correlation_val$p.value)
-  sc_correlations[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_validation"]] <- correlation_val
+  sc_correlations[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl"]] <- correlation_val
   
   # Plot correlation
-  sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_validation"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
+  sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("Naive FC") + ylab("Vaccinated FC") + labs(title = cell_type_no_underscore) +  xlim(-1.5, 1.5) + ylim(-1.5, 1.5)
+    sm_statCorr(corr_method = "spearman") + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore) +  xlim(-1.5, 1.5) + ylim(-1.5, 1.5)
   
   
   
-  # Check correlation for union of significant SC genes in primary and validation sets
-  union_of_significant_degs <- union(rownames(cell_type_sc_degs), rownames(cell_type_validation_sc_degs))
+  # Check correlation for union of significant SC genes in primary and lvl sets
+  union_of_significant_degs <- union(rownames(cell_type_sc_degs), rownames(cell_type_lvl_sc_degs))
   print(paste0("Number of union SC DEGs is: ", length(union_of_significant_degs)))
   compare_first_df <- unfiltered_cell_type_sc_degs[rownames(unfiltered_cell_type_sc_degs) %in% union_of_significant_degs,]
-  compare_second_df <- unfiltered_cell_type_validation_sc_degs[rownames(unfiltered_cell_type_validation_sc_degs) %in% union_of_significant_degs,]
+  compare_second_df <- unfiltered_cell_type_lvl_sc_degs[rownames(unfiltered_cell_type_lvl_sc_degs) %in% union_of_significant_degs,]
   compare_first_df <- compare_first_df[rownames(compare_first_df) %in% rownames(compare_second_df),]
   compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
   compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
@@ -100,19 +100,19 @@ for(cell_type in correlation_cell_types) {
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
   print(correlation_val$estimate)
   print(correlation_val$p.value)
-  sc_correlations[[cell_type]][["union_sc_primary_vs_sc_validation"]] <- correlation_val
+  sc_correlations[[cell_type]][["union_sc_primary_vs_sc_lvl"]] <- correlation_val
   
   # Plot correlation
-  sc_correlation_plots[[cell_type]][["union_sc_primary_vs_sc_validation"]] <- ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
+  sc_correlation_plots[[cell_type]][["union_sc_primary_vs_sc_lvl"]] <- ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
     geom_point() +
-    geom_smooth(method=lm) + xlab("Naive FC") + ylab("Vaccinated FC")
+    geom_smooth(method=lm) + xlab("High Viral Load FC") + ylab("Low Viral Load FC")
   
   
-  # Check correlation for union of significant SC genes (pseudobulk corrected) in primary and validation sets
-  union_of_significant_degs <- union(rownames(cell_type_sc_pseudobulk_corrected_degs), rownames(cell_type_validation_sc_pseudobulk_corrected_degs))
+  # Check correlation for union of significant SC genes (pseudobulk corrected) in primary and lvl sets
+  union_of_significant_degs <- union(rownames(cell_type_sc_pseudobulk_corrected_degs), rownames(cell_type_lvl_sc_pseudobulk_corrected_degs))
   print(paste0("Number of union SC (pseudobulk corrected) DEGs is: ", length(union_of_significant_degs)))
   compare_first_df <- unfiltered_cell_type_sc_degs[rownames(unfiltered_cell_type_sc_degs) %in% union_of_significant_degs,]
-  compare_second_df <- unfiltered_cell_type_validation_sc_degs[rownames(unfiltered_cell_type_validation_sc_degs) %in% union_of_significant_degs,]
+  compare_second_df <- unfiltered_cell_type_lvl_sc_degs[rownames(unfiltered_cell_type_lvl_sc_degs) %in% union_of_significant_degs,]
   compare_first_df <- compare_first_df[rownames(compare_first_df) %in% rownames(compare_second_df),]
   compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
   compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
@@ -124,16 +124,16 @@ for(cell_type in correlation_cell_types) {
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
   print(correlation_val$estimate)
   print(correlation_val$p.value)
-  sc_correlations[[cell_type]][["union_pseudobulk_corrected_sc_primary_vs_sc_validation"]] <- correlation_val
+  sc_correlations[[cell_type]][["union_pseudobulk_corrected_sc_primary_vs_sc_lvl"]] <- correlation_val
   
   # Plot correlation
-  sc_correlation_plots[[cell_type]][["union_pseudobulk_corrected_sc_primary_vs_sc_validation"]] <- ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
+  sc_correlation_plots[[cell_type]][["union_pseudobulk_corrected_sc_primary_vs_sc_lvl"]] <- ggplot(comparing_first_vs_second_df, aes(x=first_fc, y=second_fc)) + 
     geom_point() +
-    geom_smooth(method=lm) + xlab("Naive FC") + ylab("Vaccinated FC")
+    geom_smooth(method=lm) + xlab("High Viral Load FC") + ylab("Low Viral Load FC")
 }
 
-pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/willi/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 10, width = 10)
+hvl_vs_lvl_pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
+ggsave("C:/Users/willi/Desktop/test_2.png", plot = patchwork::wrap_plots(hvl_vs_lvl_pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 10, width = 10)
 
 # Other plotting attempts
 #n <- length(pseudobulk_corrected_plots)

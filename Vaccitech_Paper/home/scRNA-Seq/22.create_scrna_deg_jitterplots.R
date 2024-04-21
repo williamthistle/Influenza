@@ -31,7 +31,7 @@ all_sc_degs_plot <- ggplot(hvl_jitterplot_data, aes(Cell_Type, sc_log2FC, color 
   ylab("log2FC (Gene Expression)") + ggtitle("scRNA DEGs by Cell Type (28 Days Post-Exposure vs Pre-Exposure)") +
   theme(plot.title = element_text(hjust = 0.5)) + guides(color=guide_legend(title="Fold Change Direction"))
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "scrna_pseudobulk_deg_jitterplot.tiff"), plot = all_sc_degs_plot, device='tiff', dpi=300)
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "hvl_naive_scrna_deg_jitterplot.tiff"), plot = all_sc_degs_plot, device='tiff', dpi=300, width = 20)
 
 # LVL
 lvl_sc_degs_table <- data.frame(Cell_Type = character(), Gene = character(), log2FC = numeric())
