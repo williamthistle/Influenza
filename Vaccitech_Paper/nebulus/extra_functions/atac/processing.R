@@ -320,8 +320,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     # Grab cells for current cell type in peak matrix
     idxMatch <- which(str_detect(peak_count$Cell_type_voting,cell_type))
     cell_type_specific_peak_count_matrix <- peak_count_matrix[,idxMatch]
-    # Only keep rows where peaks are expressed in greater than 5% of cells in either condition
-    print("Only keeping peaks expressed in 5% of cells in either condition (SC)")
+    # Only keep rows where peaks are expressed in greater than 1% of cells in either condition
+    print("Only keeping peaks expressed in 1% of cells in either condition (SC)")
     passing_peak_indices <- find_rows_with_threshold(cell_type_specific_peak_count_matrix, metadata_df, threshold = 0.01)
 
     # assays(marker_D28_D1)$Pval[non_passing_peak_indices,] <- 1
@@ -373,8 +373,8 @@ calculate_daps_for_each_cell_type <- function(atac_proj, differential_peaks_dir,
     pseudobulk_analysis_results$end <- peak_info$end
     pseudobulk_analysis_results <- pseudobulk_analysis_results[,c('chr','start','end','baseMean', "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")]
     write.table(pseudobulk_analysis_results, paste0(differential_peaks_dir, cell_type_for_file_name, "_", "D28_D1_diff_pseudo_unfiltered.tsv"), quote = FALSE, sep = "\t")
-    # Only keep rows where peaks are expressed in greater than 5% of cells in either condition
-    print("Only keeping peaks expressed in 5% of cells in either condition (pseudobulk)")
+    # Only keep rows where peaks are expressed in greater than 1% of cells in either condition
+    print("Only keeping peaks expressed in 1% of cells in either condition (pseudobulk)")
     pseudobulk_analysis_results$pvalue[non_passing_peak_indices] <- 1
     # Create a marker DE object that uses pseudobulk info - this will make it easier for us to make plots, run motif enrichment, etc.
     marker_D28_D1_pseudo <- marker_D28_D1
