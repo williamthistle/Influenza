@@ -3,7 +3,7 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 # I picked my 9 favorite cell types so I can have a 3x3 grid of correlation plots
-correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "NK", "CD4_Memory", "CD8_Memory", "cDC", "CD8_Naive", "MAIT", "B")
+correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "NK", "CD4_Memory", "CD8_Memory", "CD8_Naive", "MAIT", "B")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -22,15 +22,15 @@ for(cell_type in correlation_cell_types) {
   unfiltered_cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
                                                        sep = "\t", header = TRUE)
   # Filtered SC
-  cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_pct_0.01.tsv"),
+  cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_pct_0.1.tsv"),
                                           sep = "\t", header = TRUE)
   # cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$sc_pval < 0.01,]
-  cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_pct_0.01.tsv"),
+  cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_pct_0.1.tsv"),
                                                      sep = "\t", header = TRUE)
   # Check correlation for primary significant SC genes in validation set
-  total_overlap <- total_overlap + length(intersect(cell_type_sc_das$Peak_Name, cell_type_validation_sc_das$Peak_Name))
+  total_overlap <- total_overlap + length(intersect(rownames(cell_type_sc_das), rownames(cell_type_validation_sc_das)))
   total_found <- total_found + length(rownames(cell_type_sc_das))
-  print(paste0("Percentage of overlap: ", length(intersect(cell_type_sc_das$Peak_Name, cell_type_validation_sc_das$Peak_Name)) / length(rownames(cell_type_sc_das))))
+  print(paste0("Percentage of overlap: ", length(intersect(rownames(cell_type_sc_das), rownames(cell_type_validation_sc_das))) / length(rownames(cell_type_sc_das))))
   primary_sc_das <- rownames(cell_type_sc_das)
   print(paste0("Number of SC das in primary data is: ", length(primary_sc_das)))
   compare_first_df <- cell_type_sc_das
