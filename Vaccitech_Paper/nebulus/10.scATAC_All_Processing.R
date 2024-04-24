@@ -95,6 +95,7 @@ atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_d
                                reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
+# load ArchR project: proj <- loadArchRProject(path = paste0(ATAC_output_dir, "no_batch_correction"))
 
 atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
                                       d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
