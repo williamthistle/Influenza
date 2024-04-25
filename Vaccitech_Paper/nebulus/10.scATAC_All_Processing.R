@@ -89,10 +89,35 @@ reference <- reference[,-idx]
 # Read in ATAC data, filter data, perform initial processing, infer batches, and integrate by batch
 atac_proj <- Read_ATAC(input_dir = data_path, sample_id_list = sample_id_list, species = species, log_flag = TRUE)
 atac_proj <- FilterRawData_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
-atac_proj <- InitialProcessing_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
-atac_proj <- IntegrateByBatch_ATAC(proj = atac_proj, output_dir = ATAC_output_dir, log_flag = TRUE)
-atac_proj <- MapCellTypes_ATAC(proj = atac_proj, reference = reference, output_dir = ATAC_output_dir,
-                               reference_cell_type_attribute = reference_cell_type_attribute, log_flag = TRUE)
+
+addArchRThreads(threads = 8)
+atac_proj <- addIterativeLSI(ArchRProj = atac_proj, useMatrix = "TileMatrix", name = "IterativeLSI", iterations = 2,  force = TRUE,
+                        clusterParams = list(resolution = c(2), sampleCells = 10000, n.start = 30),
+                        varFeatures = 20000, dims = 1:30)
+atac_proj <- addUMAP(ArchRProj = atac_proj, reducedDims = "IterativeLSI", force = TRUE)
+atac_proj <- addClusters(input = atac_proj, reducedDims = "IterativeLSI", method = "Seurat", name = "Clusters", resolution = 2, knnAssign = 30, maxClusters = NULL, force = TRUE)
+
+scRNA <- LoadReferenceSPEEDI(reference_tissue = reference_tissue, species = species, reference_dir = reference_dir,
+                             reference_file_name = reference_file_name, log_flag = TRUE)
+idx <- which(scRNA$celltype.l2 %in% c("Doublet", "B intermediate", "CD4 CTL", "gdT", "dnT", "ILC"))
+scRNA <- scRNA[,-idx]
+
+addArchRThreads(threads = 16)
+atac_proj <- addGeneIntegrationMatrix_SPEEDI(
+  ArchRProj = atac_proj, 
+  useMatrix = "GeneScoreMatrix",
+  matrixName = "GeneIntegrationMatrix",
+  reducedDims = "IterativeLSI",#Harmony
+  seRNA = scRNA,
+  addToArrow = FALSE,
+  groupRNA = "celltype.l2",
+  nameCell = "predictedCell",
+  nameGroup = "predictedGroup",
+  nameScore = "predictedScore",
+  normalization.method = "SCT",
+  force = TRUE
+)
+
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "no_batch_correction"))
@@ -109,12 +134,11 @@ treatment_metadata <- parse_metadata_for_samples(atac_proj, "treatment", high_vi
                                                  d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
 
 atac_proj <- combine_cell_types_atac(atac_proj)
-atac_proj <- MajorityVote_ATAC(proj = atac_proj)
+#atac_proj <- MajorityVote_ATAC(proj = atac_proj) - use code from some_random_atac_code
 
-cluster_info <- get_cluster_info(atac_proj)
+cluster_info <- get_cluster_info(atac_proj) # Make sure you replace function with one from some_random_atac_code
 
-atac_proj <- override_cluster_label_atac(atac_proj, c(24), "Proliferating")
-
+# Print with all clusters
 num_cells <- length(atac_proj$cellNames)
 num_samples <- length(unique(atac_proj$Sample))
 sample_text <- paste0("(", num_samples, " Samples, ", 
@@ -131,10 +155,16 @@ ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
 
+
 # Remove messy clusters
-idxPass <- which(atac_proj$seurat_clusters %in% c("1", "13", "14", "16", "21", "23"))
+idxPass <- which(atac_proj$Clusters %in% c("C1", "C2", "C3", "C8", "C11", "C12", "C13", "C14", "C24", "C28", "C36"))
 cellsPass <- atac_proj$cellNames[-idxPass]
 atac_proj_minus_clusters <- atac_proj[cellsPass, ]
+
+# Make sure you use code from some_random_atac_code
+atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C16"), "CD8 Memory")
+atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C20"), "Proliferating")
+atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C25", "C34"), "CD4 Naive")
 
 num_cells <- length(atac_proj_minus_clusters$cellNames)
 num_samples <- length(unique(atac_proj_minus_clusters$Sample))
@@ -170,8 +200,8 @@ write.table(x = peaks_df, file = paste0(ATAC_output_dir, "peaks_info.txt"), sep 
 peak_txt_file <- create_peaks_file(atac_proj_minus_clusters, ATAC_output_dir)
 # Create peak_motif_matches.txt file
 atac_proj_minus_clusters <- create_peak_motif_matches_file(atac_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
-# save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "minus_clusters"), load = FALSE, overwrite = TRUE)
-# load ArchR project: atac_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "minus_clusters"))
+# save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "minus_clusters_2"), load = FALSE, overwrite = TRUE)
+# load ArchR project: atac_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "minus_clusters_2"))
 # Find DASs
 sample_metadata <- atac_proj_minus_clusters$Sample
 for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {

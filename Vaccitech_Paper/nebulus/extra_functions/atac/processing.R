@@ -991,7 +991,7 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
         second_group <- "F"
       }
       # Perform SC DE
-      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = c('nCount_peaks', 'subject_id'), ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0)
+      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = c('nCount_peaks', 'subject_id'), ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0.1, min.pct = 0.01)
       # Save unfiltered DE results
       write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_unfiltered.tsv"), quote = FALSE, sep = "\t")
       # Filter DE results and write to file
