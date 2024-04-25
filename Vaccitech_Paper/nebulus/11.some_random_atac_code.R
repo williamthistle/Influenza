@@ -56,11 +56,20 @@ cell_type_voting <- as.character(cell_type_voting)
 proj <- ArchR::addCellColData(ArchRProj = proj, data = cell_type_voting, 
                               cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
 
+# Override ATAC cluster
+override_cluster_label_atac <- function(proj, cluster_identities, cluster_label) {
+  idxPass <- which(proj$Clusters %in% cluster_identities)
+  proj$Cell_type_voting[idxPass] <- cluster_label
+  return(proj)
+}
 
 
-
-
-
+p1 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", 
+                           name = "Clusters", embedding = "UMAP", 
+                           force = TRUE, keepAxis = TRUE)
+ggplot2::ggsave(filename = paste0(output_dir, "Xi_By_Cluster.png"), 
+                plot = p1, device = "png", width = 8, height = 8, 
+                units = "in")
 
 
 
@@ -70,14 +79,19 @@ proj <- ArchR::addCellColData(ArchRProj = proj, data = cell_type_voting,
 
 
 # Subsetting clusters 
-idxPass <- which(proj$Clusters %in% c("C1", "C2", "C3", "C8", "C11", "C12", "C13", "C24", "C26", "C36"))
+idxPass <- which(proj$Clusters %in% c("C1", "C2", "C3", "C8", "C11", "C12", "C13", "C14", "C24", "C36"))
 cellsPass <- proj$cellNames[-idxPass]
 proj_minus_clusters <- proj[cellsPass, ]
+
+proj_minus_clusters <- override_cluster_label_atac(proj_minus_clusters, c("C16"), "CD8 Memory")
+proj_minus_clusters <- override_cluster_label_atac(proj_minus_clusters, c("C20"), "Proliferating")
+proj_minus_clusters <- override_cluster_label_atac(proj_minus_clusters, c("C25", "C34"), "CD4 Naive")
+
 
 p1 <- ArchR::plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", 
                            name = "Cell_type_voting", embedding = "UMAP", 
                            force = TRUE, keepAxis = TRUE)
 
-ggplot2::ggsave(filename = paste0(output_dir, "Xi_cell_type_voting_minus_clusters.png"), 
+ggplot2::ggsave(filename = paste0(output_dir, "Xi_cell_type_voting_minus_clusters_new.png"), 
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
