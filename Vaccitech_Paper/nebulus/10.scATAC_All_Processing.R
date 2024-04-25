@@ -195,7 +195,6 @@ for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
 }
 atac_proj_minus_clusters <- addCellColData(ArchRProj = atac_proj_minus_clusters, data = sample_metadata, cells = atac_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
 
-
 # Save peak metadata
 peaks <- getPeakSet(atac_proj_minus_clusters)
 peaks_df <- as.data.frame(peaks@seqnames)
