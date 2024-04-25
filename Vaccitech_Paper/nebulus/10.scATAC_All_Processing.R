@@ -153,6 +153,7 @@ ggplot2::ggsave(filename = paste0(ATAC_output_dir, "Final_ATAC_UMAP_by_Majority_
                 units = "in")
 
 # Call peaks
+atac_proj_minus_clusters <- proj_minus_clusters
 addArchRGenome("hg38")
 atac_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(atac_proj_minus_clusters)
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
