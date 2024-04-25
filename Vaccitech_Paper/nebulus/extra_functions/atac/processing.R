@@ -1000,26 +1000,55 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
       current_de_filtered <- current_de_filtered[current_de_filtered$pct.1 >= 0.01 | current_de_filtered$pct.2 >= 0.01, ]
       write.table(current_de_filtered, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_pct_0.01.tsv"), quote = FALSE, sep = "\t")
       # Run pseudobulk DE
+      # Read in pseudobulk counts
       pseudobulk_counts <- create_pseudobulk_counts_atac_seurat(cells_subset)
+      # Grab associated metadata
       pseudobulk_metadata <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$subject_id %in% cells_subset$subject_id,]
       pseudobulk_metadata$aliquots <- rownames(pseudobulk_metadata)
       pseudobulk_metadata <- pseudobulk_metadata[match(colnames(pseudobulk_counts), pseudobulk_metadata$aliquots),]
-      pseudobulk_analysis <- DESeq2::DESeqDataSetFromMatrix(countData = pseudobulk_counts, colData = pseudobulk_metadata, design = stats::formula(paste("~ subject_id + ",group)))
-      pseudobulk_analysis <- DESeq2::DESeq(pseudobulk_analysis)
-      pseudobulk_analysis_results_contrast <- utils::tail(DESeq2::resultsNames(pseudobulk_analysis), n=1)
-      print(pseudobulk_analysis_results_contrast)
-      pseudobulk_analysis_results <- DESeq2::results(pseudobulk_analysis, name=pseudobulk_analysis_results_contrast)
+      # Set up flag matrix
+      pseudobulk_counts_flag <- pseudobulk_counts 
+      pseudobulk_counts_flag[pseudobulk_counts_flag == 1] <- 0
+      pseudobulk_counts_flag[pseudobulk_counts_flag > 0] <- 1
+      pseudobulk_counts_flag <- pseudobulk_counts_flag[rowSums(pseudobulk_counts_flag != 0) >= 2, ]
+      # Scale counts
+      total_ATAC_reads=5e6
+      ATAC_scale_factor=total_ATAC_reads/(colSums(pseudobulk_counts)+1)
+      ATAC_count=sweep(pseudobulk_counts, 2, ATAC_scale_factor, "*")
+      # Log scale
+      ATAC_log2=log2(ATAC_count+1)
+      # Subset to relevant peaks for pseudobulk testing in pseudobulk counts
+      ATAC_log2_candidate <- ATAC_log2[rownames(ATAC_log2) %in% rownames(current_de_filtered),]
+      ATAC_log2_candidate <- ATAC_log2_candidate[rownames(ATAC_log2_candidate) %in% rownames(pseudobulk_counts_flag),]
+      # Perform pseudobulk testing
+      pseudobulk_p_values <- c()
+      pseudobulk_robust_p_values <- c()
+      pseudobulk_fc <- c() 
+      for(current_peak_idx in 1:nrow(ATAC_log2_candidate)) {
+        pseudobulk_fc <- c(pseudobulk_fc, mean(as.numeric(ATAC_log2_candidate[current_peak_idx, pseudobulk_metadata$time_point == "2_D28"])) - mean(as.numeric(ATAC_log2_candidate[current_peak_idx, pseudobulk_metadata$time_point == "2_D_minus_1"])))
+        # Normal LM
+        mdl <- lm(as.numeric(ATAC_log2_candidate[current_peak_idx, ]) ~ pseudobulk_metadata$time_point)
+        pseudobulk_p_values <- c(pseudobulk_p_values, summary(mdl)$coefficients[2, 4])
+        # Robust LM
+        rsl <- MASS::rlm(as.numeric(ATAC_log2_candidate[current_peak_idx, ]) ~ pseudobulk_metadata$time_point)
+        robust_pvalue <- f.robftest(rsl, var = "sample_metadata_times2_D28")$p.value
+        pseudobulk_robust_p_values <- c(pseudobulk_robust_p_values, robust_pvalue)
+      }
+      # Create unfiltered DE results
+      current_de_pseudobulk <- data.frame(logFC_pseudobulk = pseudobulk_fc, p_value_pseudobulk = pseudobulk_p_values,
+                                          robust_p_value_pseudobulk = pseudobulk_robust_p_values)
+      rownames(current_de_pseudobulk) <- rownames(ATAC_log2_candidate)
       # Print unfiltered DE results
-      write.table(pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk_unfiltered.tsv"), quote = FALSE, sep = "\t")
+      write.table(current_de_pseudobulk, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk_unfiltered.tsv"), quote = FALSE, sep = "\t")
       # Filter DE results (p-value < 0.05) and write to file
-      pseudobulk_analysis_results <- pseudobulk_analysis_results[rowSums(is.na(pseudobulk_analysis_results)) == 0, ] # Remove NAs
-      pseudobulk_analysis_results <- pseudobulk_analysis_results[pseudobulk_analysis_results$pvalue < 0.05,]
-      write.table(pseudobulk_analysis_results, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk.tsv"), quote = FALSE, sep = "\t")
+      current_de_pseudobulk <- current_de_pseudobulk[rowSums(is.na(current_de_pseudobulk)) == 0, ] # Remove NAs
+      current_de_pseudobulk <- current_de_pseudobulk[current_de_pseudobulk$p_value_pseudobulk < 0.05 | current_de_pseudobulk$robust_p_value_pseudobulk < 0.05,]
+      write.table(current_de_pseudobulk, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_pseudobulk.tsv"), quote = FALSE, sep = "\t")
       # We want to look at pct = 0.05 and 0.1 as well, just to see whether signal is better
       pct_thresholds <- c(0.01, 0.05, 0.1)
       for(pct_threshold in pct_thresholds) {
         # This DF will store those peaks which were found to be significant in both SC and pseudobulk
-        overlapping_peak_de <- data.frame(Cell_Type = character(), Peak_Name = character(), sc_pval = character(), sc_log2FC = character(), pseudo_bulk_pval = character(),
+        overlapping_peak_de <- data.frame(Cell_Type = character(), Peak_Name = character(), sc_pval = character(), sc_log2FC = character(), pseudo_bulk_pval = character(), pseudo_bulk_robust_pval = character(),
                                           pseudo_bulk_log2FC = character())
         if(pct_threshold != 0.01) {
           current_de_with_current_pct <- current_de_filtered[current_de_filtered$pct.1 >= pct_threshold | current_de_filtered$pct.2 >= pct_threshold,]
@@ -1027,15 +1056,16 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
         } else {
           current_de_with_current_pct <- current_de_filtered
         }
-        final_peaks <- intersect(rownames(current_de_with_current_pct), rownames(pseudobulk_analysis_results))
+        final_peaks <- intersect(rownames(current_de_with_current_pct), rownames(current_de_pseudobulk))
         # Record information about remaining genes in overlapping_peak_de
         for(current_peak in final_peaks) {
           current_sc_pval <- current_de[rownames(current_de) == current_peak,]$p_val
           current_sc_log2FC <- current_de[rownames(current_de) == current_peak,]$avg_log2FC
-          current_pseudo_bulk_pval <- pseudobulk_analysis_results[rownames(pseudobulk_analysis_results) == current_peak,]$pvalue
-          current_pseudo_bulk_log2FC <- pseudobulk_analysis_results[rownames(pseudobulk_analysis_results) == current_peak,]$log2FoldChange
-          current_row <- data.frame(current_cell_type, current_peak, current_sc_pval, current_sc_log2FC, current_pseudo_bulk_pval, current_pseudo_bulk_log2FC)
-          names(current_row) <- c("Cell_Type", "Peak_Name", "sc_pval", "sc_log2FC", "pseudo_bulk_pval", "pseudo_bulk_log2FC")
+          current_pseudo_bulk_pval <- current_de_pseudobulk[rownames(current_de_pseudobulk) == current_peak,]$p_value_pseudobulk
+          current_pseudo_bulk_robust_pval <- current_de_pseudobulk[rownames(current_de_pseudobulk) == current_peak,]$robust_p_value_pseudobulk
+          current_pseudo_bulk_log2FC <- current_de_pseudobulk[rownames(current_de_pseudobulk) == current_peak,]$logFC_pseudobulk
+          current_row <- data.frame(current_cell_type, current_peak, current_sc_pval, current_sc_log2FC, current_pseudo_bulk_pval, current_pseudo_bulk_robust_pval, current_pseudo_bulk_log2FC)
+          names(current_row) <- c("Cell_Type", "Peak_Name", "sc_pval", "sc_log2FC", "pseudo_bulk_pval", "pseudo_bulk_robust_pval", "pseudo_bulk_log2FC")
           overlapping_peak_de <- rbind(overlapping_peak_de, current_row)
         }
         # Make sure that FC sign matches between SC and pseudo analysis

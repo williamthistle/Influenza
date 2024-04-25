@@ -26,13 +26,13 @@ get_cluster_info <- function(proj) {
 }
 
 # Majority vote for ATAC clusters
-seurat_clusters <- as.factor(proj$Clusters)
-predictedGroup <- proj$predictedGroup
-predictedScore <- proj$predictedScore
+seurat_clusters <- as.factor(atac_proj$Clusters)
+predictedGroup <- atac_proj$predictedGroup
+predictedScore <- atac_proj$predictedScore
 votes <- c()
 vote_levels <- as.character(levels(seurat_clusters))
 for (i in vote_levels) {
-  cluster_cells <- which(proj$Clusters == i)
+  cluster_cells <- which(atac_proj$Clusters == i)
   sub_predictedGroup <- predictedGroup[cluster_cells]
   sub_predictedScore <- predictedScore[cluster_cells]
   gmeans <- c()
@@ -53,8 +53,8 @@ for (i in vote_levels) {
 cell_type_voting <- seurat_clusters
 levels(cell_type_voting) <- vote_levels
 cell_type_voting <- as.character(cell_type_voting)
-proj <- ArchR::addCellColData(ArchRProj = proj, data = cell_type_voting, 
-                              cells = proj$cellNames, name = "Cell_type_voting", force = TRUE)
+atac_proj <- ArchR::addCellColData(ArchRProj = atac_proj, data = cell_type_voting, 
+                              cells = atac_proj$cellNames, name = "Cell_type_voting", force = TRUE)
 
 # Override ATAC cluster
 override_cluster_label_atac <- function(proj, cluster_identities, cluster_label) {
@@ -64,7 +64,7 @@ override_cluster_label_atac <- function(proj, cluster_identities, cluster_label)
 }
 
 
-p1 <- ArchR::plotEmbedding(ArchRProj = proj, colorBy = "cellColData", 
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj, colorBy = "cellColData", 
                            name = "Clusters", embedding = "UMAP", 
                            force = TRUE, keepAxis = TRUE)
 ggplot2::ggsave(filename = paste0(output_dir, "Xi_By_Cluster.png"), 
@@ -79,16 +79,16 @@ ggplot2::ggsave(filename = paste0(output_dir, "Xi_By_Cluster.png"),
 
 
 # Subsetting clusters 
-idxPass <- which(proj$Clusters %in% c("C1", "C2", "C3", "C8", "C11", "C12", "C13", "C14", "C24", "C28", "C36"))
-cellsPass <- proj$cellNames[-idxPass]
-proj_minus_clusters <- proj[cellsPass, ]
+idxPass <- which(atac_proj$Clusters %in% c("C1", "C2", "C3", "C8", "C11", "C12", "C13", "C14", "C24", "C28", "C36"))
+cellsPass <- atac_proj$cellNames[-idxPass]
+atac_proj_minus_clusters <- atac_proj[cellsPass, ]
 
-proj_minus_clusters <- override_cluster_label_atac(proj_minus_clusters, c("C16"), "CD8 Memory")
-proj_minus_clusters <- override_cluster_label_atac(proj_minus_clusters, c("C20"), "Proliferating")
-proj_minus_clusters <- override_cluster_label_atac(proj_minus_clusters, c("C25", "C34"), "CD4 Naive")
+atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C16"), "CD8 Memory")
+atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C20"), "Proliferating")
+atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C25", "C34"), "CD4 Naive")
 
 
-p1 <- ArchR::plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", 
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", 
                            name = "Cell_type_voting", embedding = "UMAP", 
                            force = TRUE, keepAxis = TRUE)
 
@@ -96,7 +96,7 @@ ggplot2::ggsave(filename = paste0(output_dir, "Xi_cell_type_voting_minus_cluster
                 plot = p1, device = "png", width = 8, height = 8, 
                 units = "in")
 
-p1 <- ArchR::plotEmbedding(ArchRProj = proj_minus_clusters, colorBy = "cellColData", 
+p1 <- ArchR::plotEmbedding(ArchRProj = atac_proj_minus_clusters, colorBy = "cellColData", 
                            name = "Clusters", embedding = "UMAP", 
                            force = TRUE, keepAxis = TRUE)
 
