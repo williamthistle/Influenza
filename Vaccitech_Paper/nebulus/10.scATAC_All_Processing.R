@@ -189,6 +189,13 @@ atac_proj_minus_clusters <- pseudo_bulk_replicates_and_call_peaks(atac_proj_minu
 # calculations
 atac_proj_minus_clusters <- addPeakMatrix(atac_proj_minus_clusters)
 
+sample_metadata <- atac_proj_minus_clusters$Sample
+for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
+  sample_metadata <- gsub(rownames(sample_metadata_for_SPEEDI_df)[j], sample_metadata_for_SPEEDI_df[j,1], sample_metadata)
+}
+atac_proj_minus_clusters <- addCellColData(ArchRProj = atac_proj_minus_clusters, data = sample_metadata, cells = atac_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
+
+
 # Save peak metadata
 peaks <- getPeakSet(atac_proj_minus_clusters)
 peaks_df <- as.data.frame(peaks@seqnames)
@@ -200,14 +207,9 @@ write.table(x = peaks_df, file = paste0(ATAC_output_dir, "peaks_info.txt"), sep 
 peak_txt_file <- create_peaks_file(atac_proj_minus_clusters, ATAC_output_dir)
 # Create peak_motif_matches.txt file
 atac_proj_minus_clusters <- create_peak_motif_matches_file(atac_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
-# save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "minus_clusters_2"), load = FALSE, overwrite = TRUE)
+# save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "minus_clusters_no_batch_correction"), load = FALSE, overwrite = TRUE)
 # load ArchR project: atac_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "minus_clusters_2"))
 # Find DASs
-sample_metadata <- atac_proj_minus_clusters$Sample
-for(j in 1:nrow(sample_metadata_for_SPEEDI_df)) {
-  sample_metadata <- gsub(rownames(sample_metadata_for_SPEEDI_df)[j], sample_metadata_for_SPEEDI_df[j,1], sample_metadata)
-}
-atac_proj_minus_clusters <- addCellColData(ArchRProj = atac_proj_minus_clusters, data = sample_metadata, cells = atac_proj_minus_clusters$cellNames, name = "subject_id", force = TRUE)
 
 # Create MAGICAL files for HVL placebo
 idxPass <- which(atac_proj_minus_clusters$treatment %in% "PLACEBO")
