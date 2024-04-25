@@ -1,6 +1,6 @@
 # Load extra RNA functions
 source("~/00.setup.R")
-home_dir <- "/Genomics/ogtr04/wat2/"
+home_dir <- "/Genomics/function/pentacon/wat2/"
 
 ### SHORTCUT ###
 # HVL_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "minus_clusters"))
@@ -37,7 +37,7 @@ sample_metadata_for_SPEEDI_df$time_point[sample_metadata_for_SPEEDI_df$time_poin
 # Break down metadata by category
 high_viral_load_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "high",]))
 low_viral_load_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "low",]))
-all_viral_load_samples <- c(high_viral_load_samples, moderate_viral_load_samples, low_viral_load_samples)
+all_viral_load_samples <- c(high_viral_load_samples, low_viral_load_samples)
 d28_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$time_point == "D28",]))
 d_minus_1_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$time_point == "D_minus_1",]))
 all_day_samples <- c(d28_samples, d_minus_1_samples)
