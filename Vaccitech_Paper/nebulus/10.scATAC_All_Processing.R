@@ -259,11 +259,11 @@ seurat_atac[['RNA']] <- CreateAssayObject(counts = gsm)
 #)
 
 seurat_atac$predicted_celltype_majority_vote <- atac_proj_minus_clusters$Cell_type_voting
-seurat_atac$subject_id <- atac_proj_minus_clusters$subject_id
+# seurat_atac$subject_id <- atac_proj_minus_clusters$subject_id
 cell_names <- rownames(seurat_atac@meta.data)
 seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name = "cell_name")
 
-# saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "seurat_minus_clusters.RDS"))
+saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "seurat_minus_clusters_no_batch_correction.RDS"))
 # seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "seurat_minus_clusters.RDS"))
 
 # Separate into relevant subsets

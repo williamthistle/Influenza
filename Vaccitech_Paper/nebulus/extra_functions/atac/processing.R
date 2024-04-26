@@ -991,7 +991,7 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
         second_group <- "F"
       }
       # Perform SC DE
-      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = c('nCount_peaks', 'subject_id'), ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0.1, min.pct = 0.01)
+      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = c('nCount_peaks', 'subject_id'), ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0)
       # Save unfiltered DE results
       write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_unfiltered.tsv"), quote = FALSE, sep = "\t")
       # Filter DE results and write to file
@@ -1025,13 +1025,13 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
       pseudobulk_robust_p_values <- c()
       pseudobulk_fc <- c() 
       for(current_peak_idx in 1:nrow(ATAC_log2_candidate)) {
-        pseudobulk_fc <- c(pseudobulk_fc, mean(as.numeric(ATAC_log2_candidate[current_peak_idx, pseudobulk_metadata$time_point == "2_D28"])) - mean(as.numeric(ATAC_log2_candidate[current_peak_idx, pseudobulk_metadata$time_point == "2_D_minus_1"])))
+        pseudobulk_fc <- c(pseudobulk_fc, mean(as.numeric(ATAC_log2_candidate[current_peak_idx, pseudobulk_metadata$time_point == "D28"])) - mean(as.numeric(ATAC_log2_candidate[current_peak_idx, pseudobulk_metadata$time_point == "D_minus_1"])))
         # Normal LM
         mdl <- lm(as.numeric(ATAC_log2_candidate[current_peak_idx, ]) ~ pseudobulk_metadata$time_point)
         pseudobulk_p_values <- c(pseudobulk_p_values, summary(mdl)$coefficients[2, 4])
         # Robust LM
         rsl <- MASS::rlm(as.numeric(ATAC_log2_candidate[current_peak_idx, ]) ~ pseudobulk_metadata$time_point)
-        robust_pvalue <- f.robftest(rsl, var = "sample_metadata_times2_D28")$p.value
+        robust_pvalue <- sfsmisc::f.robftest(rsl, var = "pseudobulk_metadata$time_pointD28")$p.value
         pseudobulk_robust_p_values <- c(pseudobulk_robust_p_values, robust_pvalue)
       }
       # Create unfiltered DE results

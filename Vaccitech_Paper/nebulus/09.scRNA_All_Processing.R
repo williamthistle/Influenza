@@ -1,6 +1,6 @@
 # Load extra RNA functions
 source("~/00.setup.R")
-home_dir <- "/Genomics/ogtr04/wat2/"
+home_dir <- "/Genomics/function/pentacon/wat2/"
 
 ################## SETUP ##################
 data_path <- paste0(home_dir, "single_cell/data")
@@ -35,7 +35,7 @@ sample_metadata_for_SPEEDI_df$time_point[sample_metadata_for_SPEEDI_df$time_poin
 # Break down metadata by category
 high_viral_load_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "high",]))
 low_viral_load_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "low",]))
-all_viral_load_samples <- c(high_viral_load_samples, moderate_viral_load_samples, low_viral_load_samples)
+all_viral_load_samples <- c(high_viral_load_samples, low_viral_load_samples)
 d28_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$time_point == "D28",]))
 d_minus_1_samples <- sort(rownames(sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$time_point == "D_minus_1",]))
 all_day_samples <- c(d28_samples, d_minus_1_samples)
@@ -87,12 +87,12 @@ reference <- reference[,-idx]
 all_sc_exp_matrices <- Read_RNA(input_dir = data_path, sample_id_list = sample_id_list, log_flag = TRUE)
 sc_obj <- FilterRawData_RNA(all_sc_exp_matrices = all_sc_exp_matrices, species = species,
                             record_doublets = FALSE, output_dir = RNA_output_dir,
-                            log_file_path = log_file_name, log_flag = TRUE)
+                            log_file_path = NULL, log_flag = FALSE)
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing_RNA(sc_obj = sc_obj, species = species, metadata_df = sample_metadata_for_SPEEDI_df, log_flag = TRUE)
 sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE)
-save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".new.batch.inference.4.RNA.rds"))
-# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.new.batch.inference.4.RNA.rds"))
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".new.batch.inference.4.RNA.PC.100.rds"))
+# load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.new.batch.inference.4.RNA.PC.100.rds"))
 sc_obj <- IntegrateByBatch_RNA(sc_obj = sc_obj, log_flag = TRUE)
 sc_obj <- VisualizeIntegration(sc_obj = sc_obj, output_dir = RNA_output_dir, log_flag = TRUE)
 sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
