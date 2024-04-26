@@ -300,9 +300,10 @@ idxPass <- which(lvl_sc_obj$treatment %in% "MVA-NP+M1")
 cellsPass <- names(lvl_sc_obj$orig.ident[idxPass])
 lvl_vaccinated_sc_obj <- subset(x = lvl_sc_obj, subset = cell_name %in% cellsPass)
 
-run_differential_expression_controlling_for_subject_id_atac(hvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_HVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
-run_differential_expression_controlling_for_subject_id_atac(lvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_LVL_PLACEBO_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
-run_differential_expression_controlling_for_subject_id_atac(hvl_vaccinated_sc_obj, paste0(ATAC_output_dir, "DE_HVL_VACCINATED_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
+run_differential_expression_controlling_for_subject_id_atac(hvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_HVL_PLACEBO_simple_model_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
+run_differential_expression_controlling_for_subject_id_atac(hvl_vaccinated_sc_obj, paste0(ATAC_output_dir, "DE_HVL_VACCINATED_simple_model_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
+
+run_differential_expression_controlling_for_subject_id_atac(lvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_LVL_PLACEBO_simple_model_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
 
 # Add GC content
 seurat_atac <- RegionStats(seurat_atac, genome = BSgenome.Hsapiens.UCSC.hg38)

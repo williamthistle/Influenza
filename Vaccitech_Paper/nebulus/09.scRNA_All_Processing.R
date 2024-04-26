@@ -98,8 +98,8 @@ sc_obj <- VisualizeIntegration(sc_obj = sc_obj, output_dir = RNA_output_dir, log
 sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
                            reference_cell_type_attribute = reference_cell_type_attribute,
                            output_dir = RNA_output_dir, log_flag = TRUE)
-# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".new.batch.inference.final.RNA.rds"))
-# load(paste0(RNA_output_dir, "all_single_cell.new.batch.inference.final.RNA.rds"))
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".new.batch.inference.final.RNA.PC.100.rds"))
+# load(paste0(RNA_output_dir, "all_single_cell.new.batch.inference.final.RNA.PC.100.rds"))
 
 sc_obj$old.predicted.id <- sc_obj$predicted.id
 Cell_type_combined <- sc_obj$predicted.id
@@ -136,7 +136,7 @@ cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
 # Print UMAPs for all subjects (HVL and LVL)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type_new.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
 print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Cluster.png",
