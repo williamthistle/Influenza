@@ -311,22 +311,32 @@ run_differential_expression_controlling_for_subject_id_atac(hvl_vaccinated_sc_ob
 
 run_differential_expression_controlling_for_subject_id_atac(lvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_LVL_PLACEBO_simple_model_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
 
-# Add GC content
-seurat_atac <- RegionStats(seurat_atac, genome = BSgenome.Hsapiens.UCSC.hg38)
-# Add motifs
-seurat_atac <- AddMotifs(
-  object = seurat_atac,
+# Add GC and motif content for HVL placebo and run motif analysis
+hvl_placebo_sc_obj <- RegionStats(hvl_placebo_sc_obj, genome = BSgenome.Hsapiens.UCSC.hg38)
+hvl_placebo_sc_obj <- AddMotifs(
+  object = hvl_placebo_sc_obj,
   genome = BSgenome.Hsapiens.UCSC.hg38,
   pfm = human_pwms_v2
 )
 
-# saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
-# seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "HVL_seurat.RDS"))
-
-
-motif_output_dir <- paste0(ATAC_output_dir, "motifs/", date, "/")
+motif_output_dir <- paste0(ATAC_output_dir, "hvl_placebo_motifs/", date, "/")
 if (!dir.exists(motif_output_dir)) {dir.create(motif_output_dir, recursive = TRUE)}
 
-motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/primary_analysis_6_subject_12_sample/ATAC/diff_peaks/2023-11-30/seurat_peaks/"
+motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/all_single_cell/ATAC/DE_HVL_PLACEBO_2024-04-26/"
 
-generate_motifs_with_signac(seurat_atac, motif_input_dir, motif_output_dir)
+generate_motifs_with_signac(hvl_placebo_sc_obj, motif_input_dir, motif_output_dir)
+
+# Add GC and motif content for HVL vaccinated and run motif analysis
+hvl_vaccinated_sc_obj <- RegionStats(hvl_vaccinated_sc_obj, genome = BSgenome.Hsapiens.UCSC.hg38)
+hvl_vaccinated_sc_obj <- AddMotifs(
+  object = hvl_vaccinated_sc_obj,
+  genome = BSgenome.Hsapiens.UCSC.hg38,
+  pfm = human_pwms_v2
+)
+
+motif_output_dir <- paste0(ATAC_output_dir, "hvl_vaccinated_motifs/", date, "/")
+if (!dir.exists(motif_output_dir)) {dir.create(motif_output_dir, recursive = TRUE)}
+
+motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/all_single_cell/ATAC/DE_HVL_VACCINATED_2024-04-26/"
+
+generate_motifs_with_signac(hvl_vaccinated_sc_obj, motif_input_dir, motif_output_dir)

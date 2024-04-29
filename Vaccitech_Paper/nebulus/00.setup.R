@@ -33,9 +33,6 @@ data("human_pwms_v2")
 mintchip_metadata <- read.table(paste0(home_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
 
 date <- Sys.Date()
-hostname <- system("hostname", intern = TRUE)
-if(hostname == "lumos.Princeton.EDU") {
-  addArchRThreads(16)
-}
+addArchRThreads(16)
 
 addArchRGenome("hg38")

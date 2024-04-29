@@ -10,21 +10,22 @@ for(cell_type in overlapping_das_cell_types) {
       print(paste0("Overlap for ", cell_type, " (", analysis_type, ", ", min_pct, ")"))
       placebo_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", min_pct, ".tsv"),
                                      sep = "\t", header = TRUE)
-      vaccination_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", min_pct, ".tsv"),
+      vaccinated_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "simple_model/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", min_pct, ".tsv"),
                                     sep = "\t", header = TRUE)
       if(analysis_type == "sc") {
-        overlapping_das <- intersect(rownames(placebo_das), rownames(vaccination_das))
+        overlapping_das <- intersect(rownames(placebo_das), rownames(vaccinated_das))
         print(paste0("Total overlapping DAS: ", length(overlapping_das)))
         print(paste0("Total placebo DAS: ", nrow(placebo_das)))
+        print(paste0("Total vaccinated DAS: ", nrow(vaccinated_das)))
         print(paste0("Percent of placebo DAS that overlap: ", (length(overlapping_das) / nrow(placebo_das) * 100)))
       } else {
-        overlapping_das_with_robust <- intersect(placebo_das$Peak_Name, vaccination_das$Peak_Name)
+        overlapping_das_with_robust <- intersect(placebo_das$Peak_Name, vaccinated_das$Peak_Name)
         print(paste0("Total overlapping DAS (using robust pvalue): ", length(overlapping_das_with_robust)))
         print(paste0("Total placebo DAS (using robust pvalue): ", nrow(placebo_das)))
         print(paste0("Percent of placebo DAS that overlap (using robust pvalue): ", (length(overlapping_das_with_robust) / nrow(placebo_das) * 100)))
         placebo_das <- placebo_das[placebo_das$pseudo_bulk_pval < 0.05,]
-        vaccination_das <- vaccination_das[vaccination_das$pseudo_bulk_pval < 0.05,]
-        overlapping_das_without_robust <- intersect(placebo_das$Peak_Name, vaccination_das$Peak_Name)
+        vaccinated_das <- vaccinated_das[vaccinated_das$pseudo_bulk_pval < 0.05,]
+        overlapping_das_without_robust <- intersect(placebo_das$Peak_Name, vaccinated_das$Peak_Name)
         print(paste0("Total overlapping DAS (not using robust pvalue): ", length(overlapping_das_without_robust)))
         print(paste0("Total placebo DAS (not using robust pvalue): ", nrow(placebo_das)))
         print(paste0("Percent of placebo DAS that overlap (not using robust pvalue): ", (length(overlapping_das_without_robust) / nrow(placebo_das) * 100)))

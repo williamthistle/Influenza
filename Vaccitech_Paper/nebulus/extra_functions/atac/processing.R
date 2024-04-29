@@ -991,7 +991,7 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
         second_group <- "F"
       }
       # Perform SC DE
-      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = c('nCount_peaks', 'subject_id'), ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0.1, min.pct = 0.01)
+      current_de <- FindMarkers(cells_subset, test.use="LR", latent.vars = c('nCount_peaks', 'subject_id'), ident.1 = first_group, ident.2 = second_group, logfc.threshold = 0, min.pct = 0)
       # Save unfiltered DE results
       write.table(current_de, paste0(analysis_dir, first_group, "-vs-", second_group, "-degs-", cell_type_for_file_name, "-", group, "-controlling_for_subject_id_sc_unfiltered.tsv"), quote = FALSE, sep = "\t")
       # Filter DE results and write to file
@@ -1106,7 +1106,8 @@ create_pseudobulk_counts_atac_seurat <- function(sc_obj) {
 generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_output_dir) {
   set.seed(SPEEDI::get_speedi_seed())
   # Declare cell types
-  cell_types <- unique(seurat_atac$predicted_celltype_majority_vote)
+  # cell_types <- unique(seurat_atac$predicted_celltype_majority_vote)
+  cell_types <- c("CD14 Mono")
   Idents(seurat_atac) <- "predicted_celltype_majority_vote"
   for(cell_type in cell_types) {
     print(cell_type)
@@ -1131,9 +1132,11 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
     # Take subset of peaks based on fold change
     fc_subsets <- c(0.1, 0.3, 0.585, 1, 2)
     for(analysis_type in analysis_types) {
+      print(analysis_type)
       analysis_type_dir <- paste0(cell_type_dir, analysis_type, "/")
       if (!dir.exists(analysis_type_dir)) {dir.create(analysis_type_dir, recursive = TRUE)}
       for(pct_level in pct_levels) {
+        print(pct_level)
         pct_level_dir <- paste0(analysis_type_dir, pct_level, "/")
         if (!dir.exists(pct_level_dir)) {dir.create(pct_level_dir, recursive = TRUE)}
         no_bg_dir <- paste0(pct_level_dir, "without_bg", "/")
@@ -1141,19 +1144,21 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
         bg_dir <- paste0(pct_level_dir, "with_bg", "/")
         if (!dir.exists(bg_dir)) {dir.create(bg_dir, recursive = TRUE)}
         for(fc_subset in fc_subsets) {
-          # Read in pos and neg peaks
-          pos_peaks <- read.table(paste0(motif_input_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_",
-                                         analysis_type, "_pct_", pct_level, "_pos.tsv"), 
-                                  sep = "\t", header = TRUE)
-          neg_peaks <- read.table(paste0(motif_input_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_",
-                                         analysis_type, "_pct_", pct_level, "_neg.tsv"), 
-                                  sep = "\t", header = TRUE)
+          print(fc_subset)
+          # Read in peaks
+          current_peaks <- read.table(paste0(motif_input_dir, "D28-vs-D_minus_1-degs-", cell_type_for_file_name, "-time_point-controlling_for_subject_id_",
+                                             analysis_type, "_pct_", pct_level, ".tsv"), 
+                                      sep = "\t", header = TRUE)
           # Take subset of peaks based on fold change
-          # Note that we filter FC based on single cell FC, not DESeq2 FC!
-          if(analysis_type == "sc_filtered") {
+          # Note that we filter FC based on single cell FC
+          if(analysis_type == "sc") {
+            pos_peaks <- current_peaks[current_peaks$avg_log2FC > 0,]
+            neg_peaks <- current_peaks[current_peaks$avg_log2FC < 0,]
             pos_peaks <- pos_peaks[pos_peaks$avg_log2FC >= fc_subset,]
             neg_peaks <- neg_peaks[neg_peaks$avg_log2FC <= -fc_subset,]
           } else {
+            pos_peaks <- current_peaks[current_peaks$sc_log2FC > 0,]
+            neg_peaks <- current_peaks[current_peaks$sc_log2FC < 0,]
             pos_peaks <- pos_peaks[pos_peaks$sc_log2FC >= fc_subset,]
             neg_peaks <- neg_peaks[neg_peaks$sc_log2FC <= -fc_subset,]
           }
@@ -1161,7 +1166,7 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
           if(nrow(pos_peaks) > 0) {
             total_pos_peaks <- nrow(pos_peaks)
             # Grab peak names 
-            if(analysis_type == "sc_filtered") {
+            if(analysis_type == "sc") {
               pos_query_feature <- rownames(pos_peaks)
             } else {
               pos_query_feature <- pos_peaks$Peak_Name
@@ -1192,7 +1197,7 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
           if(nrow(neg_peaks) > 0) {
             total_neg_peaks <- nrow(neg_peaks)
             # Grab peak names 
-            if(analysis_type == "sc_filtered") {
+            if(analysis_type == "sc") {
               neg_query_feature <- rownames(neg_peaks)
             } else {
               neg_query_feature <- neg_peaks$Peak_Name
