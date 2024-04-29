@@ -808,7 +808,7 @@ create_magical_input_files_atac <- function(atac_proj, MAGICAL_file_dir) {
   atac_proj <- addMotifAnnotations(ArchRProj = atac_proj, motifSet = "cisbp", name = "Motif",
                                                   force = TRUE)
   # A Motif-Matches-In-Peaks.rds file will be created under the Annotations folder
-  peak_motif_mapping <- readRDS(file = paste0(ATAC_output_dir, "ArchROutput/Annotations/Motif-Matches-In-Peaks.rds"))
+  peak_motif_mapping <- readRDS(file = paste0(ATAC_output_dir, "minus_clusters_no_batch_correction/Annotations/Motif-Matches-In-Peaks.rds"))
   write.table(lapply(summary(peak_motif_mapping@assays@data@listData$matches), as.numeric), 
               file=paste0(MAGICAL_motif_mapping_prior_dir, "ATAC_motif_mapping_prior.tsv"),
               quote = FALSE, row.names = FALSE, col.names = FALSE,  sep = "\t")
