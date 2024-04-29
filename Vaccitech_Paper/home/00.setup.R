@@ -198,7 +198,7 @@ flu_ID_tokens <- read.table(paste0(overall_metadata_dir, "flu_data_tokens.tsv"),
 mintchip_metadata <- read.table(paste0(mintchip_metadata_dir, "mintchip_metadata.tsv"), sep = "\t", header = TRUE)
 
 # MAGICAL
-MAGICAL_hvl_placebo_results <- read.table(file = paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+# MAGICAL_hvl_placebo_results <- read.table(file = paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 # MAGICAL_hvl_vaccinated_results <- read.table(file = paste0(MAGICAL_hvl_vaccinated_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 # MAGICAL_lvl_placebo_results <- read.table(file = paste0(MAGICAL_lvl_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 
@@ -207,7 +207,7 @@ scRNA_hvl_placebo_degs <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D
 scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type != "Platelet",]
 scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$sc_log2FC * scRNA_hvl_placebo_degs$pseudo_bulk_log2FC > 0, ]
 
-scRNA_hvl_placebo_MAGICAL_cell_types_degs <-  read.table(paste0(scRNA_hvl_placebo_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+scRNA_hvl_placebo_MAGICAL_cell_types_degs <-read.table(paste0(scRNA_hvl_placebo_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 scRNA_hvl_placebo_MAGICAL_cell_types_degs <- scRNA_hvl_placebo_MAGICAL_cell_types_degs[scRNA_hvl_placebo_MAGICAL_cell_types_degs$Cell_Type != "Platelet",]
 scRNA_hvl_placebo_MAGICAL_cell_types_degs <- scRNA_hvl_placebo_MAGICAL_cell_types_degs[scRNA_hvl_placebo_MAGICAL_cell_types_degs$sc_log2FC * scRNA_hvl_placebo_MAGICAL_cell_types_degs$pseudo_bulk_log2FC > 0, ]
 

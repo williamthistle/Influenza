@@ -8,46 +8,51 @@ source(paste0(base_dir, "00.setup.R"))
 source(paste0(base_dir, "extra_functions/MAGICAL_functions.R"))
 
 # STEP 0: Set up directories and global files
-cell_type_candidate_gene_dir <- paste0(sc_magical_dir, "Candidate_Genes/")
+cell_type_candidate_gene_dir <- paste0(MAGICAL_hvl_placebo_dir, "Candidate_Genes/")
 if (!dir.exists(cell_type_candidate_gene_dir)) {dir.create(cell_type_candidate_gene_dir, recursive = TRUE)}
-cell_type_candidate_peak_dir <- paste0(sc_magical_dir, "Candidate_Peaks/")
+cell_type_candidate_peak_dir <- paste0(MAGICAL_hvl_placebo_dir, "Candidate_Peaks/")
 if (!dir.exists(cell_type_candidate_peak_dir)) {dir.create(cell_type_candidate_peak_dir, recursive = TRUE)}
-cell_type_scATAC_cell_metadata_dir <- paste0(sc_magical_dir, "scATAC_Cell_Metadata/")
+cell_type_scATAC_cell_metadata_dir <- paste0(MAGICAL_hvl_placebo_dir, "scATAC_Cell_Metadata/")
 if (!dir.exists(cell_type_scATAC_cell_metadata_dir)) {dir.create(cell_type_scATAC_cell_metadata_dir, recursive = TRUE)}
-cell_type_scRNA_cell_metadata_dir <- paste0(sc_magical_dir, "scRNA_Cell_Metadata/")
+cell_type_scRNA_cell_metadata_dir <- paste0(MAGICAL_hvl_placebo_dir, "scRNA_Cell_Metadata/")
 if (!dir.exists(cell_type_scRNA_cell_metadata_dir)) {dir.create(cell_type_scRNA_cell_metadata_dir, recursive = TRUE)}
-cell_type_scATAC_read_counts_dir <- paste0(sc_magical_dir, "scATAC_Read_Counts/")
+cell_type_scATAC_read_counts_dir <- paste0(MAGICAL_hvl_placebo_dir, "scATAC_Read_Counts/")
 if (!dir.exists(cell_type_scATAC_read_counts_dir)) {dir.create(cell_type_scATAC_read_counts_dir, recursive = TRUE)}
-cell_type_scRNA_read_counts_dir <- paste0(sc_magical_dir, "scRNA_Read_Counts/")
+cell_type_scRNA_read_counts_dir <- paste0(MAGICAL_hvl_placebo_dir, "scRNA_Read_Counts/")
 if (!dir.exists(cell_type_scRNA_read_counts_dir)) {dir.create(cell_type_scRNA_read_counts_dir, recursive = TRUE)}
-magical_output_dir <- paste0(sc_magical_dir, "Output/")
+magical_output_dir <- paste0(MAGICAL_hvl_placebo_dir, "Output/")
 if (!dir.exists(magical_output_dir)) {dir.create(magical_output_dir, recursive = TRUE)}
 
-hg38_ref_seq <- paste0(sc_magical_dir, "hg38_Refseq.txt")
-peak_coordinates <- paste0(sc_magical_dir, "scATAC_Peak_Coordinates/HVL_ATAC_peak_coordinates.tsv")
-gene_list <- paste0(sc_magical_dir, "scRNA_Genes/HVL_RNA_genes.tsv")
-motifs <- paste0(sc_magical_dir, "Motifs.txt")
-motif_prior <- paste0(sc_magical_dir, "scATAC_Motif_Mapping_Prior/HVL_ATAC_motif_mapping_prior.tsv")
-tads <- paste0(sc_magical_dir, "RaoGM12878_40kb_TopDomTADs_filtered_hg38.txt")
+hg38_ref_seq <- paste0(MAGICAL_hvl_placebo_dir, "hg38_Refseq.txt")
+peak_coordinates <- paste0(MAGICAL_hvl_placebo_dir, "scATAC_Peak_Coordinates/HVL_ATAC_peak_coordinates.tsv")
+gene_list <- paste0(MAGICAL_hvl_placebo_dir, "scRNA_Genes/HVL_RNA_genes.tsv")
+motifs <- paste0(MAGICAL_hvl_placebo_dir, "Motifs.txt")
+motif_prior <- paste0(MAGICAL_hvl_placebo_dir, "scATAC_Motif_Mapping_Prior/HVL_ATAC_motif_mapping_prior.tsv")
+tads <- paste0(MAGICAL_hvl_placebo_dir, "RaoGM12878_40kb_TopDomTADs_filtered_hg38.txt")
 distance_control=5e5
 
-atac_cell_types <- c("B", "CD14 Mono", "CD16 Mono", "Proliferating", "NK", "CD4 Memory", "CD8 Memory", "MAIT", "T Naive")
+cell_types <- c("B", "CD14 Mono", "CD16 Mono", "Proliferating", "NK", "CD4 Memory", "CD8 Memory", "MAIT", "CD4 Naive", "CD8 Naive", "cDC")
 
 # STEP 1: CREATE CANDIDATE GENE AND PEAK FILES
 
+current_candidate_deg_table <- scRNA_hvl_placebo_MAGICAL_cell_types_degs
+current_candidate_deg_table <- current_candidate_deg_table[current_candidate_deg_table$Cell_Type != "T Naive",]
+scRNA_hvl_placebo_degs_naive_t_cells <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD4 Naive" | scRNA_hvl_placebo_degs$Cell_Type == "CD8 Naive",]
+current_candidate_deg_table <- rbind(current_candidate_deg_table, scRNA_hvl_placebo_degs_naive_t_cells)
+
 # a) Cell type candidate genes.txt
 
-for(cell_type in unique(sc_pseudobulk_deg_combined_cell_types_table$Cell_Type)) {
-  write.table(sc_pseudobulk_deg_combined_cell_types_table[sc_pseudobulk_deg_combined_cell_types_table$Cell_Type == cell_type,]$Gene_Name,
+for(cell_type in unique(current_candidate_deg_table$Cell_Type)) {
+  write.table(current_candidate_deg_table[current_candidate_deg_table$Cell_Type == cell_type,]$Gene_Name,
               file = paste0(cell_type_candidate_gene_dir, sub(" ", "_", cell_type), "_Candidate_Genes.txt"), sep = "\t", quote = FALSE,
               row.names = FALSE, col.names = FALSE)
 }
 
 # b) Cell type candidate peaks.txt
-for(cell_type in atac_cell_types) {
-  current_das <- read.table(paste0(sc_das_dir, "diff_peaks/D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_overlapping_peak_pct_0.01.tsv"), sep = "\t",
+for(cell_type in cell_types) {
+  current_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_sc_pct_0.1.tsv"), sep = "\t",
                                        header = TRUE)
-  peak_list <- current_das$Peak_Name
+  peak_list <- rownames(current_das)
   chromosomes <- sapply(strsplit(peak_list, "-"), `[`, 1)
   start_coords <- sapply(strsplit(peak_list, "-"), `[`, 2)
   end_coords <- sapply(strsplit(peak_list, "-"), `[`, 3)

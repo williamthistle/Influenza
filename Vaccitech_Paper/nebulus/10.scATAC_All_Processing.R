@@ -265,7 +265,7 @@ cell_names <- rownames(seurat_atac@meta.data)
 seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name = "cell_name")
 
 saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "seurat_minus_clusters_no_batch_correction.RDS"))
-# seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "seurat_minus_clusters_no_batch_correction.RDS"))
+# seurat_atac <- readRDS(file = paste0(ATAC_output_dir, "seurat_minus_clusters_no_batch_correction.RDS"))
 
 # Separate into relevant subsets
 
