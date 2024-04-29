@@ -2,10 +2,7 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-#overlapping_das_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC","NK", "CD4_Memory", "CD8_Memory", "CD8_Naive", "MAIT", "B", "Proliferating", "CD4_Naive")
-
-overlapping_das_cell_types <- c("CD14_Mono", "CD16_Mono")
-
+overlapping_das_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC","NK", "CD4_Memory", "CD8_Memory", "CD8_Naive", "MAIT", "B", "Proliferating", "CD4_Naive")
 
 for(cell_type in overlapping_das_cell_types) {
   for(analysis_type in c("sc", "final")) {

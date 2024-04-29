@@ -121,6 +121,7 @@ atac_proj <- addGeneIntegrationMatrix_SPEEDI(
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj, load = FALSE)
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "ArchROutput"))
 # load ArchR project: atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "no_batch_correction"))
+# load Vincy ArchR project: vincy_proj <- loadArchRProject(path = "/Genomics/function/pentacon/wat2/single_cell/analysis/vincy_analysis/ArchR_filtered")
 
 atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
                                       d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
@@ -264,7 +265,7 @@ cell_names <- rownames(seurat_atac@meta.data)
 seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name = "cell_name")
 
 saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "seurat_minus_clusters_no_batch_correction.RDS"))
-# seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "seurat_minus_clusters.RDS"))
+# seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "seurat_minus_clusters_no_batch_correction.RDS"))
 
 # Separate into relevant subsets
 
@@ -274,6 +275,11 @@ sc_obj <- seurat_atac
 idxPass <- which(sc_obj$viral_load %in% "high")
 cellsPass <- names(sc_obj$orig.ident[idxPass])
 hvl_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
+
+# PLACEBO
+idxPass <- which(sc_obj$treatment %in% "PLACEBO")
+cellsPass <- names(sc_obj$orig.ident[idxPass])
+placebo_sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
 # HVL PLACEBO
 idxPass <- which(hvl_sc_obj$treatment %in% "PLACEBO")
@@ -300,8 +306,8 @@ idxPass <- which(lvl_sc_obj$treatment %in% "MVA-NP+M1")
 cellsPass <- names(lvl_sc_obj$orig.ident[idxPass])
 lvl_vaccinated_sc_obj <- subset(x = lvl_sc_obj, subset = cell_name %in% cellsPass)
 
-run_differential_expression_controlling_for_subject_id_atac(hvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_HVL_PLACEBO_simple_model_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
-run_differential_expression_controlling_for_subject_id_atac(hvl_vaccinated_sc_obj, paste0(ATAC_output_dir, "DE_HVL_VACCINATED_simple_model_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
+run_differential_expression_controlling_for_subject_id_atac(hvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_HVL_PLACEBO_pseudobulk_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
+run_differential_expression_controlling_for_subject_id_atac(hvl_vaccinated_sc_obj, paste0(ATAC_output_dir, "DE_HVL_VACCINATED_pseudobulk_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
 
 run_differential_expression_controlling_for_subject_id_atac(lvl_placebo_sc_obj, paste0(ATAC_output_dir, "DE_LVL_PLACEBO_simple_model_", date, "/"), sample_metadata_for_SPEEDI_df, "time_point")
 

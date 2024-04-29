@@ -1125,9 +1125,9 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
     meta.feature <- GetAssayData(cells_subset, assay = "peaks", slot = "meta.features")
     
     # Analysis types include those peaks that passed SC filtering stage as well as those peaks that passed both SC filtering and pseudobulk
-    analysis_types <- c("sc_filtered", "overlapping_peak")
-    # Tested pct levels include 0.01, 0.03, 0.05
-    pct_levels <- c("0.01", "0.03", "0.05")
+    analysis_types <- c("sc", "final")
+    # Tested pct levels include 0.01, 0.05, 0.1
+    pct_levels <- c("0.01", "0.05", "0.1")
     # Take subset of peaks based on fold change
     fc_subsets <- c(0.1, 0.3, 0.585, 1, 2)
     for(analysis_type in analysis_types) {
