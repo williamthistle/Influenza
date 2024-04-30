@@ -50,7 +50,7 @@ for(cell_type in unique(current_candidate_deg_table$Cell_Type)) {
 
 # b) Cell type candidate peaks.txt
 for(cell_type in cell_types) {
-  current_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_sc_pct_0.1.tsv"), sep = "\t",
+  current_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", sub(" ", "_", cell_type), "-time_point-controlling_for_subject_id_sc_pct_0.01.tsv"), sep = "\t",
                                        header = TRUE)
   peak_list <- rownames(current_das)
   chromosomes <- sapply(strsplit(peak_list, "-"), `[`, 1)
@@ -114,6 +114,37 @@ for(cell_type in rest_of_cell_types) {
   overall_magical_df <- rbind(overall_magical_df, current_magical_df)
 }
 overall_magical_df <- overall_magical_df[,c(9,1,2,3,4,5,6,7,8)]
+
+# Read MAGICAL df
+# overall_magical_df <- read.table(paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
+
+# Add metadata - stage 1
+overall_magical_df <- add_info_stage_1_MAGICAL(overall_magical_df)
+
+# Two new tables!
+magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
+magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
+
+# One for MAGICAL genes and one for MAGICAL sites
+
+# MAGICAL genes:
+# Cell Type
+# Gene Name
+# Found_in_snME
+# Found_in_H3K4me1
+# Found_in_H3K4me3
+# Found_in_H3K9me3
+# Found_in_H3K27Ac
+# Found_in_H3K27me3
+# Found_in_H3K36me3
+# Found_in_LRT (Maybe?)
+# Found_in_HVL_Bulk_D5
+# Found_in_HVL_Bulk_D8
+
+
+
+# gene_found_in_snME
+# site_found_in_snME
 
 # Create overall motif enrichment table
 fc_0.1_motif_cell_types <- c("B")

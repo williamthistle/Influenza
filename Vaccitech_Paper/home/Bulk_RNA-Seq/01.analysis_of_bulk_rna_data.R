@@ -60,6 +60,8 @@ hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results <- run_deseq_bulk_
 # 2 D28 vs 2 D minus 1 - 77/0/0/0/0/0/0 DEGs
 hvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk_analysis_time_series("placebo", hvl_full_time_series_placebo_counts, hvl_full_time_series_placebo_metadata,
                                                                           "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "high")
+hvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results
+
 #### PERIOD 2 MODERATE VIRAL LOAD ####
 # No samples
 
