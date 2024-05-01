@@ -137,7 +137,7 @@ for(atac_cell_type in atac_cell_types) {
   # Overlap with scRNA
   for(scRNA_cell_type in scRNA_cell_types) {
     current_sc_pseudobulk_deg_table <- sc_pseudobulk_deg_table[sc_pseudobulk_deg_table$Cell_Type == scRNA_cell_type,]
-    pos_ATAC_pos_snME_scRNA_genes <- c(pos_ATAC_pos_snME_scRNA_genes, intersect(unique(current_sc_pseudobulk_deg_table$Gene_Name))
+    pos_ATAC_pos_snME_scRNA_genes <- c(pos_ATAC_pos_snME_scRNA_genes, intersect(unique(current_sc_pseudobulk_deg_table$Gene_Name)))
   }
   pos_ATAC_pos_snME_scRNA_genes <- unique(pos_ATAC_pos_snME_scRNA_genes)
   # Overlap with bulk

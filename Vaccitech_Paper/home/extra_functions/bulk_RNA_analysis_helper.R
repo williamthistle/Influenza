@@ -427,14 +427,28 @@ run_deseq2_LRT <- function(counts, metadata) {
                              metadata$time_point == "2_D_minus_1",]
   LRT_metadata <- LRT_metadata[LRT_metadata$subject_id  %in% names(table(LRT_metadata$subject_id)[table(LRT_metadata$subject_id) == 5]),]
   LRT_counts <- counts[rownames(LRT_metadata)]
+  
+  print("Applying SV correction")
+  base_model <- DESeqDataSetFromMatrix(countData = LRT_counts, colData = LRT_metadata, design = ~ subject_id + time_point)
+  base_model <- estimateSizeFactors(base_model)
+  dat <- counts(base_model, normalized = TRUE)
+  idx <- rowMeans(dat) > 1
+  dat <- dat[idx, ]
+  mod  <- model.matrix(~ subject_id + time_point, colData(base_model))
+  mod0 <- model.matrix(~ subject_id, colData(base_model))
+  print(paste0("Number of surrogate variables recommended by be: ", num.sv(dat, mod, method = "be")))
+  print(paste0("Number of surrogate variables recommended by leek: ", num.sv(dat, mod, method = "leek")))
+  svseq <- svaseq(dat, mod, mod0, n.sv = 1)
+  LRT_metadata$SV1 <- svseq$sv[,1]
+  
   LRT_analysis <- DESeqDataSetFromMatrix(countData = LRT_counts,
                                          colData = LRT_metadata,
-                                         design = ~ subject_id + time_point)
-  LRT_analysis <- DESeq(LRT_analysis, test = "LRT", reduced = ~ subject_id)
+                                         design = ~ subject_id + SV1 + time_point)
+  LRT_analysis <- DESeq(LRT_analysis, test = "LRT", reduced = ~ subject_id + SV1)
   LRT_analysis_results <- results(LRT_analysis, alpha = 0.05)
   LRT_analysis_results <- LRT_analysis_results[order(LRT_analysis_results$padj),]
-  LRT_analysis_results <- subset(LRT_analysis_results, padj < 0.05)
-  return(list(LRT_analysis, LRT_analysis_results))
+  LRT_analysis_results_filtered <- subset(LRT_analysis_results, padj < 0.05)
+  return(list(LRT_analysis, LRT_analysis_results_filtered))
 }
 
 plot_lrt_heatmap <- function(gene_list, LRT_analysis, heatmap_threshold, output_path) {

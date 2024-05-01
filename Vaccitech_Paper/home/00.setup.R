@@ -37,7 +37,7 @@ if(length(laptop_use == 1)) {
 }
 onedrive_dir <- getwd()
 onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
-# load(paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/bulk_RNA_analysis.RData"))
+load(paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/bulk_RNA_analysis.RData"))
 
 # Reload onedrive dir
 onedrive_dir <- "~"

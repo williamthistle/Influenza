@@ -24,6 +24,8 @@ for(snME_cell_type in snME_cell_types) {
   upregulated_differential_analysis_results <- upregulated_snME_dms_for_current_cell_type[,c(2,3,4)]
   upregulated_differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
   upregulated_differential_analysis_results_df <- as.data.frame(upregulated_differential_analysis_results)
+  write.table(upregulated_differential_analysis_results_df, file = paste0(snME_results_dir, "Closest_Gene_Analysis_No_Promoter_Subset/", snME_cell_type, "_D28_hypermethylated_annotated_genes.tsv"), 
+              sep = "\t", quote = FALSE)
   upregulated_differential_analysis_results_df <- subset(upregulated_differential_analysis_results_df, distanceToTSS >= -2000 & distanceToTSS <= 500)
   write.table(upregulated_differential_analysis_results_df, file = paste0(snME_results_dir, "Closest_Gene_Analysis/", snME_cell_type, "_D28_hypermethylated_annotated_genes.tsv"), 
               sep = "\t", quote = FALSE)
@@ -31,6 +33,8 @@ for(snME_cell_type in snME_cell_types) {
   downregulated_differential_analysis_results <- downregulated_snME_dms_for_current_cell_type[,c(2,3,4)]
   downregulated_differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(downregulated_differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
   downregulated_differential_analysis_results_df <- as.data.frame(downregulated_differential_analysis_results)
+  write.table(downregulated_differential_analysis_results_df, file = paste0(snME_results_dir, "Closest_Gene_Analysis_No_Promoter_Subset/", snME_cell_type, "_D_minus_1_hypermethylated_annotated_genes.tsv"), 
+              sep = "\t", quote = FALSE)
   downregulated_differential_analysis_results_df <- subset(downregulated_differential_analysis_results_df, distanceToTSS >= -2000 & distanceToTSS <= 500)
   write.table(downregulated_differential_analysis_results_df, file = paste0(snME_results_dir, "Closest_Gene_Analysis/", snME_cell_type, "_D_minus_1_hypermethylated_annotated_genes.tsv"), 
               sep = "\t", quote = FALSE)
