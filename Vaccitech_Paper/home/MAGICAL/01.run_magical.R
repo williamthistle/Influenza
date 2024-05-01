@@ -119,32 +119,76 @@ overall_magical_df <- overall_magical_df[,c(9,1,2,3,4,5,6,7,8)]
 # overall_magical_df <- read.table(paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
 
 # Add metadata - stage 1
-overall_magical_df <- add_info_stage_1_MAGICAL(overall_magical_df)
+overall_magical_df <- add_info_stage_1_MAGICAL(overall_magical_df, current_candidate_deg_table)
+write.table(overall_magical_df, file = paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output_with_stage_1_info.tsv"),
+            sep = "\t", quote = FALSE)
+
+overall_magical_df_with_pseudobulk_correction <- overall_magical_df[overall_magical_df$sc_p_val < 0.05,]
+overall_magical_df_with_pseudobulk_correction <- overall_magical_df_with_pseudobulk_correction[overall_magical_df_with_pseudobulk_correction$pseudobulk_p_val < 0.05 | overall_magical_df_with_pseudobulk_correction$pseudobulk_robust_p_val < 0.05,]
 
 # Two new tables!
 magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
 magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
 
-# One for MAGICAL genes and one for MAGICAL sites
+# Find overlapping circuits between cell types
+overlapping_circuits_df <- find_overlapping_circuits(overall_magical_df)
+overlapping_circuit_cell_type_matrix <- find_overlapping_circuit_cell_type_matrix(overlapping_circuits_df)
 
-# MAGICAL genes:
-# Cell Type
-# Gene Name
-# Found_in_snME
-# Found_in_H3K4me1
-# Found_in_H3K4me3
-# Found_in_H3K9me3
-# Found_in_H3K27Ac
-# Found_in_H3K27me3
-# Found_in_H3K36me3
-# Found_in_LRT (Maybe?)
-# Found_in_HVL_Bulk_D5
-# Found_in_HVL_Bulk_D8
+# Convert matrix to data frame
+overlapping_circuit_cell_type_df <- melt(overlapping_circuit_cell_type_matrix)
+
+# Create the heatmap
+ggplot(overlapping_circuit_cell_type_df, aes(x = Var2, y = Var1, fill = value, label = value)) +
+  geom_tile(color = "white") +
+  geom_text(size = 3) +  # Add text labels
+  scale_fill_gradient(low = "white", high = "red") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# TODO: Create UpsetPlot for genes like Aliza paper
+# 
+
+# Create targets for each cell type
+magical_tf_vs_cell_type_df <- create_tf_vs_cell_type_df(overall_magical_df)
+# Are these TFs found in scRNA data?
+tfs_found_in_scRNA_df <- find_tfs_in_scRNA_data(magical_tf_vs_cell_type_df, current_candidate_deg_table)
+
+magical_tf_heatmap_plot <- create_tf_heatmap_plot(tfs_found_in_scRNA_df)
+
+# TF analysis for min.pct = 0.05
+overall_magical_df_0.05 <- overall_magical_df[overall_magical_df$pct.1 >= 0.05 | overall_magical_df$pct.2 >= 0.05,]
+magical_tf_vs_cell_type_df_0.05 <- create_tf_vs_cell_type_df(overall_magical_df_0.05)
+tfs_found_in_scRNA_df_0.05 <- find_tfs_in_scRNA_data(magical_tf_vs_cell_type_df_0.05, current_candidate_deg_table)
+
+# TF analysis for min.pct = 0.1
+overall_magical_df_0.1 <- overall_magical_df[overall_magical_df$pct.1 >= 0.1 | overall_magical_df$pct.2 >= 0.1,]
+magical_tf_vs_cell_type_df_0.1 <- create_tf_vs_cell_type_df(overall_magical_df_0.1)
+tfs_found_in_scRNA_df_0.1 <- find_tfs_in_scRNA_data(magical_tf_vs_cell_type_df_0.1, current_candidate_deg_table)
+
+# Create TF heatmap plot
+magical_tf_heatmap_plot <- create_tf_heatmap_plot(tfs_found_in_scRNA_df_0.1)
+
+
+# Create targets for each cell type
+magical_tf_vs_cell_type_df <- create_tf_vs_cell_type_df(overall_magical_df_with_pseudobulk_correction)
+# Are these TFs found in scRNA data?
+tfs_found_in_scRNA_df <- find_tfs_in_scRNA_data(magical_tf_vs_cell_type_df, current_candidate_deg_table)
+
+# TF analysis for min.pct = 0.05
+overall_magical_df_with_pseudobulk_correction_0.05 <- overall_magical_df_with_pseudobulk_correction[overall_magical_df_with_pseudobulk_correction$pct.1 >= 0.05 | overall_magical_df_with_pseudobulk_correction$pct.2 >= 0.05,]
+magical_tf_vs_cell_type_df_0.05 <- create_tf_vs_cell_type_df(overall_magical_df_with_pseudobulk_correction_0.05)
+tfs_found_in_scRNA_df_0.05 <- find_tfs_in_scRNA_data(magical_tf_vs_cell_type_df_0.05, current_candidate_deg_table)
+
+# TF analysis for min.pct = 0.1
+overall_magical_df_with_pseudobulk_correction_0.1 <- overall_magical_df_with_pseudobulk_correction[overall_magical_df_with_pseudobulk_correction$pct.1 >= 0.1 | overall_magical_df_with_pseudobulk_correction$pct.2 >= 0.1,]
+magical_tf_vs_cell_type_df_0.1 <- create_tf_vs_cell_type_df(overall_magical_df_with_pseudobulk_correction_0.1)
+tfs_found_in_scRNA_df_0.1 <- find_tfs_in_scRNA_data(magical_tf_vs_cell_type_df_0.1, current_candidate_deg_table)
+
+# Create TF heatmap plot
+magical_tf_heatmap_plot <- create_tf_heatmap_plot(tfs_found_in_scRNA_df_0.1)
 
 
 
-# gene_found_in_snME
-# site_found_in_snME
 
 # Create overall motif enrichment table
 fc_0.1_motif_cell_types <- c("B")
