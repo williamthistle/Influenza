@@ -133,8 +133,22 @@ overall_magical_df_with_pseudobulk_correction <- overall_magical_df[overall_magi
 overall_magical_df_with_pseudobulk_correction <- overall_magical_df_with_pseudobulk_correction[overall_magical_df_with_pseudobulk_correction$pseudobulk_p_val < 0.05 | overall_magical_df_with_pseudobulk_correction$pseudobulk_robust_p_val < 0.05,]
 
 # Two new tables!
-magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
+# magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
+magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df)
 magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
+
+# Create upset plot for overlapping genes between cell types
+sets <- list()
+index <- 1
+
+for(cell_type in unique(magical_gene_overlap_df$Cell_Type)) {
+  sets[[index]] <- unique(magical_gene_overlap_df[magical_gene_overlap_df$Cell_Type == cell_type,]$Gene_Name)
+  index <- index + 1
+}
+set_names <- unique(magical_gene_overlap_df$Cell_Type)
+set_names <- gsub("_", " ", set_names)
+names(sets) <- set_names
+upset(fromList(sets), order.by = "freq", nsets = 11)
 
 # Find overlapping circuits between cell types
 overlapping_circuits_df <- find_overlapping_circuits(overall_magical_df)
