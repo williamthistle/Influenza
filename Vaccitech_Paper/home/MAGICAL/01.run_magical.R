@@ -6,6 +6,8 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 source(paste0(base_dir, "extra_functions/MAGICAL_functions.R"))
+source(paste0(base_dir, "extra_functions/my_MAGICAL_helper_functions.R"))
+
 
 # STEP 0: Set up directories and global files
 cell_type_candidate_gene_dir <- paste0(MAGICAL_hvl_placebo_dir, "Candidate_Genes/")

@@ -102,12 +102,15 @@ b_naive_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "B n
 b_naive_upregulated_genes <- b_naive_genes[b_naive_genes$sc_log2FC > 0,]$Gene_Name
 b_naive_downregulated_genes <- b_naive_genes[b_naive_genes$sc_log2FC < 0,]$Gene_Name
 
+cd14_mono_enrichr_all_results <- get_enrichr_results(unique(cd14_mono_genes$Gene_Name))
 cd14_mono_enrichr_upregulated_results <- get_enrichr_results(cd14_mono_upregulated_genes)
 cd14_mono_enrichr_downregulated_results <- get_enrichr_results(cd14_mono_downregulated_genes)
 
+cd16_mono_enrichr_all_results <- get_enrichr_results(unique(cd16_mono_genes$Gene_Name))
 cd16_mono_enrichr_upregulated_results <- get_enrichr_results(cd16_mono_upregulated_genes)
 cd16_mono_enrichr_downregulated_results <- get_enrichr_results(cd16_mono_downregulated_genes)
 
+nk_enrichr_all_results <- get_enrichr_results(unique(nk_genes$Gene_Name))
 nk_enrichr_upregulated_results <- get_enrichr_results(nk_upregulated_genes)
 nk_enrichr_downregulated_results <- get_enrichr_results(nk_downregulated_genes)
 
@@ -115,11 +118,9 @@ cDC_enrichr_upregulated_results <- get_enrichr_results(cDC_upregulated_genes)
 cDC_enrichr_downregulated_results <- get_enrichr_results(cDC_downregulated_genes)
 
 cd4_memory_enrichr_upregulated_results <- get_enrichr_results(cd4_memory_upregulated_genes)
-# Not uninteresting pathways, but maybe not enough space
 cd4_memory_enrichr_downregulated_results <- get_enrichr_results(cd4_memory_downregulated_genes)
 
 cd8_memory_enrichr_upregulated_results <- get_enrichr_results(cd8_memory_upregulated_genes)
-# Not uninteresting pathways, but maybe not enough space - maybe discuss downregulated pathways in both CD4 and CD8? Shared?
 cd8_memory_enrichr_downregulated_results <- get_enrichr_results(cd8_memory_downregulated_genes)
 
 cd8_naive_enrichr_upregulated_results <- get_enrichr_results(cd8_naive_upregulated_genes)
@@ -134,10 +135,53 @@ b_memory_enrichr_downregulated_results <- get_enrichr_results(b_memory_downregul
 b_naive_enrichr_upregulated_results <- get_enrichr_results(b_naive_upregulated_genes)
 b_naive_enrichr_downregulated_results <- get_enrichr_results(b_naive_downregulated_genes)
 
+cd14_mono_plotted_processes <- cd14_mono_enrichr_upregulated_results[[1]][c(1,10,15,17,22,26),]
+cd14_mono_plotted_processes$Cell_Type <- "CD14 Mono"
+cd16_mono_plotted_processes <- cd16_mono_enrichr_upregulated_results[[1]][c(1,2,3,5,6,8),]
+cd16_mono_plotted_processes$Cell_Type <- "CD16 Mono"
+cd4_memory_plotted_processes <- cd4_memory_enrichr_upregulated_results[[1]][c(1,2,3),]
+cd4_memory_plotted_processes$Cell_Type <- "CD4 Memory"
+cd8_memory_plotted_processes <- cd8_memory_enrichr_upregulated_results[[1]][c(1,2,4),]
+cd8_memory_plotted_processes$Cell_Type <- "CD8 Memory"
+
+all_plotted_processes <- rbind(cd14_mono_plotted_processes, cd16_mono_plotted_processes, cd4_memory_plotted_processes,
+                               cd8_memory_plotted_processes)
+all_plotted_processes$Gene.Count <- sapply(all_plotted_processes$Genes, count_genes)
+all_plotted_processes <- all_plotted_processes[,c(1,4,10,11)]
+all_plotted_processes$Term <- remove_token(all_plotted_processes$Term)
+colnames(all_plotted_processes) <- c("Biological.Process", "Adjusted.P.Value", "Cell.Type", "Gene.Count")
+
+all_plotted_processes$Cell.Type <- factor(all_plotted_processes$Cell.Type, levels = c("CD14 Mono", "CD16 Mono", "CD4 Memory", "CD8 Memory"))
+all_plotted_processes$Biological.Process <- factor(all_plotted_processes$Biological.Process, levels = unique(all_plotted_processes$Biological.Process))
+
+up_pathway_plot <- ggplot(data = all_plotted_processes, aes(x = Cell.Type, y = Biological.Process, size = Gene.Count, color = Adjusted.P.Value)) +
+  geom_point() +
+  theme_minimal() + guides(fill = guide_colorbar(reverse = TRUE)) +
+  labs(
+    title = "Biological Processes Associated with Upregulated Genes from Immune Cell Types",
+    x = "Cell Type",
+    y = "Biological Process",
+    size = "Gene Count",
+    color = "Adjusted P Value"
+  ) +
+  theme(plot.title = element_text(hjust = 1))
+
+ggsave(filename = paste0(monocyte_dir, "HB_monocyte_upregulated_genes_monocyte_gsea_top_upregulated_pathways.tiff"), plot = up_pathway_plot_file, device='tiff', dpi=300)
+
+
+
+
+
 cd14_test <- cd14_mono_enrichr_upregulated_results[[1]]
 cd14_test$Gene_Count <- sapply(cd14_test$Genes, count_genes)
 cd14_test <- cd14_test[cd14_test$Gene_Count >= 5,]
 create_enrichment_plot(cd14_test)
+
+cd16_test <- cd16_mono_enrichr_upregulated_results[[1]]
+cd16_test$Gene_Count <- sapply(cd16_test$Genes, count_genes)
+cd16_test <- cd16_test[cd16_test$Gene_Count >= 4,]
+create_enrichment_plot(cd16_test)
+
 
 cd16_test <- cd16_mono_enrichr_downregulated_results[[1]]
 cd16_test$Gene_Count <- sapply(cd16_test$Genes, count_genes)

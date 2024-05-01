@@ -90,7 +90,7 @@ add_info_stage_1_MAGICAL <- function(magical_table, deg_table) {
   return(magical_table)
 }
 
-create_magical_gene_overlap_df <- function(magical_table, bulk_LRT) {
+create_magical_gene_overlap_df <- function(magical_table, bulk_LRT = NULL) {
   # Grab mintchip data
   pos_mintchip_das <- list()
   neg_mintchip_das <- list()
@@ -174,7 +174,7 @@ create_magical_gene_overlap_df <- function(magical_table, bulk_LRT) {
     }
     pos_snME <- c(pos_snME, current_pos_snME)
     neg_snME <- c(neg_snME, current_neg_snME)
-    found_in_bulk_LRT <- c(found_in_bulk_LRT, ifelse(current_gene %in% rownames(hvl_placebo_LRT_analysis_results_filtered), TRUE, FALSE))
+    found_in_bulk_LRT <- c(found_in_bulk_LRT, ifelse(current_gene %in% rownames(bulk_LRT), TRUE, FALSE))
   }
   magical_gene_overlap_df <- data.frame(Cell_Type = magical_table$Cell_Type, Gene_Name = magical_table$Gene_symbol,
                                         H3K4me1_pos = pos_H3K4me1, H3K4me1_neg = neg_H3K4me1, 

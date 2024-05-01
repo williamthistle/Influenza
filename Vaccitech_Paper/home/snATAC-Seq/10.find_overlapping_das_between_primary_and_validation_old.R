@@ -47,9 +47,9 @@ overlapping_das_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC","NK", "CD4_Memor
 
 for(cell_type in overlapping_das_cell_types) {
   # Unfiltered
-  unfiltered_cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "Old/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
+  unfiltered_cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
                                             sep = "\t", header = TRUE)
-  unfiltered_cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "Old/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
+  unfiltered_cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
                                                        sep = "\t", header = TRUE)
   for(analysis_type in c("sc", "final")) {
     for(min_pct in c(0.01, 0.05, 0.1)) {
@@ -64,13 +64,13 @@ for(cell_type in overlapping_das_cell_types) {
         print(paste0("Total overlapping DAS: ", length(overlapping_das)))
         print(paste0("Total placebo DAS: ", nrow(placebo_das)))
         print(paste0("Percent of placebo DAS that overlap: ", (length(overlapping_das) / nrow(placebo_das) * 100)))
-        #find_sc_correlation_sc(placebo_das, unfiltered_cell_type_validation_sc_das)
+        find_sc_correlation_sc(placebo_das, unfiltered_cell_type_validation_sc_das)
       } else {
         overlapping_das_with_robust <- intersect(placebo_das$Peak_Name, vaccination_das$Peak_Name)
         print(paste0("Total overlapping DAS (with DESeq2 pseudobulk): ", length(overlapping_das_with_robust)))
         print(paste0("Total placebo DAS (with DESeq2 pvalue): ", nrow(placebo_das)))
         print(paste0("Percent of placebo DAS that overlap (with DESeq2 pvalue): ", (length(overlapping_das_with_robust) / nrow(placebo_das) * 100)))
-        #find_sc_correlation_final(placebo_das, unfiltered_cell_type_validation_sc_das)
+        find_sc_correlation_final(placebo_das, unfiltered_cell_type_validation_sc_das)
       }
     }
   }
