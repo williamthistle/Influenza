@@ -12,51 +12,47 @@ run_fmd_on_snATAC <- function(gene_list) {
   return(current_fmd_result)
 }
 
-snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "pDC", "MAIT", "Proliferating")
+snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "MAIT", "Proliferating")
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Create annotated up and downregulated peak files (annotated)
-# NOTE: Check histogram of fold change for CD16 Mono.
 snATAC_peak_annotated_dir <- paste0(scATAC_hvl_placebo_das_dir, "annotated/")
 if (!dir.exists(snATAC_peak_annotated_dir)) {dir.create(snATAC_peak_annotated_dir)}
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
-  differential_analysis_results_file <- paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv")
-  differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
-  upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC > 0,]
-  downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC < 0,]
-  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
-    # Upregulated
-    upregulated_differential_analysis_results_fc_subset <- upregulated_differential_analysis_results[upregulated_differential_analysis_results$sc_log2FC >= fc,]
-    if(nrow(upregulated_differential_analysis_results_fc_subset) > 0) {
-      current_peaks <- upregulated_differential_analysis_results_fc_subset$Peak_Name
+  for(analysis_type in c("sc", "final")) {
+    for(pct in c(0.01, 0.05, 0.1)) {
+      differential_analysis_results_file <- paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, ".tsv")
+      differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
+      if(analysis_type == "final") {
+        current_peaks <- differential_analysis_results$Peak_Name
+      } else {
+        current_peaks <- rownames(differential_analysis_results)
+      }
       chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
       start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
       end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
-      upregulated_differential_analysis_results_fc_subset$seqnames <- chromosomes
-      upregulated_differential_analysis_results_fc_subset$start <- start_coords
-      upregulated_differential_analysis_results_fc_subset$end <- end_coords
-      upregulated_differential_analysis_results_fc_subset <- upregulated_differential_analysis_results_fc_subset[,c(7,8,9)]
-      upregulated_differential_analysis_results_fc_subset <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results_fc_subset), TxDb = txdb, annoDb = "org.Hs.eg.db")
-      upregulated_differential_analysis_results_fc_subset <- as.data.frame(upregulated_differential_analysis_results_fc_subset)
-      write.table(upregulated_differential_analysis_results_fc_subset, file = paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_upregulated_annotated.tsv"), 
-                  sep = "\t", quote = FALSE, row.names = FALSE)
-    }
-    # Downregulated
-    downregulated_differential_analysis_results_fc_subset <- downregulated_differential_analysis_results[downregulated_differential_analysis_results$sc_log2FC <= -fc,]
-    if(nrow(downregulated_differential_analysis_results_fc_subset) > 0) {
-      current_peaks <- downregulated_differential_analysis_results_fc_subset$Peak_Name
-      chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
-      start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
-      end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
-      downregulated_differential_analysis_results_fc_subset$seqnames <- chromosomes
-      downregulated_differential_analysis_results_fc_subset$start <- start_coords
-      downregulated_differential_analysis_results_fc_subset$end <- end_coords
-      downregulated_differential_analysis_results_fc_subset <- downregulated_differential_analysis_results_fc_subset[,c(7,8,9)]
-      downregulated_differential_analysis_results_fc_subset <- annotatePeak(makeGRangesFromDataFrame(downregulated_differential_analysis_results_fc_subset), TxDb = txdb, annoDb = "org.Hs.eg.db")
-      downregulated_differential_analysis_results_fc_subset <- as.data.frame(downregulated_differential_analysis_results_fc_subset)
-      write.table(downregulated_differential_analysis_results_fc_subset, file = paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_downregulated_annotated.tsv"), 
-                  sep = "\t", quote = FALSE, row.names = FALSE)
+      differential_analysis_results$seqnames <- chromosomes
+      differential_analysis_results$start <- start_coords
+      differential_analysis_results$end <- end_coords
+      upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC > 0,]
+      downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC < 0,]
+      for(fc_threshold in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+        upregulated_differential_analysis_results_fc <- upregulated_differential_analysis_results[upregulated_differential_analysis_results$sc_log2FC >= fc_threshold,]
+        downregulated_differential_analysis_results_fc <- downregulated_differential_analysis_results[downregulated_differential_analysis_results$sc_log2FC <= fc_threshold,]
+        if(nrow(upregulated_differential_analysis_results_fc) > 0) {
+          upregulated_differential_analysis_results_fc <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results_fc), TxDb = txdb, annoDb = "org.Hs.eg.db")
+          upregulated_differential_analysis_results_fc <- as.data.frame(upregulated_differential_analysis_results_fc)
+          write.table(upregulated_differential_analysis_results_fc, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_upregulated_annotated.tsv"), 
+                      sep = "\t", quote = FALSE, row.names = FALSE)
+        }
+        if(nrow(downregulated_differential_analysis_results_fc) > 0) {
+          downregulated_differential_analysis_results_fc <- annotatePeak(makeGRangesFromDataFrame(downregulated_differential_analysis_results_fc), TxDb = txdb, annoDb = "org.Hs.eg.db")
+          downregulated_differential_analysis_results_fc <- as.data.frame(downregulated_differential_analysis_results_fc)
+          write.table(downregulated_differential_analysis_results_fc, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_downregulated_annotated.tsv"), 
+                      sep = "\t", quote = FALSE, row.names = FALSE)
+        }
+      }
     }
   }
 }
