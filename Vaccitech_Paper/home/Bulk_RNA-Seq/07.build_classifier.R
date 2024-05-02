@@ -2,9 +2,39 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+# Add antibody titer info
+add_antibody_titer_info <- function(metadata, antibody_titer_data) {
+  associated_antibody_titer_data <- antibody_titer_data[antibody_titer_data$subject_id %in% metadata$subject_id,]
+  MNT_Baseline_vec <- c()
+  MNT_Day_Minus_1_Pre_Challenge_vec <- c()
+  MNT_Day_28_Post_Challenge_vec <- c()
+  HAI_Day_Minus_1_Pre_Challenge_vec <- c()
+  HAI_Day_28_Post_Challenge_vec <- c()
+  for(current_row_index in 1:nrow(metadata)) {
+    current_row <- metadata[current_row_index,]
+    current_subject_id <- current_row$subject_id
+    current_antibody_titer_row <- associated_antibody_titer_data[associated_antibody_titer_data$subject_id == current_subject_id,]
+    if(nrow(current_antibody_titer_row) == 0) {
+      print(current_subject_id)
+    }
+    MNT_Baseline_vec <- c(MNT_Baseline_vec, current_antibody_titer_row$MNT_Baseline)
+    MNT_Day_Minus_1_Pre_Challenge_vec <- c(MNT_Day_Minus_1_Pre_Challenge_vec, current_antibody_titer_row$MNT_Day_Minus_1_Pre_Challenge)
+    MNT_Day_28_Post_Challenge_vec <- c(MNT_Day_28_Post_Challenge_vec, current_antibody_titer_row$MNT_Day_28_Post_Challenge)
+    HAI_Day_Minus_1_Pre_Challenge_vec <- c(HAI_Day_Minus_1_Pre_Challenge_vec, current_antibody_titer_row$HAI_Day_Minus_1_Pre_Challenge)
+    HAI_Day_28_Post_Challenge_vec <- c(HAI_Day_28_Post_Challenge_vec, current_antibody_titer_row$HAI_Day_28_Post_Challenge)
+  }
+  metadata$MNT_Baseline <- MNT_Baseline_vec
+  metadata$MNT_Day_Minus_1_Pre_Challenge <- MNT_Day_Minus_1_Pre_Challenge_vec
+  metadata$MNT_Day_28_Post_Challenge <- MNT_Day_28_Post_Challenge_vec
+  metadata$HAI_Day_Minus_1_Pre_Challenge <- HAI_Day_Minus_1_Pre_Challenge_vec
+  metadata$HAI_Day_28_Post_Challenge <- HAI_Day_28_Post_Challenge_vec
+  return(metadata)
+}
+
 # High placebo
 hvl_placebo_second_period_metadata <- hvl_placebo_metadata[hvl_placebo_metadata$period == "2",]
 hvl_placebo_second_period_metadata <- hvl_placebo_second_period_metadata[hvl_placebo_second_period_metadata$time_point != "2_D_minus_2",]
+hvl_placebo_second_period_metadata <- add_antibody_titer_info(hvl_placebo_second_period_metadata, antibody_titer_data)
 hvl_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, hvl_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
 
 # All matched placebo (period 2)
@@ -12,6 +42,7 @@ matching_all_placebo_second_period_metadata <- placebo_metadata[placebo_metadata
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D_minus_2",]
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D2",]
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D5",]
+matching_all_placebo_second_period_metadata <- add_antibody_titer_info(matching_all_placebo_second_period_metadata, antibody_titer_data)
 matching_all_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
 
 # All matched vaccine (period 2)
@@ -19,6 +50,7 @@ matching_all_vaccinated_second_period_metadata <- vaccinated_metadata[vaccinated
 matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[matching_all_vaccinated_second_period_metadata$time_point != "2_D_minus_2",]
 matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[matching_all_vaccinated_second_period_metadata$time_point != "2_D2",]
 matching_all_vaccinated_second_period_metadata <- matching_all_vaccinated_second_period_metadata[matching_all_vaccinated_second_period_metadata$time_point != "2_D5",]
+matching_all_vaccinated_second_period_metadata <- add_antibody_titer_info(matching_all_vaccinated_second_period_metadata, antibody_titer_data)
 matching_all_vaccinated_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_vaccinated_second_period_metadata, contrast = c("2_D_minus_1", "2_D8", "2_D28"))
 
 # All matched samples (period 2)
@@ -30,6 +62,7 @@ matching_all_samples_second_period_wayne_classifier <- apply_wayne_classifier(ge
 matching_all_vaccinated_first_period_metadata <- vaccinated_metadata[vaccinated_metadata$period == "1",]
 matching_all_vaccinated_first_period_metadata <- matching_all_vaccinated_first_period_metadata[matching_all_vaccinated_first_period_metadata$time_point != "1_D2",]
 matching_all_vaccinated_first_period_metadata <- matching_all_vaccinated_first_period_metadata[matching_all_vaccinated_first_period_metadata$time_point != "1_D28",]
+matching_all_vaccinated_first_period_metadata <- add_antibody_titer_info(matching_all_vaccinated_first_period_metadata, antibody_titer_data)
 matching_all_vaccinated_first_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_vaccinated_first_period_metadata, contrast = c("1_D_minus_1", "1_D8"))
 
 # All matched placebo (binary)
@@ -38,6 +71,7 @@ matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_
 matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_metadata[matching_all_placebo_2_D28_binary_metadata$time_point != "2_D2",]
 matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_metadata[matching_all_placebo_2_D28_binary_metadata$time_point != "2_D5",]
 matching_all_placebo_2_D28_binary_metadata <- matching_all_placebo_2_D28_binary_metadata[matching_all_placebo_2_D28_binary_metadata$time_point != "2_D8",]
+matching_all_placebo_2_D28_binary_metadata <- add_antibody_titer_info(matching_all_placebo_2_D28_binary_metadata, antibody_titer_data)
 matching_all_placebo_2_D28_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D28_binary_metadata, contrast = c("2_D_minus_1", "2_D28"))
 
 matching_all_placebo_2_D8_binary_metadata <- placebo_metadata[placebo_metadata$period == "2",]
@@ -45,6 +79,7 @@ matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_me
 matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D2",]
 matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D5",]
 matching_all_placebo_2_D8_binary_metadata <- matching_all_placebo_2_D8_binary_metadata[matching_all_placebo_2_D8_binary_metadata$time_point != "2_D28",]
+matching_all_placebo_2_D8_binary_metadata <- add_antibody_titer_info(matching_all_placebo_2_D8_binary_metadata, antibody_titer_data)
 matching_all_placebo_2_D8_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D8_binary_metadata, contrast = c("2_D_minus_1", "2_D8"))
 
 matching_all_placebo_2_D_minus_2_binary_metadata <- placebo_metadata[placebo_metadata$period == "2",]
@@ -52,6 +87,7 @@ matching_all_placebo_2_D_minus_2_binary_metadata <- matching_all_placebo_2_D_min
 matching_all_placebo_2_D_minus_2_binary_metadata <- matching_all_placebo_2_D_minus_2_binary_metadata[matching_all_placebo_2_D_minus_2_binary_metadata$time_point != "2_D2",]
 matching_all_placebo_2_D_minus_2_binary_metadata <- matching_all_placebo_2_D_minus_2_binary_metadata[matching_all_placebo_2_D_minus_2_binary_metadata$time_point != "2_D5",]
 matching_all_placebo_2_D_minus_2_binary_metadata <- matching_all_placebo_2_D_minus_2_binary_metadata[matching_all_placebo_2_D_minus_2_binary_metadata$time_point != "2_D28",]
+matching_all_placebo_2_D_minus_2_binary_metadata <- add_antibody_titer_info(matching_all_placebo_2_D_minus_2_binary_metadata, antibody_titer_data)
 matching_all_placebo_2_D_minus_2_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D_minus_2_binary_metadata, contrast = c("2_D_minus_1", "2_D_minus_2"))
 
 # All matched vaccinated (binary)
@@ -60,6 +96,7 @@ matching_all_vaccinated_2_D28_binary_metadata <- matching_all_vaccinated_2_D28_b
 matching_all_vaccinated_2_D28_binary_metadata <- matching_all_vaccinated_2_D28_binary_metadata[matching_all_vaccinated_2_D28_binary_metadata$time_point != "2_D2",]
 matching_all_vaccinated_2_D28_binary_metadata <- matching_all_vaccinated_2_D28_binary_metadata[matching_all_vaccinated_2_D28_binary_metadata$time_point != "2_D5",]
 matching_all_vaccinated_2_D28_binary_metadata <- matching_all_vaccinated_2_D28_binary_metadata[matching_all_vaccinated_2_D28_binary_metadata$time_point != "2_D8",]
+matching_all_vaccinated_2_D28_binary_metadata <- add_antibody_titer_info(matching_all_vaccinated_2_D28_binary_metadata, antibody_titer_data)
 matching_all_vaccinated_2_D28_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_vaccinated_2_D28_binary_metadata, contrast = c("2_D_minus_1", "2_D28"))
 
 matching_all_vaccinated_2_D8_binary_metadata <- vaccinated_metadata[vaccinated_metadata$period == "2",]
@@ -67,6 +104,8 @@ matching_all_vaccinated_2_D8_binary_metadata <- matching_all_vaccinated_2_D8_bin
 matching_all_vaccinated_2_D8_binary_metadata <- matching_all_vaccinated_2_D8_binary_metadata[matching_all_vaccinated_2_D8_binary_metadata$time_point != "2_D2",]
 matching_all_vaccinated_2_D8_binary_metadata <- matching_all_vaccinated_2_D8_binary_metadata[matching_all_vaccinated_2_D8_binary_metadata$time_point != "2_D5",]
 matching_all_vaccinated_2_D8_binary_metadata <- matching_all_vaccinated_2_D8_binary_metadata[matching_all_vaccinated_2_D8_binary_metadata$time_point != "2_D28",]
+matching_all_vaccinated_2_D8_binary_metadata <- add_antibody_titer_info(matching_all_vaccinated_2_D8_binary_metadata, antibody_titer_data)
+# This is the only one that captures anything reasonable
 matching_all_vaccinated_2_D8_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_vaccinated_2_D8_binary_metadata, contrast = c("2_D_minus_1", "2_D8"))
 
 # All samples (binary)
