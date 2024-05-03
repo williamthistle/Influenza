@@ -37,6 +37,18 @@ hvl_placebo_second_period_metadata <- hvl_placebo_second_period_metadata[hvl_pla
 hvl_placebo_second_period_metadata <- add_antibody_titer_info(hvl_placebo_second_period_metadata, antibody_titer_data)
 hvl_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, hvl_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
 
+# High and low placebo
+both_placebo_second_period_metadata <- both_full_time_series_placebo_metadata[both_full_time_series_placebo_metadata$period == "2",]
+both_placebo_second_period_metadata <- both_placebo_second_period_metadata[both_placebo_second_period_metadata$time_point != "2_D_minus_2",]
+both_placebo_second_period_metadata <- add_antibody_titer_info(both_placebo_second_period_metadata, antibody_titer_data)
+both_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, both_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
+
+# All subjects with full time series
+all_second_period_metadata <- all_full_time_series_metadata[all_full_time_series_metadata$period == "2",]
+all_second_period_metadata <- all_second_period_metadata[all_second_period_metadata$time_point != "2_D_minus_2",]
+all_second_period_metadata <- add_antibody_titer_info(all_second_period_metadata, antibody_titer_data)
+all_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, all_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
+
 # All matched placebo (period 2)
 matching_all_placebo_second_period_metadata <- placebo_metadata[placebo_metadata$period == "2",]
 matching_all_placebo_second_period_metadata <- matching_all_placebo_second_period_metadata[matching_all_placebo_second_period_metadata$time_point != "2_D_minus_2",]

@@ -210,6 +210,9 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   lvl_placebo_aliquots <<- rownames(placebo_metadata[placebo_metadata$AVAL <= lvl_threshold,])
   lvl_placebo_counts <<- placebo_counts[,lvl_placebo_aliquots]
   lvl_placebo_metadata <<- placebo_metadata[lvl_placebo_aliquots,]
+  # Get full list of all subjects for full time series
+  all_full_time_series_metadata <<- rbind(both_t_cell_vaccinated_metadata[,-c(51,52,53,54,55)], both_full_time_series_placebo_metadata)
+  all_full_time_series_counts <<- cbind(both_t_cell_vaccinated_counts, both_full_time_series_placebo_counts)
 }
 
 run_deseq_bulk_analysis_time_series=function(sample_type, counts, metadata, test_time, baseline_time, output_dir, output_name_prefix=NA, alpha = 0.05, apply_correction = "sv") {
