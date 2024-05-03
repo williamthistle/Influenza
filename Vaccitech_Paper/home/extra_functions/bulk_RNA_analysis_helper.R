@@ -1180,7 +1180,6 @@ run_fc_thresholding <- function(run, test_time, baseline_time) {
 }
 
 # Wayne approach
-
 apply_wayne_classifier <- function(counts, metadata, contrast) {
   all_results <- list()
   # Subset to relevant counts for samples
@@ -1277,6 +1276,10 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("Viral Load")
     all_results[[j]] <- cor_plot
     
+    correlation_val <- cor.test(predictions_control_subset[[barplot_time_point_order[[i]]]], predictions_control_subset$AVAL, method = "spearman")
+    print(correlation_val$estimate)
+    print(correlation_val$p.value)
+    
     j <- j + 1
     
     # MNT_Baseline
@@ -1284,6 +1287,10 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("MNT Baseline")
     all_results[[j]] <- cor_plot
+    
+    correlation_val <- cor.test(predictions_control_subset[[barplot_time_point_order[[i]]]], predictions_control_subset$MNT_Baseline, method = "spearman")
+    print(correlation_val$estimate)
+    print(correlation_val$p.value)
     
     j <- j + 1
     
@@ -1293,6 +1300,10 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("MNT (Day -1, Pre-Challenge)")
     all_results[[j]] <- cor_plot
     
+    correlation_val <- cor.test(predictions_control_subset[[barplot_time_point_order[[i]]]], predictions_control_subset$MNT_Day_Minus_1_Pre_Challenge, method = "spearman")
+    print(correlation_val$estimate)
+    print(correlation_val$p.value)
+    
     j <- j + 1
     
     # MNT_Day_28_Post_Challenge
@@ -1300,6 +1311,10 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("MNT (Day 28, Post-Challenge)")
     all_results[[j]] <- cor_plot
+    
+    correlation_val <- cor.test(predictions_control_subset[[barplot_time_point_order[[i]]]], predictions_control_subset$MNT_Day_28_Post_Challenge, method = "spearman")
+    print(correlation_val$estimate)
+    print(correlation_val$p.value)
     
     j <- j + 1
     
@@ -1309,6 +1324,10 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("HAI (Day -1, Pre-Challenge)")
     all_results[[j]] <- cor_plot
     
+    correlation_val <- cor.test(predictions_control_subset[[barplot_time_point_order[[i]]]], predictions_control_subset$HAI_Day_Minus_1_Pre_Challenge, method = "spearman")
+    print(correlation_val$estimate)
+    print(correlation_val$p.value)
+    
     j <- j + 1
     
     # HAI_Day_28_Post_Challenge
@@ -1316,6 +1335,11 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("HAI (Day 28, Post-Challenge)")
     all_results[[j]] <- cor_plot
+    
+    
+    correlation_val <- cor.test(predictions_control_subset[[barplot_time_point_order[[i]]]], predictions_control_subset$HAI_Day_28_Post_Challenge, method = "spearman")
+    print(correlation_val$estimate)
+    print(correlation_val$p.value)
     
     j <- j + 1
   }
