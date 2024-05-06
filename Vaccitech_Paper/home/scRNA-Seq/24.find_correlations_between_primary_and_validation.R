@@ -3,7 +3,7 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 # I picked my 9 favorite cell types so I can have a 3x3 grid of correlation plots
-correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC", "NK", "CD4_Memory", "CD8_Memory", "MAIT", "B_naive", "B_memory")
+correlation_cell_types <- c("NK", "CD4_Memory", "CD8_Memory", "MAIT", "B_naive", "B_memory", "CD16_Mono", "CD14_Mono", "cDC")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -50,8 +50,8 @@ for(cell_type in correlation_cell_types) {
                                              second_fc = compare_second_df$avg_log2FC)
   # Calculate correlation
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
-  print(correlation_val$estimate)
-  print(correlation_val$p.value)
+  #print(correlation_val$estimate)
+  #print(correlation_val$p.value)
   sc_correlations[[cell_type]][["sc_primary_vs_sc_validation"]] <- correlation_val
   
   # Plot correlation
@@ -72,7 +72,7 @@ for(cell_type in correlation_cell_types) {
   comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$sc_log2FC,
                                              second_fc = compare_second_df$avg_log2FC)
   # Calculate correlation
-  correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+  correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc, method = "spearman")
   print(correlation_val$estimate)
   print(correlation_val$p.value)
   sc_correlations[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_validation"]] <- correlation_val
@@ -98,8 +98,8 @@ for(cell_type in correlation_cell_types) {
                                              second_fc = compare_second_df$avg_log2FC)
   # Calculate correlation
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
-  print(correlation_val$estimate)
-  print(correlation_val$p.value)
+  #print(correlation_val$estimate)
+  #print(correlation_val$p.value)
   sc_correlations[[cell_type]][["union_sc_primary_vs_sc_validation"]] <- correlation_val
   
   # Plot correlation
@@ -122,8 +122,8 @@ for(cell_type in correlation_cell_types) {
                                              second_fc = compare_second_df$avg_log2FC)
   # Calculate correlation
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
-  print(correlation_val$estimate)
-  print(correlation_val$p.value)
+  #print(correlation_val$estimate)
+  #print(correlation_val$p.value)
   sc_correlations[[cell_type]][["union_pseudobulk_corrected_sc_primary_vs_sc_validation"]] <- correlation_val
   
   # Plot correlation
@@ -133,7 +133,7 @@ for(cell_type in correlation_cell_types) {
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/willi/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/wat2/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 10, width = 10)
 
 # Other plotting attempts
 #n <- length(pseudobulk_corrected_plots)

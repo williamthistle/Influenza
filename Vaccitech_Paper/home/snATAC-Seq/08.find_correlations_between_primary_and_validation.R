@@ -16,7 +16,7 @@ find_sc_correlation_final <- function(first_gene_df, second_gene_df) {
 }
 
 # I picked my 9 favorite cell types so I can have a 3x3 grid of correlation plots
-correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "NK", "CD4_Memory", "CD8_Memory", "CD4_Naive", "CD8_Naive", "MAIT", "B")
+correlation_cell_types <- c("CD4_Memory", "CD8_Memory", "CD4_Naive", "CD8_Naive", "MAIT", "B", "CD16_Mono", "CD14_Mono", "NK")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
