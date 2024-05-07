@@ -2,7 +2,7 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-find_bulk_correlation <- function(first_deg_subset, second_deg_subset) {
+find_bulk_correlation <- function(first_deg_subset, second_deg_subset, title = NULL, xlab_text = NULL, ylab_text = NULL) {
   correlation_return_vals <- list()
   primary_bulk_degs <- rownames(first_deg_subset)
   print(paste0("Number of bulk DEGs in first set of data is: ", length(primary_bulk_degs)))
@@ -24,13 +24,13 @@ find_bulk_correlation <- function(first_deg_subset, second_deg_subset) {
   # Plot correlation
   correlation_plot <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("Naive FC") + ylab("Vaccinated FC")
+    sm_statCorr(corr_method = "spearman") + xlab(xlab_text) + ylab(ylab_text) + labs(title = title)
   correlation_return_vals[[2]] <- correlation_plot
   
   return(correlation_return_vals)
 }
 
-find_bulk_correlations <- function(first_degs, second_degs) {
+find_bulk_correlations <- function(first_degs, second_degs, title = NULL, xlab_text = NULL, ylab_text = NULL) {
   # Unfiltered
   first_degs_unfiltered <- first_degs[[8]]
   second_degs_unfiltered <- second_degs[[8]]
@@ -44,12 +44,12 @@ find_bulk_correlations <- function(first_degs, second_degs) {
   second_degs_0.585_filtered <- second_degs[[5]]
   
   if(nrow(first_degs_0.1_filtered) > 10) {
-    first_degs_0.1_filtered_vs_second_degs_unfiltered_corr <- find_bulk_correlation(first_degs_0.1_filtered, second_degs_unfiltered)
+    first_degs_0.1_filtered_vs_second_degs_unfiltered_corr <- find_bulk_correlation(first_degs_0.1_filtered, second_degs_unfiltered, title, xlab_text, ylab_text)
   } else {
     first_degs_0.1_filtered_vs_second_degs_unfiltered_corr <- NULL
   }
   if(nrow(first_degs_0.585_filtered) > 10) {
-    first_degs_0.585_filtered_vs_second_degs_unfiltered_corr <- find_bulk_correlation(first_degs_0.585_filtered, second_degs_unfiltered)
+    first_degs_0.585_filtered_vs_second_degs_unfiltered_corr <- find_bulk_correlation(first_degs_0.585_filtered, second_degs_unfiltered, title, xlab_text, ylab_text)
   } else {
     first_degs_0.585_filtered_vs_second_degs_unfiltered_corr <- NULL
   }
@@ -76,16 +76,18 @@ period_1_day_28_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_
 period_2_day_2_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results)
 
 # Day 5 Placebo HVL vs LVL
-period_2_day_5_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results)
+period_2_day_5_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, title = "Day 5 Post-Challenge vs. Pre-Challenge", xlab_text = "HVL Naive FC", "LVL Naive FC")
 
 # Day 8 Placebo HVL vs MVL (full)
-period_2_day_8_hvl_vs_mvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, mvl_placebo_period_2_D8_vs_D_minus_1_results)
+period_2_day_8_hvl_vs_mvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, mvl_placebo_period_2_D8_vs_D_minus_1_results, title = "Day 8 Post-Challenge vs. Pre-Challenge", xlab_text = "HVL Naive FC", "MVL Naive FC")
 
 # Day 8 Placebo HVL vs LVL
-period_2_day_8_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results)
+period_2_day_8_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results, title = "Day 8 Post-Challenge vs. Pre-Challenge", xlab_text = "HVL Naive FC", "LVL Naive FC")
 
 # Day 8 Placebo HVL vs LVL (full)
-period_2_day_8_hvl_vs_lvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, lvl_placebo_period_2_D8_vs_D_minus_1_results)
+period_2_day_8_hvl_vs_lvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, lvl_placebo_period_2_D8_vs_D_minus_1_results, title = "Day 8 Post-Challenge vs. Pre-Challenge", xlab_text = "HVL Naive FC", "LVL Naive FC")
+
+
 
 # Day 28 Placebo HVL vs LVL
 period_2_day_28_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results)
@@ -107,7 +109,7 @@ period_2_day_8_hvl_vs_day_28_hvl_bulk_correlations <- find_bulk_correlations(hvl
 # Period 2
 
 # Day 8 Placebo HVL vs Day 8 Vaccinated HVL
-period_2_day_8_placebo_hvl_vs_vaccinated_hvl_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, hvl_vaccinated_period_2_D8_vs_D_minus_1_results)
+period_2_day_8_placebo_hvl_vs_vaccinated_hvl_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, hvl_vaccinated_period_2_D8_vs_D_minus_1_results, title = "Day 8 Post-Challenge vs. Pre-Challenge", xlab_text = "HVL Naive FC", ylab_text = "HVL Vaccinated FC")
 
 # Day 28 Vaccinated HVL vs Day 28 Placebo HVL
 period_2_day_28_vaccinated_hvl_vs_placebo_hvl_bulk_correlations <- find_bulk_correlations(hvl_vaccinated_period_2_D28_vs_D_minus_1_results, hvl_placebo_period_2_D28_vs_D_minus_1_results)

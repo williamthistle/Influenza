@@ -66,7 +66,6 @@ hvl_naive_d5_upregulated_genes <- rownames(hvl_naive_d5[hvl_naive_d5$log2FoldCha
 hvl_naive_d5_downregulated_genes <- rownames(hvl_naive_d5[hvl_naive_d5$log2FoldChange < 0,])
 
 bulk_D5_enrichr_upregulated_results <- get_enrichr_results(hvl_naive_d5_upregulated_genes)
-create_enrichment_plot(bulk_D5_enrichr_upregulated_results[[4]])
 bulk_D5_enrichr_downregulated_results <- get_enrichr_results(hvl_naive_d5_downregulated_genes)
 
 # HVL Naive D8
@@ -75,60 +74,36 @@ hvl_naive_d8_upregulated_genes <- rownames(hvl_naive_d8[hvl_naive_d8$log2FoldCha
 hvl_naive_d8_downregulated_genes <- rownames(hvl_naive_d8[hvl_naive_d8$log2FoldChange < 0,])
 
 bulk_D8_enrichr_upregulated_results <- get_enrichr_results(hvl_naive_d8_upregulated_genes)
-create_enrichment_plot(bulk_D8_enrichr_upregulated_results[[4]][1:20,])
 
+# Plot upregulated pathways for D5 / D8
 
-cd14_mono_enrichr_upregulated_results <- get_enrichr_results(cd14_mono_upregulated_genes)
-cd14_mono_enrichr_downregulated_results <- get_enrichr_results(cd14_mono_downregulated_genes)
+bulk_D5_plotted_processes <- bulk_D5_enrichr_upregulated_results[[4]]
+overlapping_process_indices <- which(bulk_D8_enrichr_upregulated_results[[4]]$Term %in% bulk_D5_plotted_processes$Term)
+overlapping_process_indices <- c(overlapping_process_indices, 1, 3, 5, 12)
+bulk_D8_plotted_processes <- bulk_D8_enrichr_upregulated_results[[4]][overlapping_process_indices,]  
 
-cd16_mono_enrichr_upregulated_results <- get_enrichr_results(cd16_mono_upregulated_genes)
-cd16_mono_enrichr_downregulated_results <- get_enrichr_results(cd16_mono_downregulated_genes)
+bulk_D5_plotted_processes$Day <- "Day 5"
+bulk_D8_plotted_processes$Day <- "Day 8"
 
-nk_enrichr_upregulated_results <- get_enrichr_results(nk_upregulated_genes)
-nk_enrichr_downregulated_results <- get_enrichr_results(nk_downregulated_genes)
+all_plotted_processes <- rbind(bulk_D5_plotted_processes, bulk_D8_plotted_processes)
+all_plotted_processes$Gene.Count <- sapply(all_plotted_processes$Genes, count_genes)
+all_plotted_processes <- all_plotted_processes[,c(1,4,10,11)]
+all_plotted_processes$Term <- remove_token(all_plotted_processes$Term)
+colnames(all_plotted_processes) <- c("Reactome.Pathway", "Adjusted.P.Value", "Day", "Gene.Count")
 
-cDC_enrichr_upregulated_results <- get_enrichr_results(cDC_upregulated_genes)
-cDC_enrichr_downregulated_results <- get_enrichr_results(cDC_downregulated_genes)
+all_plotted_processes$Day <- factor(all_plotted_processes$Day, levels = c("Day 5", "Day 8"))
+all_plotted_processes$Reactome.Pathway <- factor(all_plotted_processes$Reactome.Pathway, levels = unique(all_plotted_processes$Reactome.Pathway))
 
-cd4_memory_enrichr_upregulated_results <- get_enrichr_results(cd4_memory_upregulated_genes)
-# Not uninteresting pathways, but maybe not enough space
-cd4_memory_enrichr_downregulated_results <- get_enrichr_results(cd4_memory_downregulated_genes)
+up_pathway_plot <- ggplot(data = all_plotted_processes, aes(x = Day, y = Reactome.Pathway, size = Gene.Count, color = Adjusted.P.Value)) +
+  geom_point() +
+  theme_minimal() + guides(fill = guide_colorbar(reverse = TRUE)) +
+  labs(
+    title = "Pathway Analaysis of Acute Phase of Influenza",
+    x = "Day",
+    y = "Reactome Pathway",
+    size = "Gene Count",
+    color = "Adjusted P Value"
+  ) +
+  theme(plot.title = element_text(hjust = 1))
 
-cd8_memory_enrichr_upregulated_results <- get_enrichr_results(cd8_memory_upregulated_genes)
-# Not uninteresting pathways, but maybe not enough space - maybe discuss downregulated pathways in both CD4 and CD8? Shared?
-cd8_memory_enrichr_downregulated_results <- get_enrichr_results(cd8_memory_downregulated_genes)
-
-cd8_naive_enrichr_upregulated_results <- get_enrichr_results(cd8_naive_upregulated_genes)
-cd8_naive_enrichr_downregulated_results <- get_enrichr_results(cd8_naive_downregulated_genes)
-
-mait_enrichr_upregulated_results <- get_enrichr_results(mait_upregulated_genes)
-mait_enrichr_downregulated_results <- get_enrichr_results(mait_downregulated_genes)
-
-b_memory_enrichr_upregulated_results <- get_enrichr_results(b_memory_upregulated_genes)
-b_memory_enrichr_downregulated_results <- get_enrichr_results(b_memory_downregulated_genes)
-
-b_naive_enrichr_upregulated_results <- get_enrichr_results(b_naive_upregulated_genes)
-b_naive_enrichr_downregulated_results <- get_enrichr_results(b_naive_downregulated_genes)
-
-cd14_test <- cd14_mono_enrichr_upregulated_results[[1]]
-cd14_test$Gene_Count <- sapply(cd14_test$Genes, count_genes)
-cd14_test <- cd14_test[cd14_test$Gene_Count >= 5,]
-create_enrichment_plot(cd14_test)
-
-cd16_test <- cd16_mono_enrichr_downregulated_results[[1]]
-cd16_test$Gene_Count <- sapply(cd16_test$Genes, count_genes)
-cd16_test <- cd16_test[cd16_test$Gene_Count >= 5,]
-create_enrichment_plot(cd16_test)
-
-create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[1]])
- 
-create_enrichment_plot(cd16_mono_enrichr_upregulated_results[[1]])
-
-create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[4]])
-
-# Sleep for 1 second so we don't overload enrichR server with requests
-Sys.sleep(1)
-
-
-
-  
+ggsave(filename = paste0(monocyte_dir, "HB_monocyte_upregulated_genes_monocyte_gsea_top_upregulated_pathways.tiff"), plot = up_pathway_plot_file, device='tiff', dpi=300)
