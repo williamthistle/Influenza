@@ -98,7 +98,7 @@ up_pathway_plot <- ggplot(data = all_plotted_processes, aes(x = Day, y = Reactom
   geom_point() +
   theme_minimal() + guides(fill = guide_colorbar(reverse = TRUE)) +
   labs(
-    title = "Pathway Analaysis of Acute Phase of Influenza",
+    title = "Pathway Analysis of Acute Phase of Influenza",
     x = "Day",
     y = "Reactome Pathway",
     size = "Gene Count",
