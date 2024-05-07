@@ -15,36 +15,25 @@ find_bulk_correlation <- function(first_deg_subset, second_deg_subset) {
   
   comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$log2FoldChange,
                                              second_fc = compare_second_df$log2FoldChange)
-  # Calculate correlation - Pearson
-  print("Calculating Pearson correlation")
-  correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
-  print(correlation_val$estimate)
-  print(correlation_val$p.value)
-  correlation_return_vals[[1]] <- correlation_val$estimate
   print("Calculating Spearman correlation")
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc, method = "spearman")
   print(correlation_val$estimate)
   print(correlation_val$p.value)
-  correlation_return_vals[[2]] <- correlation_val$estimate
+  correlation_return_vals[[1]] <- correlation_val$estimate
   
   # Plot correlation
   correlation_plot <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr() + xlab("Vaccinated FC") + ylab("Naive FC")
-  correlation_return_vals[[3]] <- correlation_plot
+    sm_statCorr(corr_method = "spearman") + xlab("Naive FC") + ylab("Vaccinated FC")
+  correlation_return_vals[[2]] <- correlation_plot
   
   return(correlation_return_vals)
 }
-
 
 find_bulk_correlations <- function(first_degs, second_degs) {
   # Unfiltered
   first_degs_unfiltered <- first_degs[[8]]
   second_degs_unfiltered <- second_degs[[8]]
-  
-  # Filtered (0 logFC threshold)
-  first_degs_0_filtered <- first_degs[[1]]
-  second_degs_0_filtered <- second_degs[[1]]
   
   # Filtered (0.1 logFC threshold)
   first_degs_0.1_filtered <- first_degs[[2]]
@@ -54,11 +43,6 @@ find_bulk_correlations <- function(first_degs, second_degs) {
   first_degs_0.585_filtered <- first_degs[[5]]
   second_degs_0.585_filtered <- second_degs[[5]]
   
-  if(nrow(first_degs_0_filtered) > 10) {
-    first_degs_0_filtered_vs_second_degs_unfiltered_corr <- find_bulk_correlation(first_degs_0_filtered, second_degs_unfiltered)
-  } else {
-    first_degs_0_filtered_vs_second_degs_unfiltered_corr <- NULL
-  }
   if(nrow(first_degs_0.1_filtered) > 10) {
     first_degs_0.1_filtered_vs_second_degs_unfiltered_corr <- find_bulk_correlation(first_degs_0.1_filtered, second_degs_unfiltered)
   } else {
@@ -69,54 +53,53 @@ find_bulk_correlations <- function(first_degs, second_degs) {
   } else {
     first_degs_0.585_filtered_vs_second_degs_unfiltered_corr <- NULL
   }
-  return(list(first_degs_0_filtered_vs_second_degs_unfiltered_corr, first_degs_0.1_filtered_vs_second_degs_unfiltered_corr, first_degs_0.585_filtered_vs_second_degs_unfiltered_corr))
+  return(list(first_degs_0.1_filtered_vs_second_degs_unfiltered_corr, first_degs_0.585_filtered_vs_second_degs_unfiltered_corr))
 }
 
 # Period 1
 
-# Day 2 HVL vs LVL
+# Day 2 Placebo HVL vs LVL
 # Doesn't work - too few DEGs for either side
 period_1_day_2_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_1_D2_vs_D_minus_1_results, lvl_full_time_series_placebo_period_1_D2_vs_D_minus_1_results)
 
-# Day 8 HVL vs LVL
+# Day 8 Placebo HVL vs LVL
 # Doesn't work - too few DEGs for either side
 period_1_day_8_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_1_D8_vs_D_minus_1_results, lvl_full_time_series_placebo_period_1_D8_vs_D_minus_1_results)
 
-# Day 28 HVL vs LVL
+# Day 28 Placebo HVL vs LVL
 period_1_day_28_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_1_D28_vs_D_minus_1_results, lvl_full_time_series_placebo_period_1_D28_vs_D_minus_1_results)
 
 # Period 2
 
-# Day 2 HVL vs LVL
+# Day 2 Placebo HVL vs LVL
 # Doesn't work - too few DEGs for either side
 period_2_day_2_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results)
 
-# Day 5 HVL vs LVL
+# Day 5 Placebo HVL vs LVL
 period_2_day_5_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results)
 
-# Day 8 HVL vs MVL (full)
+# Day 8 Placebo HVL vs MVL (full)
 period_2_day_8_hvl_vs_mvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, mvl_placebo_period_2_D8_vs_D_minus_1_results)
 
-# Day 8 HVL vs LVL
+# Day 8 Placebo HVL vs LVL
 period_2_day_8_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results)
 
-# Day 8 HVL vs LVL (full)
+# Day 8 Placebo HVL vs LVL (full)
 period_2_day_8_hvl_vs_lvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D8_vs_D_minus_1_results, lvl_placebo_period_2_D8_vs_D_minus_1_results)
 
-
-# Day 28 HVL vs LVL
+# Day 28 Placebo HVL vs LVL
 period_2_day_28_hvl_vs_lvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results, lvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results)
 
-# Day 28 HVL vs LVL (full)
+# Day 28 Placebo HVL vs LVL (full)
 period_2_day_28_hvl_vs_lvl_full_bulk_correlations <- find_bulk_correlations(hvl_placebo_period_2_D28_vs_D_minus_1_results, lvl_placebo_period_2_D28_vs_D_minus_1_results)
 
-# Day 28 LVL vs HVL (full)
+# Day 28 Placebo LVL vs HVL (full)
 period_2_day_28_lvl_vs_hvl_full_bulk_correlations <- find_bulk_correlations(lvl_placebo_period_2_D28_vs_D_minus_1_results, hvl_placebo_period_2_D28_vs_D_minus_1_results)
 
-# Day 5 HVL vs Day 28 HVL
+# Day 5 Placebo HVL vs Day 28 HVL
 period_2_day_5_hvl_vs_day_28_hvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, hvl_placebo_period_2_D28_vs_D_minus_1_results)
 
-# Day 8 HVL vs Day 28 HVL
+# Day 8 Placebo HVL vs Day 28 HVL
 period_2_day_8_hvl_vs_day_28_hvl_bulk_correlations <- find_bulk_correlations(hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results, hvl_placebo_period_2_D28_vs_D_minus_1_results)
 
 ### Placebo vs Vaccinated
