@@ -48,11 +48,24 @@ both_full_time_series_placebo_second_period_metadata <- both_full_time_series_pl
 both_full_time_series_placebo_second_period_metadata <- add_antibody_titer_info(both_full_time_series_placebo_second_period_metadata, antibody_titer_data)
 both_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, both_full_time_series_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
 
+# Binary D2 vs D-1 for placebo - doesn't work because there are too few observations
+matching_all_placebo_2_D2_binary_metadata <- both_full_time_series_placebo_second_period_metadata[both_full_time_series_placebo_second_period_metadata$time_point != "2_D5",]
+matching_all_placebo_2_D2_binary_metadata <- matching_all_placebo_2_D2_binary_metadata[matching_all_placebo_2_D2_binary_metadata$time_point != "2_D8",]
+matching_all_placebo_2_D2_binary_metadata <- matching_all_placebo_2_D2_binary_metadata[matching_all_placebo_2_D2_binary_metadata$time_point != "2_D28",]
+matching_all_placebo_2_D2_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_placebo_2_D2_binary_metadata, contrast = c("2_D_minus_1", "2_D2"))
+
 # All subjects (full time series)
 all_second_period_metadata <- all_full_time_series_metadata[all_full_time_series_metadata$period == "2",]
 all_second_period_metadata <- all_second_period_metadata[all_second_period_metadata$time_point != "2_D_minus_2",]
 all_second_period_metadata <- add_antibody_titer_info(all_second_period_metadata, antibody_titer_data)
 all_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, all_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
+
+# Binary D2 vs D-1 for all subjects
+matching_all_2_D2_binary_metadata <- all_second_period_metadata[all_second_period_metadata$time_point != "2_D5",]
+matching_all_2_D2_binary_metadata <- matching_all_2_D2_binary_metadata[matching_all_2_D2_binary_metadata$time_point != "2_D8",]
+matching_all_2_D2_binary_metadata <- matching_all_2_D2_binary_metadata[matching_all_2_D2_binary_metadata$time_point != "2_D28",]
+matching_all_placebo_2_D2_binary_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, matching_all_2_D2_binary_metadata, contrast = c("2_D_minus_1", "2_D2"))
+
 
 # High placebo
 matching_high_placebo_second_period_metadata <- hvl_placebo_metadata[hvl_placebo_metadata$period == "2",]

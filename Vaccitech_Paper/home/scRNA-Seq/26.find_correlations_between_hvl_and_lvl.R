@@ -3,7 +3,7 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 # I picked my 9 favorite cell types so I can have a 3x3 grid of correlation plots
-correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC", "NK", "CD4_Memory", "CD8_Memory", "MAIT", "B_naive", "B_memory")
+correlation_cell_types <- c("NK", "CD4_Memory", "CD8_Memory", "MAIT", "B_naive", "B_memory", "CD16_Mono", "CD14_Mono", "cDC")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -80,7 +80,7 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore) +  xlim(-1.5, 1.5) + ylim(-1.5, 1.5)
+    sm_statCorr(corr_method = "spearman") + xlab("HVL Naive FC") + ylab("LVL Naive FC") + labs(title = cell_type_no_underscore) +  xlim(-1.5, 1.5) + ylim(-1.5, 1.5)
   
   
   

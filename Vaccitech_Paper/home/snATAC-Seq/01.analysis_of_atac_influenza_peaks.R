@@ -15,12 +15,14 @@ run_fmd_on_snATAC <- function(gene_list) {
 snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "MAIT", "Proliferating")
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
+promoter_terms <- c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)")
+
 # Create annotated up and downregulated peak files (annotated)
 snATAC_peak_annotated_dir <- paste0(scATAC_hvl_placebo_das_dir, "annotated/")
 if (!dir.exists(snATAC_peak_annotated_dir)) {dir.create(snATAC_peak_annotated_dir)}
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
-  for(analysis_type in c("sc", "final")) {
+  for(analysis_type in c("sc")) {
     for(pct in c(0.01, 0.05, 0.1)) {
       differential_analysis_results_file <- paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, ".tsv")
       differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
@@ -35,12 +37,22 @@ for(snATAC_cell_type in snATAC_cell_types) {
       differential_analysis_results$seqnames <- chromosomes
       differential_analysis_results$start <- start_coords
       differential_analysis_results$end <- end_coords
-      upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC > 0,]
-      downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC < 0,]
+      if(analysis_type == "final") {
+        upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC > 0,]
+        downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC < 0,]
+      } else {
+        upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$avg_log2FC > 0,]
+        downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$avg_log2FC < 0,]
+      }
       for(fc_threshold in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
-        upregulated_differential_analysis_results_fc <- upregulated_differential_analysis_results[upregulated_differential_analysis_results$sc_log2FC >= fc_threshold,]
-        downregulated_differential_analysis_results_fc <- downregulated_differential_analysis_results[downregulated_differential_analysis_results$sc_log2FC <= fc_threshold,]
-        if(nrow(upregulated_differential_analysis_results_fc) > 0) {
+        if(analysis_type == "final") {
+          upregulated_differential_analysis_results_fc <- upregulated_differential_analysis_results[upregulated_differential_analysis_results$sc_log2FC >= fc_threshold,]
+          downregulated_differential_analysis_results_fc <- downregulated_differential_analysis_results[downregulated_differential_analysis_results$sc_log2FC <= fc_threshold,]
+        } else {
+          upregulated_differential_analysis_results_fc <- upregulated_differential_analysis_results[upregulated_differential_analysis_results$avg_log2FC >= fc_threshold,]
+          downregulated_differential_analysis_results_fc <- downregulated_differential_analysis_results[downregulated_differential_analysis_results$avg_log2FC <= fc_threshold,]
+        }
+       if(nrow(upregulated_differential_analysis_results_fc) > 0) {
           upregulated_differential_analysis_results_fc <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results_fc), TxDb = txdb, annoDb = "org.Hs.eg.db")
           upregulated_differential_analysis_results_fc <- as.data.frame(upregulated_differential_analysis_results_fc)
           write.table(upregulated_differential_analysis_results_fc, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_upregulated_annotated.tsv"), 
@@ -114,19 +126,34 @@ for(snATAC_cell_type in snATAC_cell_types) {
 
 plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = "Distribution of Genomic Features for snATAC-Seq Data")
 
-# Run FMD (pos and neg, promoter regions)
-pos_fmd_promoter_list <- list()
+get_enrichr_results <- function(gene_list) {
+  # Set up databases
+  # Use dbs <- listEnrichrDbs() to get full list of databases
+  dbs <- c("GO_Biological_Process_2023", "GO_Cellular_Component_2023", "GO_Molecular_Function_2023", "Reactome_2022")
+  
+  # Get results
+  results <- enrichr(gene_list, dbs)
+  results[[1]] <- results[[1]][results[[1]]$Adjusted.P.value < 0.05,]
+  results[[2]] <- results[[2]][results[[2]]$Adjusted.P.value < 0.05,]
+  results[[3]] <- results[[3]][results[[3]]$Adjusted.P.value < 0.05,]
+  results[[4]] <- results[[4]][results[[4]]$Adjusted.P.value < 0.05,]
+  return(results)
+}
+
+# Run enrichment analysis (pos and neg, promoter regions)
+pos_enrichment_promoter_list <- list()
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
-  pos_fmd_promoter_list[[snATAC_cell_type_for_file_name]] <- list()
-  for(fc in c(0.1)) {
-    pos_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_upregulated_annotated.tsv")
+  pos_enrichment_promoter_list[[snATAC_cell_type_for_file_name]] <- list()
+  for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+    pos_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_final_pct_0.01_fc_", fc, "_upregulated_annotated.tsv")
     if(file.exists(pos_differential_analysis_results_file) && file.size(pos_differential_analysis_results_file) != 1 && file.size(pos_differential_analysis_results_file) != 75) {
       pos_differential_analysis_results_file <- read.table(pos_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
-      pos_differential_analysis_results_file <- subset(pos_differential_analysis_results_file, distanceToTSS >= -2000 & distanceToTSS <= 500)
+      pos_differential_analysis_results_file <- subset(pos_differential_analysis_results_file, annotation %in% promoter_terms)
       pos_genes <- unique(pos_differential_analysis_results_file$SYMBOL)
+      print(paste0("Number of genes is ", length(pos_genes)))
       pos_results <- run_fmd_on_snATAC(pos_genes)
-      pos_fmd_promoter_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- pos_results
+      pos_enrichment_promoter_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- pos_results
     }
   }
 }
@@ -142,7 +169,7 @@ for(snATAC_cell_type in snATAC_cell_types) {
     neg_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, snATAC_cell_type_for_file_name, "_FC_", fc, "_downregulated_annotated.tsv")
     if(file.exists(neg_differential_analysis_results_file) && file.size(neg_differential_analysis_results_file) != 1 && file.size(neg_differential_analysis_results_file) != 75) {
       neg_differential_analysis_results_file <- read.table(neg_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
-      neg_differential_analysis_results_file <- subset(neg_differential_analysis_results_file, distanceToTSS >= -2000 & distanceToTSS <= 500)
+      neg_differential_analysis_results_file <- subset(neg_differential_analysis_results_file, distanceToTSS >= -3000 & distanceToTSS <= 3000)
       neg_genes <- unique(neg_differential_analysis_results_file$SYMBOL)
       neg_results <- run_fmd_on_snATAC(neg_genes)
       neg_fmd_promoter_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- neg_results
