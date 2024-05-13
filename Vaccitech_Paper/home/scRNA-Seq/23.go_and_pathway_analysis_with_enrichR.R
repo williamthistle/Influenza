@@ -135,7 +135,7 @@ b_memory_enrichr_downregulated_results <- get_enrichr_results(b_memory_downregul
 b_naive_enrichr_upregulated_results <- get_enrichr_results(b_naive_upregulated_genes)
 b_naive_enrichr_downregulated_results <- get_enrichr_results(b_naive_downregulated_genes)
 
-cd14_mono_plotted_processes <- cd14_mono_enrichr_upregulated_results[[1]][c(1,10,15,17,22,26),]
+cd14_mono_plotted_processes <- cd14_mono_enrichr_upregulated_results[[1]][c(1,5,10,15,17,22,26),]
 cd14_mono_plotted_processes$Cell_Type <- "CD14 Mono"
 cd16_mono_plotted_processes <- cd16_mono_enrichr_upregulated_results[[1]][c(1,2,3,5,6,8),]
 cd16_mono_plotted_processes$Cell_Type <- "CD16 Mono"
@@ -166,7 +166,7 @@ up_pathway_plot <- ggplot(data = all_plotted_processes, aes(x = Cell.Type, y = B
   ) +
   theme(plot.title = element_text(hjust = 1))
 
-ggsave(filename = paste0(monocyte_dir, "HB_monocyte_upregulated_genes_monocyte_gsea_top_upregulated_pathways.tiff"), plot = up_pathway_plot_file, device='tiff', dpi=300)
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "HB_monocyte_upregulated_genes_monocyte_gsea_top_upregulated_pathways.png"), plot = up_pathway_plot, device='png', dpi=300, width = 8)
 
 
 

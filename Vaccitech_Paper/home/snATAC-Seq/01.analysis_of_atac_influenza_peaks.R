@@ -12,19 +12,20 @@ run_fmd_on_snATAC <- function(gene_list) {
   return(current_fmd_result)
 }
 
-snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "MAIT", "Proliferating")
+# Change between cDC for HVL and pDC for LVL
+snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "pDC", "MAIT", "Proliferating")
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 promoter_terms <- c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)")
 
 # Create annotated up and downregulated peak files (annotated)
-snATAC_peak_annotated_dir <- paste0(scATAC_hvl_placebo_das_dir, "annotated/")
+snATAC_peak_annotated_dir <- paste0(scATAC_lvl_placebo_das_dir, "annotated/")
 if (!dir.exists(snATAC_peak_annotated_dir)) {dir.create(snATAC_peak_annotated_dir)}
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
-  for(analysis_type in c("sc")) {
+  for(analysis_type in c("sc", "final")) {
     for(pct in c(0.01, 0.05, 0.1)) {
-      differential_analysis_results_file <- paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, ".tsv")
+      differential_analysis_results_file <- paste0(scATAC_lvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, ".tsv")
       differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
       if(analysis_type == "final") {
         current_peaks <- differential_analysis_results$Peak_Name
@@ -158,7 +159,7 @@ for(snATAC_cell_type in snATAC_cell_types) {
   }
 }
 
-saveRDS(pos_fmd_promoter_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
+saveRDS(pos_enrichment_promoter_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
 # pos_fmd_promoter_list <- readRDS(paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
 
 neg_fmd_promoter_list <- list()
