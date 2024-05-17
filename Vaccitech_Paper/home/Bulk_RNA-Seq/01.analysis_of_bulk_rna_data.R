@@ -62,6 +62,9 @@ hvl_full_time_series_placebo_period_2_D28_vs_D_minus_1_results <- run_deseq_bulk
                                                                           "2_D28", "2_D_minus_1", paste0(bulk_rna_results_dir, "hvl_bulk_placebo_period_2_D28_vs_D_minus_1/"), "high")
 hvl_full_time_series_placebo_period_2_D2_vs_D_minus_1_results
 
+# Run LRT on period 2 (Day -1, Day 2, Day 5, Day 8, Day 28)
+hvl_full_time_series_placebo_lrt <- run_deseq2_LRT(hvl_full_time_series_placebo_counts, hvl_full_time_series_placebo_metadata)
+
 #### PERIOD 2 MODERATE VIRAL LOAD ####
 # No samples
 

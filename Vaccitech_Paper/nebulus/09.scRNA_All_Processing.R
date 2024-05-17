@@ -7,7 +7,7 @@ data_path <- paste0(home_dir, "single_cell/data")
 reference_dir <- paste0(home_dir, "references/")
 reference_file_name <- "pbmc_multimodal.h5seurat"
 output_dir <- paste0(home_dir, "single_cell/analysis/")
-analysis_name <- "all_single_cell"
+analysis_name <- "all_single_cell_final"
 reference_tissue <- "pbmc_full"
 reference_cell_type_attribute <- "celltype.l2"
 species <- "human"
@@ -91,14 +91,14 @@ sc_obj <- FilterRawData_RNA(all_sc_exp_matrices = all_sc_exp_matrices, species =
 rm(all_sc_exp_matrices)
 sc_obj <- InitialProcessing_RNA(sc_obj = sc_obj, species = species, metadata_df = sample_metadata_for_SPEEDI_df, log_flag = TRUE)
 sc_obj <- InferBatches(sc_obj = sc_obj, log_flag = TRUE)
-# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".new.batch.inference.4.RNA.PC.100.rds"))
+# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".4.rds"))
 # load(paste0(RNA_output_dir, "primary_analysis_6_subject_12_sample.new.batch.inference.4.RNA.PC.100.rds"))
 sc_obj <- IntegrateByBatch_RNA(sc_obj = sc_obj, log_flag = TRUE)
 sc_obj <- VisualizeIntegration(sc_obj = sc_obj, output_dir = RNA_output_dir, log_flag = TRUE)
 sc_obj <- MapCellTypes_RNA(sc_obj = sc_obj, reference = reference,
                            reference_cell_type_attribute = reference_cell_type_attribute,
                            output_dir = RNA_output_dir, log_flag = TRUE)
-# save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".new.batch.inference.final.RNA.PC.100.rds"))
+save(sc_obj, file = paste0(RNA_output_dir, analysis_name, ".final.rds"))
 # load(paste0(RNA_output_dir, "all_single_cell.new.batch.inference.final.RNA.PC.100.rds"))
 
 sc_obj$old.predicted.id <- sc_obj$predicted.id

@@ -20,10 +20,9 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   viral_load <<- read.table(viral_load_file, header = TRUE, sep = "\t")
   viral_load_primary <<- viral_load[viral_load$PARAMCD == "QPCRAUC",]
   viral_load_primary$AVAL <<- as.numeric(viral_load_primary$AVAL)
-  # Read in immunogenicity data for vaccinated - antibody_titer_data is really a subset of immunogenicity data, but whatever
+  # Read in immunogenicity data
   immunogenicity_data <<- read.table(paste0(metadata_dir, "Immunogenicity_Data.tsv"), sep = "\t", header = TRUE)
-  antibody_titer_data <<- read.table(paste0(metadata_dir, "antibody_titer_data.tsv"), sep = "\t", header = TRUE)
-  antibody_titer_data$subject_id <<- antibody_titer_data$SUBJID
+  immunogenicity_data$subject_id <<- immunogenicity_data$SUBJID
   # Organize by viral load (high to low)
   viral_load_primary <<- viral_load_primary[order(viral_load_primary$AVAL, decreasing = TRUE),]
   # Separate viral loads into vaccinated / placebo
@@ -126,11 +125,11 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
                                                                           [table(vaccinated_metadata$subject_id) == 10]),]
   ### VACCINATED ###
   # Get high T cell and low T cell response subjects that were profiled with multiomics
-  immunogenicity_data <<- immunogenicity_data[immunogenicity_data$SUBJID %in% vaccinated_full_time_series_metadata$subject_id,]
-  immunogenicity_data <<- immunogenicity_data[,c(1,105,106,115,116)]
-  immunogenicity_data <<- immunogenicity_data[order(immunogenicity_data$Vaccination.Day8_IFNg_NP.Background_SFC.10.6.cells, decreasing = TRUE),]
-  high_t_cell_response_subjects <<- immunogenicity_data$SUBJID[1:7]
-  low_t_cell_response_subjects <<- immunogenicity_data$SUBJID[8:14]
+  immunogenicity_data_full_time_series <<- immunogenicity_data[immunogenicity_data$SUBJID %in% vaccinated_full_time_series_metadata$subject_id,]
+  immunogenicity_data_full_time_series <<- immunogenicity_data_full_time_series[,c(1,105,106,115,116)]
+  immunogenicity_data_full_time_series <<- immunogenicity_data_full_time_series[order(immunogenicity_data_full_time_series$Vaccination.Day8_IFNg_NP.Background_SFC.10.6.cells, decreasing = TRUE),]
+  high_t_cell_response_subjects <<- immunogenicity_data_full_time_series$SUBJID[1:7]
+  low_t_cell_response_subjects <<- immunogenicity_data_full_time_series$SUBJID[8:14]
   # Grab high t cell response vaccinated counts and metadata
   high_t_cell_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$subject_id %in% high_t_cell_response_subjects,])
   high_t_cell_vaccinated_counts <<- vaccinated_counts[,high_t_cell_vaccinated_aliquots]
@@ -1203,24 +1202,28 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
   predictions <- as.data.frame(current_cv_report[[1]])
   predictions$label <- label
   predictions$AVAL <- metadata$AVAL
+  predictions$viral_load_category <- metadata$viral_load_category
   predictions$MNT_Baseline <- metadata$MNT_Baseline
   predictions$MNT_Day_Minus_1_Pre_Challenge <- metadata$MNT_Day_Minus_1_Pre_Challenge
   predictions$MNT_Day_28_Post_Challenge <- metadata$MNT_Day_28_Post_Challenge
+  predictions$MNT_Day_28_Change <- metadata$MNT_Day_28_Change
   predictions$HAI_Day_Minus_1_Pre_Challenge <- metadata$HAI_Day_Minus_1_Pre_Challenge
   predictions$HAI_Day_28_Post_Challenge <- metadata$HAI_Day_28_Post_Challenge
+  predictions$HAI_Day_28_Change <- metadata$HAI_Day_28_Change
   predictions$sample <- rownames(metadata)
   
   # Rename columns appropriately
   prediction_colnames <- paste("time_", contrast, sep="")
   if(task == "classification_multi") {
-    colnames(predictions) <- c(prediction_colnames, "correct_label", "AVAL", "MNT_Baseline",
-                               "MNT_Day_Minus_1_Pre_Challenge", "MNT_Day_28_Post_Challenge", 
-                               "HAI_Day_Minus_1_Pre_Challenge", "HAI_Day_28_Post_Challenge",
-                               "sample")
+    colnames(predictions) <- c(prediction_colnames, "correct_label", "AVAL", "viral_load_category", "MNT_Baseline",
+                               "MNT_Day_Minus_1_Pre_Challenge", "MNT_Day_28_Post_Challenge",
+                               "MNT_Day_28_Change", "HAI_Day_Minus_1_Pre_Challenge", "HAI_Day_28_Post_Challenge",
+                               "HAI_Day_28_Change", "sample")
   } else {
-    colnames(predictions) <- c("prediction_prob", "correct_label", "AVAL",  "MNT_Baseline",
+    colnames(predictions) <- c("prediction_prob", "correct_label", "AVAL", "viral_load_category", "MNT_Baseline",
                                "MNT_Day_Minus_1_Pre_Challenge", "MNT_Day_28_Post_Challenge", 
-                               "HAI_Day_Minus_1_Pre_Challenge", "HAI_Day_28_Post_Challenge","sample")
+                               "MNT_Day_28_Change", "HAI_Day_Minus_1_Pre_Challenge", "HAI_Day_28_Post_Challenge", 
+                               "HAI_Day_28_Change", "sample")
     predictions[[prediction_colnames[1]]] <- 1 - predictions$prediction_prob
     predictions[[prediction_colnames[2]]] <- predictions$prediction_prob
   }
@@ -1271,7 +1274,7 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
   j <- 3
   for(i in 1:end_coord) {
     # Viral load
-    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "AVAL")) +
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "AVAL", color = "viral_load_category", group = 1)) +
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("Viral Load")
     all_results[[j]] <- cor_plot
@@ -1283,7 +1286,7 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
     j <- j + 1
     
     # MNT_Baseline
-    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "MNT_Baseline")) +
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "MNT_Baseline", color = "viral_load_category", group = 1)) +
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("MNT Baseline")
     all_results[[j]] <- cor_plot
@@ -1295,7 +1298,7 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
     j <- j + 1
     
     # MNT_Day_Minus_1_Pre_Challenge
-    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "MNT_Day_Minus_1_Pre_Challenge")) +
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "MNT_Day_Minus_1_Pre_Challenge", color = "viral_load_category", group = 1)) +
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("MNT (Day -1, Pre-Challenge)")
     all_results[[j]] <- cor_plot
@@ -1307,7 +1310,7 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
     j <- j + 1
     
     # MNT_Day_28_Post_Challenge
-    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "MNT_Day_28_Post_Challenge")) +
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "MNT_Day_28_Post_Challenge", color = "viral_load_category", group = 1)) +
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("MNT (Day 28, Post-Challenge)")
     all_results[[j]] <- cor_plot
@@ -1318,8 +1321,20 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
     
     j <- j + 1
     
+    # MNT_Day_28_Change
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "MNT_Day_28_Change", color = "viral_load_category", group = 1)) +
+      geom_point(size = 2) +
+      sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("MNT (Day 28, Change from Baseline)")
+    all_results[[j]] <- cor_plot
+    
+    correlation_val <- cor.test(predictions_control_subset[[barplot_time_point_order[[i]]]], predictions_control_subset$MNT_Day_28_Post_Challenge, method = "spearman")
+    print(correlation_val$estimate)
+    print(correlation_val$p.value)
+    
+    j <- j + 1
+    
     # HAI_Day_Minus_1_Pre_Challenge
-    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "HAI_Day_Minus_1_Pre_Challenge")) +
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "HAI_Day_Minus_1_Pre_Challenge", color = "viral_load_category", group = 1)) +
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("HAI (Day -1, Pre-Challenge)")
     all_results[[j]] <- cor_plot
@@ -1331,9 +1346,22 @@ apply_wayne_classifier <- function(counts, metadata, contrast) {
     j <- j + 1
     
     # HAI_Day_28_Post_Challenge
-    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "HAI_Day_28_Post_Challenge")) +
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "HAI_Day_28_Post_Challenge", color = "viral_load_category", group = 1)) +
       geom_point(size = 2) +
       sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("HAI (Day 28, Post-Challenge)")
+    all_results[[j]] <- cor_plot
+    
+    
+    correlation_val <- cor.test(predictions_control_subset[[barplot_time_point_order[[i]]]], predictions_control_subset$HAI_Day_28_Post_Challenge, method = "spearman")
+    print(correlation_val$estimate)
+    print(correlation_val$p.value)
+    
+    j <- j + 1
+    
+    # HAI_Day_28_Change
+    cor_plot <- ggplot(data = predictions_control_subset, mapping = aes_string(x = barplot_time_point_order[[i]], y = "HAI_Day_28_Change", color = "viral_load_category", group = 1)) +
+      geom_point(size = 2) +
+      sm_statCorr(corr_method = "spearman") + xlab(paste0("Probability of Misclassification as ", barplot_time_point_order_for_legend[[i]])) + ylab("HAI (Day 28, Change from Baseline)")
     all_results[[j]] <- cor_plot
     
     
