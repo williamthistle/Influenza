@@ -10,7 +10,7 @@ for(cell_type in overlapping_das_cell_types) {
       print(paste0("Overlap for ", cell_type, " (", analysis_type, ", ", min_pct, ")"))
       placebo_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", min_pct, ".tsv"),
                                      sep = "\t", header = TRUE)
-      vaccinated_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "simple_model/D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", min_pct, ".tsv"),
+      vaccinated_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", min_pct, ".tsv"),
                                     sep = "\t", header = TRUE)
       if(analysis_type == "sc") {
         overlapping_das <- intersect(rownames(placebo_das), rownames(vaccinated_das))
