@@ -119,13 +119,16 @@ scRNA_lvl_placebo_downstream_analysis_dir <- paste0(onedrive_dir, "Vaccitech_Pap
 scATAC_hvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/")
 scATAC_hvl_placebo_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Placebo/DASs/")
 scATAC_hvl_placebo_das_annotated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Placebo/DASs/Annotated/")
+scATAC_hvl_placebo_das_motif_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Placebo/DASs/TF_Motif_Analysis/")
 scATAC_hvl_vaccinated_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Vaccinated/DASs/")
 scATAC_hvl_vaccinated_das_annotated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Vaccinated/DASs/Annotated/")
+scATAC_hvl_vaccinated_das_motif_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/HVL/Vaccinated/DASs/TF_Motif_Analysis/")
 
 # LVL
 scATAC_lvl_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/")
 scATAC_lvl_placebo_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Placebo/DASs/")
 scATAC_lvl_placebo_das_annotated_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Placebo/DASs/Annotated/")
+scATAC_lvl_placebo_das_motif_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/scATAC-Seq/Results/LVL/Placebo/DASs/TF_Motif_Analysis/")
 
 # MAGICAL analysis dirs
 

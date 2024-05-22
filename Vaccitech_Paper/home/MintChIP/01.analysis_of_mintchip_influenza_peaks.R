@@ -69,6 +69,7 @@ for(marker in mintchip_markers) {
 }
 
 # Run FMD (pos and neg)
+# TODO: Try enrichr to see if it works better?
 pos_fmd_list <- list()
 for(marker in mintchip_markers) {
   marker_dir <- paste0(mintchip_das_dir, marker, "/")
@@ -103,7 +104,8 @@ for(marker in mintchip_markers) {
   }
 }
 
-saveRDS(neg_fmd_list, file = paste0(mintchip_fmd_dir, "neg_fmd_V2.RDS"))
+# saveRDS(neg_fmd_list, file = paste0(mintchip_fmd_dir, "neg_fmd_V2.RDS"))
+neg_fmd_list <- readRDS(paste0(mintchip_fmd_dir, "neg_fmd_V2.RDS"))
 
 # Create peak annotation plot
 peak_annotation_plots <- list()
