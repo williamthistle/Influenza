@@ -27,6 +27,8 @@ run_fmd_on_mintchip <- function(gene_list) {
 mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
+promoter_terms <- c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)")
+
 # Create annotated up and downregulated peak files (annotated)
 for(marker in mintchip_markers) {
   marker_dir <- paste0(mintchip_das_dir, marker, "/")
@@ -78,6 +80,7 @@ for(marker in mintchip_markers) {
     pos_differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/upregulated/", marker, "_DESeq2_FC_", fc, "_upregulated_annotated.tsv")
     if(file.exists(pos_differential_analysis_results_file) && file.size(pos_differential_analysis_results_file) != 1 && file.size(pos_differential_analysis_results_file) != 75) {
       pos_differential_analysis_results_file <- read.table(pos_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+      # pos_differential_analysis_results_file <- subset(pos_differential_analysis_results_file, annotation %in% promoter_terms)
       pos_genes <- unique(pos_differential_analysis_results_file$SYMBOL)
       pos_results <- run_fmd_on_mintchip(pos_genes)
       pos_fmd_list[[marker]][[as.character(fc)]] <- pos_results
