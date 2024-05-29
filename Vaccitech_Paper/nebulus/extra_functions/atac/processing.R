@@ -1080,7 +1080,7 @@ run_differential_expression_controlling_for_subject_id_atac <- function(sc_obj, 
 
 create_pseudobulk_counts_atac_seurat <- function(sc_obj) {
   cells_pseudobulk <- list()
-  for (sample_name in unique(sc_obj$Sample)) {
+  for(sample_name in unique(sc_obj$Sample)) {
     idxMatch <- which(stringr::str_detect(as.character(sc_obj$Sample), sample_name))
     # Note - ideally, this should be >= 1, but there's a bug with Seurat V5 where data from objects with 1 cell cannot be
     # sampled correctly. Thus, in this edge case, we assume object has 0 cells
@@ -1091,6 +1091,7 @@ create_pseudobulk_counts_atac_seurat <- function(sc_obj) {
       cells_pseudobulk[[sample_name]] <- samples_data
     } else {
       cells_pseudobulk[[sample_name]] <- numeric(nrow(sc_obj@assays$peaks))
+      names(cells_pseudobulk[[sample_name]]) <- rownames(cells_subset[["peaks"]]$data)
     }
   }
   final_cells_pseudobulk_df <- dplyr::bind_cols(cells_pseudobulk[1])

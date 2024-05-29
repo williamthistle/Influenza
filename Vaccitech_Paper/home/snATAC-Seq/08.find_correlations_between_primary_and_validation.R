@@ -15,8 +15,7 @@ find_sc_correlation_final <- function(first_gene_df, second_gene_df) {
   return(comparing_first_vs_second_df)
 }
 
-# I picked my 9 favorite cell types so I can have a 3x3 grid of correlation plots
-correlation_cell_types <- c("CD4_Memory", "CD8_Memory", "CD4_Naive", "CD8_Naive", "MAIT", "B", "CD16_Mono", "CD14_Mono", "NK")
+correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC", "pDC", "NK")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -35,12 +34,12 @@ for(cell_type in correlation_cell_types) {
   unfiltered_cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
                                                        sep = "\t", header = TRUE)
   # Filtered SC
-  cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
+  cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.1.tsv"),
                                           sep = "\t", header = TRUE)
   # Set fold change threshold (only keep high FC peaks)
   # cell_type_sc_das <- cell_type_sc_das[abs(cell_type_sc_das$sc_log2FC) > 1,]
   # cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$sc_pval < 0.01,]
-  cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
+  cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.1.tsv"),
                                                      sep = "\t", header = TRUE)
   # Check correlation for primary significant SC genes in validation set
   comparing_first_vs_second_df <- find_sc_correlation_final(cell_type_sc_das, unfiltered_cell_type_validation_sc_das)
@@ -55,15 +54,8 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   sc_correlation_plots[[cell_type]][["sc_primary_vs_sc_validation"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("Naive FC") + ylab("Vaccinated FC") + labs(title = cell_type_no_underscore) + xlim(-1.5, 1.5) + ylim(-1.5, 1.5)
+    sm_statCorr(corr_method = "spearman") + xlab("Naive FC") + ylab("Vaccinated FC") + labs(title = cell_type_no_underscore) + xlim(-5, 5) + ylim(-5, 5)
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[1]])
-ggsave("C:/Users/wat2/Desktop/test_atac.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 10, width = 10)
-
-# Other plotting attempts
-#n <- length(pseudobulk_corrected_plots)
-#nCol <- floor(sqrt(n))
-# do.call("grid.arrange", c(pseudobulk_corrected_plots, ncol=nCol))
-# test <- list(pseudobulk_corrected_plots[[1]], pseudobulk_corrected_plots[[2]], pseudobulk_corrected_plots[[3]])
-# do.call("grid.arrange", c(test, ncol=nCol))
+ggsave("C:/Users/willi/Desktop/test_atac.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 2, nrow = 3), height = 10, width = 10)

@@ -2,8 +2,7 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-# I picked my 9 favorite cell types so I can have a 3x3 grid of correlation plots
-correlation_cell_types <- c("NK", "CD4_Memory", "CD8_Memory", "MAIT", "B_naive", "B_memory", "CD16_Mono", "CD14_Mono", "cDC")
+correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC", "pDC", "NK", "NK_CD56bright")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -133,7 +132,7 @@ for(cell_type in correlation_cell_types) {
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/wat2/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/willi/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 2, nrow = 3), height = 10, width = 10)
 
 # Other plotting attempts
 #n <- length(pseudobulk_corrected_plots)

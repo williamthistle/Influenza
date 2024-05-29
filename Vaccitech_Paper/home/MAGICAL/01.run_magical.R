@@ -129,6 +129,9 @@ overall_magical_df <- add_info_stage_1_MAGICAL(overall_magical_df, current_candi
 write.table(overall_magical_df, file = paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output_with_stage_1_info.tsv"),
             sep = "\t", quote = FALSE)
 
+# overall_magical_df <- read.table(paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output_with_stage_1_info.tsv"), sep = "\t", header = TRUE)
+
+
 overall_magical_df_with_pseudobulk_correction <- overall_magical_df[overall_magical_df$sc_p_val < 0.05,]
 overall_magical_df_with_pseudobulk_correction <- overall_magical_df_with_pseudobulk_correction[overall_magical_df_with_pseudobulk_correction$pseudobulk_p_val < 0.05 | overall_magical_df_with_pseudobulk_correction$pseudobulk_robust_p_val < 0.05,]
 

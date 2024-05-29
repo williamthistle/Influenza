@@ -1,3 +1,25 @@
+atac_proj <- loadArchRProject(path = paste0(ATAC_output_dir, "no_batch_correction"))
+
+atac_proj <- add_sample_metadata_atac(atac_proj, high_viral_load_samples, low_viral_load_samples,
+                                      d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+viral_load_metadata <- parse_metadata_for_samples(atac_proj, "viral_load", high_viral_load_samples, low_viral_load_samples,
+                                                  d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+day_metadata <- parse_metadata_for_samples(atac_proj, "time_point", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+sex_metadata <- parse_metadata_for_samples(atac_proj, "sex", high_viral_load_samples, low_viral_load_samples,
+                                           d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+treatment_metadata <- parse_metadata_for_samples(atac_proj, "treatment", high_viral_load_samples, low_viral_load_samples,
+                                                 d28_samples, d_minus_1_samples, male_samples, female_samples, placebo_samples, vaccinated_samples)
+
+atac_proj <- combine_cell_types_atac(atac_proj)
+#atac_proj <- MajorityVote_ATAC(proj = atac_proj) - use code from some_random_atac_code
+
+# Make sure you use code from some_random_atac_code
+atac_proj <- override_cluster_label_atac(atac_proj, c("C16"), "CD8 Memory")
+atac_proj <- override_cluster_label_atac(atac_proj, c("C20"), "Proliferating")
+atac_proj <- override_cluster_label_atac(atac_proj, c("C25", "C34"), "CD4 Naive")
+
+
 addArchRGenome("hg38")
 atac_proj <- pseudo_bulk_replicates_and_call_peaks(atac_proj)
 # Create peak matrix (matrix containing insertion counts within our merged peak set) for differential accessibility
@@ -24,19 +46,18 @@ seurat_atac <- ArchR2Signac(
 all.equal(colnames(seurat_atac), gsub('#', '_', rownames(atac_proj@cellColData)))
 
 # Add gene score matrix from ArchR to Seurat object (could recompute it using Signac, but we'll stick with ArchR matrix for now)
-gsm <- getGeneScoreMatrix(ArchRProject = atac_proj, SeuratObject = seurat_atac)
-seurat_atac[['RNA']] <- CreateAssayObject(counts = gsm)
+#gsm <- getGeneScoreMatrix(ArchRProject = atac_proj, SeuratObject = seurat_atac)
+#seurat_atac[['RNA']] <- CreateAssayObject(counts = gsm)
 
 # Add UMAP
 seurat_atac <- addDimRed(
   ArchRProject = atac_proj,
   SeuratObject = seurat_atac,
-  addUMAPs = "UMAP",
-  reducedDims = "Harmony"
+  addUMAPs = "UMAP"
 )
 
-saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "ALL_seurat.RDS"))
-seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "ALL_seurat.RDS"))
+saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "ALL_seurat_no_batch_correction.RDS"))
+seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "ALL_seurat_no_batch_correction.RDS"))
 
 # Method to print a well-organized UMAP plot for our snRNA-seq data
 print_UMAP_ATAC_Seurat <- function(sc_obj, file_name, group_by_category = NULL, output_dir = getwd(), log_flag = FALSE) {
@@ -61,14 +82,14 @@ print_UMAP_ATAC_Seurat <- function(sc_obj, file_name, group_by_category = NULL, 
 }
 
 # Looks good!
-print_UMAP_ATAC_Seurat(seurat_atac, "seurat_atac_test.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
+print_UMAP_ATAC_Seurat(seurat_atac, "seurat_atac_test_no_batch_correction.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
 
 cell_names <- rownames(seurat_atac@meta.data)
 seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name = "cell_name")
 
-messy_clusters <- c("1", "13", "14", "16", "21", "23")
-idxPass <- which(seurat_atac$seurat_clusters %in% messy_clusters)
+messy_clusters <- c("C1", "C2", "C3", "C8", "C11", "C12", "C13", "C14", "C24", "C28", "C36")
+idxPass <- which(seurat_atac$Clusters %in% messy_clusters)
 cellsPass <- names(seurat_atac$orig.ident[-idxPass])
 seurat_atac_minus_clusters <- subset(x = seurat_atac, subset = cell_name %in% cellsPass)
 
-print_UMAP_ATAC_Seurat(seurat_atac_minus_clusters, "seurat_atac_minus_clusters_test.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
+print_UMAP_ATAC_Seurat(seurat_atac_minus_clusters, "seurat_atac_minus_clusters_test_no_batch_correction.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)

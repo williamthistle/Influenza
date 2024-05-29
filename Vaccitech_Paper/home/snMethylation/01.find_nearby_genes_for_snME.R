@@ -62,15 +62,25 @@ for(snME_cell_type in snME_cell_types) {
 
 # Create annotation plot
 peak_annotation_plots <- list()
-for(snME_cell_type in snME_cell_types) {
-  differential_analysis_results_file <- paste0(snME_results_dir, "Closest_Gene_Analysis_No_Promoter_Subset/", snME_cell_type, "_D28_hypermethylated_annotated_genes.tsv")
-  differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+innate_snME_cell_types <- c("Monocyte", "NK-cell2")
+for(snME_cell_type in innate_snME_cell_types) {
+  # Upregulated
+  up_differential_analysis_results_file <- paste0(snME_results_dir, "Closest_Gene_Analysis_No_Promoter_Subset/", snME_cell_type, "_D28_hypermethylated_annotated_genes.tsv")
+  up_differential_analysis_results <- read.table(up_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+  # Downregulated
+  down_differential_analysis_results_file <- paste0(snME_results_dir, "Closest_Gene_Analysis_No_Promoter_Subset/", snME_cell_type, "_D_minus_1_hypermethylated_annotated_genes.tsv")
+  down_differential_analysis_results <- read.table(down_differential_analysis_results_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+  # Combine
+  differential_analysis_results <- rbind(up_differential_analysis_results, down_differential_analysis_results)
   differential_analysis_results <- differential_analysis_results[,c(1,2,3,4,5)]
   differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
+  if(snME_cell_type == "NK-cell2") {
+    snME_cell_type <- "NK"
+  }
   peak_annotation_plots[[snME_cell_type]] <- differential_analysis_results
 }
 
-plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = "Genomic Locations of DMR in snMethylation Data")
+plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = "Distribution of Genomic Features for snME DMR")
 
 
 

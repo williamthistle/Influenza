@@ -2,7 +2,7 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "MAIT", "Proliferating")
+snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "MAIT", "Proliferating", "pDC")
 
 # Step 1: Add FC to motif files
 for(snATAC_cell_type in snATAC_cell_types) {
@@ -30,6 +30,9 @@ for(snATAC_cell_type in snATAC_cell_types) {
             motif_fc_values <- c(motif_fc_values, motif_fc_value)
           }
           upregulated_motifs$fc_value <- motif_fc_values
+          upregulated_motifs_sorted_by_fc <- upregulated_motifs
+          upregulated_motifs_sorted_by_fc <- upregulated_motifs_sorted_by_fc[upregulated_motifs_sorted_by_fc$p.adjust < 0.05,]
+          upregulated_motifs_sorted_by_fc <- upregulated_motifs_sorted_by_fc[rev(order(upregulated_motifs_sorted_by_fc$fc_value)),]
           # Add FC values for downregulated motifs
           motif_fc_values <- c()
           for(current_row in 1:nrow(downregulated_motifs)) {
@@ -41,10 +44,17 @@ for(snATAC_cell_type in snATAC_cell_types) {
             motif_fc_values <- c(motif_fc_values, motif_fc_value)
           }
           downregulated_motifs$fc_value <- motif_fc_values
+          downregulated_motifs_sorted_by_fc <- downregulated_motifs
+          downregulated_motifs_sorted_by_fc <- downregulated_motifs_sorted_by_fc[downregulated_motifs_sorted_by_fc$p.adjust < 0.05,]
+          downregulated_motifs_sorted_by_fc <- downregulated_motifs_sorted_by_fc[order(downregulated_motifs_sorted_by_fc$fc_value),]
           # Save to file
           write.table(upregulated_motifs, file = paste0(current_output_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-", analysis_type, "_pct_", pct, "_FC_", fc, "_with_fc_values.tsv"),
                       quote = FALSE, sep = "\t")
+          write.table(upregulated_motifs_sorted_by_fc, file = paste0(current_output_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-", analysis_type, "_pct_", pct, "_FC_", fc, "_with_fc_values_sorted.tsv"),
+                      quote = FALSE, sep = "\t")
           write.table(downregulated_motifs, file = paste0(current_output_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-", analysis_type, "_pct_", pct, "_FC_-", fc, "_with_fc_values.tsv"),
+                      quote = FALSE, sep = "\t")
+          write.table(downregulated_motifs_sorted_by_fc, file = paste0(current_output_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-", analysis_type, "_pct_", pct, "_FC_-", fc, "_with_fc_values_sorted.tsv"),
                       quote = FALSE, sep = "\t")
         }
       }

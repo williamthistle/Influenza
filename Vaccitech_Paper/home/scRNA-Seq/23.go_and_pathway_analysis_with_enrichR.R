@@ -77,6 +77,10 @@ nk_downregulated_genes <- nk_genes[nk_genes$sc_log2FC < 0,]$Gene_Name
 cDC_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "cDC",]
 cDC_upregulated_genes <- cDC_genes[cDC_genes$sc_log2FC > 0,]$Gene_Name
 cDC_downregulated_genes <- cDC_genes[cDC_genes$sc_log2FC < 0,]$Gene_Name
+# pDC
+pDC_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "pDC",]
+pDC_upregulated_genes <- pDC_genes[pDC_genes$sc_log2FC > 0,]$Gene_Name
+pDC_downregulated_genes <- pDC_genes[pDC_genes$sc_log2FC < 0,]$Gene_Name
 # CD4 Memory
 cd4_memory_genes <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type == "CD4 Memory",]
 cd4_memory_upregulated_genes <- cd4_memory_genes[cd4_memory_genes$sc_log2FC > 0,]$Gene_Name
@@ -116,6 +120,9 @@ nk_enrichr_downregulated_results <- get_enrichr_results(nk_downregulated_genes)
 
 cDC_enrichr_upregulated_results <- get_enrichr_results(cDC_upregulated_genes)
 cDC_enrichr_downregulated_results <- get_enrichr_results(cDC_downregulated_genes)
+
+pDC_enrichr_upregulated_results <- get_enrichr_results(pDC_upregulated_genes)
+pDC_enrichr_downregulated_results <- get_enrichr_results(pDC_downregulated_genes)
 
 cd4_memory_enrichr_upregulated_results <- get_enrichr_results(cd4_memory_upregulated_genes)
 cd4_memory_enrichr_downregulated_results <- get_enrichr_results(cd4_memory_downregulated_genes)
@@ -187,6 +194,11 @@ cd16_test <- cd16_mono_enrichr_downregulated_results[[1]]
 cd16_test$Gene_Count <- sapply(cd16_test$Genes, count_genes)
 cd16_test <- cd16_test[cd16_test$Gene_Count >= 5,]
 create_enrichment_plot(cd16_test)
+
+
+cd14_mono_enrichr_upregulated_results_for_barplot <- cd14_mono_enrichr_upregulated_results
+cd14_mono_enrichr_upregulated_results_for_barplot <- cd14_mono_enrichr_upregulated_results_for_barplot[c(1,5,10,15,17,22,26),]
+
 
 create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[1]])
  

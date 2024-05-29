@@ -7,7 +7,7 @@ data_path <- paste0(home_dir, "single_cell/data")
 reference_dir <- paste0(home_dir, "references/")
 reference_file_name <- "pbmc_multimodal.h5seurat"
 output_dir <- paste0(home_dir, "single_cell/analysis/")
-analysis_name <- "all_single_cell_final"
+analysis_name <- "all_single_cell"
 reference_tissue <- "pbmc_full"
 reference_cell_type_attribute <- "celltype.l2"
 species <- "human"
@@ -136,7 +136,7 @@ cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
 # Print UMAPs for all subjects (HVL and LVL)
-print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type_new.png",
+print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
 print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Cluster.png",

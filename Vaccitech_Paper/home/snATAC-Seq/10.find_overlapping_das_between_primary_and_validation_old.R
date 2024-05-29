@@ -43,7 +43,7 @@ find_sc_correlation_sc <- function(first_gene_df, second_gene_df) {
 }
 
 
-overlapping_das_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC","NK", "CD4_Memory", "CD8_Memory", "CD8_Naive", "MAIT", "B", "Proliferating", "CD4_Naive")
+overlapping_das_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC","NK", "CD4_Memory", "CD8_Memory", "CD8_Naive", "MAIT", "B", "Proliferating", "CD4_Naive","pDC")
 
 for(cell_type in overlapping_das_cell_types) {
   # Unfiltered
@@ -52,11 +52,12 @@ for(cell_type in overlapping_das_cell_types) {
   unfiltered_cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
                                                        sep = "\t", header = TRUE)
   for(analysis_type in c("final")) {
-    for(min_pct in c(0.05)) {
+    for(min_pct in c(0.01)) {
       print(paste0("Overlap and correlations for ", cell_type, " (", analysis_type, ", ", min_pct, ")"))
       # Filtered
       placebo_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", min_pct, ".tsv"),
                                      sep = "\t", header = TRUE)
+      # placebo_das <- placebo_das[placebo_das$pct.1 >= 0.01 & placebo_das$pct.2 >= 0.01,]
       vaccinated_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", min_pct, ".tsv"),
                                     sep = "\t", header = TRUE)
       if(analysis_type == "sc") {
@@ -67,9 +68,9 @@ for(cell_type in overlapping_das_cell_types) {
         find_sc_correlation_sc(placebo_das, unfiltered_cell_type_validation_sc_das)
       } else {
         overlapping_das_with_robust <- intersect(placebo_das$Peak_Name, vaccinated_das$Peak_Name)
-        print(paste0("Total overlapping DAS (with DESeq2 pseudobulk): ", length(overlapping_das_with_robust)))
-        print(paste0("Total placebo DAS (with DESeq2 pvalue): ", nrow(placebo_das)))
-        print(paste0("Percent of placebo DAS that overlap (with DESeq2 pvalue): ", (length(overlapping_das_with_robust) / nrow(placebo_das) * 100)))
+        print(paste0("Total overlapping DAS (with pseudobulk): ", length(overlapping_das_with_robust)))
+        print(paste0("Total placebo DAS (with pseudobulk pvalue): ", nrow(placebo_das)))
+        print(paste0("Percent of placebo DAS that overlap (with pseudobulk pvalue): ", (length(overlapping_das_with_robust) / nrow(placebo_das) * 100)))
         find_sc_correlation_final(placebo_das, unfiltered_cell_type_validation_sc_das)
       }
     }
