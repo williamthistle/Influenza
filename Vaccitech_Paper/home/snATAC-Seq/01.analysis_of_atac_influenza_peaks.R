@@ -48,10 +48,10 @@ get_enrichr_results <- function(gene_list) {
 }
 
 # Run enrichment analysis (pos and neg, promoter regions)
-pos_enrichment_promoter_list <- list()
+pos_fmd_promoter_list <- list()
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
-  pos_enrichment_promoter_list[[snATAC_cell_type_for_file_name]] <- list()
+  pos_fmd_promoter_list[[snATAC_cell_type_for_file_name]] <- list()
   for(fc in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
     pos_differential_analysis_results_file <- paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_final_pct_0.01_fc_", fc, "_upregulated_annotated.tsv")
     if(file.exists(pos_differential_analysis_results_file) && file.size(pos_differential_analysis_results_file) != 1 && file.size(pos_differential_analysis_results_file) != 75) {
@@ -60,12 +60,12 @@ for(snATAC_cell_type in snATAC_cell_types) {
       pos_genes <- unique(pos_differential_analysis_results_file$SYMBOL)
       print(paste0("Number of genes is ", length(pos_genes)))
       pos_results <- run_fmd_on_snATAC(pos_genes)
-      pos_enrichment_promoter_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- pos_results
+      pos_fmd_promoter_list[[snATAC_cell_type_for_file_name]][[as.character(fc)]] <- pos_results
     }
   }
 }
 
-# saveRDS(pos_enrichment_promoter_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
+# saveRDS(pos_fmd_promoter_list, file = paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
 # pos_fmd_promoter_list <- readRDS(paste0(snATAC_peak_annotated_dir, "pos_fmd_promoter.RDS"))
 
 neg_fmd_promoter_list <- list()
