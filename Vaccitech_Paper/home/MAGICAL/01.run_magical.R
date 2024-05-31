@@ -33,7 +33,7 @@ motif_prior <- paste0(MAGICAL_hvl_placebo_dir, "scATAC_Motif_Mapping_Prior/HVL_A
 tads <- paste0(MAGICAL_hvl_placebo_dir, "RaoGM12878_40kb_TopDomTADs_filtered_hg38.txt")
 distance_control=5e5
 
-cell_types <- c("B", "CD14 Mono", "CD16 Mono", "Proliferating", "NK", "CD4 Memory", "CD8 Memory", "MAIT", "CD4 Naive", "CD8 Naive", "cDC")
+cell_types <- c("CD14 Mono", "CD16 Mono", "NK", "cDC", "pDC")
 
 # STEP 1: CREATE CANDIDATE GENE AND PEAK FILES
 
@@ -72,6 +72,7 @@ possible_ATAC_types <- list.files(path = cell_type_candidate_peak_dir)
 possible_ATAC_types <- unlist(strsplit(possible_ATAC_types, "_Candidate_Peaks.txt"))
 
 cell_types <- intersect(possible_RNA_types, possible_ATAC_types)
+# cell_types <- cell_types[-c(5)] # Used to remove "Old"
 
 # STEP 3: RUN MAGICAL
 set.seed(get_speedi_seed())
@@ -138,7 +139,9 @@ overall_magical_df_with_pseudobulk_correction <- overall_magical_df_with_pseudob
 # Two new tables!
 # magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
 magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df)
+magical_gene_overlap_df <- magical_gene_overlap_df[magical_gene_overlap_df$Cell_Type %in% c("CD16_Mono", "CD14_Mono", "cDC", "pDC", "NK", "NK_CD56bright"),]
 magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
+
 
 # Create upset plot for overlapping genes between cell types
 sets <- list()
