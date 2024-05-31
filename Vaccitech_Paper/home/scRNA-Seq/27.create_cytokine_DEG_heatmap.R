@@ -40,10 +40,12 @@ for(innate_cell_type in innate_cell_types) {
 cytokine_heatmap_df <- data.frame(Cell_Type = cell_type_vector, Gene_Name = gene_name_vector, fold_change = fold_change_vector, significant = significance_vector)
 
 cytokine_heatmap_df$Gene_Name <- factor(cytokine_heatmap_df$Gene_Name, levels = unique(cytokine_heatmap_df$Gene_Name))
+cytokine_heatmap_df$Cell_Type <- factor(cytokine_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "NK_CD56bright", "cDC", "pDC"))
+
 
 ggplot() + 
   geom_raster(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
-  geom_text(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.40, size = 6) + scale_fill_gradient2(low="navy", mid="white", high="red") +
+  geom_text(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.35, size = 6) + scale_fill_gradient2(low="navy", mid="white", high="red") +
   theme_classic() + labs(title = "Fold Change for Cytokine-Related Genes in Innate Immune Cell Types",
                       x = "Cell Type",
                       y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5))
