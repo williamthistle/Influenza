@@ -88,7 +88,7 @@ for(marker in mintchip_markers) {
   }
 }
 
-saveRDS(pos_fmd_list, file = paste0(mintchip_fmd_dir, "pos_fmd_V2.RDS"))
+# saveRDS(pos_fmd_list, file = paste0(mintchip_fmd_dir, "pos_fmd_V2.RDS"))
 pos_fmd_list <- readRDS(paste0(mintchip_fmd_dir, "pos_fmd_V2.RDS"))
 
 

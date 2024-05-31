@@ -322,7 +322,7 @@ hvl_placebo_sc_obj <- AddMotifs(
 motif_output_dir <- paste0(ATAC_output_dir, "hvl_placebo_motifs/", date, "/")
 if (!dir.exists(motif_output_dir)) {dir.create(motif_output_dir, recursive = TRUE)}
 
-motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/all_single_cell/ATAC/DE_HVL_PLACEBO_pseudobulk_2024-04-29/"
+motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/all_single_cell/ATAC/DE_HVL_PLACEBO_processed_0_min_pct_peaks_2024-05-30/"
 
 generate_motifs_with_signac(hvl_placebo_sc_obj, motif_input_dir, motif_output_dir)
 
