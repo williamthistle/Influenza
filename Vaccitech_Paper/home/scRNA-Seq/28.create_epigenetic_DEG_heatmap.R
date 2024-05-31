@@ -4,7 +4,7 @@ source(paste0(base_dir, "00.setup.R"))
 
 innate_scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type %in% innate_cell_types,]
 
-heatmap_genes <- c("KAT6A", "HDAC5", "HDAC7", "HDAC9", "ASH1L", "PRDM2", "SETD2", "ANTKMT", "KDM2B", "KDM3A")
+heatmap_genes <- c("KAT6A", "HDAC5", "HDAC7", "HDAC9", "ASH1L", "PRDM2", "SETD2", "KDM2B", "KDM3A")
 
 cell_type_vector <- c()
 gene_name_vector <- c()
