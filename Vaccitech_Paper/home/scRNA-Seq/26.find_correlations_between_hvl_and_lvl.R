@@ -2,8 +2,7 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-# I picked my 9 favorite cell types so I can have a 3x3 grid of correlation plots
-correlation_cell_types <- c("NK", "CD4_Memory", "CD8_Memory", "MAIT", "B_naive", "B_memory", "CD16_Mono", "CD14_Mono", "cDC")
+correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "NK", "NK_CD56bright", "cDC", "pDC")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -13,10 +12,8 @@ for(cell_type in correlation_cell_types) {
   sc_correlations[[cell_type]] <- list()
   sc_correlation_plots[[cell_type]] <- list()
   cell_type_no_underscore <- gsub("_", " ", cell_type)
-  if(cell_type_no_underscore == "B memory") {
-    cell_type_no_underscore <- "B Memory"
-  } else if(cell_type_no_underscore == "B naive") {
-    cell_type_no_underscore <- "B Naive"
+  if(cell_type_no_underscore == "NK CD56bright") {
+    cell_type_no_underscore <- "NK_CD56bright"
   }
   # Unfiltered SC
   unfiltered_cell_type_sc_degs <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
@@ -78,13 +75,15 @@ for(cell_type in correlation_cell_types) {
   sc_correlations[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl"]] <- correlation_val
   
   # Plot correlation
+  # Idea! Use data to set limits. 
+  
   sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
     sm_statCorr(corr_method = "spearman") + xlab("HVL Naive FC") + ylab("LVL Naive FC") + labs(title = cell_type_no_underscore) +  xlim(-1.5, 1.5) + ylim(-1.5, 1.5)
 }
 
 hvl_vs_lvl_pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_fc_correlation.png", plot = patchwork::wrap_plots(hvl_vs_lvl_pseudobulk_corrected_plots, ncol = 3, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_fc_correlation.png", plot = patchwork::wrap_plots(hvl_vs_lvl_pseudobulk_corrected_plots, ncol = 2, nrow = 3), height = 10, width = 10)
 
 # Other plotting attempts
 #n <- length(pseudobulk_corrected_plots)
