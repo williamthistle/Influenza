@@ -357,7 +357,7 @@ create_tf_heatmap_plot <- function(tf_table) {
   
   ggplot(tf_table, aes(Cell_Type, TF, fill = Count)) + 
     geom_tile() + scale_fill_gradientn(
-      colors = c("cornsilk", "lightcoral", "red"),
+      colors = c("ivory1", "lightcoral", "red"),
       values = scales::rescale(c(0, 20, 100))) +
     theme_minimal() +
     theme(

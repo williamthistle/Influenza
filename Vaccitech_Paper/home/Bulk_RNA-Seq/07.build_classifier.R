@@ -3,7 +3,7 @@ base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
 # Add antibody titer info
-add_antibody_titer_info <- function(metadata, immunogenicity_data) {
+add_antibody_titer_info <- function(metadata, immunogenicity_data, nai_data) {
   associated_immunogenicity_data <- immunogenicity_data[immunogenicity_data$subject_id %in% metadata$subject_id,]
   MNT_Baseline_vec <- c()
   MNT_Day_Minus_1_Pre_Challenge_vec <- c()
@@ -12,9 +12,13 @@ add_antibody_titer_info <- function(metadata, immunogenicity_data) {
   HAI_Day_Minus_1_Pre_Challenge_vec <- c()
   HAI_Day_28_Post_Challenge_vec <- c()
   HAI_Day_28_Change_vec <- c()
+  NAI_Day_Minus_1_Pre_Challenge_vec <- c()
+  NAI_Day_28_Post_Challenge_vec <- c()
+  NAI_Day_28_Change_vec <- c()
   for(current_row_index in 1:nrow(metadata)) {
     current_row <- metadata[current_row_index,]
     current_subject_id <- current_row$subject_id
+    # Immunogenicity
     current_immunogenicity_row <- immunogenicity_data[immunogenicity_data$subject_id == current_subject_id,]
     if(nrow(current_immunogenicity_row) == 0) {
       print(current_subject_id)
@@ -26,6 +30,22 @@ add_antibody_titer_info <- function(metadata, immunogenicity_data) {
     HAI_Day_Minus_1_Pre_Challenge_vec <- c(HAI_Day_Minus_1_Pre_Challenge_vec, current_immunogenicity_row$HAI_Challenge_Day.1_Result_Analysis.value)
     HAI_Day_28_Post_Challenge_vec <- c(HAI_Day_28_Post_Challenge_vec, current_immunogenicity_row$HAI_Challenge_Day28_Result_Analysis.value)
     HAI_Day_28_Change_vec <- c(HAI_Day_28_Change_vec, current_immunogenicity_row$HAI_Challenge_Change.from.Baseline)
+    # NAI
+    current_nai_rows <- nai_data[nai_data$SUBJECT_ID == current_subject_id,]
+    if(nrow(current_nai_rows) == 0) {
+      print("Subject ID missing for NAI!")
+      print(current_subject_id)
+      NAI_Day_Minus_1_Pre_Challenge_vec <- c(NAI_Day_Minus_1_Pre_Challenge_vec, 0)
+      NAI_Day_28_Post_Challenge_vec <- c(NAI_Day_28_Post_Challenge_vec, 0)
+      NAI_Day_28_Change_vec <- c(NAI_Day_28_Change_vec, 0)
+    } else {
+      current_nai_pre_challenge_row <- current_nai_rows[current_nai_rows$TIME_POINT == "D-1",]
+      NAI_Day_Minus_1_Pre_Challenge_vec <- c(NAI_Day_Minus_1_Pre_Challenge_vec, current_nai_pre_challenge_row$GMT_NAI_TITER)
+      current_nai_post_challenge_row <- current_nai_rows[current_nai_rows$TIME_POINT == "D28",]
+      NAI_Day_28_Post_Challenge_vec <- c(NAI_Day_28_Post_Challenge_vec, current_nai_post_challenge_row$GMT_NAI_TITER)
+      NAI_day_28_change <- current_nai_post_challenge_row$GMT_NAI_TITER - current_nai_pre_challenge_row$GMT_NAI_TITER
+      NAI_Day_28_Change_vec <- c(NAI_Day_28_Change_vec, NAI_day_28_change)
+    }
   }
   metadata$MNT_Baseline <- MNT_Baseline_vec
   metadata$MNT_Day_Minus_1_Pre_Challenge <- MNT_Day_Minus_1_Pre_Challenge_vec
@@ -34,6 +54,9 @@ add_antibody_titer_info <- function(metadata, immunogenicity_data) {
   metadata$HAI_Day_Minus_1_Pre_Challenge <- HAI_Day_Minus_1_Pre_Challenge_vec
   metadata$HAI_Day_28_Post_Challenge <- HAI_Day_28_Post_Challenge_vec
   metadata$HAI_Day_28_Change <- HAI_Day_28_Change_vec
+  metadata$NAI_Day_Minus_1_Pre_Challenge <- NAI_Day_Minus_1_Pre_Challenge_vec
+  metadata$NAI_Day_28_Post_Challenge <- NAI_Day_28_Post_Challenge_vec
+  metadata$NAI_Day_28_Change <- NAI_Day_28_Change_vec
   return(metadata)
 }
 
@@ -51,7 +74,9 @@ hvl_full_time_series_placebo_second_period_wayne_classifier <- apply_wayne_class
 # So I think it's a combination of sharp viral load split AND too few data points
 both_full_time_series_placebo_second_period_metadata <- both_full_time_series_placebo_metadata[both_full_time_series_placebo_metadata$period == "2",]
 both_full_time_series_placebo_second_period_metadata <- both_full_time_series_placebo_second_period_metadata[both_full_time_series_placebo_second_period_metadata$time_point != "2_D_minus_2",]
-both_full_time_series_placebo_second_period_metadata <- add_antibody_titer_info(both_full_time_series_placebo_second_period_metadata, immunogenicity_data)
+both_full_time_series_placebo_second_period_metadata <- add_antibody_titer_info(both_full_time_series_placebo_second_period_metadata, immunogenicity_data, nai_data)
+# Remove NAI outlier?
+# both_full_time_series_placebo_second_period_metadata <- both_full_time_series_placebo_second_period_metadata[both_full_time_series_placebo_second_period_metadata$subject_id != "559611060bb962b9",]
 both_placebo_second_period_wayne_classifier <- apply_wayne_classifier(gene_counts_normalized_without_scale, both_full_time_series_placebo_second_period_metadata, contrast = c("2_D_minus_1", "2_D2", "2_D5", "2_D8", "2_D28"))
 
 # Binary D2 vs D-1 for placebo - doesn't work because there are too few observations
