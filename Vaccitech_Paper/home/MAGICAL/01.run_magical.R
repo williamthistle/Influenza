@@ -132,14 +132,12 @@ write.table(overall_magical_df, file = paste0(MAGICAL_hvl_placebo_output_dir, "M
 
 # overall_magical_df <- read.table(paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output_with_stage_1_info.tsv"), sep = "\t", header = TRUE)
 
-
-overall_magical_df_with_pseudobulk_correction <- overall_magical_df[overall_magical_df$sc_p_val < 0.05,]
-overall_magical_df_with_pseudobulk_correction <- overall_magical_df_with_pseudobulk_correction[overall_magical_df_with_pseudobulk_correction$pseudobulk_p_val < 0.05 | overall_magical_df_with_pseudobulk_correction$pseudobulk_robust_p_val < 0.05,]
+# overall_magical_df_with_pseudobulk_correction <- overall_magical_df[overall_magical_df$sc_p_val < 0.05,]
+# overall_magical_df_with_pseudobulk_correction <- overall_magical_df_with_pseudobulk_correction[overall_magical_df_with_pseudobulk_correction$pseudobulk_p_val < 0.05 | overall_magical_df_with_pseudobulk_correction$pseudobulk_robust_p_val < 0.05,]
 
 # Two new tables!
 # magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
 magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df)
-magical_gene_overlap_df <- magical_gene_overlap_df[magical_gene_overlap_df$Cell_Type %in% c("CD16_Mono", "CD14_Mono", "cDC", "pDC", "NK", "NK_CD56bright"),]
 magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
 
 
@@ -154,7 +152,8 @@ for(cell_type in unique(magical_gene_overlap_df$Cell_Type)) {
 set_names <- unique(magical_gene_overlap_df$Cell_Type)
 set_names <- gsub("_", " ", set_names)
 names(sets) <- set_names
-upset(fromList(sets), order.by = "freq", nsets = 11)
+UpSetR::upset(UpSetR::fromList(sets), order.by = "freq", sets = rev(c("CD14 Mono", "CD16 Mono", "cDC", "pDC", "NK")), keep.order = TRUE,
+              mainbar.y.label = "Gene Intersections", sets.x.label = "Total Genes Per Cell Type")
 
 # Find overlapping circuits between cell types
 overlapping_circuits_df <- find_overlapping_circuits(overall_magical_df)
@@ -170,9 +169,6 @@ ggplot(overlapping_circuit_cell_type_df, aes(x = Var2, y = Var1, fill = value, l
   scale_fill_gradient(low = "white", high = "red") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-# TODO: Create UpsetPlot for genes like Aliza paper
-# 
 
 # Create targets for each cell type
 magical_tf_vs_cell_type_df <- create_tf_vs_cell_type_df(overall_magical_df)

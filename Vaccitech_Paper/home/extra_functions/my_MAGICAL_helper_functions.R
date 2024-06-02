@@ -329,7 +329,8 @@ find_tfs_in_scRNA_data <- function(tf_table, deg_table) {
   found_in_scRNA <- c()
   for(row_index in 1:nrow(tf_table)) {
     current_tf_row <- tf_table[row_index,]
-    deg_table_subset <- deg_table[deg_table$Cell_Type == current_tf_row$Cell_Type,]
+    current_tf_cell_type <- gsub("_", " ", current_tf_row$Cell_Type)
+    deg_table_subset <- deg_table[deg_table$Cell_Type == current_tf_cell_type,]
     found_in_scRNA <- c(found_in_scRNA, ifelse(current_tf_row$TF %in% deg_table_subset$Gene_Name, TRUE, FALSE))
   }
   tf_table$found_in_scRNA <- found_in_scRNA
@@ -337,15 +338,39 @@ find_tfs_in_scRNA_data <- function(tf_table, deg_table) {
 }
 
 create_tf_heatmap_plot <- function(tf_table) {
-  tf_table_subset <- tf_table
-  tf_table_subset <- tf_table_subset[tf_table_subset$Cell_Type %in% c("B", "CD14_Mono",
-                                                                      "CD4_Memory", "CD8_Memory", "NK"),]
-  # tf_table_subset <- tf_table[tf_table$Count >= 15,]
-  ggplot(tf_table_subset, aes(Cell_Type, TF, fill = Count)) + 
-    geom_tile() + scale_fill_gradient(low="white", high="red") + 
-    theme(axis.title.y=element_blank(),
-          axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
+  
+  # Subset to top 5 TF for each cell type
+  #tf_table <- tf_table %>%
+  #  group_by(Cell_Type) %>%
+  #  slice_head(n = 5)
+  
+  interesting_tfs <- c("BACH1", "BACH2", "CTCF", "FOS", "FOSB", "FOSL1", "FOSL2", "JUN", "JUNB", "JUND", "PATZ1", "PLAG1", "ZFX", "ZNF143", "ZNF281", "ZNF589")
+  
+  tf_table <- tf_table[tf_table$TF %in% interesting_tfs,]
+  
+  tf_table$Cell_Type <- gsub("_", " ",  tf_table$Cell_Type)
+  tf_table$Cell_Type <- factor(tf_table$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "cDC", "pDC"))
+  #ggplot(tf_table, aes(Cell_Type, TF, fill = Count)) + 
+  #  geom_tile() + scale_fill_gradient(low="white", high="red") + 
+  #  theme(axis.title.y=element_blank(),
+  #        axis.ticks.y=element_blank())
+  
+  ggplot(tf_table, aes(Cell_Type, TF, fill = Count)) + 
+    geom_tile() + scale_fill_gradientn(
+      colors = c("cornsilk", "lightcoral", "red"),
+      values = scales::rescale(c(0, 20, 100))) +
+    theme_minimal() +
+    theme(
+      panel.background = element_rect(fill = "white", color = NA), # Set background to white
+      panel.grid.major = element_blank(), # Remove major grid lines
+      panel.grid.minor = element_blank(),  # Remove minor grid lines
+      plot.title = element_text(hjust = 0.5)
+    ) +
+    labs(title = "Heatmap of TF Count by Cell Type",
+         x = "Transcription Factor (TF)",
+         y = "Cell Type",
+         fill = "Count")
+
 }
 
 find_overlapping_circuits <- function(magical_table) {

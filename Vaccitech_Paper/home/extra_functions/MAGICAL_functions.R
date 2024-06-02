@@ -215,7 +215,11 @@ Candidate_circuits_construction_with_TAD <- function(loaded_data, TAD_file_path)
   #pseudobulk ATAC data is calculated for model initialization
   ATAC_count=matrix(0,nrow=nrow(scATAC_read_count_matrix), ncol=length(Common_samples))
   for (s in 1:length(Common_samples)){
-    ATAC_count[,s]=rowSums(scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])])
+    if(is.null(ncol(scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])]))) {
+      ATAC_count[,s] <- scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])]
+    } else {
+      ATAC_count[,s] <- rowSums(scATAC_read_count_matrix[,which(scATAC_cells$subject_ID==Common_samples[s])])
+    }
   }
   colnames(ATAC_count)<-Common_samples
   print(nrow(ATAC_count))
