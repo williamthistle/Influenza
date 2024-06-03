@@ -90,7 +90,7 @@ add_info_stage_1_MAGICAL <- function(magical_table, deg_table) {
   return(magical_table)
 }
 
-create_magical_gene_overlap_df <- function(magical_table, bulk_LRT = NULL) {
+create_magical_gene_overlap_df <- function(magical_table, bulk_D5 = NULL, bulk_D8 = NULL) {
   # Grab mintchip data
   pos_mintchip_das <- list()
   neg_mintchip_das <- list()
@@ -119,7 +119,10 @@ create_magical_gene_overlap_df <- function(magical_table, bulk_LRT = NULL) {
   neg_H3K36me3 <- c()
   pos_snME <- c()
   neg_snME <- c()
-  found_in_bulk_LRT <- c()
+  bulk_D5_adj_p_value <- c()
+  bulk_D5_fc <- c()
+  bulk_D8_adj_p_value <- c()
+  bulk_D8_fc <- c()
   # Parse MAGICAL table
   for(current_index in 1:nrow(magical_table)) {
     # Grab current gene
@@ -174,7 +177,32 @@ create_magical_gene_overlap_df <- function(magical_table, bulk_LRT = NULL) {
     }
     pos_snME <- c(pos_snME, current_pos_snME)
     neg_snME <- c(neg_snME, current_neg_snME)
-    found_in_bulk_LRT <- c(found_in_bulk_LRT, ifelse(current_gene %in% rownames(bulk_LRT), TRUE, FALSE))
+    # Day 5 bulk
+    if(current_gene %in% rownames(bulk_D5[[2]])) {
+      current_gene_bulk_info <- bulk_D5[[2]][rownames(bulk_D5[[2]]) %in% current_gene,]
+      bulk_D5_adj_p_value <- c(bulk_D5_adj_p_value, current_gene_bulk_info$padj)
+      bulk_D5_fc <- c(bulk_D5_fc, current_gene_bulk_info$log2FoldChange)
+    } else if(current_gene %in% rownames(bulk_D5[[8]])) {
+      current_gene_bulk_info <- bulk_D5[[8]][rownames(bulk_D5[[8]]) %in% current_gene,]
+      bulk_D5_adj_p_value <- c(bulk_D5_adj_p_value, current_gene_bulk_info$padj)
+      bulk_D5_fc <- c(bulk_D5_fc, current_gene_bulk_info$log2FoldChange)
+    } else {
+      bulk_D5_adj_p_value <- c(bulk_D5_adj_p_value, 1)
+      bulk_D5_fc <- c(bulk_D5_fc, 0)
+    }
+    # Day 8 bulk
+    if(current_gene %in% rownames(bulk_D8[[2]])) {
+      current_gene_bulk_info <- bulk_D8[[2]][rownames(bulk_D8[[2]]) %in% current_gene,]
+      bulk_D8_adj_p_value <- c(bulk_D8_adj_p_value, current_gene_bulk_info$padj)
+      bulk_D8_fc <- c(bulk_D8_fc, current_gene_bulk_info$log2FoldChange)
+    } else if(current_gene %in% rownames(bulk_D8[[8]])) {
+      current_gene_bulk_info <- bulk_D8[[8]][rownames(bulk_D8[[8]]) %in% current_gene,]
+      bulk_D8_adj_p_value <- c(bulk_D8_adj_p_value, current_gene_bulk_info$padj)
+      bulk_D8_fc <- c(bulk_D8_fc, current_gene_bulk_info$log2FoldChange)
+    } else {
+      bulk_D8_adj_p_value <- c(bulk_D8_adj_p_value, 1)
+      bulk_D8_fc <- c(bulk_D8_fc, 0)
+    }
   }
   magical_gene_overlap_df <- data.frame(Cell_Type = magical_table$Cell_Type, Gene_Name = magical_table$Gene_symbol,
                                         H3K4me1_pos = pos_H3K4me1, H3K4me1_neg = neg_H3K4me1, 
@@ -183,7 +211,8 @@ create_magical_gene_overlap_df <- function(magical_table, bulk_LRT = NULL) {
                                         H3K27Ac_pos = pos_H3K27Ac, H3K27Ac_neg = neg_H3K27Ac,
                                         H3K27me3_pos = pos_H3K27me3, H3K27me3_neg = neg_H3K27me3,
                                         H3K36me3_pos = pos_H3K36me3, H3K36me3_neg = neg_H3K36me3,
-                                        pos_snME = pos_snME, neg_snME = neg_snME, bulk_LRT = found_in_bulk_LRT)
+                                        pos_snME = pos_snME, neg_snME = neg_snME, bulk_D5_adj_p_value = bulk_D5_adj_p_value,
+                                        bulk_D5_fc = bulk_D5_fc, bulk_D8_adj_p_value = bulk_D8_adj_p_value, bulk_D8_fc = bulk_D8_fc)
   return(magical_gene_overlap_df)
 }
 
@@ -307,6 +336,50 @@ create_magical_site_overlap_df <- function(magical_table) {
   return(magical_site_overlap_df)
 }
 
+create_tf_targets_df <- function(magical_table) {
+  split_df <- magical_table %>%
+    mutate(TFs.binding.prob. = strsplit(as.character(TFs.binding.prob.), ",")) %>%
+    unnest(TFs.binding.prob.) %>%
+    mutate(TFs.binding.prob. = trimws(TFs.binding.prob.)) %>%
+    filter(!is.na(TFs.binding.prob.))
+  
+  split_df <- subset(split_df, !grepl("^\\(", TFs.binding.prob.))
+  TF_fc <- c()
+  TF_sc_pval <- c()
+  TF_pseudobulk_pval <- c()
+  cell_types <- unique(split_df$Cell_Type)
+  unfiltered_sc_results <- list()
+  unfiltered_pseudobulk_results <- list()
+  for(cell_type in cell_types) {
+    current_unfiltered_sc_result <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", 
+                                                      cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
+                                               sep = "\t", header = TRUE)
+    current_unfiltered_pseudobulk_result <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", 
+                                                      cell_type, "-time_point-controlling_for_subject_id_pseudobulk_unfiltered.tsv"),
+                                               sep = "\t", header = TRUE)
+    unfiltered_sc_results[[cell_type]] <- current_unfiltered_sc_result
+    unfiltered_pseudobulk_results[[cell_type]] <- current_unfiltered_pseudobulk_result
+  }
+  for(current_row_index in 1:nrow(split_df)) {
+    current_row <- split_df[current_row_index,]
+    current_cell_type <- current_row$Cell_Type
+    current_sc_results <- unfiltered_sc_results[[current_cell_type]]
+    current_sc_results <- current_sc_results[rownames(current_sc_results) == current_row$TFs.binding.prob.,]
+    current_pseudobulk_results <- unfiltered_pseudobulk_results[[current_cell_type]]
+    current_pseudobulk_results <- current_pseudobulk_results[rownames(current_pseudobulk_results) == current_row$TFs.binding.prob.,]
+    TF_fc <- c(TF_fc, current_sc_results$avg_log2FC)
+    TF_sc_pval <- c(TF_sc_pval, current_sc_results$p_val_adj)
+    if(is.na(current_pseudobulk_results$pvalue)) {
+      current_pseudobulk_results$pvalue <- 1
+    }
+    TF_pseudobulk_pval <- c(TF_pseudobulk_pval, current_pseudobulk_results$pvalue)
+  }
+  split_df$TF_fc <- TF_fc
+  split_df$TF_sc_pval <- TF_sc_pval
+  split_df$TF_pseudobulk_pval <- TF_pseudobulk_pval
+  return(split_df)
+}
+
 create_tf_vs_cell_type_df <- function(magical_table) {
   split_df <- magical_table %>%
     mutate(TFs.binding.prob. = strsplit(as.character(TFs.binding.prob.), ",")) %>%
@@ -366,10 +439,10 @@ create_tf_heatmap_plot <- function(tf_table) {
       panel.grid.minor = element_blank(),  # Remove minor grid lines
       plot.title = element_text(hjust = 0.5)
     ) +
-    labs(title = "Heatmap of TF Count by Cell Type",
-         x = "Transcription Factor (TF)",
-         y = "Cell Type",
-         fill = "Count")
+    labs(title = "Heatmap of TF Target Count by Cell Type",
+         x = "Cell Type",
+         y = "TF",
+         fill = "Target Count")
 
 }
 

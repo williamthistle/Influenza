@@ -137,7 +137,7 @@ write.table(overall_magical_df, file = paste0(MAGICAL_hvl_placebo_output_dir, "M
 
 # Two new tables!
 # magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
-magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df)
+magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results)
 magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
 
 
@@ -169,6 +169,11 @@ ggplot(overlapping_circuit_cell_type_df, aes(x = Var2, y = Var1, fill = value, l
   scale_fill_gradient(low = "white", high = "red") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Create targets for each gene
+magical_tf_vs_gene_df <- create_tf_targets_df(overall_magical_df)
+# Only keep TFs that are found to be significant in scRNA-seq
+magical_tf_vs_gene_df_significant_tfs <- magical_tf_vs_gene_df[magical_tf_vs_gene_df$TF_sc_pval < 0.05 & magical_tf_vs_gene_df$TF_pseudobulk_pval < 0.05,]
 
 # Create targets for each cell type
 magical_tf_vs_cell_type_df <- create_tf_vs_cell_type_df(overall_magical_df)
