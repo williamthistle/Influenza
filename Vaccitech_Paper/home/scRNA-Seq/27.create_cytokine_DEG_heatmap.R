@@ -5,7 +5,7 @@ source(paste0(base_dir, "00.setup.R"))
 innate_scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type %in% innate_cell_types,]
 
 heatmap_genes <- c("CCL3", "CX3CR1", "CXCL16", "NFIL3", "IL32", "IRAK3", "IL1RAP", "IRF2", "IRF7", "IFNGR1", "IFNG", "JUN", "JUNB", 
-                   "JUND", "FOS", "FOSL1", "FOSL2")
+                   "FOSL2")
 
 cell_type_vector <- c()
 gene_name_vector <- c()
@@ -45,7 +45,7 @@ cytokine_heatmap_df$Cell_Type <- factor(cytokine_heatmap_df$Cell_Type, levels = 
 
 ggplot() + 
   geom_raster(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
-  geom_text(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.35, size = 6) + scale_fill_gradient2(low="navy", mid="white", high="red") +
-  theme_classic() + labs(title = "Fold Change for Cytokine-Related Genes in Innate Immune Cell Types",
+  geom_text(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.40, size = 6) + scale_fill_gradient2(low="navy", mid="white", high="red") +
+  theme_classic() + labs(title = "Fold Change for Cytokine-Related DEG in Innate Immune Cell Types",
                       x = "Cell Type",
                       y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5))

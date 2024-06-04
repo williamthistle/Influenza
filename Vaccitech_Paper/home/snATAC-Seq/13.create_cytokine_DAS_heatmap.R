@@ -72,13 +72,59 @@ cytokine_das_heatmap_df <- data.frame(Cell_Type = cell_type_vector, Gene_Name = 
                                   start = start_vector, end = end_vector, fold_change = fold_change_vector, 
                                   significant = significance_vector)
 
-cytokine_das_heatmap_df$Gene_Name <- factor(cytokine_heatmap_df$Gene_Name, levels = unique(cytokine_heatmap_df$Gene_Name))
-cytokine_das_heatmap_df$Cell_Type <- factor(cytokine_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "NK_CD56bright", "cDC", "pDC"))
+cytokine_das_heatmap_df <- cytokine_das_heatmap_df[!is.na(cytokine_das_heatmap_df$significant),]
 
+cytokine_das_heatmap_df$cytokine_type <- c("Interferon", "Interferon", "Interferon",
+                                           "Interleukin", "Interleukin", "Interleukin",
+                                           "Interferon", "Interferon", "Interleukin",
+                                           "Interleukin", "Interferon", "Interleukin",
+                                           "Interferon", "Interferon", "Interleukin",
+                                           "Interferon", "Interferon", "Interferon",
+                                           "Interleukin", "Interleukin", "Interleukin",
+                                           "Interleukin")
+
+# Remove pDC because there's only one
+cytokine_das_heatmap_df <- cytokine_das_heatmap_df[cytokine_das_heatmap_df$Cell_Type != "pDC",]
+
+cytokine_das_plots <- list()
+
+for(cell_type in unique(cytokine_das_heatmap_df$Cell_Type)) {
+  current_cytokine_das_heatmap_df <- cytokine_das_heatmap_df[cytokine_das_heatmap_df$Cell_Type == cell_type,]
+  current_cytokine_das_heatmap_df <- current_cytokine_das_heatmap_df[rev(order(current_cytokine_das_heatmap_df$fold_change)),]
+  current_cytokine_das_heatmap_df$Gene_Name <- factor(current_cytokine_das_heatmap_df$Gene_Name, levels = current_cytokine_das_heatmap_df$Gene_Name)
+  current_plot <- ggplot(current_cytokine_das_heatmap_df, aes(x = Gene_Name, y = fold_change, fill = cytokine_type)) +
+    geom_col() + geom_text(aes(label = significant,
+                          vjust = ifelse(fold_change >= 0, 0, 1)),
+                           size = 6) + theme_bw() + ylim(-4, 4) + theme(text = element_text(size = 16)) +
+    labs(title = cell_type,
+         x = "Gene Name",
+         y = "Fold Change", fill = "Cytokine Type") + theme(plot.title = element_text(hjust = 0.5)) # + theme(legend.position="none")
+  
+  cytokine_das_plots[[cell_type]] <- current_plot
+}
+
+ggsave("C:/Users/willi/Desktop/test_with_legend.png", plot = patchwork::wrap_plots(cytokine_das_plots, ncol = 2, nrow = 2), height = 10, width = 14)
+  
+  
+  
+  geom_text(aes(label = ifelse(significant, "*", ""), group = Treatment), 
+            position = position_dodge(width = .9), vjust = -.1, size = 20 / .pt) +
+  theme_classic() +
+  scale_fill_grey() +
+  labs(x = "", y = "%") +
+  facet_wrap(~Group) +
+  ylim(0, 40)
+
+
+
+
+
+cytokine_das_heatmap_df$Gene_Name <- factor(cytokine_das_heatmap_df$Gene_Name, levels = c("IRF1", "IRF4", "IRF5", "IRF8", "IRF2BPL", "IFNGR1", "IFI6", "IFI27L1", "IFI35", "IFI44L", "IFITM3", "IL1B", "IL20", "IL2RB", "IL5RA", "IL6R (Site 1)", "IL6R (Site 2)", "IL15RA", "IL17RA", "IL21R", "IL1RN", "IRAK1BP1"))
+cytokine_das_heatmap_df$Cell_Type <- factor(cytokine_das_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "NK_CD56bright", "cDC", "pDC"))
 
 ggplot() + 
-  geom_raster(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
-  geom_text(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.35, size = 6) + scale_fill_gradient2(low="navy", mid="white", high="red") +
-  theme_classic() + labs(title = "Fold Change for Cytokine-Related Genes in Innate Immune Cell Types",
+  geom_raster(data = cytokine_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
+  geom_text(data = cytokine_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.45, size = 6) + scale_fill_gradient2(low="navy", mid="white", high="red") +
+  theme_classic() + labs(title = "Fold Change for Cytokine-Related DAS (Promoter Regions) in Innate Immune Cell Types",
                       x = "Cell Type",
                       y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5))
