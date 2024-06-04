@@ -2,27 +2,59 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-innate_scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type %in% innate_cell_types,]
-
-heatmap_genes <- c("IRF1", "IRF4", "IRF5", "IRF8", "IRF2BPL", "IFNGR1", "IFI6", "IFI27L1", "IFI35", "IFI44L", "IFITM3", "IL1B", "IL20", "IL2RB", "IL5RA", "IL6R", "IL15RA", "IL17RA", "IL21R", "IL1RN", "IRAK1BP1")
+cytokine_das_coords <- read.table(paste0(scATAC_hvl_placebo_das_dir, "cytokine_DAS_coordinates.tsv"), sep = "\t", header = TRUE)
+innate_cell_types_atac <- c("CD14 Mono", "CD16 Mono", "cDC", "pDC", "NK")
 
 cell_type_vector <- c()
 gene_name_vector <- c()
+chr_vector <- c()
+start_vector <- c()
+end_vector <- c()
 fold_change_vector <- c()
 significance_vector <- c()
 
-for(innate_cell_type in innate_cell_types) {
-  innate_cell_type_for_file_name <- sub(" ", "_", innate_cell_type)
-  current_scRNA_hvl_placebo_degs <- innate_scRNA_hvl_placebo_degs[innate_scRNA_hvl_placebo_degs$Cell_Type == innate_cell_type,]
-  current_unfiltered_hvl_placebo_degs <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", innate_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
-                                                           sep = "\t", header = TRUE)
-  for(heatmap_gene in heatmap_genes) {
-    current_heatmap_gene_unfiltered_data <- current_unfiltered_hvl_placebo_degs[rownames(current_unfiltered_hvl_placebo_degs) == heatmap_gene,]
+for(current_row in 1:nrow(cytokine_das_coords)) {
+  # Grab info associated with current site
+  current_coords <- cytokine_das_coords[current_row,]
+  current_chr <- current_coords$chr
+  current_start <- current_coords$start
+  current_end <- current_coords$end
+  current_gene <- current_coords$associated_gene
+  for(innate_cell_type in innate_cell_types_atac) {
+    # Read in relevant files
+    innate_cell_type_for_file_name <- sub(" ", "_", innate_cell_type)
+    current_scATAC_hvl_placebo_upregulated_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "annotated/D28-vs-D_minus_1-degs-", innate_cell_type_for_file_name, "-time_point-controlling_for_subject_id_final_pct_0.01_fc_0.1_upregulated_promoter_subset_annotated.tsv"),
+                                                 sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+    current_scATAC_hvl_placebo_downregulated_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "annotated/D28-vs-D_minus_1-degs-", innate_cell_type_for_file_name, "-time_point-controlling_for_subject_id_final_pct_0.01_fc_0.1_downregulated_promoter_subset_annotated.tsv"),
+                                                             sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+    current_unfiltered_hvl_placebo_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "annotated/D28-vs-D_minus_1-degs-", innate_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered_annotated.tsv"),
+                                                     sep = "\t", header = TRUE, comment.char = "", quote = "\"")
+    # Add relevant info for plotting
     cell_type_vector <- c(cell_type_vector, innate_cell_type)
-    gene_name_vector <- c(gene_name_vector, heatmap_gene)
-    fold_change_vector <- c(fold_change_vector, current_heatmap_gene_unfiltered_data$avg_log2FC)
-    if(heatmap_gene %in% current_scRNA_hvl_placebo_degs$Gene_Name) {
-      current_p_value <- current_scRNA_hvl_placebo_degs[current_scRNA_hvl_placebo_degs$Gene_Name == heatmap_gene,]$sc_pval_adj
+    gene_name_vector <- c(gene_name_vector, current_gene)
+    chr_vector <- c(chr_vector, current_chr)
+    start_vector <- c(start_vector, current_start)
+    end_vector <- c(end_vector, current_end)
+    unfiltered_info <- current_unfiltered_hvl_placebo_das[current_unfiltered_hvl_placebo_das$seqnames == current_chr & current_unfiltered_hvl_placebo_das$start == current_start & current_unfiltered_hvl_placebo_das$end == current_end,]
+    unfiltered_info <- unfiltered_info[unfiltered_info$pct.1 > 0 & unfiltered_info$pct.2 > 0,]
+    if(nrow(unfiltered_info) > 0) {
+      fold_change_vector <- c(fold_change_vector, unfiltered_info$avg_log2FC)
+    } else {
+      fold_change_vector <- c(fold_change_vector, 0)
+    }
+    if(current_chr %in% current_scATAC_hvl_placebo_upregulated_das$seqnames && current_start %in% current_scATAC_hvl_placebo_upregulated_das$start && current_end %in% current_scATAC_hvl_placebo_upregulated_das$end) {
+      current_info <- current_scATAC_hvl_placebo_upregulated_das[current_scATAC_hvl_placebo_upregulated_das$seqnames == current_chr & current_scATAC_hvl_placebo_upregulated_das$start == current_start & current_scATAC_hvl_placebo_upregulated_das$end == current_end,]
+      current_p_value <- current_info$sc_pval
+      if(current_p_value < 0.001) {
+        significance_vector <- c(significance_vector, "***")
+      } else if(current_p_value < 0.01) {
+        significance_vector <- c(significance_vector, "**")
+      } else if(current_p_value < 0.05) {
+        significance_vector <- c(significance_vector, "*")
+      }
+    } else if(current_chr %in% current_scATAC_hvl_placebo_downregulated_das$seqnames && current_start %in% current_scATAC_hvl_placebo_downregulated_das$start && current_end %in% current_scATAC_hvl_placebo_downregulated_das$end) {
+      current_info <- current_scATAC_hvl_placebo_downregulated_das[current_scATAC_hvl_placebo_downregulated_das$seqnames == current_chr & current_scATAC_hvl_placebo_downregulated_das$start == current_start & current_scATAC_hvl_placebo_downregulated_das$end == current_end,]
+      current_p_value <- current_info$sc_pval
       if(current_p_value < 0.001) {
         significance_vector <- c(significance_vector, "***")
       } else if(current_p_value < 0.01) {
@@ -36,10 +68,12 @@ for(innate_cell_type in innate_cell_types) {
   }
 }
 
-cytokine_heatmap_df <- data.frame(Cell_Type = cell_type_vector, Gene_Name = gene_name_vector, fold_change = fold_change_vector, significant = significance_vector)
+cytokine_das_heatmap_df <- data.frame(Cell_Type = cell_type_vector, Gene_Name = gene_name_vector, chr = chr_vector,
+                                  start = start_vector, end = end_vector, fold_change = fold_change_vector, 
+                                  significant = significance_vector)
 
-cytokine_heatmap_df$Gene_Name <- factor(cytokine_heatmap_df$Gene_Name, levels = unique(cytokine_heatmap_df$Gene_Name))
-cytokine_heatmap_df$Cell_Type <- factor(cytokine_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "NK_CD56bright", "cDC", "pDC"))
+cytokine_das_heatmap_df$Gene_Name <- factor(cytokine_heatmap_df$Gene_Name, levels = unique(cytokine_heatmap_df$Gene_Name))
+cytokine_das_heatmap_df$Cell_Type <- factor(cytokine_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "NK_CD56bright", "cDC", "pDC"))
 
 
 ggplot() + 

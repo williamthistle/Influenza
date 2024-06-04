@@ -26,8 +26,8 @@ for(snATAC_cell_type in snATAC_cell_types) {
   }
 }
 
-# Step 2: Remove any peaks that don't have 1% of cells in BOTH pct.1 and pct.2
-# This eliminates weird outliers (e.g., crazy high FC due to 0 min.pct value for one group)
+# Step 2: Remove any peaks that have 0 min.pct value for one group
+# This eliminates weird outliers (e.g., crazy high FC)
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
   for(analysis_type in c("sc", "final")) {
@@ -47,108 +47,126 @@ if (!dir.exists(snATAC_peak_annotated_dir)) {dir.create(snATAC_peak_annotated_di
 
 for(snATAC_cell_type in snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
+  # Read in full list of unfiltered SC peaks
+  differential_analysis_results_file <- paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv")
+  differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
+  current_peaks <- rownames(differential_analysis_results)
+  # Annotate with chromosome info for annotation
+  chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
+  start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
+  end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
+  differential_analysis_results$seqnames <- chromosomes
+  differential_analysis_results$start <- start_coords
+  differential_analysis_results$end <- end_coords
+  # Annotate full list of unfiltered SC peaks
+  differential_analysis_results_annotated <- annotatePeak(makeGRangesFromDataFrame(differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
+  differential_analysis_results_annotated <- as.data.frame(differential_analysis_results_annotated)
+  # Add info from data (FC / min.pct / pval)
+  differential_analysis_results_annotated$avg_log2FC <- differential_analysis_results$avg_log2FC
+  differential_analysis_results_annotated$pct.1 <- differential_analysis_results$pct.1
+  differential_analysis_results_annotated$pct.2 <- differential_analysis_results$pct.2
+  differential_analysis_results_annotated$p_val <- differential_analysis_results$p_val
+  # Write annotated peaks to file
+  write.table(differential_analysis_results_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered_annotated.tsv"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  # Write promoter subset to file
+  write.table(differential_analysis_results_annotated[differential_analysis_results_annotated$annotation %in% promoter_terms,], file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered_promoter_subset_annotated.tsv"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  # Split into upregulated and downregulated peaks and write to file
+  upregulated_differential_analysis_results_annotated <- differential_analysis_results_annotated[differential_analysis_results_annotated$avg_log2FC > 0,]
+  downregulated_differential_analysis_results_annotated <- differential_analysis_results_annotated[differential_analysis_results_annotated$avg_log2FC < 0,]
+  write.table(upregulated_differential_analysis_results_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered_upregulated_annotated.tsv"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(upregulated_differential_analysis_results_annotated[upregulated_differential_analysis_results_annotated$annotation %in% promoter_terms,], file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered_upregulated_promoter_subset_annotated.tsv"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(downregulated_differential_analysis_results_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered_downregulated_annotated.tsv"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(downregulated_differential_analysis_results_annotated[downregulated_differential_analysis_results_annotated$annotation %in% promoter_terms,], file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_sc_unfiltered_downregulated_promoter_subset_annotated.tsv"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  # For remaining analysis, we will split into sc and final as well as by min.pct
   for(analysis_type in c("sc", "final")) {
     for(pct in c(0.01, 0.05, 0.1)) {
+      # Read in current set of peaks
       differential_analysis_results_file <- paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, ".tsv")
       differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
+      # Grab peak names
       if(analysis_type == "final") {
         current_peaks <- differential_analysis_results$Peak_Name
       } else {
         current_peaks <- rownames(differential_analysis_results)
       }
+      # Annotate with chromosome info for annotation
       chromosomes <- sapply(strsplit(current_peaks, "-"), `[`, 1)
       start_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 2))
       end_coords <- as.numeric(sapply(strsplit(current_peaks, "-"), `[`, 3))
       differential_analysis_results$seqnames <- chromosomes
       differential_analysis_results$start <- start_coords
       differential_analysis_results$end <- end_coords
+      # Annotate full list of peaks
+      differential_analysis_results_annotated <- annotatePeak(makeGRangesFromDataFrame(differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
+      differential_analysis_results_annotated <- as.data.frame(differential_analysis_results_annotated)
+      # Add info from data (FC / min.pct / pval / pseudobulk pval)
       if(analysis_type == "final") {
-        upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC > 0,]
-        downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$sc_log2FC < 0,]
+        differential_analysis_results_annotated$sc_pval <- differential_analysis_results$sc_pval
+        differential_analysis_results_annotated$sc_log2FC <- differential_analysis_results$sc_log2FC
+        differential_analysis_results_annotated$pseudo_bulk_pval <- differential_analysis_results$pseudo_bulk_pval
+        differential_analysis_results_annotated$pseudo_bulk_robust_pval <- differential_analysis_results$pseudo_bulk_robust_pval
+        differential_analysis_results_annotated$pseudo_bulk_log2FC <- differential_analysis_results$pseudo_bulk_log2FC
+        differential_analysis_results_annotated$pct.1 <- differential_analysis_results$pct.1
+        differential_analysis_results_annotated$pct.2 <- differential_analysis_results$pct.2
       } else {
-        upregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$avg_log2FC > 0,]
-        downregulated_differential_analysis_results <- differential_analysis_results[differential_analysis_results$avg_log2FC < 0,]
+        differential_analysis_results_annotated$avg_log2FC <- differential_analysis_results$avg_log2FC
+        differential_analysis_results_annotated$pct.1 <- differential_analysis_results$pct.1
+        differential_analysis_results_annotated$pct.2 <- differential_analysis_results$pct.2
+        differential_analysis_results_annotated$p_val_adj <- differential_analysis_results$p_val_adj
       }
-      for(fc_threshold in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
+      # Write annotated peaks to file
+      write.table(differential_analysis_results_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_annotated.tsv"), 
+                  sep = "\t", quote = FALSE, row.names = FALSE)
+      write.table(differential_analysis_results_annotated[differential_analysis_results_annotated$annotation %in% promoter_terms,], file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_promoter_subset_annotated.tsv"), 
+                  sep = "\t", quote = FALSE, row.names = FALSE)
+      # Split into upregulated and downregulated peaks
+      for(fc_threshold in c(0, 0.1, 0.2, 0.3, 0.585, 1, 2)) {
+        # Filter based on FC threshold
         if(analysis_type == "final") {
-          upregulated_differential_analysis_results_fc <- upregulated_differential_analysis_results[upregulated_differential_analysis_results$sc_log2FC >= fc_threshold,]
-          downregulated_differential_analysis_results_fc <- downregulated_differential_analysis_results[downregulated_differential_analysis_results$sc_log2FC <= -fc_threshold,]
+          upregulated_differential_analysis_results_annotated <- differential_analysis_results_annotated[differential_analysis_results_annotated$sc_log2FC >= fc_threshold,]
+          downregulated_differential_analysis_results_annotated <- differential_analysis_results_annotated[differential_analysis_results_annotated$sc_log2FC <= -fc_threshold,]
         } else {
-          upregulated_differential_analysis_results_fc <- upregulated_differential_analysis_results[upregulated_differential_analysis_results$avg_log2FC >= fc_threshold,]
-          downregulated_differential_analysis_results_fc <- downregulated_differential_analysis_results[downregulated_differential_analysis_results$avg_log2FC <= -fc_threshold,]
+          upregulated_differential_analysis_results_annotated <- differential_analysis_results_annotated[differential_analysis_results_annotated$avg_log2FC >= fc_threshold,]
+          downregulated_differential_analysis_results_annotated <- differential_analysis_results_annotated[differential_analysis_results_annotated$avg_log2FC <= -fc_threshold,]
         }
-       if(nrow(upregulated_differential_analysis_results_fc) > 0) {
-          upregulated_differential_analysis_results_fc_annotated <- annotatePeak(makeGRangesFromDataFrame(upregulated_differential_analysis_results_fc), TxDb = txdb, annoDb = "org.Hs.eg.db")
-          upregulated_differential_analysis_results_fc_annotated <- as.data.frame(upregulated_differential_analysis_results_fc_annotated)
-          if(analysis_type == "final") {
-            upregulated_differential_analysis_results_fc_annotated$sc_pval <- upregulated_differential_analysis_results_fc$sc_pval
-            upregulated_differential_analysis_results_fc_annotated$sc_log2FC <- upregulated_differential_analysis_results_fc$sc_log2FC
-            upregulated_differential_analysis_results_fc_annotated$pseudo_bulk_pval <- upregulated_differential_analysis_results_fc$pseudo_bulk_pval
-            upregulated_differential_analysis_results_fc_annotated$pseudo_bulk_robust_pval <- upregulated_differential_analysis_results_fc$pseudo_bulk_robust_pval
-            upregulated_differential_analysis_results_fc_annotated$pseudo_bulk_log2FC <- upregulated_differential_analysis_results_fc$pseudo_bulk_log2FC
-            upregulated_differential_analysis_results_fc_annotated$pct.1 <- upregulated_differential_analysis_results_fc$pct.1
-            upregulated_differential_analysis_results_fc_annotated$pct.2 <- upregulated_differential_analysis_results_fc$pct.2
+        # If there are any upregulated peaks at FC threshold, print them to file
+        if(nrow(upregulated_differential_analysis_results_annotated) > 0) {
+          if(fc_threshold == 0) {
+            write.table(upregulated_differential_analysis_results_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_upregulated_annotated.tsv"), 
+                        sep = "\t", quote = FALSE, row.names = FALSE)
+            write.table(upregulated_differential_analysis_results_annotated[upregulated_differential_analysis_results_annotated$annotation %in% promoter_terms,], file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_upregulated_promoter_subset_annotated.tsv"), 
+                        sep = "\t", quote = FALSE, row.names = FALSE)
           } else {
-            upregulated_differential_analysis_results_fc_annotated$avg_log2FC <- upregulated_differential_analysis_results_fc$avg_log2FC
-            upregulated_differential_analysis_results_fc_annotated$pct.1 <- upregulated_differential_analysis_results_fc$pct.1
-            upregulated_differential_analysis_results_fc_annotated$pct.2 <- upregulated_differential_analysis_results_fc$pct.2
-            upregulated_differential_analysis_results_fc_annotated$p_val_adj <- upregulated_differential_analysis_results_fc$p_val_adj
+            write.table(upregulated_differential_analysis_results_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_upregulated_annotated.tsv"), 
+                        sep = "\t", quote = FALSE, row.names = FALSE)
+            write.table(upregulated_differential_analysis_results_annotated[upregulated_differential_analysis_results_annotated$annotation %in% promoter_terms,], file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_upregulated_promoter_subset_annotated.tsv"), 
+                        sep = "\t", quote = FALSE, row.names = FALSE)
           }
-          write.table(upregulated_differential_analysis_results_fc_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_upregulated_annotated.tsv"), 
-                      sep = "\t", quote = FALSE, row.names = FALSE)
         }
-        if(nrow(downregulated_differential_analysis_results_fc) > 0) {
-          downregulated_differential_analysis_results_fc_annotated <- annotatePeak(makeGRangesFromDataFrame(downregulated_differential_analysis_results_fc), TxDb = txdb, annoDb = "org.Hs.eg.db")
-          downregulated_differential_analysis_results_fc_annotated <- as.data.frame(downregulated_differential_analysis_results_fc_annotated)
-          if(analysis_type == "final") {
-            downregulated_differential_analysis_results_fc_annotated$sc_pval <- downregulated_differential_analysis_results_fc$sc_pval
-            downregulated_differential_analysis_results_fc_annotated$sc_log2FC <- downregulated_differential_analysis_results_fc$sc_log2FC
-            downregulated_differential_analysis_results_fc_annotated$pseudo_bulk_pval <- downregulated_differential_analysis_results_fc$pseudo_bulk_pval
-            downregulated_differential_analysis_results_fc_annotated$pseudo_bulk_robust_pval <- downregulated_differential_analysis_results_fc$pseudo_bulk_robust_pval
-            downregulated_differential_analysis_results_fc_annotated$pseudo_bulk_log2FC <- downregulated_differential_analysis_results_fc$pseudo_bulk_log2FC
-            downregulated_differential_analysis_results_fc_annotated$pct.1 <- downregulated_differential_analysis_results_fc$pct.1
-            downregulated_differential_analysis_results_fc_annotated$pct.2 <- downregulated_differential_analysis_results_fc$pct.2
+        # If there are any downregulated peaks at FC threshold, print them to file
+        if(nrow(downregulated_differential_analysis_results_annotated) > 0) {
+          if(fc_threshold == 0) {
+            write.table(downregulated_differential_analysis_results_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_downregulated_annotated.tsv"), 
+                        sep = "\t", quote = FALSE, row.names = FALSE)
+            write.table(downregulated_differential_analysis_results_annotated[downregulated_differential_analysis_results_annotated$annotation %in% promoter_terms,], file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_downregulated_promoter_subset_annotated.tsv"), 
+                        sep = "\t", quote = FALSE, row.names = FALSE)
           } else {
-            downregulated_differential_analysis_results_fc_annotated$avg_log2FC <- downregulated_differential_analysis_results_fc$avg_log2FC
-            downregulated_differential_analysis_results_fc_annotated$pct.1 <- downregulated_differential_analysis_results_fc$pct.1
-            downregulated_differential_analysis_results_fc_annotated$pct.2 <- downregulated_differential_analysis_results_fc$pct.2
-            downregulated_differential_analysis_results_fc_annotated$p_val_adj <- downregulated_differential_analysis_results_fc$p_val_adj
+            write.table(downregulated_differential_analysis_results_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_downregulated_annotated.tsv"), 
+                        sep = "\t", quote = FALSE, row.names = FALSE)
+            write.table(downregulated_differential_analysis_results_annotated[downregulated_differential_analysis_results_annotated$annotation %in% promoter_terms,], file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_downregulated_promoter_subset_annotated.tsv"), 
+                        sep = "\t", quote = FALSE, row.names = FALSE)
           }
-          write.table(downregulated_differential_analysis_results_fc_annotated, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_downregulated_annotated.tsv"), 
-                      sep = "\t", quote = FALSE, row.names = FALSE)
         }
       }
     }
   }
 }
-
-# Step 4: Print peaks that fall in promoter regions specifically
-for(snATAC_cell_type in snATAC_cell_types) {
-  snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
-  for(analysis_type in c("sc", "final")) {
-    for(pct in c(0.01, 0.05, 0.1)) {
-      for(fc_threshold in c(0.1, 0.2, 0.3, 0.585, 1, 2)) {
-        upregulated_annotated_file <- paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_upregulated_annotated.tsv")
-        downregulated_annotated_file <- paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_downregulated_annotated.tsv")
-      
-        if(file.exists(upregulated_annotated_file)) {
-          upregulated_annotated_results <- read.table(upregulated_annotated_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
-          upregulated_annotated_results <- upregulated_annotated_results[upregulated_annotated_results$annotation %in% promoter_terms,]
-          write.table(upregulated_annotated_results, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_upregulated_promoter_subset_annotated.tsv"),
-                      sep = "\t", quote = FALSE, row.names = FALSE)
-        }
-      
-        if(file.exists(downregulated_annotated_file)) {
-          downregulated_annotated_results <- read.table(downregulated_annotated_file, sep = "\t", header = TRUE, comment.char = "", quote = "\"")
-          downregulated_annotated_results <- downregulated_annotated_results[downregulated_annotated_results$annotation %in% promoter_terms,]
-          write.table(downregulated_annotated_results, file = paste0(snATAC_peak_annotated_dir, "D28-vs-D_minus_1-degs-", snATAC_cell_type_for_file_name, "-time_point-controlling_for_subject_id_", analysis_type, "_pct_", pct, "_fc_", fc_threshold, "_downregulated_promoter_subset_annotated.tsv"),
-                      sep = "\t", quote = FALSE, row.names = FALSE)
-        }
-      }
-    }
-  }
-}
-
 
 # Run FMD (pos and neg)
 pos_fmd_list <- list()
