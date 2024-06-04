@@ -16,6 +16,7 @@ library(pheatmap)
 library(ArchRtoSignac)
 library(EnsDb.Hsapiens.v86)
 library(chromVARmotifs)
+library(Signac)
 # Load extra RNA functions
 home_dir <- "~/"
 source(paste0(home_dir, "extra_functions/rna/preprocessing_and_qc.R"))
