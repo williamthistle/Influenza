@@ -13,31 +13,6 @@ hvl_placebo_CD14_mono_sc_obj$time_point <- gsub("D28", "28 Days Post-Challenge",
 Idents(hvl_placebo_CD14_mono_sc_obj) <- "time_point"
 levels(hvl_placebo_CD14_mono_sc_obj) <- c("Pre-Challenge", "28 Days Post-Challenge")
 
-# We do each subplot with scale.factor = 1e7, and we see what the highest possible ymax is
-# Then, we use that for each plot and then combine them together
-
-# Plot TSS
-
-cov_plot <- CoveragePlot(
-  object = hvl_placebo_CD14_mono_sc_obj,
-  region = c("chr11-65614221-65615221"),
-  annotation = FALSE,
-  peaks = FALSE
-)
-
-ggsave("/home/wat2/tss_plot.png", plot = cov_plot, width = 20)
-
-# Plot gene
-
-cov_plot <- CoveragePlot(
-  object = hvl_placebo_CD14_mono_sc_obj,
-  region = c("MAP3K11"),
-  annotation = TRUE,
-  peaks = FALSE
-)
-
-ggsave("/home/wat2/gene_plot.png", plot = cov_plot, width = 20)
-
 # Do highlighted plot
 
 ranges.show <- StringToGRanges(c("chr11-65615225-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"))
@@ -64,6 +39,30 @@ cov_plot <- CoveragePlot(
 cov_plot <- cov_plot & scale_fill_manual(values = c("#f8766d", "grey"))
 
 ggsave("/home/wat2/everything_plot.png", plot = cov_plot, width = 20)
+
+
+
+### EXTRA
+# Plot TSS
+
+cov_plot <- CoveragePlot(
+  object = hvl_placebo_CD14_mono_sc_obj,
+  region = c("chr11-65614221-65615221"),
+  annotation = FALSE,
+  peaks = FALSE
+)
+
+ggsave("/home/wat2/tss_plot.png", plot = cov_plot, width = 20)
+
+# Plot gene
+cov_plot <- CoveragePlot(
+  object = hvl_placebo_CD14_mono_sc_obj,
+  region = c("MAP3K11"),
+  annotation = TRUE,
+  peaks = FALSE
+)
+
+ggsave("/home/wat2/gene_plot.png", plot = cov_plot, width = 20)
 
 # Plot gene - original ymax is 410
 cov_plot <- CoveragePlot(
