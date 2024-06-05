@@ -10,7 +10,7 @@ find_sc_correlation_final <- function(first_gene_df, second_gene_df) {
   compare_first_df <- compare_first_df[order(compare_first_df$Peak_Name),]
   compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
   
-  comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$sc_log2FC,
+  comparing_first_vs_second_df <- data.frame(gene_name = compare_first_df$Peak_Name, first_fc = compare_first_df$sc_log2FC,
                                              second_fc = compare_second_df$avg_log2FC)
   return(comparing_first_vs_second_df)
 }
@@ -41,6 +41,9 @@ for(cell_type in correlation_cell_types) {
   # cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$sc_pval < 0.01,]
   cell_type_validation_sc_das <- read.table(paste0(scATAC_lvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
                                                      sep = "\t", header = TRUE)
+  # Remove any entries that are min.pct of 0 that will mess up fold change comparisons
+  unfiltered_cell_type_validation_sc_das <- unfiltered_cell_type_validation_sc_das[unfiltered_cell_type_validation_sc_das$pct.1 > 0 & unfiltered_cell_type_validation_sc_das$pct.2 > 0,]
+  cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$Peak_Name %in% rownames(unfiltered_cell_type_validation_sc_das),]
   # Check correlation for primary significant SC genes in validation set
   comparing_first_vs_second_df <- find_sc_correlation_final(cell_type_sc_das, unfiltered_cell_type_validation_sc_das)
   
@@ -54,7 +57,7 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   sc_correlation_plots[[cell_type]][["sc_primary_hvl_vs_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore) + xlim(-5, 5) + ylim(-5, 5)
+    sm_statCorr(corr_method = "spearman") + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore) + xlim(-6, 6) + ylim(-6, 6)
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[1]])
