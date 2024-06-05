@@ -3,6 +3,8 @@
 # CD14_Mono     MAP3K11    chr11 65614221    chr11   65706207 65706707     0.961039
 # CD14_Mono     MAP3K11    chr11 65614221    chr11   65827775 65828275     0.976024
 # CD14_Mono     MAP3K11    chr11 65614221    chr11   66069371 66069871     0.958042
+# Downregulation of H3K27ac: 	chr11:65612955-65613355
+# Hypermethylation: chr11:65613039-65613039
 idxPass <- which(hvl_placebo_sc_obj$predicted_celltype_majority_vote %in% "CD14 Mono")
 cellsPass <- names(hvl_placebo_sc_obj$orig.ident[idxPass])
 hvl_placebo_CD14_mono_sc_obj <- subset(x = hvl_placebo_sc_obj, subset = cell_name %in% cellsPass)
@@ -13,20 +15,7 @@ hvl_placebo_CD14_mono_sc_obj$time_point <- gsub("D28", "28 Days Post-Challenge",
 Idents(hvl_placebo_CD14_mono_sc_obj) <- "time_point"
 levels(hvl_placebo_CD14_mono_sc_obj) <- c("Pre-Challenge", "28 Days Post-Challenge")
 
-# Do highlighted plot
 
-ranges.show <- StringToGRanges(c("chr11-65615225-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"))
-ranges.show$color <- "orange"
-
-cov_plot <- CoveragePlot(
-  object = hvl_placebo_CD14_mono_sc_obj,
-  region = c("chr11-65614221-66069871"),
-  annotation = FALSE,
-  peaks = FALSE,
-  region.highlight = ranges.show
-)
-
-ggsave("/home/wat2/highlighted_plot.png", plot = cov_plot, width = 20)
 
 # Plot everything
 cov_plot <- CoveragePlot(
@@ -36,9 +25,25 @@ cov_plot <- CoveragePlot(
   peaks = FALSE
 )
 
-cov_plot <- cov_plot & scale_fill_manual(values = c("#f8766d", "grey"))
+cov_plot <- cov_plot & scale_fill_manual(values = c("#00bfc4", "grey"))
 
 ggsave("/home/wat2/everything_plot.png", plot = cov_plot, width = 20)
+
+# Highlight regions of interest so I can annotate them
+
+ranges.show <- StringToGRanges(c("chr11-65612955-65613355"))
+ranges.show$color <- "orange"
+
+cov_plot <- CoveragePlot(
+  object = hvl_placebo_CD14_mono_sc_obj,
+  region = c("chr11-65611955-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"),
+  annotation = TRUE,
+  peaks = FALSE,
+  region.highlight = ranges.show
+)
+
+ggsave("/home/wat2/highlighted_plot_ac.png", plot = cov_plot, width = 20)
+
 
 
 
