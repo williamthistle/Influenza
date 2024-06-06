@@ -79,7 +79,7 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_validation"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("Naive FC") + ylab("Vaccinated FC") + labs(title = cell_type_no_underscore) +  xlim(-1.5, 1.5) + ylim(-1.5, 1.5)
+    sm_statCorr(corr_method = "spearman") + xlab("Naive FC") + ylab("Vaccinated FC") + labs(title = cell_type_no_underscore) +  xlim(-2.5, 2.5) + ylim(-2.5, 2.5)
   
   
   
@@ -132,11 +132,4 @@ for(cell_type in correlation_cell_types) {
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/willi/Desktop/test.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 2, nrow = 3), height = 10, width = 10)
-
-# Other plotting attempts
-#n <- length(pseudobulk_corrected_plots)
-#nCol <- floor(sqrt(n))
-# do.call("grid.arrange", c(pseudobulk_corrected_plots, ncol=nCol))
-# test <- list(pseudobulk_corrected_plots[[1]], pseudobulk_corrected_plots[[2]], pseudobulk_corrected_plots[[3]])
-# do.call("grid.arrange", c(test, ncol=nCol))
+ggsave("C:/Users/willi/Desktop/hvl_vaccinated_vs_naive_deg_correlation.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 2, nrow = 3), height = 10, width = 10)
