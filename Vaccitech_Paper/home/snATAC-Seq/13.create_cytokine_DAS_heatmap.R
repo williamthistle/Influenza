@@ -76,12 +76,13 @@ cytokine_das_heatmap_df <- cytokine_das_heatmap_df[!is.na(cytokine_das_heatmap_d
 
 cytokine_das_heatmap_df$cytokine_type <- c("Interferon", "Interferon", "Interferon",
                                            "Interleukin", "Interleukin", "Interleukin",
+                                           "Chemokine", "Chemokine", "Chemokine",
                                            "Interferon", "Interferon", "Interleukin",
-                                           "Interleukin", "Interferon", "Interleukin",
+                                           "Interleukin", "Chemokine", "Interferon", "Interleukin",
                                            "Interferon", "Interferon", "Interleukin",
                                            "Interferon", "Interferon", "Interferon",
                                            "Interleukin", "Interleukin", "Interleukin",
-                                           "Interleukin")
+                                           "Interleukin", "Chemokine")
 
 # Remove pDC because there's only one
 cytokine_das_heatmap_df <- cytokine_das_heatmap_df[cytokine_das_heatmap_df$Cell_Type != "pDC",]
@@ -92,10 +93,17 @@ for(cell_type in unique(cytokine_das_heatmap_df$Cell_Type)) {
   current_cytokine_das_heatmap_df <- cytokine_das_heatmap_df[cytokine_das_heatmap_df$Cell_Type == cell_type,]
   current_cytokine_das_heatmap_df <- current_cytokine_das_heatmap_df[rev(order(current_cytokine_das_heatmap_df$fold_change)),]
   current_cytokine_das_heatmap_df$Gene_Name <- factor(current_cytokine_das_heatmap_df$Gene_Name, levels = current_cytokine_das_heatmap_df$Gene_Name)
+  current_cytokine_das_heatmap_df$cytokine_type <- factor(current_cytokine_das_heatmap_df$cytokine_type, levels = c("Interferon", "Interleukin", "Chemokine"))
+  if(length(unique(current_cytokine_das_heatmap_df$cytokine_type)) == 2) {
+    barplot_colors <- c("#F8766D", "#00BA38")
+  } else {
+    barplot_colors <- c("#F8766D", "#00BA38", "#619CFF")
+  }
   current_plot <- ggplot(current_cytokine_das_heatmap_df, aes(x = Gene_Name, y = fold_change, fill = cytokine_type)) +
     geom_col() + geom_text(aes(label = significant,
                           vjust = ifelse(fold_change >= 0, 0, 1)),
                            size = 6) + theme_bw() + ylim(-4, 4) + theme(text = element_text(size = 16)) +
+    scale_fill_manual(values = c("red", "blue", "green")) + 
     labs(title = cell_type,
          x = "Gene Name",
          y = "Fold Change", fill = "Cytokine Type") + theme(plot.title = element_text(hjust = 0.5)) # + theme(legend.position="none")
