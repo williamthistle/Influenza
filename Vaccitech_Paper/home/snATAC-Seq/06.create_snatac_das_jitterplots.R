@@ -1,3 +1,7 @@
+# Setup environment
+base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
+source(paste0(base_dir, "00.setup.R"))
+
 all_sc_das_table <- data.frame(Cell_Type = character(), Site = character(), log2FC = numeric())
 
 atac_innate_cell_types_jitterplot <- c("CD14 Mono", "CD16 Mono", "cDC", "NK", "pDC")
