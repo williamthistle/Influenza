@@ -417,7 +417,7 @@ create_tf_heatmap_plot <- function(tf_table) {
   #  group_by(Cell_Type) %>%
   #  slice_head(n = 5)
   
-  interesting_tfs <- c("BACH1", "BACH2", "CTCF", "FOS", "FOSB", "FOSL1", "FOSL2", "JUN", "JUNB", "JUND", "PATZ1", "PLAG1", "ZFX", "ZNF143", "ZNF281", "ZNF589")
+  interesting_tfs <- c("BACH1", "BACH2", "CTCF", "ETS2", "FOS", "FOSB", "FOSL1", "FOSL2", "JUN", "JUNB", "JUND", "PATZ1", "PLAG1", "ZFX", "ZNF143", "ZNF281", "ZNF589")
   
   tf_table <- tf_table[tf_table$TF %in% interesting_tfs,]
   

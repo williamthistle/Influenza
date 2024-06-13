@@ -103,15 +103,15 @@ for(cell_type in unique(cytokine_das_heatmap_df$Cell_Type)) {
     geom_col() + geom_text(aes(label = significant,
                           vjust = ifelse(fold_change >= 0, 0, 1)),
                            size = 6) + theme_bw() + ylim(-4, 4) + theme(text = element_text(size = 16)) +
-    scale_fill_manual(values = c("red", "blue", "green")) + 
+    scale_fill_manual(values = barplot_colors) + 
     labs(title = cell_type,
          x = "Gene Name",
-         y = "Fold Change", fill = "Cytokine Type") + theme(plot.title = element_text(hjust = 0.5)) # + theme(legend.position="none")
+         y = "Fold Change", fill = "Cytokine Type") + theme(plot.title = element_text(hjust = 0.5)) + theme(legend.position="none")
   
   cytokine_das_plots[[cell_type]] <- current_plot
 }
 
-ggsave("C:/Users/willi/Desktop/test_with_legend.png", plot = patchwork::wrap_plots(cytokine_das_plots, ncol = 2, nrow = 2), height = 10, width = 14)
+ggsave("C:/Users/willi/Desktop/test_without_legend.png", plot = patchwork::wrap_plots(cytokine_das_plots, ncol = 2, nrow = 2), height = 10, width = 15)
   
   
   

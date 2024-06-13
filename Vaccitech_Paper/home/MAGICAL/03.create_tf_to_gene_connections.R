@@ -93,8 +93,7 @@ ggsave("C:/Users/willi/Desktop/SETD2_TF_plots_CD14.png", plot = patchwork::wrap_
 SETD2_plots_cDC <- create_tf_barplots_for_magical_gene(overall_magical_df, "SETD2", "cDC")
 ggsave("C:/Users/willi/Desktop/SETD2_TF_plots_cDC.png", plot = patchwork::wrap_plots(SETD2_plots_cDC, ncol = 1, nrow = 1), height = 7, width = 9)
 
-# ETS2 TF exploration
-ETS2_tf_gene_mappings <- magical_tf_vs_gene_df[magical_tf_vs_gene_df$TFs.binding.prob. == "ETS2",]
+
 
 
 
