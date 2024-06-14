@@ -82,10 +82,10 @@ category_colors <- cytokine_heatmap_df %>%
   distinct(Cytokine_Type, Gene_Name) %>% 
   mutate(color = case_when(
     Cytokine_Type == "Interferon" ~ "red",
-    Cytokine_Type == "Interleukin" ~ "blue",
-    Cytokine_Type == "Chemokine" ~ "green",
+    Cytokine_Type == "Interleukin" ~ "green",
+    Cytokine_Type == "Chemokine" ~ "blue",
     Cytokine_Type == "AP-1" ~ "orange",
-    Cytokine_Type == "MAP Kinase" ~ "red",
+    Cytokine_Type == "MAP Kinase" ~ "purple",
     TRUE ~ "black" # default color
   )) %>% 
   pull(color, name = Gene_Name)
@@ -93,9 +93,9 @@ category_colors <- cytokine_heatmap_df %>%
 
 ggplot() + 
   geom_raster(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
-  geom_text(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.25, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
+  geom_text(data = cytokine_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.20, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
   theme_classic(base_size = 14) + labs(title = "Fold Change for Inflammation-Related DEG in Innate Immune Cell Types",
                       x = "Cell Type",
                       y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1),
-        axis.text.y = element_text(size = 14, color = category_colors[levels(factor(cytokine_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.5)
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
+        axis.text.y = element_text(size = 12, color = category_colors[levels(factor(cytokine_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.5)
