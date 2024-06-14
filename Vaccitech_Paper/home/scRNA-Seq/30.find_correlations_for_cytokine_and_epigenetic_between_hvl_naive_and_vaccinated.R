@@ -69,10 +69,10 @@ for(cell_type in correlation_cell_types) {
 }
 
 cyto_hvl_vs_vaccinated_cytoepi_correlation_plots <- lapply(hvl_vs_vaccinated_cytoepi_correlation_plots, function(x) x[[1]])
-ggsave("C:/Users/willi/Desktop/hvl_vs_vaccinated_fc_cyto_correlation.png", plot = patchwork::wrap_plots(cyto_hvl_vs_vaccinated_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/wat2/Desktop/hvl_vs_vaccinated_fc_cyto_correlation.png", plot = patchwork::wrap_plots(cyto_hvl_vs_vaccinated_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
 
 epigenetic_hvl_vs_vaccinated_cytoepi_correlation_plots <- lapply(hvl_vs_vaccinated_cytoepi_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/willi/Desktop/hvl_vs_vaccinated_fc_epigenetic_correlation.png", plot = patchwork::wrap_plots(epigenetic_hvl_vs_vaccinated_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/wat2/Desktop/hvl_vs_vaccinated_fc_epigenetic_correlation.png", plot = patchwork::wrap_plots(epigenetic_hvl_vs_vaccinated_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
 
 
 # Other plotting attempts
