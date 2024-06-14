@@ -8,7 +8,7 @@ hvl_vs_vaccinated_cytoepi_correlations <- list()
 hvl_vs_vaccinated_cytoepi_correlation_plots <- list()
 
 cytokine_genes <- c("CCL3", "CX3CR1", "CXCL16", "NFIL3", "IL32", "IRAK3", "IL1RAP", "IRF2", "IRF7", "IFNGR1", "IFNG", "JUN", "JUNB", 
-                   "JUND", "FOS", "FOSL1", "FOSL2")
+                    "FOSL2", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K11", "MAP3K20", "MAP4K3", "MAPKAPK2")
 
 epigenetic_genes <- c("KAT6A", "HDAC5", "HDAC7", "HDAC9", "ASH1L", "PRDM2", "SETD2", "KDM2B", "KDM3A")
 

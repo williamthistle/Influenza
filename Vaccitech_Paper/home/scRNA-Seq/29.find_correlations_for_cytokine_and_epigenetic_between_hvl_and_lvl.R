@@ -8,7 +8,7 @@ hvl_vs_lvl_cytoepi_correlations <- list()
 hvl_vs_lvl_cytoepi_correlation_plots <- list()
 
 cytokine_genes <- c("CCL3", "CX3CR1", "CXCL16", "NFIL3", "IL32", "IRAK3", "IL1RAP", "IRF2", "IRF7", "IFNGR1", "IFNG", "JUN", "JUNB", 
-                   "JUND", "FOS", "FOSL1", "FOSL2")
+                    "FOSL2", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K11", "MAP3K20", "MAP4K3", "MAPKAPK2")
 
 epigenetic_genes <- c("KAT6A", "HDAC5", "HDAC7", "HDAC9", "ASH1L", "PRDM2", "SETD2", "KDM2B", "KDM3A")
 
@@ -69,10 +69,10 @@ for(cell_type in correlation_cell_types) {
 }
 
 cyto_hvl_vs_lvl_cytoepi_correlation_plots <- lapply(hvl_vs_lvl_cytoepi_correlation_plots, function(x) x[[1]])
-ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_fc_cyto_correlation.png", plot = patchwork::wrap_plots(cyto_hvl_vs_lvl_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/wat2/Desktop/hvl_vs_lvl_fc_cyto_correlation.png", plot = patchwork::wrap_plots(cyto_hvl_vs_lvl_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
 
 epigenetic_hvl_vs_lvl_cytoepi_correlation_plots <- lapply(hvl_vs_lvl_cytoepi_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_fc_epigenetic_correlation.png", plot = patchwork::wrap_plots(epigenetic_hvl_vs_lvl_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/wat2/Desktop/hvl_vs_lvl_fc_epigenetic_correlation.png", plot = patchwork::wrap_plots(epigenetic_hvl_vs_lvl_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
 
 
 # Other plotting attempts
