@@ -78,4 +78,4 @@ ggplot() +
                       x = "Cell Type",
                       y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
-        axis.text.y = element_text(size = 12, color = category_colors[levels(factor(epigenetic_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.5)
+        axis.text.y = element_text(size = 12, color = category_colors[levels(factor(epigenetic_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.75)
