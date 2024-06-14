@@ -89,21 +89,14 @@ cd14_mono_downregulated_motif_df_for_plotting <- data.frame(tf = cd14_mono_downr
 
 combined_cd14_mono_motif_df_for_plotting <- rbind(cd14_mono_upregulated_motif_df_for_plotting, cd14_mono_downregulated_motif_df_for_plotting)
 
-#combined_cd14_mono_motif_df_for_plotting$color <- with(combined_cd14_mono_motif_df_for_plotting, 
-#                                                       ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red",
-#                                                              ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
-
 combined_cd14_mono_motif_df_for_plotting$color <- with(combined_cd14_mono_motif_df_for_plotting, 
-                                                              ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey"))
-
-combined_cd14_mono_motif_df_for_plotting$color <- with(combined_cd14_mono_motif_df_for_plotting, 
-                                                       ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red", "grey"))
-
+                                                       ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red",
+                                                              ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
 
 cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
   geom_point(aes(color = color)) +
   scale_color_identity() +
-  geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
+  # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
   theme_classic() +
   labs(title = "CD14 Monocytes",
        x = "Log2(FC)",
@@ -140,10 +133,6 @@ combined_cd16_mono_motif_df_for_plotting <- rbind(cd16_mono_upregulated_motif_df
 combined_cd16_mono_motif_df_for_plotting$color <- with(combined_cd16_mono_motif_df_for_plotting, 
                                                        ifelse(p.adjust.log >= 5 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red",
                                                               ifelse(p.adjust.log >= 5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
-
-#combined_cd16_mono_motif_df_for_plotting$color <- with(combined_cd16_mono_motif_df_for_plotting, 
-#                                                              ifelse(p.adjust.log >= 5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey"))
-
 
 cd16_mono_motif_plot <- ggplot(combined_cd16_mono_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
   geom_point(aes(color = color)) +
