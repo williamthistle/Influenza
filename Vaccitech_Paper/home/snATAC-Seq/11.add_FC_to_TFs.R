@@ -103,7 +103,7 @@ cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x =
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/wat2/Desktop/CD14_Mono_Motif_Up.png", plot = cd14_mono_motif_plot, width = 6)
+ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif_Up.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
 
 # CD16 Mono
 cd16_mono_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "CD16_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cd16_Mono-sc_pct_0.01_FC_1_with_fc_values.tsv"),
