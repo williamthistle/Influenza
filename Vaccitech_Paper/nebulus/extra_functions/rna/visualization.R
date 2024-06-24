@@ -1,4 +1,23 @@
 # Method to print a well-organized UMAP plot for our snRNA-seq data
+print_UMAP_RNA_for_paper <- function(sc_obj, file_name, group_by_category = NULL, output_dir = getwd(), log_flag = FALSE) {
+  # Normalize paths (in case user provides relative paths)
+  output_dir <- normalize_dir_path(output_dir)
+  sample_count <- length(unique(sc_obj$sample))
+  cell_count <- length(sc_obj$cell_name)
+  current_title <- paste0("RNA Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
+  if(!is.null(group_by_category)) {
+    p <- Seurat::DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, repel = TRUE, raster = FALSE) + 
+      labs(x ="UMAP 1", y = "UMAP 2")
+    
+  } else {
+    p <- Seurat::DimPlot(sc_obj, reduction = "umap", repel = TRUE, raster = FALSE) +
+      labs(x ="UMAP 1", y = "UMAP 2")
+  }
+  ggplot2::ggsave(paste0(output_dir, file_name), plot = p, device = "png", dpi = 300)
+  return(TRUE)
+}
+
+# Method to print a well-organized UMAP plot for our snRNA-seq data
 print_UMAP_RNA <- function(sc_obj, file_name, group_by_category = NULL, output_dir = getwd(), log_flag = FALSE) {
   # Normalize paths (in case user provides relative paths)
   output_dir <- normalize_dir_path(output_dir)
