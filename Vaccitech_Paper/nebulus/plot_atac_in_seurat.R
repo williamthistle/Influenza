@@ -56,7 +56,7 @@ seurat_atac <- addDimRed(
   addUMAPs = "UMAP"
 )
 
-saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "ALL_seurat_no_batch_correction.RDS"))
+# saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "ALL_seurat_no_batch_correction.RDS"))
 seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "ALL_seurat_no_batch_correction.RDS"))
 
 # Method to print a well-organized UMAP plot for our snRNA-seq data
@@ -67,15 +67,12 @@ print_UMAP_ATAC_Seurat <- function(sc_obj, file_name, group_by_category = NULL, 
   cell_count <- length(sc_obj$Sample)
   current_title <- paste0("RNA Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   if(!is.null(group_by_category)) {
-    p <- Seurat::DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, label = TRUE,
-                         label.size = 3, repel = TRUE, raster = FALSE) +
-      ggplot2::labs(title = current_title) +
-      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+    p <- Seurat::DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, repel = TRUE, raster = FALSE) +
+      labs(x ="UMAP 1", y = "UMAP 2", title = NULL)
   } else {
     p <- Seurat::DimPlot(sc_obj, reduction = "umap", label = TRUE,
                          label.size = 3, repel = TRUE, raster = FALSE) +
-      ggplot2::labs(title = current_title) +
-      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+      labs(x ="UMAP 1", y = "UMAP 2", title = NULL)
   }
   ggplot2::ggsave(paste0(output_dir, file_name), plot = p, device = "png", dpi = 300)
   return(TRUE)
