@@ -26,6 +26,7 @@ library(enrichR)
 library(smplot2)
 library(tidyverse)
 library(multiclassPairs)
+library(biomaRt)
 
 # Load bulk RNA-seq analysis results
 onedrive_dir <- "~"
