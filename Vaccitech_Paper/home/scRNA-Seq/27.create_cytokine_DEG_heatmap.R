@@ -5,7 +5,7 @@ source(paste0(base_dir, "00.setup.R"))
 innate_scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type %in% innate_cell_types,]
 
 heatmap_genes <- c("CCL3", "CX3CR1", "CXCL16", "NFIL3", "IL32", "IRAK3", "IL1RAP", "IRF2", "IRF7", "IFNGR1", "IFNG", "JUN", "JUNB", 
-                   "FOSL2", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K11", "MAP3K20", "MAP4K3", "MAPKAPK2")
+                   "FOSB", "FOSL2", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K11", "MAP3K20", "MAP4K3", "MAPKAPK2")
 
 heatmap_gene_types <- list()
 heatmap_gene_types[["CCL3"]] <- "Chemokine"
@@ -24,6 +24,7 @@ heatmap_gene_types[["IFNG"]] <- "Interferon"
 
 heatmap_gene_types[["JUN"]] <- "AP-1"
 heatmap_gene_types[["JUNB"]] <- "AP-1"
+heatmap_gene_types[["FOSB"]] <- "AP-1"
 heatmap_gene_types[["FOSL2"]] <- "AP-1"
 
 heatmap_gene_types[["MAPK7"]] <- "MAP Kinase"

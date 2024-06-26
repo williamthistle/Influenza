@@ -113,20 +113,6 @@ for(cell_type in unique(cytokine_das_heatmap_df$Cell_Type)) {
 
 ggsave("C:/Users/willi/Desktop/test_without_legend.png", plot = patchwork::wrap_plots(cytokine_das_plots, ncol = 2, nrow = 2), height = 10, width = 15)
   
-  
-  
-  geom_text(aes(label = ifelse(significant, "*", ""), group = Treatment), 
-            position = position_dodge(width = .9), vjust = -.1, size = 20 / .pt) +
-  theme_classic() +
-  scale_fill_grey() +
-  labs(x = "", y = "%") +
-  facet_wrap(~Group) +
-  ylim(0, 40)
-
-
-
-
-
 cytokine_das_heatmap_df$Gene_Name <- factor(cytokine_das_heatmap_df$Gene_Name, levels = c("IRF1", "IRF4", "IRF5", "IRF8", "IRF2BPL", "IFNGR1", "IFI6", "IFI27L1", "IFI35", "IFI44L", "IFITM3", "IL1B", "IL20", "IL2RB", "IL5RA", "IL6R (Site 1)", "IL6R (Site 2)", "IL15RA", "IL17RA", "IL21R", "IL1RN", "IRAK1BP1"))
 cytokine_das_heatmap_df$Cell_Type <- factor(cytokine_das_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "NK_CD56bright", "cDC", "pDC"))
 

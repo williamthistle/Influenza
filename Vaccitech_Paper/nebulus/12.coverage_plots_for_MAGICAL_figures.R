@@ -17,31 +17,49 @@ Idents(hvl_placebo_CD14_mono_sc_obj) <- "time_point"
 levels(hvl_placebo_CD14_mono_sc_obj) <- c("Pre-Challenge", "28 Days Post-Challenge")
 
 # Plot everything
+#cov_plot <- CoveragePlot(
+#  object = hvl_placebo_CD14_mono_sc_obj,
+#  region = c("chr11-65611955-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"),
+#  annotation = TRUE,
+#  peaks = FALSE
+#)
+
+# Alternative plot of everything
 cov_plot <- CoveragePlot(
   object = hvl_placebo_CD14_mono_sc_obj,
-  region = c("chr11-65611955-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"),
+  region = c("chr11-65611955-66069871"),
   annotation = TRUE,
   peaks = FALSE
 )
 
-cov_plot <- cov_plot & scale_fill_manual(values = c("#00bfc4", "grey"))
 
-ggsave("/home/wat2/everything_plot.png", plot = cov_plot, width = 20)
+# cov_plot_build <- ggplot_build(cov_plot[[1]][[1]])
+
+# cov_plot <- cov_plot & scale_fill_manual(values = c("grey", "grey"))
+
+ggsave("/home/wat2/everything_plot.png", plot = cov_plot, width = 8)
 
 # Highlight regions of interest so I can annotate them
 
-ranges.show <- StringToGRanges(c("chr11-65612955-65613355"))
+# Acetylation (and hypermethylation)
+# First site
+# Second site 
+# Third site
+# Fourth site
+ranges.show <- StringToGRanges(c("chr11-65612955-65613355", "chr11-65615225-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"))
 ranges.show$color <- "orange"
 
 cov_plot <- CoveragePlot(
   object = hvl_placebo_CD14_mono_sc_obj,
-  region = c("chr11-65611955-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"),
+  region = c("chr11-65611955-66069871"),
   annotation = TRUE,
   peaks = FALSE,
   region.highlight = ranges.show
 )
 
-ggsave("/home/wat2/highlighted_plot_ac.png", plot = cov_plot, width = 20)
+# cov_plot <- cov_plot & scale_fill_manual(values = c("grey", "grey"))
+
+ggsave("/home/wat2/highlighted_plot.png", plot = cov_plot, width = 8)
 
 ### FOSB in CD16 Monocytes ###
 # CD16_Mono        FOSB    chr19 45467995    chr19   45584223 45584723     0.999001
