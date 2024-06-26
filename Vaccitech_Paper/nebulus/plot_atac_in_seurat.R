@@ -56,7 +56,7 @@ seurat_atac <- addDimRed(
   addUMAPs = "UMAP"
 )
 
-saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "ALL_seurat_no_batch_correction.RDS"))
+# saveRDS(seurat_atac, file = paste0(ATAC_output_dir, "ALL_seurat_no_batch_correction.RDS"))
 seurat_atac <- readRDS(file =  paste0(ATAC_output_dir, "ALL_seurat_no_batch_correction.RDS"))
 
 # Method to print a well-organized UMAP plot for our snRNA-seq data
@@ -67,22 +67,19 @@ print_UMAP_ATAC_Seurat <- function(sc_obj, file_name, group_by_category = NULL, 
   cell_count <- length(sc_obj$Sample)
   current_title <- paste0("RNA Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   if(!is.null(group_by_category)) {
-    p <- Seurat::DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, label = TRUE,
-                         label.size = 3, repel = TRUE, raster = FALSE) +
-      ggplot2::labs(title = current_title) +
-      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+    p <- Seurat::DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, repel = TRUE, raster = FALSE) +
+      labs(x ="UMAP 1", y = "UMAP 2", title = NULL)
   } else {
     p <- Seurat::DimPlot(sc_obj, reduction = "umap", label = TRUE,
                          label.size = 3, repel = TRUE, raster = FALSE) +
-      ggplot2::labs(title = current_title) +
-      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+      labs(x ="UMAP 1", y = "UMAP 2", title = NULL)
   }
   ggplot2::ggsave(paste0(output_dir, file_name), plot = p, device = "png", dpi = 300)
   return(TRUE)
 }
 
 # Looks good!
-print_UMAP_ATAC_Seurat(seurat_atac, "seurat_atac_test_no_batch_correction.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
+print_UMAP_ATAC_Seurat(seurat_atac, "ATAC_Seurat_no_batch_correction.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
 
 cell_names <- rownames(seurat_atac@meta.data)
 seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name = "cell_name")
@@ -92,4 +89,4 @@ idxPass <- which(seurat_atac$Clusters %in% messy_clusters)
 cellsPass <- names(seurat_atac$orig.ident[-idxPass])
 seurat_atac_minus_clusters <- subset(x = seurat_atac, subset = cell_name %in% cellsPass)
 
-print_UMAP_ATAC_Seurat(seurat_atac_minus_clusters, "seurat_atac_minus_clusters_test_no_batch_correction.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
+print_UMAP_ATAC_Seurat(seurat_atac_minus_clusters, "ATAC_Seurat_no_batch_correction_minus_clusters.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
