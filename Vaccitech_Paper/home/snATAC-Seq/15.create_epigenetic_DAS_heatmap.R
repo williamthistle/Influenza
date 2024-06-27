@@ -90,11 +90,11 @@ category_colors <- epigenetic_remodeling_das_heatmap_df %>%
   )) %>% 
   pull(color, name = Gene_Name)
 
-epigenetic_remodeling_das_heatmap_df$Gene_Name <- factor(epigenetic_remodeling_das_heatmap_df$Gene_Name, levels = names(sort(category_colors)))
+epigenetic_remodeling_das_heatmap_df$Gene_Name <- factor(epigenetic_remodeling_das_heatmap_df$Gene_Name, levels = names(category_colors[order(match(category_colors,c("blue","green","orange","purple","red","maroon","pink","turquoise")))]))
 epigenetic_remodeling_das_heatmap_df$Cell_Type <- factor(epigenetic_remodeling_das_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "cDC", "pDC"))
 
 # Alternative - all of the sites
-ggplot() + 
+epigenetic_remodeling_das_heatmap <- ggplot() + 
   geom_raster(data = epigenetic_remodeling_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
   geom_text(data = epigenetic_remodeling_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.30, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
   theme_classic(base_size = 14) + labs(title = "Fold Change for Epigenetic Remodeling DAS in Innate Immune Cell Types",
