@@ -75,18 +75,33 @@ epigenetic_remodeling_das_heatmap_df <- data.frame(Cell_Type = cell_type_vector,
                                   start = start_vector, end = end_vector, fold_change = fold_change_vector, 
                                   significant = significance_vector, epigenetic_remodeling_type = epigenetic_remodeling_type_vector)
 
+category_colors <- epigenetic_remodeling_das_heatmap_df %>% 
+  distinct(epigenetic_remodeling_type, Gene_Name) %>% 
+  mutate(color = case_when(
+    epigenetic_remodeling_type == "Histone" ~ "red",
+    epigenetic_remodeling_type == "Lysine Demethylase" ~ "green",
+    epigenetic_remodeling_type == "Lysine Methyltransferase" ~ "blue",
+    epigenetic_remodeling_type == "AT-Rich Interaction Domain" ~ "orange",
+    epigenetic_remodeling_type == "Lysine Acetyltransferase" ~ "purple",
+    epigenetic_remodeling_type == "DNA Methyltransferase" ~ "pink",
+    epigenetic_remodeling_type == "Sirtuin" ~ "turquoise",
+    epigenetic_remodeling_type == "Tet Methylcytosine Dioxygenase" ~ "maroon",
+    TRUE ~ "black" # default color
+  )) %>% 
+  pull(color, name = Gene_Name)
 
-
-
+epigenetic_remodeling_das_heatmap_df$Gene_Name <- factor(epigenetic_remodeling_das_heatmap_df$Gene_Name, levels = names(sort(category_colors)))
+epigenetic_remodeling_das_heatmap_df$Cell_Type <- factor(epigenetic_remodeling_das_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "cDC", "pDC"))
 
 # Alternative - all of the sites
-epigenetic_remodeling_das_heatmap <- ggplot() + 
+ggplot() + 
   geom_raster(data = epigenetic_remodeling_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
   geom_text(data = epigenetic_remodeling_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.30, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
-  theme_classic(base_size = 14) + labs(title = "Fold Change for Promoter Sites Found in Epigenetic Remodeling Genes in Innate Immune Cell Types",
+  theme_classic(base_size = 14) + labs(title = "Fold Change for Epigenetic Remodeling DAS in Innate Immune Cell Types",
                                        x = "Cell Type",
                                        y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 12)) + coord_fixed(ratio = 0.40)
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
+        axis.text.y = element_text(size = 12, color = category_colors[levels(factor(epigenetic_remodeling_das_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.4)
 
 ggsave("C:/Users/willi/Desktop/epigenetic_remodeling_das_heatmap.png", plot = epigenetic_remodeling_das_heatmap, height = 10, width = 10)
 
