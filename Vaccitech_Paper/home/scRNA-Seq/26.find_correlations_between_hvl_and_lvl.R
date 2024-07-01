@@ -2,7 +2,7 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "NK", "NK_CD56bright", "cDC", "pDC")
+correlation_cell_types <- c("pDC", "NK_CD56bright", "CD16_Mono", "cDC", "NK", "CD14_Mono")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -79,8 +79,8 @@ for(cell_type in correlation_cell_types) {
   
   sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("HVL Naive FC") + ylab("LVL Naive FC") + labs(title = cell_type_no_underscore) +  xlim(-2.5, 2.5) + ylim(-2.5, 2.5)
+    sm_statCorr(corr_method = "spearman", text_size = 5) + xlab("HVL Naive FC") + ylab("LVL Naive FC") + labs(title = cell_type_no_underscore) +  xlim(-2.5, 2.5) + ylim(-2.5, 2.5) + theme(aspect.ratio = 1, text=element_text(size=15))
 }
 
 hvl_vs_lvl_pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_fc_correlation.png", plot = patchwork::wrap_plots(hvl_vs_lvl_pseudobulk_corrected_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_fc_correlation.png", plot = patchwork::wrap_plots(hvl_vs_lvl_pseudobulk_corrected_plots, ncol = 3, nrow = 2), height = 10, width = 10)

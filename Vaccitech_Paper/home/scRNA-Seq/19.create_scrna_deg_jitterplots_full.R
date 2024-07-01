@@ -33,8 +33,6 @@ mutate(direction = ifelse(log2FC > 0, "Upregulated", "Downregulated"))
 pos_all_sc_degs <- hvl_scrna_jitterplot_table[hvl_scrna_jitterplot_table$log2FC > 0,]
 neg_all_sc_degs <- hvl_scrna_jitterplot_table[hvl_scrna_jitterplot_table$log2FC < 0,]
 
-
-
 cell_type_order <- c("pDC", "NK_CD56bright", "CD16 Mono", "cDC", "NK", "CD14 Mono")
 hvl_scrna_jitterplot_table$Cell_Type <- factor(hvl_scrna_jitterplot_table$Cell_Type, levels = cell_type_order)
 hvl_scrna_jitterplot_table$direction <- factor(hvl_scrna_jitterplot_table$direction, levels = c("Upregulated", "Downregulated"))
@@ -46,7 +44,7 @@ hvl_sc_deg_plot <- ggplot(hvl_scrna_jitterplot_table, aes(Cell_Type, log2FC, col
   ylab("log2FC (Gene Expression)") + theme(plot.title = element_text(hjust = 0.5)) + 
   guides(color=guide_legend(title="Fold Change Direction")) + theme(legend.position="none", axis.text.x = element_text(angle = 45, hjust = 1, size = 18))
 
-ggsave(filename = paste0("C:/Users/wat2/Desktop/", "scrna_deg_jitterplot.png"), plot = hvl_sc_deg_plot, device='png', dpi=300, width = 4, units = "in")
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "scrna_deg_jitterplot.png"), plot = hvl_sc_deg_plot, device='png', dpi=300, width = 4, height = 5, units = "in")
 # LVL
 lvl_sc_degs_table <- data.frame(Cell_Type = character(), Gene = character(), log2FC = numeric())
 
