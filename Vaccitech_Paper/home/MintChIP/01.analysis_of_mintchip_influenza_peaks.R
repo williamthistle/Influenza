@@ -120,7 +120,8 @@ for(marker in mintchip_markers) {
   peak_annotation_plots[[marker]] <- differential_analysis_results
 }
 
-mintchip_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = "Distribution of Genomic Features for MintChIP Data") + theme_classic(base_size = 18)
+mintchip_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = NULL) + theme_classic(base_size = 18)
+ggsave(filename = paste0("C:/Users/wat2/Desktop/", "scatac_das_jitterplot.png"), plot = mintchip_annotation_barplots, device='png', dpi=300)
 
 
       

@@ -33,7 +33,8 @@ for(snATAC_cell_type in innate_snATAC_cell_types) {
   peak_annotation_plots[[snATAC_cell_type]] <- differential_analysis_results
 }
 
-plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = "Distribution of Genomic Features for scATAC-Seq DAS")
+atac_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = NULL) + theme_classic(base_size = 18)
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "scatac_das_genomic_features.png"), plot = atac_annotation_barplots, device='png', dpi=300, width = 8, units = "in")
 
 get_enrichr_results <- function(gene_list) {
   # Set up databases
