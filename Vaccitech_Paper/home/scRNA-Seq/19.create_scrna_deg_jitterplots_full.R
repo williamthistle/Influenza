@@ -39,15 +39,14 @@ cell_type_order <- c("pDC", "NK_CD56bright", "CD16 Mono", "cDC", "NK", "CD14 Mon
 hvl_scrna_jitterplot_table$Cell_Type <- factor(hvl_scrna_jitterplot_table$Cell_Type, levels = cell_type_order)
 hvl_scrna_jitterplot_table$direction <- factor(hvl_scrna_jitterplot_table$direction, levels = c("Upregulated", "Downregulated"))
 
-all_sc_degs_plot <- ggplot(hvl_scrna_jitterplot_table, aes(Cell_Type, log2FC, color = direction)) +
+hvl_sc_deg_plot <- ggplot(hvl_scrna_jitterplot_table, aes(Cell_Type, log2FC, color = direction)) +
   geom_jitter() + geom_hline(yintercept = 0.1, linetype = "dashed", color = "black") + 
-  geom_hline(yintercept = -0.1, linetype = "dashed", color = "black") + theme_minimal(base_size = 14) + 
+  geom_hline(yintercept = -0.1, linetype = "dashed", color = "black") + theme_minimal(base_size = 18) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + xlab("Cell Type") +
-  ylab("log2FC (Gene Expression)") + ggtitle("scRNA DEGs by Cell Type (28 Days Post-Exposure vs Pre-Exposure)") +
-  theme(plot.title = element_text(hjust = 0.5)) + guides(color=guide_legend(title="Fold Change Direction"))
+  ylab("log2FC (Gene Expression)") + theme(plot.title = element_text(hjust = 0.5)) + 
+  guides(color=guide_legend(title="Fold Change Direction")) + theme(legend.position="none", axis.text.x = element_text(angle = 45, hjust = 1, size = 18))
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "scrna_deg_jitterplot.tiff"), plot = all_sc_degs_plot, device='tiff', dpi=300)
-
+ggsave(filename = paste0("C:/Users/wat2/Desktop/", "scrna_deg_jitterplot.png"), plot = hvl_sc_deg_plot, device='png', dpi=300, width = 4, units = "in")
 # LVL
 lvl_sc_degs_table <- data.frame(Cell_Type = character(), Gene = character(), log2FC = numeric())
 

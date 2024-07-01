@@ -68,18 +68,18 @@ print_UMAP_ATAC_Seurat <- function(sc_obj, file_name, group_by_category = NULL, 
   current_title <- paste0("RNA Data Integration \n (", sample_count, " Samples, ", cell_count, " Cells)")
   if(!is.null(group_by_category)) {
     p <- Seurat::DimPlot(sc_obj, reduction = "umap", group.by = group_by_category, repel = TRUE, raster = FALSE) +
-      labs(x ="UMAP 1", y = "UMAP 2", title = NULL)
+      labs(x ="UMAP 1", y = "UMAP 2", title = NULL) + theme_classic(base_size = 24)
   } else {
     p <- Seurat::DimPlot(sc_obj, reduction = "umap", label = TRUE,
                          label.size = 3, repel = TRUE, raster = FALSE) +
-      labs(x ="UMAP 1", y = "UMAP 2", title = NULL)
+      labs(x ="UMAP 1", y = "UMAP 2", title = NULL) + theme_classic(base_size = 24)
   }
-  ggplot2::ggsave(paste0(output_dir, file_name), plot = p, device = "png", dpi = 300)
+  ggplot2::ggsave(paste0(output_dir, file_name), plot = p, device = "png", dpi = 300, width=8.5, height=5.5, units = "in")
   return(TRUE)
 }
 
 # Looks good!
-print_UMAP_ATAC_Seurat(seurat_atac, "ATAC_Seurat_no_batch_correction.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
+print_UMAP_ATAC_Seurat(seurat_atac, "ATAC_Seurat_no_batch_correction_for_paper.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
 
 cell_names <- rownames(seurat_atac@meta.data)
 seurat_atac <- Seurat::AddMetaData(seurat_atac, metadata = cell_names, col.name = "cell_name")
@@ -89,4 +89,4 @@ idxPass <- which(seurat_atac$Clusters %in% messy_clusters)
 cellsPass <- names(seurat_atac$orig.ident[-idxPass])
 seurat_atac_minus_clusters <- subset(x = seurat_atac, subset = cell_name %in% cellsPass)
 
-print_UMAP_ATAC_Seurat(seurat_atac_minus_clusters, "ATAC_Seurat_no_batch_correction_minus_clusters.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
+print_UMAP_ATAC_Seurat(seurat_atac_minus_clusters, "ATAC_Seurat_no_batch_correction_minus_clusters_for_paper.png", group_by_category = "Cell_type_voting", output_dir = ATAC_output_dir)
