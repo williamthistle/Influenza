@@ -14,8 +14,9 @@ run_fmd_on_snATAC <- function(gene_list) {
 
 peak_annotation_plots <- list()
 
-innate_snATAC_cell_types <- c("CD14 Mono", "CD16 Mono", "cDC", "pDC", "NK")
+innate_snATAC_cell_types <- c("pDC", "CD16 Mono", "cDC", "NK", "CD14 Mono")
 snATAC_peak_annotated_dir <- paste0(scATAC_hvl_placebo_das_dir, "annotated/")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 for(snATAC_cell_type in innate_snATAC_cell_types) {
   snATAC_cell_type_for_file_name <- sub(" ", "_", snATAC_cell_type)
