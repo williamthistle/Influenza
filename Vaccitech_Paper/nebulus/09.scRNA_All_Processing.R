@@ -136,7 +136,7 @@ cellsPass <- names(sc_obj$orig.ident[-idxPass])
 sc_obj <- subset(x = sc_obj, subset = cell_name %in% cellsPass)
 
 # Print UMAPs for all subjects (HVL and LVL)
-print_UMAP_RNA_for_paper(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type.png",
+print_UMAP_RNA_for_paper(sc_obj, file_name = "Final_RNA_UMAP_by_Majority_Vote_Cell_Type_for_paper.png",
                group_by_category = "predicted_celltype_majority_vote", output_dir = RNA_output_dir,
                log_flag = log_flag)
 print_UMAP_RNA(sc_obj, file_name = "Final_RNA_UMAP_by_Cluster.png",
