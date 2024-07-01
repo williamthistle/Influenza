@@ -26,9 +26,9 @@ all_sc_das_table$direction <- factor(all_sc_das_table$direction, levels = c("Upr
 
 all_sc_das_plot <- ggplot(all_sc_das_table, aes(Cell_Type, log2FC, color = direction)) +
   geom_jitter() + geom_hline(yintercept = 0.1, linetype = "dashed", color = "black") + 
-  geom_hline(yintercept = -0.1, linetype = "dashed", color = "black") + theme_minimal(base_size = 14) + 
+  geom_hline(yintercept = -0.1, linetype = "dashed", color = "black") + theme_minimal(base_size = 18) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + xlab("Cell Type") +
-  ylab("log2FC (Site Expression)") + ggtitle("scATAC DAS by Cell Type (28 Days Post-Exposure vs Pre-Exposure)") +
-  theme(plot.title = element_text(hjust = 0.5)) + guides(color=guide_legend(title="Fold Change Direction"))
+  ylab("log2FC (Site Expression)") + theme(plot.title = element_text(hjust = 0.5)) + 
+  guides(color=guide_legend(title="Fold Change Direction")) + theme(legend.position="none", axis.text.x = element_text(angle = 90, hjust = 1, size = 18))
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "scatac_das_jitterplot.tiff"), plot = all_sc_das_plot, device='tiff', dpi=300)
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "scatac_das_jitterplot.png"), plot = all_sc_das_plot, device='png', dpi=300, width = 4, units = "in")
