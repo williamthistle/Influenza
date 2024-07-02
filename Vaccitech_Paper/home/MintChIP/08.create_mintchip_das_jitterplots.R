@@ -21,7 +21,7 @@ mintchip_das_plot <- ggplot(all_mintchip_das_table, aes(Marker, log2FC, color = 
   geom_jitter() + geom_hline(yintercept = 0.1, linetype = "dashed", color = "black") + 
   geom_hline(yintercept = -0.1, linetype = "dashed", color = "black") + theme_minimal(base_size = 18) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + xlab("Histone Marker") +
-  ylab("log2FC (Mark Enrichment)") + theme(plot.title = element_text(hjust = 0.5)) + 
+  ylab("log2FC (Marker Enrichment)") + theme(plot.title = element_text(hjust = 0.5)) + 
   guides(color=guide_legend(title="Fold Change Direction")) + theme(legend.position="none", axis.text.x = element_text(angle = 45, hjust = 1, size = 18))
 
 ggsave(filename = paste0("C:/Users/willi/Desktop/", "mintchip_das_jitterplot.png"), plot = mintchip_das_plot, device='png', dpi=300, width = 4, height = 5, units = "in")
