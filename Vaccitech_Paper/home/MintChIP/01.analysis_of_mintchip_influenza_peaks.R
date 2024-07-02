@@ -121,7 +121,6 @@ for(marker in mintchip_markers) {
 }
 
 mintchip_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = NULL) + theme_classic(base_size = 18)
-ggsave(filename = paste0("C:/Users/wat2/Desktop/", "scatac_das_jitterplot.png"), plot = mintchip_annotation_barplots, device='png', dpi=300)
-
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "mintchip_genomic_features.png"), plot = mintchip_annotation_barplots, device='png', dpi=300, width = 8, units = "in")
 
       
