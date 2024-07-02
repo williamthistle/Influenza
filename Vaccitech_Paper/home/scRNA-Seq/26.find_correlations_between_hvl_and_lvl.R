@@ -79,7 +79,7 @@ for(cell_type in correlation_cell_types) {
   
   sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman", text_size = 5) + xlab("HVL Naive FC") + ylab("LVL Naive FC") + labs(title = cell_type_no_underscore) +  xlim(-2.5, 2.5) + ylim(-2.5, 2.5) + theme(aspect.ratio = 1, text=element_text(size=15))
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("HVL Naive FC") + ylab("LVL Naive FC") + labs(title = cell_type_no_underscore) +  xlim(-2.5, 2.5) + ylim(-2.5, 2.5) + theme(aspect.ratio = 1, text=element_text(size=15))
 }
 
 hvl_vs_lvl_pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])
