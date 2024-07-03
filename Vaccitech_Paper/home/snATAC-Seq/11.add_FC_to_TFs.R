@@ -94,16 +94,16 @@ combined_cd14_mono_motif_df_for_plotting$color <- with(combined_cd14_mono_motif_
                                                               ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
 
 cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
-  geom_point(aes(color = color)) +
+  geom_point(aes(color = color), size = 4) +
   scale_color_identity() +
   # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
-  theme_classic() +
-  labs(title = "CD14 Monocytes",
+  theme_classic(base_size = 30) +
+  labs(title = "CD14 Mono",
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif_Up.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
+ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
 
 # CD16 Mono
 cd16_mono_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "CD16_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cd16_Mono-sc_pct_0.01_FC_1_with_fc_values.tsv"),
@@ -135,16 +135,16 @@ combined_cd16_mono_motif_df_for_plotting$color <- with(combined_cd16_mono_motif_
                                                               ifelse(p.adjust.log >= 5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
 
 cd16_mono_motif_plot <- ggplot(combined_cd16_mono_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
-  geom_point(aes(color = color)) +
+  geom_point(aes(color = color), size = 4) +
   scale_color_identity() +
-  geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
-  theme_classic() +
-  labs(title = "CD16 Monocytes",
+  # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
+  theme_classic(base_size = 30) +
+  labs(title = "CD16 Mono,
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/wat2/Desktop/CD16_Mono_Motif.png", plot = cd16_mono_motif_plot, width = 6)
+ggsave(filename = "C:/Users/willi/Desktop/CD16_Mono_Motif.png", plot = cd16_mono_motif_plot, width = 1800, height = 1703, units = "px")
 
 # cDC
 cDC_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "cDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cDC-sc_pct_0.01_FC_1_with_fc_values.tsv"),
@@ -176,16 +176,16 @@ combined_cDC_motif_df_for_plotting$color <- with(combined_cDC_motif_df_for_plott
                                                               ifelse(p.adjust.log >= 10 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
 
 cDC_motif_plot <- ggplot(combined_cDC_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
-  geom_point(aes(color = color)) +
+  geom_point(aes(color = color), size = 4) +
   scale_color_identity() +
-  geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
-  theme_classic() +
+  # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
+  theme_classic(base_size = 30) +
   labs(title = "cDCs",
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/wat2/Desktop/cDC_Motif.png", plot = cDC_motif_plot, width = 6)
+ggsave(filename = "C:/Users/willi/Desktop/cDC_Motif.png", plot = cDC_motif_plot, width = 1800, height = 1703, units = "px")
 
 # pDC
 pDC_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "pDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-pDC-sc_pct_0.01_FC_1_with_fc_values.tsv"),
@@ -217,14 +217,14 @@ combined_pDC_motif_df_for_plotting$color <- with(combined_pDC_motif_df_for_plott
                                                         ifelse(p.adjust.log >= 3.5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
 
 pDC_motif_plot <- ggplot(combined_pDC_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
-  geom_point(aes(color = color)) +
+  geom_point(aes(color = color), size = 4) +
   scale_color_identity() +
-  geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
-  theme_classic() +
+  # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
+  theme_classic(base_size = 30) +
   labs(title = "pDCs",
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/wat2/Desktop/pDC_Motif.png", plot = pDC_motif_plot, width = 6)
+ggsave(filename = "C:/Users/willi/Desktop/pDC_Motif.png", plot = pDC_motif_plot, width = 1800, height = 1703, units = "px")
 
