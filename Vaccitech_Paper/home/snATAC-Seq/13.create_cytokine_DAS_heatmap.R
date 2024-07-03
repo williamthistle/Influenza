@@ -78,17 +78,45 @@ cytokine_das_heatmap_df <- data.frame(Cell_Type = cell_type_vector, Gene_Name = 
 category_colors <- cytokine_das_heatmap_df %>% 
   distinct(cytokine_type, Gene_Name) %>% 
   mutate(color = case_when(
-    cytokine_type == "interferon" ~ "red",
-    cytokine_type == "interleukin" ~ "green",
-    cytokine_type == "chemokine" ~ "blue",
+    cytokine_type == "interferon" ~ "#e31a1c",
+    cytokine_type == "interleukin" ~ "#1f78b4",
+    cytokine_type == "chemokine" ~ "#33a02c",
     TRUE ~ "black" # default color
   )) %>% 
   pull(color, name = Gene_Name)
 
+# Approach 1: Plot barplot for significant DAS for each cell type 
+significant_cytokine_das_heatmap_df <- cytokine_das_heatmap_df[!is.na(cytokine_das_heatmap_df$significant),]
+# Remove pDC because there's only one
+significant_cytokine_das_heatmap_df <- significant_cytokine_das_heatmap_df[significant_cytokine_das_heatmap_df$Cell_Type != "pDC",]
+# Create list to store barplots for each cell type
+cytokine_das_plots <- list()
+
+for(cell_type in unique(significant_cytokine_das_heatmap_df$Cell_Type)) {
+  current_cytokine_das_heatmap_df <- significant_cytokine_das_heatmap_df[significant_cytokine_das_heatmap_df$Cell_Type == cell_type,]
+  current_cytokine_das_heatmap_df <- current_cytokine_das_heatmap_df[rev(order(current_cytokine_das_heatmap_df$fold_change)),]
+  current_cytokine_das_heatmap_df$Gene_Name <- factor(current_cytokine_das_heatmap_df$Gene_Name, levels = current_cytokine_das_heatmap_df$Gene_Name)
+  current_cytokine_das_heatmap_df$cytokine_type <- factor(current_cytokine_das_heatmap_df$cytokine_type, levels = c("Interferon", "Interleukin", "Chemokine"))
+  current_plot <- ggplot(current_cytokine_das_heatmap_df, aes(x = Gene_Name, y = fold_change, fill = Gene_Name)) +
+    geom_col() + geom_hline(yintercept = 0, linetype = "dashed", color = "black") + 
+    geom_text(aes(label = significant,
+                          vjust = ifelse(fold_change >= 0, 0.4, 1)),
+                           size = 10) + theme_bw() + ylim(-4, 4) +
+    scale_fill_manual(values = category_colors) + 
+    labs(title = cell_type,
+         x = NULL,
+         y = "Fold Change", fill = "Cytokine Type") + theme(plot.title = element_text(hjust = 0.5)) + theme(legend.position="none", axis.text.x = element_text(angle = 45, hjust = 1), text=element_text(size=32))
+  
+  cytokine_das_plots[[cell_type]] <- current_plot
+}
+
+ggsave("C:/Users/willi/Desktop/test_without_legend.png", plot = patchwork::wrap_plots(cytokine_das_plots, ncol = 2, nrow = 2), height = 10, width = 14)
+
+# Approach 2: Plot heatmap for all DAS across all cell types
 cytokine_das_heatmap_df$Gene_Name <- factor(cytokine_das_heatmap_df$Gene_Name, levels = c("CCL17", "CCR7", "CXCL12", "CXCR3", "XCR1", "IRF1", "IRF4", "IRF5", "IRF8", "IRF2BPL", "IFNGR1", "IFI6", "IFI27L1", "IFI35", "IFI44L", "IFITM3", "IL1B", "IL20", "IL2RB", "IL5RA", "IL6R", "IL15RA", "IL17RA", "IL21R", "IL1RN", "IRAK1BP1"))
 cytokine_das_heatmap_df$Cell_Type <- factor(cytokine_das_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "cDC", "pDC"))
 
-ggplot() + 
+cytokine_das_heatmap <- ggplot() + 
   geom_raster(data = cytokine_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
   geom_text(data = cytokine_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.30, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
   theme_classic(base_size = 14) + labs(title = "Fold Change for Cytokine-Related DAS in Innate Immune Cell Types",
@@ -98,48 +126,3 @@ ggplot() +
         axis.text.y = element_text(size = 12, color = category_colors[levels(factor(cytokine_das_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.4)
 
 ggsave("C:/Users/willi/Desktop/cytokine_das_heatmap.png", plot = cytokine_das_heatmap, height = 10, width = 10)
-
-
-
-
-#cytokine_das_heatmap_df <- cytokine_das_heatmap_df[!is.na(cytokine_das_heatmap_df$significant),]
-
-#cytokine_das_heatmap_df$cytokine_type <- c("Interferon", "Interferon", "Interferon",
-#                                           "Interleukin", "Interleukin", "Interleukin",
-#                                           "Chemokine", "Chemokine", "Chemokine",
-#                                           "Interferon", "Interferon", "Interleukin",
-#                                           "Interleukin", "Chemokine", "Interferon", "Interleukin",
-#                                           "Interferon", "Interferon", "Interleukin",
-#                                           "Interferon", "Interferon", "Interferon",
-#                                           "Interleukin", "Interleukin", "Interleukin",
-#                                           "Interleukin", "Chemokine")
-
-# Remove pDC because there's only one
-#cytokine_das_heatmap_df <- cytokine_das_heatmap_df[cytokine_das_heatmap_df$Cell_Type != "pDC",]
-
-#cytokine_das_plots <- list()
-
-#for(cell_type in unique(cytokine_das_heatmap_df$Cell_Type)) {
-#  current_cytokine_das_heatmap_df <- cytokine_das_heatmap_df[cytokine_das_heatmap_df$Cell_Type == cell_type,]
-#  current_cytokine_das_heatmap_df <- current_cytokine_das_heatmap_df[rev(order(current_cytokine_das_heatmap_df$fold_change)),]
-#  current_cytokine_das_heatmap_df$Gene_Name <- factor(current_cytokine_das_heatmap_df$Gene_Name, levels = current_cytokine_das_heatmap_df$Gene_Name)
-#  current_cytokine_das_heatmap_df$cytokine_type <- factor(current_cytokine_das_heatmap_df$cytokine_type, levels = c("Interferon", "Interleukin", "Chemokine"))
-#  if(length(unique(current_cytokine_das_heatmap_df$cytokine_type)) == 2) {
-#    barplot_colors <- c("#F8766D", "#00BA38")
-#  } else {
-#    barplot_colors <- c("#F8766D", "#00BA38", "#619CFF")
-#  }
-#  current_plot <- ggplot(current_cytokine_das_heatmap_df, aes(x = Gene_Name, y = fold_change, fill = cytokine_type)) +
-#    geom_col() + geom_text(aes(label = significant,
-#                          vjust = ifelse(fold_change >= 0, 0, 1)),
-#                           size = 6) + theme_bw() + ylim(-4, 4) + theme(text = element_text(size = 16)) +
-#    scale_fill_manual(values = barplot_colors) + 
-#    labs(title = cell_type,
-#         x = "Gene Name",
-#         y = "Fold Change", fill = "Cytokine Type") + theme(plot.title = element_text(hjust = 0.5)) + theme(legend.position="none")
-#  
-#  cytokine_das_plots[[cell_type]] <- current_plot
-#}
-
-#ggsave("C:/Users/willi/Desktop/test_without_legend.png", plot = patchwork::wrap_plots(cytokine_das_plots, ncol = 2, nrow = 2), height = 10, width = 15)
-  

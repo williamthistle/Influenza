@@ -78,81 +78,59 @@ epigenetic_remodeling_das_heatmap_df <- data.frame(Cell_Type = cell_type_vector,
 category_colors <- epigenetic_remodeling_das_heatmap_df %>% 
   distinct(epigenetic_remodeling_type, Gene_Name) %>% 
   mutate(color = case_when(
-    epigenetic_remodeling_type == "Histone" ~ "red",
-    epigenetic_remodeling_type == "Lysine Demethylase" ~ "green",
-    epigenetic_remodeling_type == "Lysine Methyltransferase" ~ "blue",
-    epigenetic_remodeling_type == "AT-Rich Interaction Domain" ~ "orange",
-    epigenetic_remodeling_type == "Lysine Acetyltransferase" ~ "purple",
-    epigenetic_remodeling_type == "DNA Methyltransferase" ~ "pink",
+    epigenetic_remodeling_type == "Histone" ~ "#e31a1c",
+    epigenetic_remodeling_type == "Lysine Demethylase" ~ "#1f78b4",
+    epigenetic_remodeling_type == "Lysine Methyltransferase" ~ "#33a02c",
+    epigenetic_remodeling_type == "AT-Rich Interaction Domain" ~ "#a6cee3",
+    epigenetic_remodeling_type == "Lysine Acetyltransferase" ~ "#6a3d9a",
+    epigenetic_remodeling_type == "DNA Methyltransferase" ~ "#cab2d6",
     epigenetic_remodeling_type == "Sirtuin" ~ "turquoise",
     epigenetic_remodeling_type == "Tet Methylcytosine Dioxygenase" ~ "maroon",
     TRUE ~ "black" # default color
   )) %>% 
   pull(color, name = Gene_Name)
 
-epigenetic_remodeling_das_heatmap_df$Gene_Name <- factor(epigenetic_remodeling_das_heatmap_df$Gene_Name, levels = names(category_colors[order(match(category_colors,c("blue","green","orange","purple","red","maroon","pink","turquoise")))]))
-epigenetic_remodeling_das_heatmap_df$Cell_Type <- factor(epigenetic_remodeling_das_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "cDC", "pDC"))
+# Approach 1: Plot barplot for significant DAS for each cell type 
+significant_epigenetic_remodeling_das_heatmap_df <- epigenetic_remodeling_das_heatmap_df[!is.na(epigenetic_remodeling_das_heatmap_df$significant),]
+# Remove pDC
+significant_epigenetic_remodeling_das_heatmap_df <- significant_epigenetic_remodeling_das_heatmap_df[significant_epigenetic_remodeling_das_heatmap_df$Cell_Type != "pDC",]
+# Remove genes
+removed_genes <- c("SIRT2", "SETD7", "SETD3", "ARID3B", "ARID5B", "ARID1B")
+significant_epigenetic_remodeling_das_heatmap_df <- significant_epigenetic_remodeling_das_heatmap_df[!(significant_epigenetic_remodeling_das_heatmap_df$Gene_Name %in% removed_genes),]
+# Create list to store barplots
+epigenetic_remodeling_das_plots <- list()
 
-# Alternative - all of the sites
-epigenetic_remodeling_das_heatmap <- ggplot() + 
-  geom_raster(data = epigenetic_remodeling_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
-  geom_text(data = epigenetic_remodeling_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.30, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
-  theme_classic(base_size = 14) + labs(title = "Fold Change for Epigenetic Remodeling DAS in Innate Immune Cell Types",
+for(cell_type in unique(significant_epigenetic_remodeling_das_heatmap_df$Cell_Type)) {
+  current_epigenetic_remodeling_das_heatmap_df <- significant_epigenetic_remodeling_das_heatmap_df[significant_epigenetic_remodeling_das_heatmap_df$Cell_Type == cell_type,]
+  current_epigenetic_remodeling_das_heatmap_df <- current_epigenetic_remodeling_das_heatmap_df[rev(order(current_epigenetic_remodeling_das_heatmap_df$fold_change)),]
+  current_epigenetic_remodeling_das_heatmap_df$Gene_Name <- factor(current_epigenetic_remodeling_das_heatmap_df$Gene_Name, levels = current_epigenetic_remodeling_das_heatmap_df$Gene_Name)
+  current_epigenetic_remodeling_das_heatmap_df$epigenetic_remodeling_type <- factor(current_epigenetic_remodeling_das_heatmap_df$epigenetic_remodeling_type, levels = c("Interferon", "Interleukin", "Chemokine"))
+  current_plot <- ggplot(current_epigenetic_remodeling_das_heatmap_df, aes(x = Gene_Name, y = fold_change, fill = Gene_Name)) +
+    geom_col() + geom_hline(yintercept = 0, linetype = "dashed", color = "black") + 
+    geom_text(aes(label = significant,
+                  vjust = ifelse(fold_change >= 0, 0.4, 1)),
+              size = 10) + theme_bw() + ylim(-5, 5) +
+    scale_fill_manual(values = category_colors) + 
+    labs(title = cell_type,
+         x = NULL,
+         y = "Fold Change", fill = "Epigenetic Remodeling Type") + theme(plot.title = element_text(hjust = 0.5)) + theme(legend.position="none", axis.text.x = element_text(angle = 45, hjust = 1), text=element_text(size=32))
+  
+  epigenetic_remodeling_das_plots[[cell_type]] <- current_plot
+}
+
+ggsave("C:/Users/willi/Desktop/epigenetic_remodeling_barplot_without_legend.png", plot = patchwork::wrap_plots(epigenetic_remodeling_das_plots, ncol = 2, nrow = 2), height = 10, width = 14)
+
+# Approach 2: Plot heatmap for all DAS across all cell types
+cytokine_das_heatmap_df$Gene_Name <- factor(cytokine_das_heatmap_df$Gene_Name, levels = c("CCL17", "CCR7", "CXCL12", "CXCR3", "XCR1", "IRF1", "IRF4", "IRF5", "IRF8", "IRF2BPL", "IFNGR1", "IFI6", "IFI27L1", "IFI35", "IFI44L", "IFITM3", "IL1B", "IL20", "IL2RB", "IL5RA", "IL6R", "IL15RA", "IL17RA", "IL21R", "IL1RN", "IRAK1BP1"))
+cytokine_das_heatmap_df$Cell_Type <- factor(cytokine_das_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "cDC", "pDC"))
+
+cytokine_das_heatmap <- ggplot() + 
+  geom_raster(data = cytokine_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
+  geom_text(data = cytokine_das_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.30, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
+  theme_classic(base_size = 14) + labs(title = "Fold Change for Cytokine-Related DAS in Innate Immune Cell Types",
                                        x = "Cell Type",
                                        y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
-        axis.text.y = element_text(size = 12, color = category_colors[levels(factor(epigenetic_remodeling_das_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.4)
+        axis.text.y = element_text(size = 12, color = category_colors[levels(factor(cytokine_das_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.4)
 
-ggsave("C:/Users/willi/Desktop/epigenetic_remodeling_das_heatmap.png", plot = epigenetic_remodeling_das_heatmap, height = 10, width = 10)
-
-
-
-# epigenetic_remodeling_das_heatmap_df <- epigenetic_remodeling_das_heatmap_df[!is.na(epigenetic_remodeling_das_heatmap_df$significant),]
-
-# epigenetic_remodeling_das_heatmap_df$epigenetic_remodeling_type <- c("Histone", "Histone", "Histone Modification",
-#                                            "Histone Modification", "DNA Methylation", "Histone Modification",
-#                                            "Histone Modification", "Histone Modification", "Chromatin Remodeling",
-#                                            "Chromatin Remodeling", "Histone", "Histone Modification",
-#                                            "Histone Modification", "Histone Modification", "Chromatin Remodeling", "Histone Modification",
-#                                            "Histone", "Histone", "Histone Modification",
-#                                            "Histone Modification", "Histone Modification", "DNA Methylation",
-#                                            "Chromatin Remodeling", "Histone", "Histone Modification",
-#                                            "Histone", "Histone", "Histone Modification",
-#                                            "Histone Modification", "Histone Modification", "Histone Modification",
-#                                            "DNA Methylation", "Chromatin Remodeling", "Histone Modification",
-#                                            "Histone", "Histone Modification", "Histone Modification",
-#                                            "Histone Modification",  "Histone Modification", "Histone",
-#                                            "Histone", "Histone Modification")
-# 
-# # Temporary removal of one row
-# # epigenetic_remodeling_das_heatmap_df <- epigenetic_remodeling_das_heatmap_df[-c(31),]
-# 
-# epigenetic_remodeling_das_plots <- list()
-# 
-# for(cell_type in unique(epigenetic_remodeling_das_heatmap_df$Cell_Type)) {
-#   current_epigenetic_remodeling_das_heatmap_df <- epigenetic_remodeling_das_heatmap_df[epigenetic_remodeling_das_heatmap_df$Cell_Type == cell_type,]
-#   current_epigenetic_remodeling_das_heatmap_df <- current_epigenetic_remodeling_das_heatmap_df[rev(order(current_epigenetic_remodeling_das_heatmap_df$fold_change)),]
-#   current_epigenetic_remodeling_das_heatmap_df$Gene_Name <- factor(current_epigenetic_remodeling_das_heatmap_df$Gene_Name, levels = current_epigenetic_remodeling_das_heatmap_df$Gene_Name)
-#   current_epigenetic_remodeling_das_heatmap_df$epigenetic_remodeling_type <- factor(current_epigenetic_remodeling_das_heatmap_df$epigenetic_remodeling_type, levels = c("Histone", "Histone Modification", "DNA Methylation", "Chromatin Remodeling"))
-#   if(length(unique(current_epigenetic_remodeling_das_heatmap_df$epigenetic_remodeling_type)) == 2) {
-#     barplot_colors <- c("#F8766D", "#00BA38")
-#   } else if(length(unique(current_epigenetic_remodeling_das_heatmap_df$epigenetic_remodeling_type)) == 3) {
-#     barplot_colors <- c("#F8766D", "#00BA38", "#619CFF")
-#   } else {
-#     barplot_colors <- c("#F8766D", "#00BA38", "#619CFF", "#7cae00")
-#   }
-#   
-#   current_plot <- ggplot(current_epigenetic_remodeling_das_heatmap_df, aes(x = Gene_Name, y = fold_change, fill = epigenetic_remodeling_type)) +
-#     geom_col() + geom_text(aes(label = significant,
-#                           vjust = ifelse(fold_change >= 0, 0, 1)),
-#                            size = 6) + theme_bw() + ylim(-5, 5) + theme(text = element_text(size = 16)) +
-#     scale_fill_manual(values = barplot_colors) + 
-#     labs(title = cell_type,
-#          x = "Gene Name",
-#          y = "Fold Change", fill = "Epigenetic Remodeling Gene Type") + theme(plot.title = element_text(hjust = 0.5)) #+ theme(legend.position="none")
-#   
-#   epigenetic_remodeling_das_plots[[cell_type]] <- current_plot
-# }
-# 
-# ggsave("C:/Users/willi/Desktop/test_with_legend.png", plot = patchwork::wrap_plots(epigenetic_remodeling_das_plots, ncol = 2, nrow = 3), height = 10, width = 20)
-#   
+ggsave("C:/Users/willi/Desktop/cytokine_das_heatmap.png", plot = cytokine_das_heatmap, height = 10, width = 10)
