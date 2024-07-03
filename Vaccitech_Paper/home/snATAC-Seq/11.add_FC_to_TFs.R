@@ -94,7 +94,7 @@ combined_cd14_mono_motif_df_for_plotting$color <- with(combined_cd14_mono_motif_
                                                               ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
 
 cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
-  geom_point(aes(color = color), size = 4) +
+  geom_point(aes(color = color), size = 3) +
   scale_color_identity() +
   # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
   theme_classic(base_size = 30) +
@@ -139,7 +139,7 @@ cd16_mono_motif_plot <- ggplot(combined_cd16_mono_motif_df_for_plotting, aes(x =
   scale_color_identity() +
   # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
   theme_classic(base_size = 30) +
-  labs(title = "CD16 Mono,
+  labs(title = "CD16 Mono",
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
