@@ -110,7 +110,7 @@ for(cell_type in unique(significant_cytokine_das_heatmap_df$Cell_Type)) {
   cytokine_das_plots[[cell_type]] <- current_plot
 }
 
-ggsave("C:/Users/willi/Desktop/test_without_legend.png", plot = patchwork::wrap_plots(cytokine_das_plots, ncol = 2, nrow = 2), height = 10, width = 14)
+ggsave("C:/Users/willi/Desktop/cytokine_barplot_without_legend.png", plot = patchwork::wrap_plots(cytokine_das_plots, ncol = 2, nrow = 2), height = 10, width = 14)
 
 # Approach 2: Plot heatmap for all DAS across all cell types
 cytokine_das_heatmap_df$Gene_Name <- factor(cytokine_das_heatmap_df$Gene_Name, levels = c("CCL17", "CCR7", "CXCL12", "CXCR3", "XCR1", "IRF1", "IRF4", "IRF5", "IRF8", "IRF2BPL", "IFNGR1", "IFI6", "IFI27L1", "IFI35", "IFI44L", "IFITM3", "IL1B", "IL20", "IL2RB", "IL5RA", "IL6R", "IL15RA", "IL17RA", "IL21R", "IL1RN", "IRAK1BP1"))
