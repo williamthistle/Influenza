@@ -78,10 +78,10 @@ epigenetic_remodeling_das_heatmap_df <- data.frame(Cell_Type = cell_type_vector,
 category_colors <- epigenetic_remodeling_das_heatmap_df %>% 
   distinct(epigenetic_remodeling_type, Gene_Name) %>% 
   mutate(color = case_when(
-    epigenetic_remodeling_type == "Histone" ~ "#e31a1c",
-    epigenetic_remodeling_type == "Lysine Demethylase" ~ "#1f78b4",
-    epigenetic_remodeling_type == "Lysine Methyltransferase" ~ "#33a02c",
-    epigenetic_remodeling_type == "AT-Rich Interaction Domain" ~ "#a6cee3",
+    epigenetic_remodeling_type == "Histone" ~ "#ffff99",
+    epigenetic_remodeling_type == "Lysine Demethylase" ~ "#ff7f00",
+    epigenetic_remodeling_type == "Lysine Methyltransferase" ~ "#a6cee3",
+    epigenetic_remodeling_type == "AT-Rich Interaction Domain" ~ "#000000",
     epigenetic_remodeling_type == "Lysine Acetyltransferase" ~ "#6a3d9a",
     epigenetic_remodeling_type == "DNA Methyltransferase" ~ "#cab2d6",
     epigenetic_remodeling_type == "Sirtuin" ~ "turquoise",
@@ -118,7 +118,7 @@ for(cell_type in unique(significant_epigenetic_remodeling_das_heatmap_df$Cell_Ty
   epigenetic_remodeling_das_plots[[cell_type]] <- current_plot
 }
 
-ggsave("C:/Users/willi/Desktop/epigenetic_remodeling_barplot_without_legend.png", plot = patchwork::wrap_plots(epigenetic_remodeling_das_plots, ncol = 2, nrow = 2), height = 10, width = 14)
+ggsave("C:/Users/wat2/Desktop/epigenetic_remodeling_barplot_without_legend.png", plot = patchwork::wrap_plots(epigenetic_remodeling_das_plots, ncol = 2, nrow = 2), height = 10, width = 14)
 
 # Approach 2: Plot heatmap for all DAS across all cell types
 cytokine_das_heatmap_df$Gene_Name <- factor(cytokine_das_heatmap_df$Gene_Name, levels = c("CCL17", "CCR7", "CXCL12", "CXCR3", "XCR1", "IRF1", "IRF4", "IRF5", "IRF8", "IRF2BPL", "IFNGR1", "IFI6", "IFI27L1", "IFI35", "IFI44L", "IFITM3", "IL1B", "IL20", "IL2RB", "IL5RA", "IL6R", "IL15RA", "IL17RA", "IL21R", "IL1RN", "IRAK1BP1"))
@@ -133,4 +133,4 @@ cytokine_das_heatmap <- ggplot() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
         axis.text.y = element_text(size = 12, color = category_colors[levels(factor(cytokine_das_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.4)
 
-ggsave("C:/Users/willi/Desktop/cytokine_das_heatmap.png", plot = cytokine_das_heatmap, height = 10, width = 10)
+ggsave("C:/Users/wat2/Desktop/cytokine_das_heatmap.png", plot = cytokine_das_heatmap, height = 10, width = 10)
