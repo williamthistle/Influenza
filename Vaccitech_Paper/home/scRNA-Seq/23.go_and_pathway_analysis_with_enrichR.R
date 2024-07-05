@@ -32,12 +32,12 @@ create_enrichment_plot <- function(results, cutoff = 0.05) {
   
   # Create the barplot
   ggplot(subset_df, aes(x = Num_Genes, y = fct_rev(Term), fill = Adjusted.P.value)) +
-    theme_bw() +
+    theme_bw(base_size = 32) +
     geom_bar(stat = "identity") +
     scale_fill_gradient(low = "red", high = "blue") +  # Reversed color scale
     labs(x = "Number of Genes", y = "Term") +
     guides(fill = guide_colorbar(reverse = TRUE)) +  # Reverse the legend  
-    scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
+    scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) 
 }
 
 get_enrichr_results <- function(gene_list) {
@@ -196,7 +196,19 @@ cd16_test <- cd16_test[cd16_test$Gene_Count >= 5,]
 create_enrichment_plot(cd16_test)
 
 
+cd14_mono_enrichr_upregulated_results_go <- cd14_mono_enrichr_upregulated_results[[1]]
+cd14_mono_enrichr_upregulated_results_go$Pathway_Type <- "GO"
+cd14_mono_enrichr_upregulated_results_reactome <- cd14_mono_enrichr_upregulated_results[[4]]
+cd14_mono_enrichr_upregulated_results_reactome$Pathway_Type <- "Reactome"
+
+
+
+
 cd14_mono_enrichr_upregulated_results_for_barplot <- cd14_mono_enrichr_upregulated_results
+
+
+
+
 cd14_mono_enrichr_upregulated_results_for_barplot <- cd14_mono_enrichr_upregulated_results_for_barplot[c(1,5,10,15,17,22,26),]
 
 
@@ -205,6 +217,8 @@ create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[1]])
 create_enrichment_plot(cd16_mono_enrichr_upregulated_results[[1]])
 
 create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[4]])
+
+
 
 # Sleep for 1 second so we don't overload enrichR server with requests
 Sys.sleep(1)
