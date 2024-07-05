@@ -174,7 +174,10 @@ ggplot(overlapping_circuit_cell_type_df, aes(x = Var2, y = Var1, fill = value, l
 magical_tf_vs_gene_df <- create_tf_targets_df(overall_magical_df)
 magical_tf_vs_gene_df <- magical_tf_vs_gene_df[sign(magical_tf_vs_gene_df$atac_pseudobulk_fc) == sign(magical_tf_vs_gene_df$TF_fc),]
 # Only keep TFs that are found to be significant in scRNA-seq
-magical_tf_vs_gene_df_significant_tfs <- magical_tf_vs_gene_df[magical_tf_vs_gene_df$TF_sc_pval < 0.05 & magical_tf_vs_gene_df$TF_pseudobulk_pval < 0.05,]
+magical_tf_vs_gene_df_significant_tfs <- magical_tf_vs_gene_df[magical_tf_vs_gene_df$TF_sc_pval < 0.05,]
+
+# Check ETS2
+ETS2_circuits <- magical_tf_vs_gene_df_significant_tfs[magical_tf_vs_gene_df_significant_tfs$TFs.binding.prob. == "ETS2",]
 
 # Create targets for each cell type
 magical_tf_vs_cell_type_df <- create_tf_vs_cell_type_df(overall_magical_df)

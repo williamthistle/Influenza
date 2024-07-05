@@ -111,16 +111,22 @@ for(marker in mintchip_markers) {
 neg_fmd_list <- readRDS(paste0(mintchip_fmd_dir, "neg_fmd_V2.RDS"))
 
 # Create peak annotation plot
+mintchip_markers <- c("H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3")
+mintchip_markers_alt <- c("H3K27me3", "H3K27Ac", "H3K4me3", "H3K36me3", "H3K9me3", "H3K4me1")
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
 peak_annotation_plots <- list()
 for(marker in mintchip_markers) {
   differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/all/", marker, "_DESeq2_FC_0.1.tsv")
   differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
   differential_analysis_results <- differential_analysis_results[,c(1,2,3,4,5)]
   differential_analysis_results <- annotatePeak(makeGRangesFromDataFrame(differential_analysis_results), TxDb = txdb, annoDb = "org.Hs.eg.db")
+  print(marker)
+  print(differential_analysis_results)
   peak_annotation_plots[[marker]] <- differential_analysis_results
 }
 
 mintchip_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = NULL) + theme_classic(base_size = 18)
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "mintchip_genomic_features.png"), plot = mintchip_annotation_barplots, device='png', dpi=300, width = 8, units = "in")
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "mintchip_genomic_features_2.png"), plot = mintchip_annotation_barplots, device='png', dpi=300, width = 8, units = "in")
 
       

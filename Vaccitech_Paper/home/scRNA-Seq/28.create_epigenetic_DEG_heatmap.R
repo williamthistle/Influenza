@@ -4,18 +4,24 @@ source(paste0(base_dir, "00.setup.R"))
 
 innate_scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type %in% innate_cell_types,]
 
+# Check for relevant genes
+library(org.Hs.eg.db)
+cols <- c("GENENAME")
+annotated_innate_deg <- select(org.Hs.eg.db, keys=unique(innate_scRNA_hvl_placebo_degs$Gene_Name), columns=cols, keytype="SYMBOL")
+annotated_innate_deg[grep("histone", annotated_innate_deg$GENENAME), ]
+
 heatmap_genes <- c("KAT6A", "HDAC5", "HDAC7", "HDAC9", "ASH1L", "PRDM2", "SETD2", "KDM2B", "KDM3A")
 
 heatmap_gene_types <- list()
-heatmap_gene_types[["KAT6A"]] <- "Histone Acetyltransferase"
+heatmap_gene_types[["KAT6A"]] <- "Lysine Acetyltransferase"
 heatmap_gene_types[["HDAC5"]] <- "Histone Deacetylase"
 heatmap_gene_types[["HDAC7"]] <- "Histone Deacetylase"
 heatmap_gene_types[["HDAC9"]] <- "Histone Deacetylase"
-heatmap_gene_types[["ASH1L"]] <- "Histone Methyltransferase"
-heatmap_gene_types[["PRDM2"]] <- "Histone Methyltransferase"
-heatmap_gene_types[["SETD2"]] <- "Histone Methyltransferase"
-heatmap_gene_types[["KDM2B"]] <- "Histone Demethylase"
-heatmap_gene_types[["KDM3A"]] <- "Histone Demethylase"
+heatmap_gene_types[["ASH1L"]] <- "Lysine Methyltransferase"
+heatmap_gene_types[["PRDM2"]] <- "Lysine Methyltransferase"
+heatmap_gene_types[["SETD2"]] <- "Lysine Methyltransferase"
+heatmap_gene_types[["KDM2B"]] <- "Lysine Demethylase"
+heatmap_gene_types[["KDM3A"]] <- "Lysine Demethylase"
 
 cell_type_vector <- c()
 gene_name_vector <- c()
@@ -50,7 +56,7 @@ for(innate_cell_type in innate_cell_types) {
 epigenetic_heatmap_df <- data.frame(Cell_Type = cell_type_vector, Gene_Name = gene_name_vector, fold_change = fold_change_vector, significant = significance_vector)
 
 epigenetic_heatmap_df$Gene_Name <- factor(epigenetic_heatmap_df$Gene_Name, levels = unique(epigenetic_heatmap_df$Gene_Name))
-epigenetic_heatmap_df$Cell_Type <- factor(epigenetic_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "NK_CD56bright", "cDC", "pDC"))
+epigenetic_heatmap_df$Cell_Type <- factor(epigenetic_heatmap_df$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "cDC", "pDC", "NK", "NK_CD56bright"))
 
 epigenetic_type <- c()
 for(current_row_index in 1:nrow(epigenetic_heatmap_df)) {
@@ -63,19 +69,23 @@ epigenetic_heatmap_df$Epigenetic_Type <- epigenetic_type
 category_colors <- epigenetic_heatmap_df %>% 
   distinct(Epigenetic_Type, Gene_Name) %>% 
   mutate(color = case_when(
-    Epigenetic_Type == "Histone Acetyltransferase" ~ "red",
-    Epigenetic_Type == "Histone Deacetylase" ~ "green",
-    Epigenetic_Type == "Histone Methyltransferase" ~ "blue",
-    Epigenetic_Type == "Histone Demethylase" ~ "orange",
+    Epigenetic_Type == "Lysine Acetyltransferase" ~ "#6a3d9a",
+    Epigenetic_Type == "Histone Deacetylase" ~ "#0b6623",
+    Epigenetic_Type == "Lysine Methyltransferase" ~ "#b22222",
+    Epigenetic_Type == "Lysine Demethylase" ~ "#ff7f00",
     TRUE ~ "black" # default color
   )) %>% 
   pull(color, name = Gene_Name)
 
-ggplot() + 
+epigenetic_remodeling_heatmap_plot <- ggplot() + 
   geom_raster(data = epigenetic_heatmap_df, aes(x = Cell_Type, y = Gene_Name, fill = fold_change)) +
   geom_text(data = epigenetic_heatmap_df, aes(x = Cell_Type, y = Gene_Name, label = significant), nudge_y = 0.15, nudge_x = 0.20, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
-  theme_classic(base_size = 14) + labs(title = "Fold Change for Epigenetic Remodeling Genes in Innate Immune Cell Types",
-                      x = "Cell Type",
-                      y = "Gene", fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
-        axis.text.y = element_text(size = 12, color = category_colors[levels(factor(epigenetic_heatmap_df$Gene_Name))])) + coord_fixed(ratio = 0.75)
+  theme_classic(base_size = 14) + labs(title = NULL,
+                      x = NULL,
+                      y = NULL, fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 16),
+        axis.text.y = element_text(size = 16, color = category_colors[levels(factor(epigenetic_heatmap_df$Gene_Name))]))
+
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "epigenetic_remodeling_deg_heatmap.png"), plot = epigenetic_remodeling_heatmap_plot, device='png', dpi=300, width = 5, height = 5, units = "in")
+
+
