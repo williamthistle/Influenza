@@ -152,8 +152,10 @@ for(cell_type in unique(magical_gene_overlap_df$Cell_Type)) {
 set_names <- unique(magical_gene_overlap_df$Cell_Type)
 set_names <- gsub("_", " ", set_names)
 names(sets) <- set_names
+png(filename = 'C:/Users/willi/Desktop/magical_upset_plot_small.png', width = 15, height = 10, res = 300, units = "in")
 UpSetR::upset(UpSetR::fromList(sets), order.by = "freq", sets = rev(c("CD14 Mono", "CD16 Mono", "cDC", "pDC", "NK")), keep.order = TRUE,
-              mainbar.y.label = "Gene Intersections", sets.x.label = "Total Genes Per Cell Type")
+              mainbar.y.label = "Gene Intersections", sets.x.label = "Total Genes Per Cell Type", text.scale = 4, point.size = 4)
+dev.off()
 
 # Find overlapping circuits between cell types
 overlapping_circuits_df <- find_overlapping_circuits(overall_magical_df)
@@ -185,6 +187,7 @@ magical_tf_vs_cell_type_df <- create_tf_vs_cell_type_df(overall_magical_df)
 tfs_found_in_scRNA_df <- find_tfs_in_scRNA_data(magical_tf_vs_cell_type_df, current_candidate_deg_table)
 
 magical_tf_heatmap_plot <- create_tf_heatmap_plot(tfs_found_in_scRNA_df)
+ggsave("C:/Users/willi/Desktop/MAGICAL_TF_plot.png", plot = magical_tf_heatmap_plot, width = 10, height = 10, units = "in", dpi = 300)
 
 # TF analysis for min.pct = 0.05
 overall_magical_df_0.05 <- overall_magical_df[overall_magical_df$pct.1 >= 0.05 | overall_magical_df$pct.2 >= 0.05,]

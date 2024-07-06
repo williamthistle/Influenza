@@ -422,7 +422,7 @@ create_tf_heatmap_plot <- function(tf_table) {
   tf_table <- tf_table[tf_table$TF %in% interesting_tfs,]
   
   tf_table$Cell_Type <- gsub("_", " ",  tf_table$Cell_Type)
-  tf_table$Cell_Type <- factor(tf_table$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "NK", "cDC", "pDC"))
+  tf_table$Cell_Type <- factor(tf_table$Cell_Type, levels = c("CD14 Mono", "CD16 Mono", "cDC", "pDC", "NK"))
   #ggplot(tf_table, aes(Cell_Type, TF, fill = Count)) + 
   #  geom_tile() + scale_fill_gradient(low="white", high="red") + 
   #  theme(axis.title.y=element_blank(),
@@ -432,18 +432,18 @@ create_tf_heatmap_plot <- function(tf_table) {
     geom_tile() + scale_fill_gradientn(
       colors = c("ivory1", "lightcoral", "red"),
       values = scales::rescale(c(0, 20, 100))) +
-    theme_minimal() +
+    theme_minimal(base_size = 24) +
     theme(
       panel.background = element_rect(fill = "white", color = NA), # Set background to white
       panel.grid.major = element_blank(), # Remove major grid lines
       panel.grid.minor = element_blank(),  # Remove minor grid lines
-      plot.title = element_text(hjust = 0.5)
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 90, hjust = 1)
     ) +
-    labs(title = "Heatmap of TF Target Count by Cell Type",
-         x = "Cell Type",
-         y = "TF",
+    labs(title = NULL,
+         x = NULL,
+         y = NULL,
          fill = "Target Count")
-
 }
 
 find_overlapping_circuits <- function(magical_table) {

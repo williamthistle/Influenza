@@ -28,16 +28,42 @@ levels(hvl_placebo_CD14_mono_sc_obj) <- c("Pre-Challenge", "28 Days Post-Challen
 cov_plot <- CoveragePlot(
   object = hvl_placebo_CD14_mono_sc_obj,
   region = c("chr11-65611955-66069871"),
-  annotation = TRUE,
+  annotation = FALSE,
   peaks = FALSE
 )
 
+# cov_plot <- cov_plot & theme_classic(base_size = 32)
 
 # cov_plot_build <- ggplot_build(cov_plot[[1]][[1]])
 
-# cov_plot <- cov_plot & scale_fill_manual(values = c("grey", "grey"))
+# Try text size 0?
+cov_plot_peak_plot <- cov_plot[[1]]
+cov_plot_peak_plot <- cov_plot_peak_plot + scale_fill_manual(values = c("#11c3c8", "#f8766d")) + theme(
+  # Remove axis text and titles
+  axis.text = element_blank(),
+  axis.title = element_blank(),
+  # Remove facet labels
+  strip.text = element_blank(),
+  # Remove plot title and caption
+  plot.title = element_blank(),
+  plot.caption = element_blank(),
+  # Remove legend title and text
+  legend.title = element_blank(),
+  legend.text = element_blank(),
+  # Remove panel (plot area) labels
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.border = element_blank(),
+  # Remove axis ticks
+  axis.ticks = element_blank(),
+  # Remove plot background
+  panel.background = element_blank(),
+  plot.background = element_blank()
+)
 
-ggsave("/home/wat2/everything_plot.png", plot = cov_plot, width = 8)
+# cov_plot <- cov_plot & scale_fill_manual(values = c("#11c3c8", "#f8766d"))
+
+ggsave("/home/wat2/MAP3K11_everything_plot.png", plot = cov_plot_peak_plot, width = 6, height = 4, dpi = 300)
 
 # Highlight regions of interest so I can annotate them
 
