@@ -1,3 +1,4 @@
+##### GENE 1 #####
 ### MAP3K11 in CD14 Monocytes ###
 
 # CD14_Mono     MAP3K11    chr11 65614221    chr11   65615225 65615725     1.000000
@@ -16,76 +17,126 @@ hvl_placebo_CD14_mono_sc_obj$time_point <- gsub("D28", "28 Days Post-Challenge",
 Idents(hvl_placebo_CD14_mono_sc_obj) <- "time_point"
 levels(hvl_placebo_CD14_mono_sc_obj) <- c("Pre-Challenge", "28 Days Post-Challenge")
 
-# Plot everything
-#cov_plot <- CoveragePlot(
-#  object = hvl_placebo_CD14_mono_sc_obj,
-#  region = c("chr11-65611955-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"),
-#  annotation = TRUE,
-#  peaks = FALSE
-#)
+ranges.show <- StringToGRanges(c("chr11-65612955-65613355", "chr11-65615225-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"))
+ranges.show$color <- "orange"
 
-# Alternative plot of everything
+# First, plot everything without highlighting
 cov_plot <- CoveragePlot(
   object = hvl_placebo_CD14_mono_sc_obj,
   region = c("chr11-65611955-66069871"),
   annotation = FALSE,
-  peaks = FALSE
+  #annotation = TRUE,
+  peaks = FALSE,
+  #region.highlight = ranges.show
 )
 
-# cov_plot <- cov_plot & theme_classic(base_size = 32)
-
-# cov_plot_build <- ggplot_build(cov_plot[[1]][[1]])
-
-# Try text size 0?
 cov_plot_peak_plot <- cov_plot[[1]]
-cov_plot_peak_plot <- cov_plot_peak_plot + scale_fill_manual(values = c("#11c3c8", "#f8766d")) + theme(
-  # Remove axis text and titles
-  axis.text = element_blank(),
-  axis.title = element_blank(),
-  # Remove facet labels
-  strip.text = element_blank(),
-  # Remove plot title and caption
-  plot.title = element_blank(),
-  plot.caption = element_blank(),
-  # Remove legend title and text
-  legend.title = element_blank(),
-  legend.text = element_blank(),
-  # Remove panel (plot area) labels
-  panel.grid.major = element_blank(),
-  panel.grid.minor = element_blank(),
-  panel.border = element_blank(),
-  # Remove axis ticks
-  axis.ticks = element_blank(),
-  # Remove plot background
-  panel.background = element_blank(),
-  plot.background = element_blank()
+cov_plot_peak_plot <- cov_plot_peak_plot & scale_fill_manual(values = c("#11c3c8", "#f8766d")) & theme(
+  strip.text.y.left = element_blank(),         # Facet labels
 )
-
-# cov_plot <- cov_plot & scale_fill_manual(values = c("#11c3c8", "#f8766d"))
 
 ggsave("/home/wat2/MAP3K11_everything_plot.png", plot = cov_plot_peak_plot, width = 6, height = 4, dpi = 300)
 
-# Highlight regions of interest so I can annotate them
-
-# Acetylation (and hypermethylation)
-# First site
-# Second site 
-# Third site
-# Fourth site
-ranges.show <- StringToGRanges(c("chr11-65612955-65613355", "chr11-65615225-65615725", "chr11-65706207-65706707", "chr11-65827775-65828275", "chr11-66069371-66069871"))
-ranges.show$color <- "orange"
-
+# Then, highlight regions
+# First, plot everything without highlighting
 cov_plot <- CoveragePlot(
   object = hvl_placebo_CD14_mono_sc_obj,
   region = c("chr11-65611955-66069871"),
+  annotation = FALSE,
+  #annotation = TRUE,
+  peaks = FALSE,
+  region.highlight = ranges.show
+)
+
+cov_plot_peak_plot <- cov_plot[[1]]
+cov_plot_peak_plot <- cov_plot_peak_plot & scale_fill_manual(values = c("#11c3c8", "#f8766d")) & theme(
+  strip.text.y.left = element_blank(),         # Facet labels
+)
+
+ggsave("/home/wat2/MAP3K11_everything_plot_highlighted.png", plot = cov_plot_peak_plot, width = 6, height = 4, dpi = 300)
+
+# Also plot everything with genes
+cov_plot <- CoveragePlot(
+  object = hvl_placebo_CD14_mono_sc_obj,
+  region = c("chr11-65611955-66069871"),
+  #annotation = FALSE,
+  annotation = TRUE,
+  peaks = FALSE,
+  #region.highlight = ranges.show
+)
+
+cov_plot_peak_plot <- cov_plot[[1]]
+cov_plot_peak_plot <- cov_plot_peak_plot & scale_fill_manual(values = c("#11c3c8", "#f8766d")) & theme(
+  strip.text.y.left = element_blank(),         # Facet labels
+)
+
+ggsave("/home/wat2/MAP3K11_everything_plot_with_genes.png", plot = cov_plot_peak_plot, width = 6, height = 4, dpi = 300)
+
+##### GENE 2 #####
+
+### IL1RAP in CD14 Monocytes ###
+# CD14_Mono      IL1RAP     chr3 190514084     chr3  190586645 190587145     0.984016
+# Downregulation of H3K36me3: chr3:190634549-190634949
+# Transcript Location: chr3-190514085-190651514
+idxPass <- which(hvl_placebo_sc_obj$predicted_celltype_majority_vote %in% "CD14 Mono")
+cellsPass <- names(hvl_placebo_sc_obj$orig.ident[idxPass])
+hvl_placebo_CD14_mono_sc_obj <- subset(x = hvl_placebo_sc_obj, subset = cell_name %in% cellsPass)
+
+hvl_placebo_CD14_mono_sc_obj$time_point <- gsub("D_minus_1", "Pre-Challenge", hvl_placebo_CD14_mono_sc_obj$time_point)
+hvl_placebo_CD14_mono_sc_obj$time_point <- gsub("D28", "28 Days Post-Challenge", hvl_placebo_CD14_mono_sc_obj$time_point)
+
+Idents(hvl_placebo_CD14_mono_sc_obj) <- "time_point"
+levels(hvl_placebo_CD14_mono_sc_obj) <- c("Pre-Challenge", "28 Days Post-Challenge")
+
+# Highlight regions of interest so I can annotate them
+ranges.show <- StringToGRanges(c("chr3-190634549-190634949", "chr3-190586645-190587145"))
+ranges.show$color <- "orange"
+
+# First, plot everything without highlighting
+cov_plot <- CoveragePlot(
+  object = hvl_placebo_CD14_mono_sc_obj,
+  region = c("chr11-65611955-66069871"),
+  annotation = FALSE,
+  #annotation = TRUE,
+  peaks = FALSE,
+  #region.highlight = ranges.show
+)
+
+cov_plot_peak_plot <- cov_plot[[1]]
+cov_plot_peak_plot <- cov_plot_peak_plot & scale_fill_manual(values = c("#11c3c8", "#f8766d")) & theme(
+  strip.text.y.left = element_blank(),         # Facet labels
+)
+
+ggsave("/home/wat2/MAP3K11_everything_plot.png", plot = cov_plot_peak_plot, width = 6, height = 4, dpi = 300)
+
+
+
+# Plot everything
+cov_plot <- CoveragePlot(
+  object = hvl_placebo_CD14_mono_sc_obj,
+  region = c("chr3-190514085-190651514"),
+  annotation = FALSE,
+  peaks = FALSE
+)
+
+cov_plot <- cov_plot & scale_fill_manual(values = c("#00bfc4", "grey"))
+
+ggsave("/home/wat2/everything_plot_IL1RAP.png", plot = cov_plot, width = 20)
+
+
+
+# Plot everything
+cov_plot <- CoveragePlot(
+  object = hvl_placebo_CD14_mono_sc_obj,
+  region = c("chr3-190514085-190651514"),
   annotation = TRUE,
   peaks = FALSE,
   region.highlight = ranges.show
 )
 
-# cov_plot <- cov_plot & scale_fill_manual(values = c("grey", "grey"))
+ggsave("/home/wat2/highlighted_plot_IL1RAP.png", plot = cov_plot, width = 20)
 
-ggsave("/home/wat2/highlighted_plot.png", plot = cov_plot, width = 8)
+##### GENE 3 #####
 
 ### FOSB in CD16 Monocytes ###
 # CD16_Mono        FOSB    chr19 45467995    chr19   45584223 45584723     0.999001
@@ -127,47 +178,6 @@ cov_plot <- CoveragePlot(
 )
 
 ggsave("/home/wat2/highlighted_plot_FOSB.png", plot = cov_plot, width = 20)
-
-### IL1RAP in CD14 Monocytes ###
-# CD14_Mono      IL1RAP     chr3 190514084     chr3  190586645 190587145     0.984016
-# Downregulation of H3K36me3: chr3:190634549-190634949
-# Transcript Location: chr3-190514085-190651514
-idxPass <- which(hvl_placebo_sc_obj$predicted_celltype_majority_vote %in% "CD14 Mono")
-cellsPass <- names(hvl_placebo_sc_obj$orig.ident[idxPass])
-hvl_placebo_CD14_mono_sc_obj <- subset(x = hvl_placebo_sc_obj, subset = cell_name %in% cellsPass)
-
-hvl_placebo_CD14_mono_sc_obj$time_point <- gsub("D_minus_1", "Pre-Challenge", hvl_placebo_CD14_mono_sc_obj$time_point)
-hvl_placebo_CD14_mono_sc_obj$time_point <- gsub("D28", "28 Days Post-Challenge", hvl_placebo_CD14_mono_sc_obj$time_point)
-
-Idents(hvl_placebo_CD14_mono_sc_obj) <- "time_point"
-levels(hvl_placebo_CD14_mono_sc_obj) <- c("Pre-Challenge", "28 Days Post-Challenge")
-
-# Plot everything
-cov_plot <- CoveragePlot(
-  object = hvl_placebo_CD14_mono_sc_obj,
-  region = c("chr3-190514085-190651514"),
-  annotation = TRUE,
-  peaks = FALSE
-)
-
-cov_plot <- cov_plot & scale_fill_manual(values = c("#00bfc4", "grey"))
-
-ggsave("/home/wat2/everything_plot_IL1RAP.png", plot = cov_plot, width = 20)
-
-# Highlight regions of interest so I can annotate them
-ranges.show <- StringToGRanges(c("chr3-190634549-190634949", "chr3-190586645-190587145"))
-ranges.show$color <- "orange"
-
-# Plot everything
-cov_plot <- CoveragePlot(
-  object = hvl_placebo_CD14_mono_sc_obj,
-  region = c("chr3-190514085-190651514"),
-  annotation = TRUE,
-  peaks = FALSE,
-  region.highlight = ranges.show
-)
-
-ggsave("/home/wat2/highlighted_plot_IL1RAP.png", plot = cov_plot, width = 20)
 
 ### SETD2 in CD14 Monocytes ###
 # CD14_Mono       SETD2     chr3 47164113     chr3   46949083 46949583     0.952048
