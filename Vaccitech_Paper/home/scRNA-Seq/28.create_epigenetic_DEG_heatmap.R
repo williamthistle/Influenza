@@ -5,21 +5,28 @@ source(paste0(base_dir, "00.setup.R"))
 innate_scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type %in% innate_cell_types,]
 
 # Check for relevant genes
-library(org.Hs.eg.db)
-cols <- c("GENENAME")
-annotated_innate_deg <- select(org.Hs.eg.db, keys=unique(innate_scRNA_hvl_placebo_degs$Gene_Name), columns=cols, keytype="SYMBOL")
-annotated_innate_deg[grep("histone", annotated_innate_deg$GENENAME), ]
+#library(org.Hs.eg.db)
+#cols <- c("GENENAME")
+#annotated_innate_deg <- select(org.Hs.eg.db, keys=unique(innate_scRNA_hvl_placebo_degs$Gene_Name), columns=cols, keytype="SYMBOL")
+#annotated_innate_deg[grep("histone", annotated_innate_deg$GENENAME), ]
 
-heatmap_genes <- c("KAT6A", "HDAC5", "HDAC7", "HDAC9", "ASH1L", "PRDM2", "SETD2", "KDM2B", "KDM3A")
+heatmap_genes <- c("HIST1H1C", "HIST1H1D", "HIST1H1E", "H2AFZ", "KAT6A", "BRD1", "MSL2", "HDAC5", "HDAC7", "HDAC9", "METTL23", "ASH1L", "PRDM2", "SETD2","KDM2B", "KDM3A")
 
 heatmap_gene_types <- list()
+heatmap_gene_types[["HIST1H1C"]] <- "Histone"
+heatmap_gene_types[["HIST1H1D"]] <- "Histone"
+heatmap_gene_types[["HIST1H1E"]] <- "Histone"
+heatmap_gene_types[["H2AFZ"]] <- "Histone"
 heatmap_gene_types[["KAT6A"]] <- "Lysine Acetyltransferase"
-heatmap_gene_types[["HDAC5"]] <- "Histone Deacetylase"
-heatmap_gene_types[["HDAC7"]] <- "Histone Deacetylase"
-heatmap_gene_types[["HDAC9"]] <- "Histone Deacetylase"
+heatmap_gene_types[["BRD1"]] <- "Lysine Acetyltransferase"
+heatmap_gene_types[["MSL2"]] <- "Lysine Acetyltransferase"
+heatmap_gene_types[["HDAC5"]] <- "Lysine Deacetylase"
+heatmap_gene_types[["HDAC7"]] <- "Lysine Deacetylase"
+heatmap_gene_types[["HDAC9"]] <- "Lysine Deacetylase"
 heatmap_gene_types[["ASH1L"]] <- "Lysine Methyltransferase"
 heatmap_gene_types[["PRDM2"]] <- "Lysine Methyltransferase"
 heatmap_gene_types[["SETD2"]] <- "Lysine Methyltransferase"
+heatmap_gene_types[["METTL23"]] <- "Lysine Methyltransferase"
 heatmap_gene_types[["KDM2B"]] <- "Lysine Demethylase"
 heatmap_gene_types[["KDM3A"]] <- "Lysine Demethylase"
 
@@ -69,10 +76,12 @@ epigenetic_heatmap_df$Epigenetic_Type <- epigenetic_type
 category_colors <- epigenetic_heatmap_df %>% 
   distinct(Epigenetic_Type, Gene_Name) %>% 
   mutate(color = case_when(
+    Epigenetic_Type == "Histone" ~ "#555555",
     Epigenetic_Type == "Lysine Acetyltransferase" ~ "#6a3d9a",
-    Epigenetic_Type == "Histone Deacetylase" ~ "#0b6623",
+    Epigenetic_Type == "Lysine Deacetylase" ~ "#0b6623",
     Epigenetic_Type == "Lysine Methyltransferase" ~ "#b22222",
     Epigenetic_Type == "Lysine Demethylase" ~ "#ff7f00",
+    
     TRUE ~ "black" # default color
   )) %>% 
   pull(color, name = Gene_Name)
@@ -86,6 +95,18 @@ epigenetic_remodeling_heatmap_plot <- ggplot() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 16),
         axis.text.y = element_text(size = 16, color = category_colors[levels(factor(epigenetic_heatmap_df$Gene_Name))]))
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "epigenetic_remodeling_deg_heatmap.png"), plot = epigenetic_remodeling_heatmap_plot, device='png', dpi=300, width = 5, height = 5, units = "in")
+ggsave(filename = paste0("C:/Users/wat2/Desktop/", "epigenetic_remodeling_deg_heatmap.png"), plot = epigenetic_remodeling_heatmap_plot, device='png', dpi=300, width = 5, height = 5, units = "in")
+
+# Flip it!
+epigenetic_remodeling_heatmap_plot <- ggplot() + 
+  geom_raster(data = epigenetic_heatmap_df, aes(x = Gene_Name, y = Cell_Type, fill = fold_change)) +
+  geom_text(data = epigenetic_heatmap_df, aes(x = Gene_Name, y = Cell_Type, label = significant), nudge_y = 0.15, nudge_x = 0.10, size = 4) + scale_fill_gradient2(low="navy", mid="white", high="red") +
+  theme_classic(base_size = 14) + labs(title = NULL,
+                                       x = NULL,
+                                       y = NULL, fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 16, color = category_colors[levels(factor(epigenetic_heatmap_df$Gene_Name))]),
+        axis.text.y = element_text(size = 16)) # + coord_fixed(ratio = 0.5)
+
+ggsave(filename = paste0("C:/Users/wat2/Desktop/", "epigenetic_remodeling_deg_heatmap_flipped.png"), plot = epigenetic_remodeling_heatmap_plot, device='png', dpi=300, width = 8, height = 3, units = "in")
 
 
