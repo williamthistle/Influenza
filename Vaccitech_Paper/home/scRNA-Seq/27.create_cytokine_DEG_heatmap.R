@@ -5,7 +5,7 @@ source(paste0(base_dir, "00.setup.R"))
 innate_scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type %in% innate_cell_types,]
 
 heatmap_genes <- c("CCL3", "CX3CR1", "CCL3L1", "CXCL16", "IL32", "CASP1", "NFIL3", "IRAK3", "IL1RAP", "RIPK1", "PTGES", "CEBPB", 
-                   "IRF2", "IRF7", "IFNG", "OAS1", "NMRAL1", "MNDA", "GBP1", "PSMB9", "IFNGR1", "DNAJC3", "GBP5", "CEMIP2",  
+                   "IRF2", "IRF7", "IFNG", "OAS1", "NMRAL1", "MNDA", "GBP1", "PSMB9", "IFNGR1", "DNAJC3", "GBP5", "CEMIP2", "USP38",  
                    "JUN", "JUNB", "FOSB", "FOSL2", "JDP2", 
                    "MAP3K11", "CSK", "DUSP1", "DUSP2", "DUSP6", "TRAF3IP3", "ABHD17A", "CSF1R", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K20", "MAP4K3", "MAPKAPK2",
                    "PTK2B", "RELL1", "MINK1", "BRAF",
@@ -38,6 +38,7 @@ heatmap_gene_types[["MNDA"]] <- "Interferon"
 heatmap_gene_types[["GBP1"]] <- "Interferon"
 heatmap_gene_types[["CEMIP2"]] <- "Interferon"
 heatmap_gene_types[["PSMB9"]] <- "Interferon"
+heatmap_gene_types[["USP38"]] <- "Interferon"
 
 heatmap_gene_types[["JUN"]] <- "AP-1"
 heatmap_gene_types[["JUNB"]] <- "AP-1"
