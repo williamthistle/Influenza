@@ -146,6 +146,7 @@ MAGICAL_lvl_placebo_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICA
 MAGICAL_lvl_placebo_output_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MAGICAL/Results/LVL/Placebo/Output/")
 
 # MintChIP analysis dirs
+mintchip_data_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Data/")
 mintchip_metadata_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Metadata/")
 mintchip_das_dir <- paste0(onedrive_dir, "Vaccitech_Paper/Analyses/MintChIP/Results/differentially_accessible_sites/")
 mintchip_fmd_dir <- paste0(mintchip_das_dir, "FMD/")

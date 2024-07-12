@@ -2,6 +2,17 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+combineRows <- function(df1, df2, matches) {
+  combined <- data.frame()
+  for (i in 1:nrow(matches)) {
+    queryRow <- matches[i, "queryHits"]
+    subjectRow <- matches[i, "subjectHits"]
+    combinedRow <- cbind(df1[queryRow,], df2[subjectRow,])
+    combined <- rbind(combined, combinedRow)
+  }
+  return(combined)
+}
+
 search_terms <- c("histone", "interferon", "interleukin", "AP-1", "methyltransferase", "acetyltransferase", "demethylase")
 gene_terms <- c("CCL3", "CX3CR1", "CCL3L1", "CXCL16", "IL32", "CASP1", "NFIL3", "IRAK3", "IL1RAP", "RIPK1", "PTGES", "CEBPB", 
                 "IRF2", "IRF7", "IFNG", "OAS1", "NMRAL1", "MNDA", "GBP1", "PSMB9", "IFNGR1", "DNAJC3", "GBP5", "CEMIP2", "USP38",  
@@ -19,6 +30,9 @@ promoter_terms <- c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)")
 
 # MintChIP - "H3K4me1", "H3K4me3", "H3K9me3", "H3K27Ac", "H3K27me3", "H3K36me3"
 # H2K27ac
+mintchip_H3K27ac_all_peaks <- read.table(paste0(mintchip_data_dir, "H3K27Ac_all_peaks.tsv"), sep = "\t", header = FALSE)
+mintchip_H3K27ac_all_peaks <- mintchip_H3K27ac_all_peaks[,-c(1)]
+colnames(mintchip_H3K27ac_all_peaks) <- c("seqnames", "start", "end", "strand")
 mintchip_H3K27ac_peaks <- read.table(paste0(mintchip_das_dir, "H3K27Ac/H3K27Ac_DESeq2_FC_0.1.tsv"), sep = "\t", header = TRUE)
 mintchip_H3K27ac_peaks_annotated <- annotatePeak(makeGRangesFromDataFrame(mintchip_H3K27ac_peaks), TxDb = txdb_hg19, annoDb = "org.Hs.eg.db")
 mintchip_H3K27ac_peaks_annotated <- as.data.frame(mintchip_H3K27ac_peaks_annotated)
@@ -35,6 +49,9 @@ mintchip_H3K27ac_peaks_annotated_final_pos <- mintchip_H3K27ac_peaks_annotated_f
 mintchip_H3K27ac_peaks_annotated_final_neg <- mintchip_H3K27ac_peaks_annotated_final[mintchip_H3K27ac_peaks_annotated_final$Fold < 0,]
 
 # H3K4me1
+mintchip_H3K4me1_all_peaks <- read.table(paste0(mintchip_data_dir, "H3K4me1_all_peaks.tsv"), sep = "\t", header = FALSE)
+mintchip_H3K4me1_all_peaks <- mintchip_H3K4me1_all_peaks[,-c(1)]
+colnames(mintchip_H3K4me1_all_peaks) <- c("seqnames", "start", "end", "strand")
 mintchip_H3K4me1_peaks <- read.table(paste0(mintchip_das_dir, "H3K4me1/H3K4me1_DESeq2_FC_0.3.tsv"), sep = "\t", header = TRUE)
 mintchip_H3K4me1_peaks_annotated <- annotatePeak(makeGRangesFromDataFrame(mintchip_H3K4me1_peaks), TxDb = txdb_hg19, annoDb = "org.Hs.eg.db")
 mintchip_H3K4me1_peaks_annotated <- as.data.frame(mintchip_H3K4me1_peaks_annotated)
@@ -47,8 +64,21 @@ mintchip_H3K4me1_peaks_annotated_final <- mintchip_H3K4me1_peaks_annotated %>%
       str_detect(GENENAME, paste(search_terms, collapse = "|"))
   )
 
-mintchip_H3K4me1_peaks_annotated_final_pos <- mintchip_H3K4me1_peaks_annotated_final[mintchip_H3K4me1_peaks_annotated_final$Fold > 0,]
-mintchip_H3K4me1_peaks_annotated_final_neg <- mintchip_H3K4me1_peaks_annotated_final[mintchip_H3K4me1_peaks_annotated_final$Fold < 0,]
+# Find active enhancer marks
+mintchip_H3K4me1_peaks_annotated_final_granges <- makeGRangesFromDataFrame(df = mintchip_H3K4me1_peaks_annotated_final, keep.extra.columns = TRUE)
+mintchip_H3K27ac_all_peaks_granges <- makeGRangesFromDataFrame(df = mintchip_H3K27ac_all_peaks, keep.extra.columns = TRUE)
+marker_overlap <- as.data.frame(findOverlaps(mintchip_H3K4me1_peaks_annotated_final_granges, mintchip_H3K27ac_all_peaks_granges))
+active_enhancer_H3K4me1_peaks_annotated <- combineRows(mintchip_H3K4me1_peaks_annotated_final, mintchip_H3K27ac_all_peaks, marker_overlap)
+# Find poised enhancer marks
+poised_enhancer_H3K4me1_peaks_annotated <- mintchip_H3K4me1_peaks_annotated_final[!(rownames(mintchip_H3K4me1_peaks_annotated_final) %in% rownames(active_enhancer_H3K4me1_peaks_annotated)),]
+
+# Separate into positive and negative
+active_enhancer_H3K4me1_peaks_annotated_pos <- active_enhancer_H3K4me1_peaks_annotated[active_enhancer_H3K4me1_peaks_annotated$Fold > 0,]
+active_enhancer_H3K4me1_peaks_annotated_neg <- active_enhancer_H3K4me1_peaks_annotated[active_enhancer_H3K4me1_peaks_annotated$Fold < 0,]
+
+poised_enhancer_H3K4me1_peaks_annotated_pos <- poised_enhancer_H3K4me1_peaks_annotated[poised_enhancer_H3K4me1_peaks_annotated$Fold > 0,]
+poised_enhancer_H3K4me1_peaks_annotated_neg <- poised_enhancer_H3K4me1_peaks_annotated[poised_enhancer_H3K4me1_peaks_annotated$Fold < 0,]
+
 
 # H3K4me3
 mintchip_H3K4me3_peaks <- read.table(paste0(mintchip_das_dir, "H3K4me3/H3K4me3_DESeq2_FC_0.1.tsv"), sep = "\t", header = TRUE)
