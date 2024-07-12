@@ -59,6 +59,9 @@ options(max.print=10000)
 txdb_hg19 <- TxDb.Hsapiens.UCSC.hg19.knownGene
 txdb_hg38 <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
+# Promoter terms for gene annotations
+promoter_terms <- c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)")
+
 # Set base script dir 
 script_base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 
