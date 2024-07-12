@@ -39,6 +39,13 @@ peak_motif_matches_AP1 <- peak_motif_matches[peak_motif_matches$FOS > 0 | peak_m
 peak_motif_matches_AP1$chr <- paste0("chr", peak_motif_matches_AP1$chr)
 peak_motif_matches_AP1$chr <- gsub("chr23", "chrX", peak_motif_matches_AP1$chr)
 
+# Get IRF1 loci
+peak_motif_matches <- read.table(paste0(scATAC_hvl_dir, "Placebo/peak_motif_matches.txt"), sep = "\t", header = TRUE)
+
+peak_motif_matches_IRF1 <- peak_motif_matches[peak_motif_matches$IRF1 > 0,]
+peak_motif_matches_IRF1$chr <- paste0("chr", peak_motif_matches_IRF1$chr)
+peak_motif_matches_IRF1$chr <- gsub("chr23", "chrX", peak_motif_matches_IRF1$chr)
+
 correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC", "pDC", "NK")
 
 sc_annotated_genes <- list()
@@ -109,3 +116,5 @@ scATAC_CD14_mono_peaks_AP1_annotated_final <- scATAC_CD14_mono_peaks_AP1_annotat
 
 scATAC_CD14_mono_peaks_AP1_annotated_final_pos <- scATAC_CD14_mono_peaks_AP1_annotated_final[scATAC_CD14_mono_peaks_AP1_annotated_final$sc_log2FC > 0,]
 scATAC_CD14_mono_peaks_AP1_annotated_final_neg <- scATAC_CD14_mono_peaks_AP1_annotated_final[scATAC_CD14_mono_peaks_AP1_annotated_final$sc_log2FC < 0,]
+
+# Compare AP1 to IRF1
