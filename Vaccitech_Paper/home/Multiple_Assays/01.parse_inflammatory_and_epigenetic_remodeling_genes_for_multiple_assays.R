@@ -67,7 +67,7 @@ mintchip_H3K4me1_peaks_annotated_final <- mintchip_H3K4me1_peaks_annotated %>%
 # Find active enhancer marks
 mintchip_H3K4me1_peaks_annotated_final_granges <- makeGRangesFromDataFrame(df = mintchip_H3K4me1_peaks_annotated_final, keep.extra.columns = TRUE)
 mintchip_H3K27ac_all_peaks_granges <- makeGRangesFromDataFrame(df = mintchip_H3K27ac_all_peaks, keep.extra.columns = TRUE)
-marker_overlap <- as.data.frame(findOverlaps(mintchip_H3K4me1_peaks_annotated_final_granges, mintchip_H3K27ac_all_peaks_granges, minoverlap = 300))
+marker_overlap <- as.data.frame(findOverlaps(mintchip_H3K4me1_peaks_annotated_final_granges, mintchip_H3K27ac_all_peaks_granges, minoverlap = 200))
 active_enhancer_H3K4me1_peaks_annotated <- combineRows(mintchip_H3K4me1_peaks_annotated_final, mintchip_H3K27ac_all_peaks, marker_overlap)
 # Find poised enhancer marks
 poised_enhancer_H3K4me1_peaks_annotated <- mintchip_H3K4me1_peaks_annotated_final[!(rownames(mintchip_H3K4me1_peaks_annotated_final) %in% rownames(active_enhancer_H3K4me1_peaks_annotated)),]
