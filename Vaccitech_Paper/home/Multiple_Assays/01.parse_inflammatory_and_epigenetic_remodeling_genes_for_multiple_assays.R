@@ -13,6 +13,16 @@ combineRows <- function(df1, df2, matches) {
   return(combined)
 }
 
+get_fc_and_p_val_for_all_cell_types <- function(input_gene) {
+  gene_list <- c()
+  fc_list <- c()
+  p_val_list <- c()
+  cell_types <- gsub(" ", "_", scRNA_cell_types)
+  for(cell_type in cell_types) {
+    
+  }
+}
+
 search_terms <- c("histone", "interferon", "interleukin", "AP-1", "methyltransferase", "acetyltransferase", "demethylase")
 gene_terms <- c("CCL3", "CX3CR1", "CCL3L1", "CXCL16", "IL32", "CASP1", "NFIL3", "IRAK3", "IL1RAP", "RIPK1", "PTGES", "CEBPB", 
                 "IRF2", "IRF7", "IFNG", "OAS1", "NMRAL1", "MNDA", "GBP1", "PSMB9", "IFNGR1", "DNAJC3", "GBP5", "CEMIP2", "USP38",  
@@ -293,5 +303,30 @@ scATAC_NK_peaks_annotated_final_pos_promoters <- scATAC_NK_peaks_annotated_final
 scATAC_NK_peaks_annotated_final_neg <- scATAC_NK_peaks_annotated_final[scATAC_NK_peaks_annotated_final$sc_log2FC < 0,]
 scATAC_NK_peaks_annotated_final_neg_promoters <- scATAC_NK_peaks_annotated_final_neg[scATAC_NK_peaks_annotated_final_neg$annotation %in% promoter_terms,]
 
+# pDC peaks
+scATAC_pDC_peaks <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-pDC-time_point-controlling_for_subject_id_final_pct_0.01.tsv"), sep = "\t", header = TRUE)
+
+chromosomes <- sapply(strsplit(scATAC_pDC_peaks$Peak_Name, "-"), `[`, 1)
+start_coords <- as.numeric(sapply(strsplit(scATAC_pDC_peaks$Peak_Name, "-"), `[`, 2))
+end_coords <- as.numeric(sapply(strsplit(scATAC_pDC_peaks$Peak_Name, "-"), `[`, 3))
+scATAC_pDC_peaks$seqnames <- chromosomes
+scATAC_pDC_peaks$start <- start_coords
+scATAC_pDC_peaks$end <- end_coords
+
+scATAC_pDC_peaks_annotated <- annotatePeak(makeGRangesFromDataFrame(scATAC_pDC_peaks), TxDb = txdb_hg38, annoDb = "org.Hs.eg.db")
+scATAC_pDC_peaks_annotated <- as.data.frame(scATAC_pDC_peaks_annotated)
+scATAC_pDC_peaks_annotated$sc_log2FC <- scATAC_pDC_peaks$sc_log2FC
+scATAC_pDC_peaks_annotated$sc_pval <- scATAC_pDC_peaks$sc_pval
+
+scATAC_pDC_peaks_annotated_final <- scATAC_pDC_peaks_annotated %>%
+  filter(
+    str_detect(SYMBOL, paste(gene_terms, collapse = "|")) |
+      str_detect(GENENAME, paste(search_terms, collapse = "|"))
+  )
+
+scATAC_pDC_peaks_annotated_final_pos <- scATAC_pDC_peaks_annotated_final[scATAC_pDC_peaks_annotated_final$sc_log2FC > 0,]
+scATAC_pDC_peaks_annotated_final_pos_promoters <- scATAC_pDC_peaks_annotated_final_pos[scATAC_pDC_peaks_annotated_final_pos$annotation %in% promoter_terms,]
+scATAC_pDC_peaks_annotated_final_neg <- scATAC_pDC_peaks_annotated_final[scATAC_pDC_peaks_annotated_final$sc_log2FC < 0,]
+scATAC_pDC_peaks_annotated_final_neg_promoters <- scATAC_pDC_peaks_annotated_final_neg[scATAC_pDC_peaks_annotated_final_neg$annotation %in% promoter_terms,]
 
 
