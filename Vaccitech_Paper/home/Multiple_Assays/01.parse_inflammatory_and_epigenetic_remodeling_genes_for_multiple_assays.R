@@ -14,13 +14,21 @@ combineRows <- function(df1, df2, matches) {
 }
 
 get_fc_and_p_val_for_all_cell_types <- function(input_gene) {
+  cell_type_list <- c()
   gene_list <- c()
   fc_list <- c()
   p_val_list <- c()
   cell_types <- gsub(" ", "_", scRNA_cell_types)
   for(cell_type in cell_types) {
-    
+    current_genes <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"), sep = "\t", header = TRUE)
+    current_genes <- current_genes[rownames(current_genes) %in% input_gene,]
+    cell_type_list <- c(cell_type_list, cell_type)
+    gene_list <- c(gene_list, rownames(current_genes))
+    fc_list <- c(fc_list, current_genes$avg_log2FC)
+    p_val_list <- c(p_val_list, current_genes$p_val_adj)
   }
+  complete_gene_df <- data.frame(cell_type = cell_type_list, gene = gene_list, FC = fc_list, p_val_adj = p_val_list)
+  return(complete_gene_df)
 }
 
 search_terms <- c("histone", "interferon", "interleukin", "AP-1", "methyltransferase", "acetyltransferase", "demethylase")
@@ -329,4 +337,6 @@ scATAC_pDC_peaks_annotated_final_pos_promoters <- scATAC_pDC_peaks_annotated_fin
 scATAC_pDC_peaks_annotated_final_neg <- scATAC_pDC_peaks_annotated_final[scATAC_pDC_peaks_annotated_final$sc_log2FC < 0,]
 scATAC_pDC_peaks_annotated_final_neg_promoters <- scATAC_pDC_peaks_annotated_final_neg[scATAC_pDC_peaks_annotated_final_neg$annotation %in% promoter_terms,]
 
-
+# Testing FC for different genes
+IL4R_results <- get_fc_and_p_val_for_all_cell_types("IL4R")
+PTGES3_results <- get_fc_and_p_val_for_all_cell_types("PTGES3")
