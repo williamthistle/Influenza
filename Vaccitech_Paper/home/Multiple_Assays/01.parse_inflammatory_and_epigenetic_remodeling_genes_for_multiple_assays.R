@@ -185,8 +185,24 @@ snME_monocytes_peaks_annotated_final <- snME_monocytes_peaks_annotated %>%
   )
 
 snME_monocytes_peaks_annotated_final_pos <- snME_monocytes_peaks_annotated_final[snME_monocytes_peaks_annotated_final$methylation == "upregulated",]
+# Dunno how to interpret distal intergenic methylation
+snME_monocytes_peaks_annotated_final_pos <- snME_monocytes_peaks_annotated_final_pos[snME_monocytes_peaks_annotated_final_pos$annotation != "Distal Intergenic",]
+# 1st intron 
+snME_monocytes_peaks_annotated_final_pos_introns <- snME_monocytes_peaks_annotated_final_pos %>%
+  filter(
+    str_detect(annotation, "Intron")
+  )
+# Promoters
 snME_monocytes_peaks_annotated_final_pos_promoters <- snME_monocytes_peaks_annotated_final_pos[snME_monocytes_peaks_annotated_final_pos$annotation %in% promoter_terms,]
 snME_monocytes_peaks_annotated_final_neg <- snME_monocytes_peaks_annotated_final[snME_monocytes_peaks_annotated_final$methylation == "downregulated",]
+# Dunno how to interpret distal intergenic methylation
+snME_monocytes_peaks_annotated_final_neg <- snME_monocytes_peaks_annotated_final_neg[snME_monocytes_peaks_annotated_final_neg$annotation != "Distal Intergenic",]
+# 1st intron
+snME_monocytes_peaks_annotated_final_neg_introns <- snME_monocytes_peaks_annotated_final_neg %>%
+  filter(
+    str_detect(annotation, "Intron")
+  )
+# Promoters
 snME_monocytes_peaks_annotated_final_neg_promoters <- snME_monocytes_peaks_annotated_final_neg[snME_monocytes_peaks_annotated_final_neg$annotation %in% promoter_terms,]
 
 # NK
