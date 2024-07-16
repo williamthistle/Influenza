@@ -35,7 +35,7 @@ get_fc_and_p_val_for_all_cell_types <- function(input_gene) {
   return(complete_gene_df)
 }
 
-search_terms <- c("histone", "interferon", "interleukin", "AP-1", "methyltransferase", "acetyltransferase", "demethylase")
+search_terms <- c("histone", "interferon", "interleukin", "chemokine", "AP-1", "methyltransferase", "acetyltransferase", "demethylase")
 gene_terms <- c("CCL3", "CX3CR1", "CCL3L1", "CXCL16", "IL32", "CASP1", "NFIL3", "IRAK3", "IL1RAP", "RIPK1", "PTGES", "CEBPB", 
                 "IRF2", "IRF7", "IFNG", "OAS1", "NMRAL1", "MNDA", "GBP1", "PSMB9", "IFNGR1", "DNAJC3", "GBP5", "CEMIP2", "USP38",  
                 "JUN", "JUNB", "FOSB", "FOSL2", "JDP2", 
@@ -55,7 +55,7 @@ promoter_terms <- c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)")
 mintchip_H3K27ac_all_peaks <- read.table(paste0(mintchip_data_dir, "H3K27Ac_all_peaks.tsv"), sep = "\t", header = FALSE)
 mintchip_H3K27ac_all_peaks <- mintchip_H3K27ac_all_peaks[,-c(1)]
 colnames(mintchip_H3K27ac_all_peaks) <- c("seqnames", "start", "end", "strand")
-mintchip_H3K27ac_peaks <- read.table(paste0(mintchip_das_dir, "H3K27Ac/H3K27Ac_DESeq2_FC_0.1.tsv"), sep = "\t", header = TRUE)
+mintchip_H3K27ac_peaks <- read.table(paste0(mintchip_das_dir, "H3K27Ac/H3K27Ac_DESeq2_FC_0.3.tsv"), sep = "\t", header = TRUE)
 mintchip_H3K27ac_peaks_annotated <- annotatePeak(makeGRangesFromDataFrame(mintchip_H3K27ac_peaks), TxDb = txdb_hg19, annoDb = "org.Hs.eg.db")
 mintchip_H3K27ac_peaks_annotated <- as.data.frame(mintchip_H3K27ac_peaks_annotated)
 mintchip_H3K27ac_peaks_annotated$Fold <- mintchip_H3K27ac_peaks$Fold
@@ -115,7 +115,9 @@ mintchip_H3K4me3_peaks_annotated_final <- mintchip_H3K4me3_peaks_annotated %>%
   )
 
 mintchip_H3K4me3_peaks_annotated_final_pos <- mintchip_H3K4me3_peaks_annotated_final[mintchip_H3K4me3_peaks_annotated_final$Fold > 0,]
+mintchip_H3K4me3_peaks_annotated_final_pos_promoters <- mintchip_H3K4me3_peaks_annotated_final_pos[mintchip_H3K4me3_peaks_annotated_final_pos$annotation %in% promoter_terms,]
 mintchip_H3K4me3_peaks_annotated_final_neg <- mintchip_H3K4me3_peaks_annotated_final[mintchip_H3K4me3_peaks_annotated_final$Fold < 0,]
+mintchip_H3K4me3_peaks_annotated_final_neg_promoters <- mintchip_H3K4me3_peaks_annotated_final_neg[mintchip_H3K4me3_peaks_annotated_final_neg$annotation %in% promoter_terms,]
 
 # H3K9me3
 mintchip_H3K9me3_peaks <- read.table(paste0(mintchip_das_dir, "H3K9me3/H3K9me3_DESeq2_FC_0.3.tsv"), sep = "\t", header = TRUE)
