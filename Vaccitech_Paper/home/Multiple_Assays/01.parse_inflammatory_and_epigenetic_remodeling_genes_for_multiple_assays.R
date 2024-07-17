@@ -55,7 +55,7 @@ promoter_terms <- c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)")
 mintchip_H3K27ac_all_peaks <- read.table(paste0(mintchip_data_dir, "H3K27Ac_all_peaks.tsv"), sep = "\t", header = FALSE)
 mintchip_H3K27ac_all_peaks <- mintchip_H3K27ac_all_peaks[,-c(1)]
 colnames(mintchip_H3K27ac_all_peaks) <- c("seqnames", "start", "end", "strand")
-mintchip_H3K27ac_peaks <- read.table(paste0(mintchip_das_dir, "H3K27Ac/H3K27Ac_DESeq2_FC_0.3.tsv"), sep = "\t", header = TRUE)
+mintchip_H3K27ac_peaks <- read.table(paste0(mintchip_das_dir, "H3K27Ac/H3K27Ac_DESeq2_FC_0.1.tsv"), sep = "\t", header = TRUE)
 mintchip_H3K27ac_peaks_annotated <- annotatePeak(makeGRangesFromDataFrame(mintchip_H3K27ac_peaks), TxDb = txdb_hg19, annoDb = "org.Hs.eg.db")
 mintchip_H3K27ac_peaks_annotated <- as.data.frame(mintchip_H3K27ac_peaks_annotated)
 mintchip_H3K27ac_peaks_annotated$Fold <- mintchip_H3K27ac_peaks$Fold
