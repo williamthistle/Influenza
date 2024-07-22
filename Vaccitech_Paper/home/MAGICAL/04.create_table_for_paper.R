@@ -164,4 +164,49 @@ for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
   magical_heatmap_plots[[cell_type]] <- magical_heatmap_plot
 }
 
-ggsave(filename = paste0("C:/Users/wat2/Desktop/CD14_Mono_magical_heatmap.png"), plot = magical_heatmap_plots[["CD14_Mono"]], device='png', dpi=300, width = 3.5, height = 10, units = "in")
+ggsave(filename = paste0("C:/Users/wat2/Desktop/CD14_Mono_magical_heatmap.png"), plot = magical_heatmap_plots[["CD14_Mono"]], device='png', dpi=300, width = 3.5, height = 6, units = "in")
+
+# Without legend
+magical_heatmap_plots_without_legend <- list()
+
+for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
+  cell_type_final_magical_df_for_paper <- final_magical_df_for_paper[final_magical_df_for_paper$cell_type == cell_type,]
+  
+  cell_type_final_magical_df_for_paper$gene_type <- factor(cell_type_final_magical_df_for_paper$gene_type, levels = c("Interleukin", "Interferon", "AP-1", "MAP Kinase", "Lysine Methyltransferase", "Lysine Demethylase", "Lysine Acetyltransferase"))
+  
+  # Organize the rows
+  cell_type_final_magical_df_for_paper <- cell_type_final_magical_df_for_paper %>%
+    arrange(gene_type, desc(gene_fc), gene_name, desc(site_fc))
+  
+  cell_type_final_magical_df_for_paper <- cell_type_final_magical_df_for_paper %>%
+    group_by(gene_name) %>%
+    mutate(entry_id = row_number()) %>%
+    ungroup()
+  
+  cell_type_final_magical_df_for_paper_long <- cell_type_final_magical_df_for_paper %>%
+    pivot_longer(cols = c(gene_fc, site_fc), names_to = "type", values_to = "value")
+  
+  cell_type_final_magical_df_for_paper_long <- cell_type_final_magical_df_for_paper_long %>%
+    mutate(gene_entry = paste(gene_name, entry_id, sep = "_"))
+  
+  cell_type_final_magical_df_for_paper_long$gene_type <- factor(cell_type_final_magical_df_for_paper_long$gene_type, levels = c("Interleukin", "Interferon", "AP-1", "MAP Kinase",
+                                                                                                                                "Lysine Methyltransferase", "Lysine Demethylase"))
+  
+  # Sort the data frame by the gene_type column
+  cell_type_final_magical_df_for_paper_long <- cell_type_final_magical_df_for_paper_long %>%
+    arrange(gene_type)
+  
+  cell_type_final_magical_df_for_paper_long$gene_entry <- factor(cell_type_final_magical_df_for_paper_long$gene_entry, levels = rev(unique(cell_type_final_magical_df_for_paper_long$gene_entry)))
+  
+  
+  magical_heatmap_plot <- ggplot() + 
+    geom_raster(data = cell_type_final_magical_df_for_paper_long, aes(x = type, y = gene_entry, fill = value)) +
+    scale_fill_gradient2(low="navy", mid="white", high="red") +
+    theme_classic(base_size = 14) + labs(title = NULL,
+                                         x = NULL,
+                                         y = NULL, fill = "Fold Change") + theme(plot.title = element_text(hjust = 0.5), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.text.y=element_blank()) + guides(fill="none")
+  
+  magical_heatmap_plots_without_legend[[cell_type]] <- magical_heatmap_plot
+}
+
+ggsave(filename = paste0("C:/Users/wat2/Desktop/CD14_Mono_magical_heatmap_without_legend.png"), plot = magical_heatmap_plots_without_legend[["CD14_Mono"]], device='png', dpi=300, width = 1, height = 6, units = "in")
