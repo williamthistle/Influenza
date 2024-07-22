@@ -155,7 +155,7 @@ for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
   
 
   magical_heatmap_plot <- ggplot() + 
-    geom_raster(data = cell_type_final_magical_df_for_paper_long, aes(x = type, y = gene_entry, fill = value)) +
+    geom_tile(data = cell_type_final_magical_df_for_paper_long, aes(x = type, y = gene_entry, fill = value), color = "black") +
     scale_fill_gradient2(low="navy", mid="white", high="red") +
     theme_classic(base_size = 14) + labs(title = NULL,
                                          x = NULL,
@@ -200,7 +200,7 @@ for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
   
   
   magical_heatmap_plot <- ggplot() + 
-    geom_raster(data = cell_type_final_magical_df_for_paper_long, aes(x = type, y = gene_entry, fill = value)) +
+    geom_tile(data = cell_type_final_magical_df_for_paper_long, aes(x = type, y = gene_entry, fill = value), color = "black") +
     scale_fill_gradient2(low="navy", mid="white", high="red") +
     theme_classic(base_size = 14) + labs(title = NULL,
                                          x = NULL,
