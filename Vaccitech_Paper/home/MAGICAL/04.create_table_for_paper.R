@@ -210,3 +210,19 @@ for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
 }
 
 ggsave(filename = paste0("C:/Users/wat2/Desktop/CD14_Mono_magical_heatmap_without_legend.png"), plot = magical_heatmap_plots_without_legend[["CD14_Mono"]], device='png', dpi=300, width = 1, height = 6, units = "in")
+
+# Other TF-based stuff
+magical_tf_vs_gene_df <- create_tf_targets_df(overall_magical_df)
+important_magical_tf_vs_gene_df <- magical_tf_vs_gene_df[magical_tf_vs_gene_df$Gene_symbol %in% important_overall_magical_df$Gene_symbol,]
+
+# Add gene types
+gene_types <- c()
+for(current_row_index in 1:nrow(important_magical_tf_vs_gene_df)) {
+  current_row <- important_magical_tf_vs_gene_df[current_row_index,]
+  gene_types <- c(gene_types, heatmap_gene_types[[current_row$Gene_symbol]])
+}
+
+important_magical_tf_vs_gene_df$gene_type <- gene_types
+
+important_magical_tf_vs_gene_df <- important_magical_tf_vs_gene_df[important_magical_tf_vs_gene_df$Cell_Type == "CD14_Mono",]
+important_magical_tf_vs_gene_df <- important_magical_tf_vs_gene_df[important_magical_tf_vs_gene_df$gene_type == "MAP Kinase",]
