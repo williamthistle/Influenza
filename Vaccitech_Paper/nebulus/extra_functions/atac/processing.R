@@ -1109,7 +1109,6 @@ generate_motifs_with_signac <- function(seurat_atac, motif_input_dir, motif_outp
   # Declare cell types
   cell_types <- unique(seurat_atac$predicted_celltype_majority_vote)
   Idents(seurat_atac) <- "predicted_celltype_majority_vote"
-  cell_types <- c("CD14 Mono", "CD8 Naive", "Proliferating")
   for(cell_type in cell_types) {
     print(cell_type)
     # Create dir for cell type results
