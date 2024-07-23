@@ -4,12 +4,15 @@ source(paste0(base_dir, "00.setup.R"))
 
 innate_scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type %in% innate_cell_types,]
 
-heatmap_genes <- c("CCL3", "CX3CR1", "CCL3L1", "CXCL16", "IL32", "CASP1", "NFIL3", "IRAK3", "IL1RAP", "RIPK1", "PTGES", "CEBPB", 
-                   "IRF2", "IRF7", "IFNG", "OAS1", "NMRAL1", "MNDA", "GBP1", "PSMB9", "IFNGR1", "DNAJC3", "GBP5", "CEMIP2", "USP38",  
+heatmap_genes <- c("CCL3", "CX3CR1", "CCL3L1", "CXCL16", 
+                   "IL32", "CASP1", "CSF1R", "NFIL3", "IRAK3", "IL1RAP", "PTGES",   
+                   "IRF2", "IRF7", "IFNG", "OAS1", "MNDA", "PSMB9", "IFNGR1", "DNAJC3", "GBP5", "USP38",  
                    "JUN", "JUNB", "FOSB", "FOSL2", "JDP2", 
-                   "MAP3K11", "CSK", "DUSP1", "DUSP2", "DUSP6", "TRAF3IP3", "ABHD17A", "CSF1R", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K20", "MAP4K3", "MAPKAPK2",
+                   "MAP3K11", "CSK", "DUSP1", "DUSP2", "DUSP6", "ABHD17A", "RIPK1", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K20", "MAP4K3", "MAPKAPK2",
                    "PTK2B", "RELL1", "MINK1", "BRAF",
-                   "NFKB1", "JAK1", "STAT3", "STAT4")
+                   "NMRAL1", "NFKBIA", "NFKBIZ", "NFKB1",
+                   "JAK1", "STAT3", "STAT4")
+
 
 heatmap_gene_types <- list()
 heatmap_gene_types[["CCL3"]] <- "Chemokine"
@@ -17,27 +20,23 @@ heatmap_gene_types[["CX3CR1"]] <- "Chemokine"
 heatmap_gene_types[["CXCL16"]] <- "Chemokine"
 heatmap_gene_types[["CCL3L1"]] <- "Chemokine"
 
-heatmap_gene_types[["NFIL3"]] <- "Interleukin"
 heatmap_gene_types[["IL32"]] <- "Interleukin"
+heatmap_gene_types[["CASP1"]] <- "Interleukin"
+heatmap_gene_types[["CSF1R"]] <- "Interleukin"
+heatmap_gene_types[["NFIL3"]] <- "Interleukin"
 heatmap_gene_types[["IRAK3"]] <- "Interleukin"
 heatmap_gene_types[["IL1RAP"]] <- "Interleukin"
-heatmap_gene_types[["RIPK1"]] <- "Interleukin"
-heatmap_gene_types[["CASP1"]] <- "Interleukin"
 heatmap_gene_types[["PTGES"]] <- "Interleukin"
-heatmap_gene_types[["CEBPB"]] <- "Interleukin"
 
 heatmap_gene_types[["IRF2"]] <- "Interferon"
 heatmap_gene_types[["IRF7"]] <- "Interferon"
-heatmap_gene_types[["IFNGR1"]] <- "Interferon"
 heatmap_gene_types[["IFNG"]] <- "Interferon"
 heatmap_gene_types[["OAS1"]] <- "Interferon"
-heatmap_gene_types[["DNAJC3"]] <- "Interferon"
-heatmap_gene_types[["NMRAL1"]] <- "Interferon"
-heatmap_gene_types[["GBP5"]] <- "Interferon"
 heatmap_gene_types[["MNDA"]] <- "Interferon"
-heatmap_gene_types[["GBP1"]] <- "Interferon"
-heatmap_gene_types[["CEMIP2"]] <- "Interferon"
 heatmap_gene_types[["PSMB9"]] <- "Interferon"
+heatmap_gene_types[["IFNGR1"]] <- "Interferon"
+heatmap_gene_types[["DNAJC3"]] <- "Interferon"
+heatmap_gene_types[["GBP5"]] <- "Interferon"
 heatmap_gene_types[["USP38"]] <- "Interferon"
 
 heatmap_gene_types[["JUN"]] <- "AP-1"
@@ -46,27 +45,29 @@ heatmap_gene_types[["FOSB"]] <- "AP-1"
 heatmap_gene_types[["FOSL2"]] <- "AP-1"
 heatmap_gene_types[["JDP2"]] <- "AP-1"
 
+heatmap_gene_types[["MAP3K11"]] <- "MAP Kinase"
+heatmap_gene_types[["CSK"]] <- "MAP Kinase"
+heatmap_gene_types[["DUSP1"]] <- "MAP Kinase"
+heatmap_gene_types[["DUSP2"]] <- "MAP Kinase"
+heatmap_gene_types[["DUSP6"]] <- "MAP Kinase"
+heatmap_gene_types[["ABHD17A"]] <- "MAP Kinase"
+heatmap_gene_types[["RIPK1"]] <- "MAP Kinase"
 heatmap_gene_types[["MAPK7"]] <- "MAP Kinase"
 heatmap_gene_types[["MAPK8"]] <- "MAP Kinase"
 heatmap_gene_types[["MAP2K1"]] <- "MAP Kinase"
 heatmap_gene_types[["MAP3K8"]] <- "MAP Kinase"
-heatmap_gene_types[["MAP3K11"]] <- "MAP Kinase"
 heatmap_gene_types[["MAP3K20"]] <- "MAP Kinase"
 heatmap_gene_types[["MAP4K3"]] <- "MAP Kinase"
 heatmap_gene_types[["MAPKAPK2"]] <- "MAP Kinase"
-heatmap_gene_types[["CSK"]] <- "MAP Kinase"
-heatmap_gene_types[["DUSP2"]] <- "MAP Kinase"
 heatmap_gene_types[["PTK2B"]] <- "MAP Kinase"
-heatmap_gene_types[["CSF1R"]] <- "MAP Kinase"
 heatmap_gene_types[["RELL1"]] <- "MAP Kinase"
 heatmap_gene_types[["MINK1"]] <- "MAP Kinase"
-heatmap_gene_types[["RASAL3"]] <- "MAP Kinase"
-heatmap_gene_types[["DUSP1"]] <- "MAP Kinase"
-heatmap_gene_types[["DUSP6"]] <- "MAP Kinase"
 heatmap_gene_types[["BRAF"]] <- "MAP Kinase"
-heatmap_gene_types[["TRAF3IP3"]] <- "MAP Kinase"
-heatmap_gene_types[["ABHD17A"]] <- "MAP Kinase"
-heatmap_gene_types[["NFKB1"]] <- "MAP Kinase"
+
+heatmap_gene_types[["NMRAL1"]] <- "NF-κB"
+heatmap_gene_types[["NFKBIA"]] <- "NF-κB"
+heatmap_gene_types[["NFKBIZ"]] <- "NF-κB"
+heatmap_gene_types[["NFKB1"]] <- "NF-κB"
 
 heatmap_gene_types[["JAK1"]] <- "JAK-STAT"
 heatmap_gene_types[["STAT3"]] <- "JAK-STAT"
