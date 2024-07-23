@@ -125,6 +125,7 @@ category_colors <- cytokine_heatmap_df %>%
     Cytokine_Type == "AP-1" ~ "orange",
     Cytokine_Type == "MAP Kinase" ~ "purple",
     Cytokine_Type == "JAK-STAT" ~ "#8e3563",
+    Cytokine_Type == "NF-κB" ~ "#CC79A7",
     TRUE ~ "black" # default color
   )) %>% 
   pull(color, name = Gene_Name)
