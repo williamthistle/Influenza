@@ -123,6 +123,9 @@ for(current_row_index in 1:nrow(final_magical_df_for_paper)) {
 
 final_magical_df_for_paper$dist_to_tss_category <- dist_to_tss_categories
 
+write.table(final_magical_df_for_paper, file = "C:/Users/wat2/Desktop/final_magical_df_for_paper.tsv", sep = "\t",
+            row.names = FALSE, quote = FALSE)
+
 magical_heatmap_plots <- list()
 
 for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
