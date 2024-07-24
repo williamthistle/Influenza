@@ -309,16 +309,6 @@ idxPass <- which(hvl_sc_obj$treatment %in% "PLACEBO")
 cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
 hvl_placebo_sc_obj <- subset(x = hvl_sc_obj, subset = cell_name %in% cellsPass)
 
-# HVL PLACEBO (CD14 Mono)
-idxPass <- which(hvl_placebo_sc_obj$predicted_celltype_majority_vote %in% "CD14 Mono")
-cellsPass <- names(hvl_placebo_sc_obj$orig.ident[idxPass])
-hvl_placebo_CD14_mono_sc_obj <- subset(x = hvl_placebo_sc_obj, subset = cell_name %in% cellsPass)
-
-# HVL PLACEBO (CD16 Mono)
-idxPass <- which(hvl_placebo_sc_obj$predicted_celltype_majority_vote %in% "CD16 Mono")
-cellsPass <- names(hvl_placebo_sc_obj$orig.ident[idxPass])
-hvl_placebo_CD16_mono_sc_obj <- subset(x = hvl_placebo_sc_obj, subset = cell_name %in% cellsPass)
-
 # HVL VACCINATED
 idxPass <- which(hvl_sc_obj$treatment %in% "MVA-NP+M1")
 cellsPass <- names(hvl_sc_obj$orig.ident[idxPass])
