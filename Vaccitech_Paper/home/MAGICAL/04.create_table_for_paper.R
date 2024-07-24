@@ -122,6 +122,9 @@ for(current_row_index in 1:nrow(final_magical_df_for_paper)) {
 
 final_magical_df_for_paper$dist_to_tss_category <- dist_to_tss_categories
 
+write.table(final_magical_df_for_paper, file = paste0("C:/Users/willi/Desktop/final_magical_df_for_paper.tsv"),
+            sep = "\t", row.names = FALSE, quote = FALSE)
+
 magical_heatmap_plots <- list()
 
 for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
@@ -164,7 +167,7 @@ for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
   magical_heatmap_plots[[cell_type]] <- magical_heatmap_plot
 }
 
-ggsave(filename = paste0("C:/Users/wat2/Desktop/CD14_Mono_magical_heatmap.png"), plot = magical_heatmap_plots[["CD14_Mono"]], device='png', dpi=300, width = 3.5, height = 6, units = "in")
+ggsave(filename = paste0("C:/Users/willi/Desktop/CD14_Mono_magical_heatmap.png"), plot = magical_heatmap_plots[["CD14_Mono"]], device='png', dpi=300, width = 3.5, height = 6, units = "in")
 
 # Without legend
 magical_heatmap_plots_without_legend <- list()
@@ -209,7 +212,7 @@ for(cell_type in unique(final_magical_df_for_paper$cell_type)) {
   magical_heatmap_plots_without_legend[[cell_type]] <- magical_heatmap_plot
 }
 
-ggsave(filename = paste0("C:/Users/wat2/Desktop/CD14_Mono_magical_heatmap_without_legend.png"), plot = magical_heatmap_plots_without_legend[["CD14_Mono"]], device='png', dpi=300, width = 1, height = 6, units = "in")
+ggsave(filename = paste0("C:/Users/willi/Desktop/CD14_Mono_magical_heatmap_without_legend.png"), plot = magical_heatmap_plots_without_legend[["CD14_Mono"]], device='png', dpi=300, width = 1, height = 6, units = "in")
 
 # Other TF-based stuff
 magical_tf_vs_gene_df <- create_tf_targets_df(overall_magical_df)
