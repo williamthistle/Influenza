@@ -162,7 +162,7 @@ idxPass <- which(atac_proj$Clusters %in% c("C1", "C2", "C3", "C8", "C11", "C12",
 cellsPass <- atac_proj$cellNames[-idxPass]
 atac_proj_minus_clusters <- atac_proj[cellsPass, ]
 
-# Make sure you use code from some_random_atac_code
+# Make sure you use code from some_random_atac_code for override_cluster_label_atac function
 atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C16"), "CD8 Memory")
 atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C20"), "Proliferating")
 atac_proj_minus_clusters <- override_cluster_label_atac(atac_proj_minus_clusters, c("C25", "C34"), "CD4 Naive")
@@ -221,6 +221,29 @@ cellsPass <- placebo_atac_proj$cellNames[idxPass]
 placebo_hvl_atac_proj <- placebo_atac_proj[cellsPass,]
 
 create_magical_input_files_atac(placebo_hvl_atac_proj, paste0(ATAC_output_dir, "MAGICAL_HVL_PLACEBO_", date, "/"))
+
+# Create MAGICAL files for HVL vaccinated
+idxPass <- which(atac_proj_minus_clusters$treatment %in% "MVA-NP+M1")
+cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
+vaccinated_atac_proj <- atac_proj_minus_clusters[cellsPass,]
+
+idxPass <- which(vaccinated_atac_proj$viral_load %in% "high")
+cellsPass <- vaccinated_atac_proj$cellNames[idxPass]
+vaccinated_hvl_atac_proj <- vaccinated_atac_proj[cellsPass,]
+
+create_magical_input_files_atac(vaccinated_hvl_atac_proj, paste0(ATAC_output_dir, "MAGICAL_HVL_VACCINATED_", date, "/"))
+
+# Create MAGICAL files for LVL placebo
+idxPass <- which(atac_proj_minus_clusters$treatment %in% "PLACEBO")
+cellsPass <- atac_proj_minus_clusters$cellNames[idxPass]
+placebo_atac_proj <- atac_proj_minus_clusters[cellsPass,]
+
+idxPass <- which(placebo_atac_proj$viral_load %in% "low")
+cellsPass <- placebo_atac_proj$cellNames[idxPass]
+placebo_lvl_atac_proj <- placebo_atac_proj[cellsPass,]
+
+create_magical_input_files_atac(placebo_lvl_atac_proj, paste0(ATAC_output_dir, "MAGICAL_LVL_PLACEBO_", date, "/"))
+
 
 # Record cell type proportions for each subset - TODO
 # HVL_sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "low",]
@@ -350,3 +373,18 @@ if (!dir.exists(motif_output_dir)) {dir.create(motif_output_dir, recursive = TRU
 motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/all_single_cell/ATAC/DE_HVL_VACCINATED_pseudobulk_2024-04-29/"
 
 generate_motifs_with_signac(hvl_vaccinated_sc_obj, motif_input_dir, motif_output_dir)
+
+# Add GC and motif content for LVL placebo and run motif analysis
+lvl_placebo_sc_obj <- RegionStats(lvl_placebo_sc_obj, genome = BSgenome.Hsapiens.UCSC.hg38)
+lvl_placebo_sc_obj <- AddMotifs(
+  object = lvl_placebo_sc_obj,
+  genome = BSgenome.Hsapiens.UCSC.hg38,
+  pfm = human_pwms_v2
+)
+
+motif_output_dir <- paste0(ATAC_output_dir, "lvl_placebo_motifs/", date, "/")
+if (!dir.exists(motif_output_dir)) {dir.create(motif_output_dir, recursive = TRUE)}
+
+motif_input_dir <- "/Genomics/function/pentacon/wat2/single_cell/analysis/all_single_cell/ATAC/DE_LVL_PLACEBO_pseudobulk_2024-04-29/"
+
+generate_motifs_with_signac(lvl_placebo_sc_obj, motif_input_dir, motif_output_dir)
