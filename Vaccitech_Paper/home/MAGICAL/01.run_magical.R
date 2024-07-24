@@ -129,9 +129,9 @@ for(magical_dir in magical_dirs) {
   # overall_magical_df <- read.table(paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output.tsv"), sep = "\t", header = TRUE)
   
   # Add metadata - stage 1
-  overall_magical_df <- add_info_stage_1_MAGICAL(overall_magical_df, current_candidate_deg_table)
-  write.table(overall_magical_df, file = paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output_with_stage_1_info.tsv"),
-              sep = "\t", quote = FALSE)
+  overall_magical_df <- add_info_stage_1_MAGICAL(overall_magical_df, magical_input_scRNA_dir, magical_input_scATAC_dir)
+  write.table(overall_magical_df, file = paste0(magical_output_dir, "MAGICAL_overall_output_with_stage_1_info.tsv"),
+              sep = "\t", quote = FALSE, row.names = FALSE)
   
   # overall_magical_df <- read.table(paste0(MAGICAL_hvl_placebo_output_dir, "MAGICAL_overall_output_with_stage_1_info.tsv"), sep = "\t", header = TRUE)
   
@@ -141,8 +141,7 @@ for(magical_dir in magical_dirs) {
 
 # Two new tables!
 # magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
-magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results, hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results)
-magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
+# magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
 
 
 # Create upset plot for overlapping genes between cell types

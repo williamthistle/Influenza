@@ -25,7 +25,7 @@ add_hg38_coordinates_to_marker_peaks <- function(marker_table, hg38_table) {
   return(marker_overlap_df)
 }
 
-add_info_stage_1_MAGICAL <- function(magical_table, deg_table) {
+add_info_stage_1_MAGICAL <- function(magical_table, deg_dir, das_dir) {
   # Add RNA info
   rna_sc_fc <- c()
   rna_pseudobulk_fc <- c()
@@ -35,7 +35,8 @@ add_info_stage_1_MAGICAL <- function(magical_table, deg_table) {
     rna_row <- magical_table[rna_index,]
     rna_cell_type <- rna_row$Cell_Type
     rna_cell_type <- gsub("_", " ", rna_cell_type)
-    cell_type_subset_deg_table <- deg_table[deg_table$Cell_Type == rna_cell_type,]
+    cell_type_subset_deg_table <- read.table(paste0(deg_dir, "D28-vs-D_minus_1-degs-", sub(" ", "_", rna_cell_type), "-time_point-controlling_for_subject_id_final.tsv"), sep = "\t",
+                                             header = TRUE)
     cell_type_subset_deg_table <- cell_type_subset_deg_table[cell_type_subset_deg_table$Gene_Name == rna_row$Gene_symbol,]
     rna_sc_fc <- c(rna_sc_fc, cell_type_subset_deg_table$sc_log2FC)
     rna_pseudobulk_fc <- c(rna_pseudobulk_fc, cell_type_subset_deg_table$pseudo_bulk_log2FC)
@@ -59,9 +60,9 @@ add_info_stage_1_MAGICAL <- function(magical_table, deg_table) {
   for(atac_index in 1:nrow(magical_table)) {
     atac_row <- magical_table[atac_index,]
     atac_cell_type <- atac_row$Cell_Type
-    atac_sc_file <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", sub(" ", "_", atac_cell_type), "-time_point-controlling_for_subject_id_sc_pct_0.01.tsv"), sep = "\t",
+    atac_sc_file <- read.table(paste0(das_dir, "D28-vs-D_minus_1-degs-", sub(" ", "_", atac_cell_type), "-time_point-controlling_for_subject_id_sc_pct_0.01.tsv"), sep = "\t",
                               header = TRUE)
-    atac_pseudobulk_file <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", sub(" ", "_", atac_cell_type), "-time_point-controlling_for_subject_id_pseudobulk_unfiltered.tsv"), sep = "\t",
+    atac_pseudobulk_file <- read.table(paste0(das_dir, "D28-vs-D_minus_1-degs-", sub(" ", "_", atac_cell_type), "-time_point-controlling_for_subject_id_pseudobulk_unfiltered.tsv"), sep = "\t",
                                   header = TRUE)
     atac_peak <- paste0(atac_row$Peak_chr, "-", atac_row$Peak_start, "-", atac_row$Peak_end)
     atac_sc_row <- atac_sc_file[rownames(atac_sc_file) == atac_peak,]

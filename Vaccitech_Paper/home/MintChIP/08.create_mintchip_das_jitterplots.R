@@ -3,9 +3,13 @@ all_mintchip_das_table <- data.frame(Marker = character(), Site = character(), l
 for(marker in mintchip_markers) {
   full_mintchip_das <- read.table(paste0(mintchip_das_dir, marker, "/", marker, "_DESeq2_FC_0.1.tsv"),
                                     sep = "\t", header = TRUE)
-  full_mintchip_das_for_cell_type <- data.frame(Marker = marker, Site = full_mintchip_das$coordinates, log2FC = full_mintchip_das$Fold)
+  full_mintchip_das_for_cell_type <- data.frame(Marker = marker, Site = full_mintchip_das$coordinates, log2FC = full_mintchip_das$Fold, p.val = full_mintchip_das$p.value)
   all_mintchip_das_table <- rbind(all_mintchip_das_table, full_mintchip_das_for_cell_type)
 }
+
+write.table(all_mintchip_das_table, file = paste0(mintchip_das_dir, "combined_final_results.tsv"), sep = "\t",
+            row.names = FALSE, quote = FALSE)
+
 
 all_mintchip_das_table <- all_mintchip_das_table %>%
   mutate(direction = ifelse(log2FC > 0, "Upregulated", "Downregulated"))

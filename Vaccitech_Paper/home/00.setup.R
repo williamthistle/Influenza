@@ -215,7 +215,7 @@ scRNA_hvl_placebo_degs <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D
 scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$Cell_Type != "Platelet",]
 scRNA_hvl_placebo_degs <- scRNA_hvl_placebo_degs[scRNA_hvl_placebo_degs$sc_log2FC * scRNA_hvl_placebo_degs$pseudo_bulk_log2FC > 0, ]
 
-scRNA_hvl_placebo_MAGICAL_cell_types_degs <-read.table(paste0(scRNA_hvl_placebo_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
+scRNA_hvl_placebo_MAGICAL_cell_types_degs <- read.table(paste0(scRNA_hvl_placebo_MAGICAL_cell_types_deg_dir, "D28-vs-D_minus_1-degs-time_point.final.list.tsv"), sep = "\t", header = TRUE)
 scRNA_hvl_placebo_MAGICAL_cell_types_degs <- scRNA_hvl_placebo_MAGICAL_cell_types_degs[scRNA_hvl_placebo_MAGICAL_cell_types_degs$Cell_Type != "Platelet",]
 scRNA_hvl_placebo_MAGICAL_cell_types_degs <- scRNA_hvl_placebo_MAGICAL_cell_types_degs[scRNA_hvl_placebo_MAGICAL_cell_types_degs$sc_log2FC * scRNA_hvl_placebo_MAGICAL_cell_types_degs$pseudo_bulk_log2FC > 0, ]
 
