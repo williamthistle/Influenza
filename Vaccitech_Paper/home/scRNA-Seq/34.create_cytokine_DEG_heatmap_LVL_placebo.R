@@ -34,8 +34,8 @@ annotations_final <- annotations %>%
 heatmap_genes <- c("CCL3", "CCL4", "CCL4L2", "CXCL16", "CXCL2",
                    "IL1B",
                    "IFI44L", "IFIT2", "IFIT3", "IFIT5", "IFITM1", "IFITM10", "IFRD1", 
-                   "DUSP1",
                    "FOS", "FOSB", "JUN", "JUND",
+                   "DUSP1",
                    "NFKBIA")
 
 heatmap_gene_types <- list()

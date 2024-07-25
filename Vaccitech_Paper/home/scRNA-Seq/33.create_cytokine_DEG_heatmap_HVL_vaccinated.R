@@ -34,8 +34,8 @@ annotations_final <- annotations %>%
 heatmap_genes <- c("CX3CR1", "CCR2", "CCL3", "CXCL16", "CXCL2", "CXCL3", "CXCL8", "CXCR4",
                    "CSF1R", "NFIL3", "IL10", "IL10RA", "IL1R1", "IL1R2", "IL1RAP",
                    "IFNG", "IRF1", "IRF2", "OAS1", "IFI16", "IFIH1", "IFITM1", "IFNAR1", "IRF8", "IFNGR1", "IRF2BP2", 
-                   "DUSP1", "MAPK14", "MAP2K3", "MAP3K8", "MAPK6", "MAPK8", "MAPKAPK2", "DUSP4",
                    "FOS", "JUN", "FOSL2", "JDP2",
+                   "DUSP1", "MAPK14", "MAP2K3", "MAP3K8", "MAPK6", "MAPK8", "MAPKAPK2", "DUSP4",
                    "NFKBIA", "NFKBIZ",
                    "JAK2", "STAT1")
 
