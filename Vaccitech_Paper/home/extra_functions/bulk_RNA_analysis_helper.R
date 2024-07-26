@@ -377,10 +377,10 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
   # Select subset of counts associated with subjects
   counts_subset <- counts[rownames(metadata_subset)]
   # Run DESeq2
-  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ sex + age + viral_load)
+  current_analysis <- DESeqDataSetFromMatrix(countData = counts_subset, colData = metadata_subset, design = ~ sex + age + viral_load_category)
   current_analysis <- DESeq(current_analysis)
   # Grab results with alpha = 0.05 and lfcThreshold = 0.1
-  current_analysis_results <- results(current_analysis, contrast = c("viral_load", test_cond, baseline_cond), alpha = 0.05, lfcThreshold = 0.1)
+  current_analysis_results <- results(current_analysis, contrast = c("viral_load_category", test_cond, baseline_cond), alpha = 0.05, lfcThreshold = 0.1)
   current_analysis_results <- current_analysis_results[order(current_analysis_results$padj),]
   current_analysis_results <- subset(current_analysis_results, padj < 0.05)
   if(is.na(output_name_prefix)) {
@@ -389,7 +389,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
     write.table(rownames(current_analysis_results), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_0.1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
   # Grab results with alpha = 0.05 and lfcThreshold = 0.585 (1.5 fold increase)
-  current_analysis_results_1.5 <- results(current_analysis, contrast = c("viral_load", test_cond, baseline_cond), alpha = 0.05, lfcThreshold = 0.585)
+  current_analysis_results_1.5 <- results(current_analysis, contrast = c("viral_load_category", test_cond, baseline_cond), alpha = 0.05, lfcThreshold = 0.585)
   current_analysis_results_1.5 <- current_analysis_results_1.5[order(current_analysis_results_1.5$padj),]
   current_analysis_results_1.5 <- subset(current_analysis_results_1.5, padj < 0.05)
   if(is.na(output_name_prefix)) {
@@ -398,7 +398,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
     write.table(rownames(current_analysis_results_1.5), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_0.585.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)   
   }
   # Grab results with alpha = 0.05 and lfcThreshold = 1
-  current_analysis_results_2 <- results(current_analysis, contrast = c("viral_load", test_cond, baseline_cond), alpha = 0.05, lfcThreshold = 1)
+  current_analysis_results_2 <- results(current_analysis, contrast = c("viral_load_category", test_cond, baseline_cond), alpha = 0.05, lfcThreshold = 1)
   current_analysis_results_2 <- current_analysis_results_2[order(current_analysis_results_2$padj),]
   current_analysis_results_2 <- subset(current_analysis_results_2, padj < 0.05)
   if(is.na(output_name_prefix)) {
@@ -407,7 +407,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
     write.table(rownames(current_analysis_results_2), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_1.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
   # Grab results with alpha = 0.05 and lfcThreshold = 2
-  current_analysis_results_4 <- results(current_analysis, contrast = c("viral_load", test_cond, baseline_cond), alpha = 0.05, lfcThreshold = 2)
+  current_analysis_results_4 <- results(current_analysis, contrast = c("viral_load_category", test_cond, baseline_cond), alpha = 0.05, lfcThreshold = 2)
   current_analysis_results_4 <- current_analysis_results_4[order(current_analysis_results_4$padj),]
   current_analysis_results_4 <- subset(current_analysis_results_4, padj < 0.05)
   if(is.na(output_name_prefix)) {
@@ -416,7 +416,7 @@ run_deseq_bulk_analysis_viral_load=function(sample_type, counts, metadata, test_
     write.table(rownames(current_analysis_results_4), paste0(output_dir, test_cond, "_vs_", baseline_cond, "_", output_name_prefix, "_", sample_type, "_2.txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
   }
   # Grab results with alpha = 0.05 and no lfcThreshold
-  current_analysis_results_none <- results(current_analysis, contrast = c("viral_load", test_cond, baseline_cond), alpha = 0.05)
+  current_analysis_results_none <- results(current_analysis, contrast = c("viral_load_category", test_cond, baseline_cond), alpha = 0.05)
   current_analysis_results_none <- current_analysis_results_none[order(current_analysis_results_none$padj),]
   current_analysis_results_none <- subset(current_analysis_results_none, padj < 0.05)
   if(is.na(output_name_prefix)) {

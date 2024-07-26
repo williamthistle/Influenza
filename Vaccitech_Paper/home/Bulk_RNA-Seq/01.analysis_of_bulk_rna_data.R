@@ -366,35 +366,38 @@ current_analysis_results <- current_analysis_results[order(current_analysis_resu
 current_analysis_results <- subset(current_analysis_results, padj < 0.05)
 
 # HIGH VS LOW VIRAL LOAD
+# OVERALL, everything significant for D-2 / D-1 / D2 / D28 are very low base mean and kind of nonsense
+# D5 / D8 are higher base mean and actually have real DEG
+# This makes sense
 # 2 D minus 2
 # 144/143/142/138/151
 # Note: If I don't control for age and sex, I find nothing.
-placebo_period_2_D_minus_2_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
-                                                                              "2_D_minus_2", "HIGH", "LOW", paste0(bulk_rna_results_dir, "placebo_period_2_D_minus_2_high_vs_low/"), "2_D_minus_2")
+placebo_period_2_D_minus_2_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_full_time_series_placebo_counts, both_full_time_series_placebo_metadata,
+                                                                              "2_D_minus_2", "high", "low", paste0(bulk_rna_results_dir, "placebo_period_2_D_minus_2_high_vs_low/"), "2_D_minus_2")
 # 2 D minus 1
 # 167/157/155/151/178
 # Note: If I don't control for age and sex, I find nothing.
-placebo_period_2_D_minus_1_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
-                                                                              "2_D_minus_1", "HIGH", "LOW", paste0(bulk_rna_results_dir, "placebo_period_2_D_minus_1_high_vs_low/"), "2_D_minus_1")
+placebo_period_2_D_minus_1_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_full_time_series_placebo_counts, both_full_time_series_placebo_metadata,
+                                                                              "2_D_minus_1", "high", "low", paste0(bulk_rna_results_dir, "placebo_period_2_D_minus_1_high_vs_low/"), "2_D_minus_1")
 # 2 D2
 # 139/138/137/134/139
-placebo_period_2_D2_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
-                                                                                     "2_D2", "HIGH", "LOW", paste0(bulk_rna_results_dir, "placebo_period_2_D2_high_vs_low/"), "2_D2")
+placebo_period_2_D2_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_full_time_series_placebo_counts, both_full_time_series_placebo_metadata,
+                                                                                     "2_D2", "high", "low", paste0(bulk_rna_results_dir, "placebo_period_2_D2_high_vs_low/"), "2_D2")
 # 2 D5
 # Note: If I don't control for age and sex, I still find a lot of DEGs.
 # https://hb.flatironinstitute.org/module/overview/?body_tag=9a43682013acc9404b08417d64f9e60f2436bfba all upregulated
 # 883/269/155/88/1653
-placebo_period_2_D5_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
-                                                                              "2_D5", "HIGH", "LOW", paste0(bulk_rna_results_dir, "placebo_period_2_D5_high_vs_low/"), "2_D5")
+placebo_period_2_D5_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_full_time_series_placebo_counts, both_full_time_series_placebo_metadata,
+                                                                              "2_D5", "high", "low", paste0(bulk_rna_results_dir, "placebo_period_2_D5_high_vs_low/"), "2_D5")
 # 2 D8
 # https://hb.flatironinstitute.org/module/overview/?body_tag=e7397a8502c94a074b03dedb68c473ef8912a8e9 all upregulated
 # 298/207/196/187/365
-placebo_period_2_D8_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
-                                                                              "2_D8", "HIGH", "LOW", paste0(bulk_rna_results_dir, "placebo_period_2_D8_high_vs_low/"), "2_D8")
+placebo_period_2_D8_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_full_time_series_placebo_counts, both_full_time_series_placebo_metadata,
+                                                                              "2_D8", "high", "low", paste0(bulk_rna_results_dir, "placebo_period_2_D8_high_vs_low/"), "2_D8")
 # 2 D28
 # 193/180/172/170/209
-placebo_period_2_D28_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_placebo_counts, both_placebo_metadata,
-                                                                              "2_D28", "HIGH", "LOW", paste0(bulk_rna_results_dir, "placebo_period_2_D8_high_vs_low/"), "2_D28")
+placebo_period_2_D28_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_full_time_series_placebo_counts, both_full_time_series_placebo_metadata,
+                                                                              "2_D28", "high", "low", paste0(bulk_rna_results_dir, "placebo_period_2_D8_high_vs_low/"), "2_D28")
 
 # VACCINATED
 #### PERIOD 1 HIGH T CELL RESPONSE ####
