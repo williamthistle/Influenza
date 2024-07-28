@@ -152,7 +152,7 @@ cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x =
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
+ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif_LVL.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
 
 
 # CD16 Mono
@@ -196,7 +196,7 @@ cd16_mono_motif_plot <- ggplot(combined_cd16_mono_motif_df_for_plotting, aes(x =
 
 ggsave(filename = "C:/Users/willi/Desktop/CD16_Mono_Motif.png", plot = cd16_mono_motif_plot, width = 1800, height = 1703, units = "px")
 
-# cDC
+# cDC (Naive HVL)
 cDC_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "cDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cDC-sc_pct_0.01_FC_1_with_fc_values.tsv"),
                                            sep = "\t", header = TRUE)
 cDC_upregulated_motifs <- cDC_upregulated_motifs[rowSums(is.na(cDC_upregulated_motifs)) == 0, ] # Remove NAs
@@ -236,6 +236,47 @@ cDC_motif_plot <- ggplot(combined_cDC_motif_df_for_plotting, aes(x = fc, y = p.a
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
 ggsave(filename = "C:/Users/willi/Desktop/cDC_Motif.png", plot = cDC_motif_plot, width = 1800, height = 1703, units = "px")
+
+# cDC (Naive LVL)
+cDC_upregulated_motifs <- read.table(paste0(scATAC_lvl_placebo_das_motif_dir, "cDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cDC-sc_pct_0.01_FC_1_with_fc_values.tsv"),
+                                     sep = "\t", header = TRUE)
+cDC_upregulated_motifs <- cDC_upregulated_motifs[rowSums(is.na(cDC_upregulated_motifs)) == 0, ] # Remove NAs
+cDC_upregulated_motifs <- cDC_upregulated_motifs[cDC_upregulated_motifs$fc_value > 0,]
+cDC_upregulated_motifs$p.adjust.log <- -log(cDC_upregulated_motifs$p.adjust, base = 10)
+
+cDC_downregulated_motifs <-  read.table(paste0(scATAC_lvl_placebo_das_motif_dir, "cDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cDC-sc_pct_0.01_FC_-1_with_fc_values.tsv"),
+                                        sep = "\t", header = TRUE)
+cDC_downregulated_motifs <- cDC_downregulated_motifs[rowSums(is.na(cDC_downregulated_motifs)) == 0, ] # Remove NAs
+cDC_downregulated_motifs <- cDC_downregulated_motifs[cDC_downregulated_motifs$fc_value < 0,]
+cDC_downregulated_motifs$p.adjust.log <- -log(cDC_downregulated_motifs$p.adjust, base = 10)
+
+cDC_upregulated_motif_df_for_plotting <- data.frame(tf = cDC_upregulated_motifs$motif.name,
+                                                    fc = cDC_upregulated_motifs$fc_value,
+                                                    p.adjust.log = cDC_upregulated_motifs$p.adjust.log,
+                                                    peak_direction = "upregulated")
+
+cDC_downregulated_motif_df_for_plotting <- data.frame(tf = cDC_downregulated_motifs$motif.name,
+                                                      fc = cDC_downregulated_motifs$fc_value,
+                                                      p.adjust.log = cDC_downregulated_motifs$p.adjust.log,
+                                                      peak_direction = "downregulated")
+
+combined_cDC_motif_df_for_plotting <- rbind(cDC_upregulated_motif_df_for_plotting, cDC_downregulated_motif_df_for_plotting)
+
+combined_cDC_motif_df_for_plotting$color <- with(combined_cDC_motif_df_for_plotting, 
+                                                 ifelse(p.adjust.log >= 6 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red",
+                                                        ifelse(p.adjust.log >= 6 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
+
+cDC_motif_plot <- ggplot(combined_cDC_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
+  geom_point(aes(color = color), size = 4) +
+  scale_color_identity() +
+  # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
+  theme_classic(base_size = 30) +
+  labs(title = "cDCs",
+       x = "Log2(FC)",
+       y = "-Log10(Adjusted P-value)") +
+  theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
+
+ggsave(filename = "C:/Users/willi/Desktop/cDC_Motif_Naive_LVL.png", plot = cDC_motif_plot, width = 1800, height = 1703, units = "px")
 
 # pDC
 pDC_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "pDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-pDC-sc_pct_0.01_FC_1_with_fc_values.tsv"),
