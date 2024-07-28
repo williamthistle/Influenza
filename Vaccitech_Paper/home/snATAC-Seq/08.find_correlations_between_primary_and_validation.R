@@ -15,7 +15,7 @@ find_sc_correlation_final <- function(first_gene_df, second_gene_df) {
   return(comparing_first_vs_second_df)
 }
 
-correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC", "pDC", "NK")
+correlation_cell_types <- c("pDC", "CD16_Mono", "cDC", "NK", "CD14_Mono")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -36,6 +36,9 @@ for(cell_type in correlation_cell_types) {
   # Filtered SC
   cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
                                  sep = "\t", header = TRUE)
+  # Set fold change threshold (only keep high FC peaks)
+  # cell_type_sc_das <- cell_type_sc_das[abs(cell_type_sc_das$sc_log2FC) > 1,]
+  # cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$sc_pval < 0.01,]
   cell_type_validation_sc_das <- read.table(paste0(scATAC_hvl_vaccinated_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
                                             sep = "\t", header = TRUE)
   # Remove any entries that are min.pct of 0 that will mess up fold change comparisons
@@ -49,13 +52,13 @@ for(cell_type in correlation_cell_types) {
                               method = "spearman")
   print(correlation_val$estimate)
   print(correlation_val$p.value)
-  sc_correlations[[cell_type]][["sc_primary_primary_vs_validation"]] <- correlation_val
+  sc_correlations[[cell_type]][["sc_primary_hvl_vs_lvl"]] <- correlation_val
   
   # Plot correlation
   sc_correlation_plots[[cell_type]][["sc_primary_hvl_vs_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("Naive FC") + ylab("Vaccinated FC") + labs(title = cell_type_no_underscore) + xlim(-6, 6) + ylim(-6, 6)
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive HVL FC") + ylab("Vaccinated HVL FC") + labs(title = cell_type_no_underscore) +  xlim(-8, 8) + ylim(-8, 8) + theme(aspect.ratio = 1, text=element_text(size=15))
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[1]])
-ggsave("C:/Users/willi/Desktop/naive_vs_vaccinated_das_correlations.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/willi/Desktop/hvl_vs_vaccinated_das_correlations.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 2), height = 10, width = 10)

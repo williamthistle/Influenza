@@ -15,7 +15,7 @@ find_sc_correlation_final <- function(first_gene_df, second_gene_df) {
   return(comparing_first_vs_second_df)
 }
 
-correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "cDC", "pDC", "NK")
+correlation_cell_types <- c("pDC", "CD16_Mono", "cDC", "NK", "CD14_Mono")
 
 sc_correlations <- list()
 sc_correlation_plots <- list()
@@ -57,8 +57,8 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   sc_correlation_plots[[cell_type]][["sc_primary_hvl_vs_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore) + xlim(-6, 6) + ylim(-6, 6)
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive HVL FC") + ylab("Naive LVL FC") + labs(title = cell_type_no_underscore) +  xlim(-8, 8) + ylim(-8, 8) + theme(aspect.ratio = 1, text=element_text(size=15))
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[1]])
-ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_das_correlations.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_das_correlations.png", plot = patchwork::wrap_plots(pseudobulk_corrected_plots, ncol = 3, nrow = 2), height = 10, width = 10)

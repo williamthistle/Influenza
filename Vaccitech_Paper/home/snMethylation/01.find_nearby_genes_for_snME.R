@@ -80,7 +80,6 @@ for(snME_cell_type in innate_snME_cell_types) {
   peak_annotation_plots[[snME_cell_type]] <- differential_analysis_results
 }
 
-plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = "Distribution of Genomic Features for snME DMR")
-
-
+snME_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = NULL) + theme_classic(base_size = 18)
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "snME_genomic_features.png"), plot = snME_annotation_barplots, device='png', dpi=300, width = 8, units = "in")
 
