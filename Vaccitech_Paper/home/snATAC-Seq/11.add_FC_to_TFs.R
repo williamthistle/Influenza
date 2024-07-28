@@ -4,7 +4,8 @@ source(paste0(base_dir, "00.setup.R"))
 
 snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "MAIT", "Proliferating", "pDC")
 
-motif_dirs <- c(scATAC_hvl_placebo_das_motif_dir, scATAC_hvl_vaccinated_das_motif_dir, scATAC_lvl_placebo_das_motif_dir)
+# motif_dirs <- c(scATAC_hvl_placebo_das_motif_dir, scATAC_hvl_vaccinated_das_motif_dir, scATAC_lvl_placebo_das_motif_dir)
+motif_dirs <- c(scATAC_lvl_placebo_das_motif_dir)
 
 # Step 1: Add FC to motif files
 for(motif_dir in motif_dirs) {
@@ -71,7 +72,7 @@ for(motif_dir in motif_dirs) {
 
 # Step 2: Create plots
 
-# CD14 Mono
+# CD14 Mono (Naive HVL)
 cd14_mono_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "CD14_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-CD14_Mono-sc_pct_0.01_FC_1_with_fc_values.tsv"),
                                            sep = "\t", header = TRUE)
 cd14_mono_upregulated_motifs <- cd14_mono_upregulated_motifs[rowSums(is.na(cd14_mono_upregulated_motifs)) == 0, ] # Remove NAs
@@ -111,6 +112,48 @@ cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x =
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
 ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
+
+# CD14 Mono (Naive LVL)
+cd14_mono_upregulated_motifs <- read.table(paste0(scATAC_lvl_placebo_das_motif_dir, "CD14_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-CD14_Mono-sc_pct_0.01_FC_1_with_fc_values.tsv"),
+                                           sep = "\t", header = TRUE)
+cd14_mono_upregulated_motifs <- cd14_mono_upregulated_motifs[rowSums(is.na(cd14_mono_upregulated_motifs)) == 0, ] # Remove NAs
+cd14_mono_upregulated_motifs <- cd14_mono_upregulated_motifs[cd14_mono_upregulated_motifs$fc_value > 0,]
+cd14_mono_upregulated_motifs$p.adjust.log <- -log(cd14_mono_upregulated_motifs$p.adjust, base = 10)
+
+cd14_mono_downregulated_motifs <-  read.table(paste0(scATAC_lvl_placebo_das_motif_dir, "CD14_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-CD14_Mono-sc_pct_0.01_FC_-1_with_fc_values.tsv"),
+                                              sep = "\t", header = TRUE)
+cd14_mono_downregulated_motifs <- cd14_mono_downregulated_motifs[rowSums(is.na(cd14_mono_downregulated_motifs)) == 0, ] # Remove NAs
+cd14_mono_downregulated_motifs <- cd14_mono_downregulated_motifs[cd14_mono_downregulated_motifs$fc_value < 0,]
+cd14_mono_downregulated_motifs$p.adjust.log <- -log(cd14_mono_downregulated_motifs$p.adjust, base = 10)
+
+cd14_mono_upregulated_motif_df_for_plotting <- data.frame(tf = cd14_mono_upregulated_motifs$motif.name,
+                                                          fc = cd14_mono_upregulated_motifs$fc_value,
+                                                          p.adjust.log = cd14_mono_upregulated_motifs$p.adjust.log,
+                                                          peak_direction = "upregulated")
+
+cd14_mono_downregulated_motif_df_for_plotting <- data.frame(tf = cd14_mono_downregulated_motifs$motif.name,
+                                                            fc = cd14_mono_downregulated_motifs$fc_value,
+                                                            p.adjust.log = cd14_mono_downregulated_motifs$p.adjust.log,
+                                                            peak_direction = "downregulated")
+
+combined_cd14_mono_motif_df_for_plotting <- rbind(cd14_mono_upregulated_motif_df_for_plotting, cd14_mono_downregulated_motif_df_for_plotting)
+
+combined_cd14_mono_motif_df_for_plotting$color <- with(combined_cd14_mono_motif_df_for_plotting, 
+                                                       ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red",
+                                                              ifelse(p.adjust.log >= 7.5 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
+
+cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
+  geom_point(aes(color = color), size = 3) +
+  scale_color_identity() +
+  # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
+  theme_classic(base_size = 30) +
+  labs(title = "CD14 Mono",
+       x = "Log2(FC)",
+       y = "-Log10(Adjusted P-value)") +
+  theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
+
+ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
+
 
 # CD16 Mono
 cd16_mono_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "CD16_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cd16_Mono-sc_pct_0.01_FC_1_with_fc_values.tsv"),
