@@ -37,8 +37,8 @@ create_enrichment_plot <- function(results, cutoff = 0.05) {
     scale_fill_gradient(low = "red", high = "blue") +  # Reversed color scale
     labs(x = "Number of Genes", y = "Term") +
     guides(fill = guide_colorbar(reverse = TRUE)) +  # Reverse the legend  
-    scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) #+
-    #theme(legend.position="none")
+    scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) +
+    theme(legend.position="none")
 }
 
 get_enrichr_results <- function(gene_list) {
@@ -220,6 +220,9 @@ create_enrichment_plot(cd16_mono_enrichr_upregulated_results[[1]])
 
 cd14_reactome_plot <- create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[4]])
 ggsave("C:/Users/willi/Desktop/CD14_reactome_plot.png", plot = cd14_reactome_plot, device = "png", width = 10, height = 5, units = "in")
+
+cd14_go_plot <- create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[1]])
+ggsave("C:/Users/willi/Desktop/CD14_go_plot.png", plot = cd14_go_plot, device = "png", width = 14, height = 9, units = "in")
 
 
 # Sleep for 1 second so we don't overload enrichR server with requests

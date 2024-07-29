@@ -155,7 +155,7 @@ cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x =
 ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif_LVL.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
 
 
-# CD16 Mono
+# CD16 Mono (Naive HVL)
 cd16_mono_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "CD16_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cd16_Mono-sc_pct_0.01_FC_1_with_fc_values.tsv"),
                                            sep = "\t", header = TRUE)
 cd16_mono_upregulated_motifs <- cd16_mono_upregulated_motifs[rowSums(is.na(cd16_mono_upregulated_motifs)) == 0, ] # Remove NAs
@@ -195,6 +195,47 @@ cd16_mono_motif_plot <- ggplot(combined_cd16_mono_motif_df_for_plotting, aes(x =
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
 ggsave(filename = "C:/Users/willi/Desktop/CD16_Mono_Motif.png", plot = cd16_mono_motif_plot, width = 1800, height = 1703, units = "px")
+
+# CD16 Mono (Vaccinated HVL)
+cd16_mono_upregulated_motifs <- read.table(paste0(scATAC_hvl_vaccinated_das_motif_dir, "CD16_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cd16_Mono-sc_pct_0.01_FC_1_with_fc_values.tsv"),
+                                           sep = "\t", header = TRUE)
+cd16_mono_upregulated_motifs <- cd16_mono_upregulated_motifs[rowSums(is.na(cd16_mono_upregulated_motifs)) == 0, ] # Remove NAs
+cd16_mono_upregulated_motifs <- cd16_mono_upregulated_motifs[cd16_mono_upregulated_motifs$fc_value > 0,]
+cd16_mono_upregulated_motifs$p.adjust.log <- -log(cd16_mono_upregulated_motifs$p.adjust, base = 10)
+
+cd16_mono_downregulated_motifs <-  read.table(paste0(scATAC_hvl_vaccinated_das_motif_dir, "CD16_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cd16_Mono-sc_pct_0.01_FC_-1_with_fc_values.tsv"),
+                                              sep = "\t", header = TRUE)
+cd16_mono_downregulated_motifs <- cd16_mono_downregulated_motifs[rowSums(is.na(cd16_mono_downregulated_motifs)) == 0, ] # Remove NAs
+cd16_mono_downregulated_motifs <- cd16_mono_downregulated_motifs[cd16_mono_downregulated_motifs$fc_value < 0,]
+cd16_mono_downregulated_motifs$p.adjust.log <- -log(cd16_mono_downregulated_motifs$p.adjust, base = 10)
+
+cd16_mono_upregulated_motif_df_for_plotting <- data.frame(tf = cd16_mono_upregulated_motifs$motif.name,
+                                                          fc = cd16_mono_upregulated_motifs$fc_value,
+                                                          p.adjust.log = cd16_mono_upregulated_motifs$p.adjust.log,
+                                                          peak_direction = "upregulated")
+
+cd16_mono_downregulated_motif_df_for_plotting <- data.frame(tf = cd16_mono_downregulated_motifs$motif.name,
+                                                            fc = cd16_mono_downregulated_motifs$fc_value,
+                                                            p.adjust.log = cd16_mono_downregulated_motifs$p.adjust.log,
+                                                            peak_direction = "downregulated")
+
+combined_cd16_mono_motif_df_for_plotting <- rbind(cd16_mono_upregulated_motif_df_for_plotting, cd16_mono_downregulated_motif_df_for_plotting)
+
+combined_cd16_mono_motif_df_for_plotting$color <- with(combined_cd16_mono_motif_df_for_plotting, 
+                                                       ifelse(p.adjust.log >= 10 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red",
+                                                              ifelse(p.adjust.log >= 10 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
+
+cd16_mono_motif_plot <- ggplot(combined_cd16_mono_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
+  geom_point(aes(color = color), size = 4) +
+  scale_color_identity() +
+  # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
+  theme_classic(base_size = 30) +
+  labs(title = "CD16 Mono",
+       x = "Log2(FC)",
+       y = "-Log10(Adjusted P-value)") +
+  theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
+
+ggsave(filename = "C:/Users/willi/Desktop/CD16_Mono_Motif_HVL_Vaccinated.png", plot = cd16_mono_motif_plot, width = 1800, height = 1703, units = "px")
 
 # cDC (Naive HVL)
 cDC_upregulated_motifs <- read.table(paste0(scATAC_hvl_placebo_das_motif_dir, "cDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cDC-sc_pct_0.01_FC_1_with_fc_values.tsv"),

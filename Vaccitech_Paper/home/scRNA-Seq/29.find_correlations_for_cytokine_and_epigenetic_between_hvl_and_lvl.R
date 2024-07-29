@@ -2,15 +2,32 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-correlation_cell_types <- c("CD14_Mono", "CD16_Mono", "NK", "NK_CD56bright", "cDC", "pDC")
+correlation_cell_types <- c("pDC", "NK_CD56bright", "CD16_Mono", "cDC", "NK", "CD14_Mono")
 
 hvl_vs_lvl_cytoepi_correlations <- list()
 hvl_vs_lvl_cytoepi_correlation_plots <- list()
 
-cytokine_genes <- c("CCL3", "CX3CR1", "CXCL16", "NFIL3", "IL32", "IRAK3", "IL1RAP", "IRF2", "IRF7", "IFNGR1", "IFNG", "JUN", "JUNB", 
-                    "FOSL2", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K11", "MAP3K20", "MAP4K3", "MAPKAPK2")
+cytokine_genes <- c("CCL3", "CX3CR1", "CCL3L1", "CXCL16", 
+                    "IL32", "CASP1", "CSF1R", "NFIL3", "IRAK3", "IL1RAP", "PTGES",   
+                    "IRF2", "IRF7", "IFNG", "OAS1", "MNDA", "PSMB9", "IFNGR1", "DNAJC3", "GBP5", "USP38",  
+                    "JUN", "JUNB", "FOSB", "FOSL2", "JDP2", 
+                    "MAP3K11", "CSK", "DUSP1", "DUSP2", "DUSP6", "ABHD17A", "RIPK1", "MAPK7", "MAPK8", "MAP2K1", "MAP3K8", "MAP3K20", "MAP4K3", "MAPKAPK2",
+                    "PTK2B", "RELL1", "MINK1", "BRAF",
+                    "NMRAL1", "NFKBIA", "NFKBIZ", "NFKB1",
+                    "JAK1", "STAT3", "STAT4")
 
-epigenetic_genes <- c("KAT6A", "HDAC5", "HDAC7", "HDAC9", "ASH1L", "PRDM2", "SETD2", "KDM2B", "KDM3A")
+cytokine_genes_lvl <- c("CCL3", "CCL4", "CCL4L2", "CXCL16", "CXCL2",
+                        "IL1B",
+                        "IFI44L", "IFIT2", "IFIT3", "IFIT5", "IFITM1", "IFITM10", "IFRD1", 
+                        "FOS", "FOSB", "JUN", "JUND",
+                        "DUSP1",
+                        "NFKBIA")
+
+cytokine_genes <- union(cytokine_genes, cytokine_genes_lvl)
+
+epigenetic_genes <- c("HIST1H1C", "HIST1H1D", "HIST1H1E", "H2AFZ", "KAT6A", "BRD1", "MSL2", "HDAC5", "HDAC7", "HDAC9", "METTL23", "ASH1L", "PRDM2", "SETD2","KDM2B", "KDM3A")
+# Add LVL
+epigenetic_genes <- c(epigenetic_genes, "KDM6B")
 
 for(cell_type in correlation_cell_types) {
   print(cell_type)
@@ -44,7 +61,7 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   hvl_vs_lvl_cytoepi_correlation_plots[[cell_type]][["cytokine"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore) + xlim(-2, 2) + ylim(-2, 2)
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive HVL FC") + ylab("Naive LVL FC") + labs(title = cell_type_no_underscore) +  xlim(-4, 4) + ylim(-4, 4) + theme(aspect.ratio = 1, text=element_text(size=15))
   
   # Check correlation for epigenetic genes
   epigenetic_unfiltered_cell_type_sc_degs <- unfiltered_cell_type_sc_degs[rownames(unfiltered_cell_type_sc_degs) %in% epigenetic_genes,]
@@ -64,15 +81,14 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   hvl_vs_lvl_cytoepi_correlation_plots[[cell_type]][["epigenetic"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman") + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore) + xlim(-2, 2) + ylim(-2, 2)
-  
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive HVL FC") + ylab("Naive LVL FC") + labs(title = cell_type_no_underscore) +  xlim(-2, 2) + ylim(-2, 2) + theme(aspect.ratio = 1, text=element_text(size=15))
 }
 
 cyto_hvl_vs_lvl_cytoepi_correlation_plots <- lapply(hvl_vs_lvl_cytoepi_correlation_plots, function(x) x[[1]])
-ggsave("C:/Users/wat2/Desktop/hvl_vs_lvl_fc_cyto_correlation.png", plot = patchwork::wrap_plots(cyto_hvl_vs_lvl_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_fc_cyto_correlation.png", plot = patchwork::wrap_plots(cyto_hvl_vs_lvl_cytoepi_correlation_plots, ncol = 3, nrow = 2), height = 10, width = 10)
 
 epigenetic_hvl_vs_lvl_cytoepi_correlation_plots <- lapply(hvl_vs_lvl_cytoepi_correlation_plots, function(x) x[[2]])
-ggsave("C:/Users/wat2/Desktop/hvl_vs_lvl_fc_epigenetic_correlation.png", plot = patchwork::wrap_plots(epigenetic_hvl_vs_lvl_cytoepi_correlation_plots, ncol = 2, nrow = 3), height = 10, width = 10)
+ggsave("C:/Users/willi/Desktop/hvl_vs_lvl_fc_epigenetic_correlation.png", plot = patchwork::wrap_plots(epigenetic_hvl_vs_lvl_cytoepi_correlation_plots, ncol = 3, nrow = 2), height = 10, width = 10)
 
 
 # Other plotting attempts
