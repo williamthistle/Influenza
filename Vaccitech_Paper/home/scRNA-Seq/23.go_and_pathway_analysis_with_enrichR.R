@@ -37,8 +37,8 @@ create_enrichment_plot <- function(results, cutoff = 0.05) {
     scale_fill_gradient(low = "red", high = "blue") +  # Reversed color scale
     labs(x = "Number of Genes", y = "Term") +
     guides(fill = guide_colorbar(reverse = TRUE)) +  # Reverse the legend  
-    scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) +
-    theme(legend.position="none")
+    scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) #+
+    #theme(legend.position="none")
 }
 
 get_enrichr_results <- function(gene_list) {
@@ -143,6 +143,9 @@ b_memory_enrichr_downregulated_results <- get_enrichr_results(b_memory_downregul
 b_naive_enrichr_upregulated_results <- get_enrichr_results(b_naive_upregulated_genes)
 b_naive_enrichr_downregulated_results <- get_enrichr_results(b_naive_downregulated_genes)
 
+nk_enrichr_upregulated_results <- get_enrichr_results(nk_upregulated_genes)
+nk_enrichr_downregulated_results <- get_enrichr_results(nk_downregulated_genes)
+
 cd14_mono_plotted_processes <- cd14_mono_enrichr_upregulated_results[[1]][c(5,15,17,22,26),]
 cd14_mono_plotted_processes$Cell_Type <- "CD14 Mono"
 cd16_mono_plotted_processes <- cd16_mono_enrichr_upregulated_results[[1]][c(1,2,3,5,6,8),]
@@ -175,9 +178,6 @@ up_pathway_plot <- ggplot(data = all_plotted_processes, aes(x = Cell.Type, y = B
   theme(plot.title = element_text(hjust = 1))
 
 ggsave(filename = paste0("C:/Users/willi/Desktop/", "HB_monocyte_upregulated_genes_monocyte_gsea_top_upregulated_pathways.png"), plot = up_pathway_plot, device='png', dpi=300, width = 8)
-
-
-
 
 
 cd14_test <- cd14_mono_enrichr_upregulated_results[[1]]
@@ -222,8 +222,10 @@ cd14_reactome_plot <- create_enrichment_plot(cd14_mono_enrichr_upregulated_resul
 ggsave("C:/Users/willi/Desktop/CD14_reactome_plot.png", plot = cd14_reactome_plot, device = "png", width = 10, height = 5, units = "in")
 
 cd14_go_plot <- create_enrichment_plot(cd14_mono_enrichr_upregulated_results[[1]])
-ggsave("C:/Users/willi/Desktop/CD14_go_plot.png", plot = cd14_go_plot, device = "png", width = 14, height = 9, units = "in")
+ggsave("C:/Users/wat2/Desktop/CD14_go_plot_with_legend.png", plot = cd14_go_plot, device = "png", width = 18, height = 9, units = "in")
 
+cd16_go_plot <- create_enrichment_plot(NK_enrichr_upregulated_results[[4]])
+ggsave("C:/Users/wat2/Desktop/CD16_go_plot.png", plot = cd16_go_plot, device = "png", width = 14, height = 9, units = "in")
 
 # Sleep for 1 second so we don't overload enrichR server with requests
 Sys.sleep(1)
