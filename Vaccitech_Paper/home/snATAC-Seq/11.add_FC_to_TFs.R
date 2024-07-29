@@ -329,7 +329,7 @@ cd14_mono_motif_plot <- ggplot(combined_cd14_mono_motif_df_for_plotting, aes(x =
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/willi/Desktop/CD14_Mono_Motif_LVL.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
+ggsave(filename = "C:/Users/wat2/Desktop/motif_plots/CD14_Mono_Motif_LVL.png", plot = cd14_mono_motif_plot, width = 1800, height = 1703, units = "px")
 
 # cDC (Naive LVL)
 cDC_upregulated_motifs <- read.table(paste0(scATAC_lvl_placebo_das_motif_dir, "cDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cDC-sc_pct_0.01_FC_1_with_fc_values.tsv"),
@@ -368,12 +368,12 @@ cDC_motif_plot <- ggplot(combined_cDC_motif_df_for_plotting, aes(x = fc, y = p.a
   scale_color_identity() +
   # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
   theme_classic(base_size = 30) +
-  labs(title = "CD14 Mono",
+  labs(title = "cDC",
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/willi/Desktop/cDC_Motif_LVL.png", plot = cDC_motif_plot, width = 1800, height = 1703, units = "px")
+ggsave(filename = "C:/Users/wat2/Desktop/motif_plots/cDC_Motif_LVL.png", plot = cDC_motif_plot, width = 1800, height = 1703, units = "px")
 
 # NK (Naive LVL)
 NK_upregulated_motifs <- read.table(paste0(scATAC_lvl_placebo_das_motif_dir, "NK/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-NK-sc_pct_0.01_FC_1_with_fc_values.tsv"),
@@ -412,12 +412,12 @@ NK_motif_plot <- ggplot(combined_NK_motif_df_for_plotting, aes(x = fc, y = p.adj
   scale_color_identity() +
   # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
   theme_classic(base_size = 30) +
-  labs(title = "CD14 Mono",
+  labs(title = "NK",
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/willi/Desktop/NK_Motif_LVL.png", plot = NK_motif_plot, width = 1800, height = 1703, units = "px")
+ggsave(filename = "C:/Users/wat2/Desktop/motif_plots/NK_Motif_LVL.png", plot = NK_motif_plot, width = 1800, height = 1703, units = "px")
 
 # CD16 Mono (Vaccinated HVL)
 cd16_mono_upregulated_motifs <- read.table(paste0(scATAC_hvl_vaccinated_das_motif_dir, "CD16_Mono/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-cd16_Mono-sc_pct_0.01_FC_1_with_fc_values.tsv"),
@@ -445,8 +445,11 @@ cd16_mono_downregulated_motif_df_for_plotting <- data.frame(tf = cd16_mono_downr
 combined_cd16_mono_motif_df_for_plotting <- rbind(cd16_mono_upregulated_motif_df_for_plotting, cd16_mono_downregulated_motif_df_for_plotting)
 
 combined_cd16_mono_motif_df_for_plotting$color <- with(combined_cd16_mono_motif_df_for_plotting, 
-                                                       ifelse(p.adjust.log >= 10 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red",
-                                                              ifelse(p.adjust.log >= 10 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
+                                                       ifelse(p.adjust.log >= 20 & abs(fc) >= 0.5 & peak_direction == "upregulated", "red",
+                                                              ifelse(p.adjust.log >= 20 & abs(fc) >= 0.5 & peak_direction == "downregulated", "blue", "grey")))
+
+table(combined_cd16_mono_motif_df_for_plotting$color)
+combined_cd16_mono_motif_df_for_plotting[combined_cd16_mono_motif_df_for_plotting$color == "blue",]
 
 cd16_mono_motif_plot <- ggplot(combined_cd16_mono_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
   geom_point(aes(color = color), size = 4) +
@@ -458,7 +461,7 @@ cd16_mono_motif_plot <- ggplot(combined_cd16_mono_motif_df_for_plotting, aes(x =
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/willi/Desktop/CD16_Mono_Motif_HVL_Vaccinated.png", plot = cd16_mono_motif_plot, width = 1800, height = 1703, units = "px")
+ggsave(filename = "C:/Users/wat2/Desktop/motif_plots/CD16_Mono_Motif_HVL_Vaccinated.png", plot = cd16_mono_motif_plot, width = 1800, height = 1703, units = "px")
 # pDC (Vaccinated HVL)
 pDC_upregulated_motifs <- read.table(paste0(scATAC_hvl_vaccinated_das_motif_dir, "pDC/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-pDC-sc_pct_0.01_FC_1_with_fc_values.tsv"),
                                            sep = "\t", header = TRUE)
@@ -496,12 +499,12 @@ pDC_motif_plot <- ggplot(combined_pDC_motif_df_for_plotting, aes(x = fc, y = p.a
   scale_color_identity() +
   # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
   theme_classic(base_size = 30) +
-  labs(title = "CD16 Mono",
+  labs(title = "pDC",
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/willi/Desktop/pDC_Motif_HVL_Vaccinated.png", plot = pDC_motif_plot, width = 1800, height = 1703, units = "px")
+ggsave(filename = "C:/Users/wat2/Desktop/motif_plots/pDC_Motif_HVL_Vaccinated.png", plot = pDC_motif_plot, width = 1800, height = 1703, units = "px")
 
 # NK (Vaccinated HVL)
 NK_upregulated_motifs <- read.table(paste0(scATAC_hvl_vaccinated_das_motif_dir, "NK/sc/0.01/with_bg/with_fc_added/D28-vs-D_minus_1-degs-NK-sc_pct_0.01_FC_1_with_fc_values.tsv"),
@@ -534,16 +537,17 @@ combined_NK_motif_df_for_plotting$color <- with(combined_NK_motif_df_for_plottin
 
 table(combined_NK_motif_df_for_plotting$color)
 combined_NK_motif_df_for_plotting[combined_NK_motif_df_for_plotting$color == "blue",]
+combined_NK_motif_df_for_plotting[combined_NK_motif_df_for_plotting$color == "red",]
 
 NK_motif_plot <- ggplot(combined_NK_motif_df_for_plotting, aes(x = fc, y = p.adjust.log, label = tf)) +
   geom_point(aes(color = color), size = 4) +
   scale_color_identity() +
   # geom_text(aes(label = ifelse(color %in% c("red", "blue"), tf, '')), vjust = 2, hjust = 0.5, size = 3) +
   theme_classic(base_size = 30) +
-  labs(title = "CD16 Mono",
+  labs(title = "NK",
        x = "Log2(FC)",
        y = "-Log10(Adjusted P-value)") +
   theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=c(0), linetype="dotted", color = "grey")
 
-ggsave(filename = "C:/Users/willi/Desktop/NK_Motif_HVL_Vaccinated.png", plot = NK_motif_plot, width = 1800, height = 1703, units = "px")
+ggsave(filename = "C:/Users/wat2/Desktop/motif_plots/NK_Motif_HVL_Vaccinated.png", plot = NK_motif_plot, width = 1800, height = 1703, units = "px")
 
