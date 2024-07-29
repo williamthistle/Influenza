@@ -2,10 +2,10 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-snATAC_cell_types <- c("B", "CD4 Memory", "CD8 Memory", "CD14 Mono", "CD16 Mono", "NK", "CD4 Naive", "CD8 Naive", "cDC", "MAIT", "Proliferating", "pDC")
+snATAC_cell_types <- c("CD14 Mono", "CD16 Mono", "NK","cDC", "pDC")
 
-# motif_dirs <- c(scATAC_hvl_placebo_das_motif_dir, scATAC_hvl_vaccinated_das_motif_dir, scATAC_lvl_placebo_das_motif_dir)
-motif_dirs <- c(scATAC_lvl_placebo_das_motif_dir)
+motif_dirs <- c(scATAC_hvl_placebo_das_motif_dir, scATAC_hvl_vaccinated_das_motif_dir, scATAC_lvl_placebo_das_motif_dir)
+#motif_dirs <- c(scATAC_lvl_placebo_das_motif_dir)
 
 # Step 1: Add FC to motif files
 for(motif_dir in motif_dirs) {

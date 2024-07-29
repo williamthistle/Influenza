@@ -193,6 +193,11 @@ setup_bulk_rna_analysis=function(metadata_dir, data_dir) {
   hvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL >= hvl_threshold,])
   hvl_vaccinated_counts <<- vaccinated_counts[,hvl_vaccinated_aliquots]
   hvl_vaccinated_metadata <<- vaccinated_metadata[hvl_vaccinated_aliquots,]
+  # Subset to full time series as well
+  hvl_full_time_series_vaccinated_subjects <<- unique(hvl_vaccinated_metadata[hvl_vaccinated_metadata$time_point == "2_D2",]$subject_id)
+  hvl_full_time_series_vaccinated_metadata <<- hvl_vaccinated_metadata[hvl_vaccinated_metadata$subject_id %in% hvl_full_time_series_vaccinated_subjects,]
+  hvl_full_time_series_vaccinated_aliquots <<- rownames(hvl_full_time_series_vaccinated_metadata)
+  hvl_full_time_series_vaccinated_counts <<- hvl_vaccinated_counts[,hvl_full_time_series_vaccinated_aliquots]
   # Grab mvl viral load vaccinated counts and metadata
   mvl_vaccinated_aliquots <<- rownames(vaccinated_metadata[vaccinated_metadata$AVAL > lvl_threshold & vaccinated_metadata$AVAL < hvl_threshold,])
   mvl_vaccinated_counts <<- vaccinated_counts[,mvl_vaccinated_aliquots]
