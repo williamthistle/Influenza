@@ -113,5 +113,5 @@ epigenetic_remodeling_heatmap_plot <- ggplot() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 16, color = category_colors[levels(factor(epigenetic_remodeling_heatmap_df$Gene_Name))]),
         axis.text.y = element_text(size = 16)) # + coord_fixed(ratio = 0.5)
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "epigenetic_remodeling_deg_heatmap_naive_hvl_bulk_flipped.png"), plot = epigenetic_remodeling_heatmap_plot, device='png', dpi=300, width = 8, height = 3, units = "in")
+ggsave(filename = paste0("C:/Users/willi/Desktop/", "epigenetic_remodeling_deg_heatmap_naive_hvl_bulk_flipped.png"), plot = epigenetic_remodeling_heatmap_plot, device='png', dpi=300, width = 8, height = 4, units = "in")
 
