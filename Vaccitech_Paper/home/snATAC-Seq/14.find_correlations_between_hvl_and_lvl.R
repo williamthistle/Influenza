@@ -57,6 +57,12 @@ for(cell_type in correlation_cell_types) {
   print(correlation_val$p.value)
   sc_correlations[[cell_type]][["sc_primary_hvl_vs_lvl"]] <- correlation_val
   
+  # How does fold change compare between HVL and LVL?
+  print("Number of HVL > LVL points")
+  print(sum(abs(comparing_first_vs_second_df$second_fc) > abs(comparing_first_vs_second_df$first_fc)))
+  print("Number of LVL > HVL points")
+  print(sum(abs(comparing_first_vs_second_df$first_fc) > abs(comparing_first_vs_second_df$second_fc)))
+  
   # Plot correlation
   sc_correlation_plots[[cell_type]][["sc_primary_hvl_vs_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
