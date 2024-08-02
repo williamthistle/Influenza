@@ -33,29 +33,6 @@ for(cell_type in correlation_cell_types) {
                                              sep = "\t", header = TRUE)
   rownames(cell_type_lvl_sc_pseudobulk_corrected_degs) <- cell_type_lvl_sc_pseudobulk_corrected_degs$Gene_Name
   
-  # Check correlation for primary significant SC genes in LVL data
-  primary_sc_degs <- rownames(cell_type_sc_degs)
-  print(paste0("Number of SC DEGs in primary data is: ", length(primary_sc_degs)))
-  compare_first_df <- cell_type_sc_degs
-  compare_second_df <- unfiltered_cell_type_lvl_sc_degs[rownames(unfiltered_cell_type_lvl_sc_degs) %in% primary_sc_degs,]
-  compare_first_df <- compare_first_df[rownames(compare_first_df) %in% rownames(compare_second_df),]
-  compare_second_df <- compare_second_df[rownames(compare_second_df) %in% rownames(compare_first_df),]
-  compare_first_df <- compare_first_df[order(rownames(compare_first_df)),]
-  compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
-  
-  comparing_first_vs_second_df <- data.frame(gene_name = rownames(compare_first_df), first_fc = compare_first_df$avg_log2FC,
-                                             second_fc = compare_second_df$avg_log2FC)
-  # Calculate correlation
-  correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
-  print(correlation_val$estimate)
-  print(correlation_val$p.value)
-  sc_correlations[[cell_type]][["sc_primary_vs_sc_lvl"]] <- correlation_val
-  
-  # Plot correlation
-  sc_correlation_plots[[cell_type]][["sc_primary_vs_sc_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
-    geom_point(size = 2) +
-    sm_statCorr() + xlab("High Viral Load FC") + ylab("Low Viral Load FC") + labs(title = cell_type_no_underscore)
-  
   # Check correlation for primary significant SC genes (pseudobulk_corrected) in LVL data
   primary_sc_pseudobulk_corrected_degs <- rownames(cell_type_sc_pseudobulk_corrected_degs)
   print(paste0("Number of SC DEGs (pseudobulk corrected) in primary data is: ", length(primary_sc_pseudobulk_corrected_degs)))
@@ -76,10 +53,36 @@ for(cell_type in correlation_cell_types) {
   
   # Plot correlation
   # Idea! Use data to set limits. 
-  
   sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
     sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive HVL FC") + ylab("Naive LVL FC") + labs(title = cell_type_no_underscore) +  xlim(-2.5, 2.5) + ylim(-2.5, 2.5) + theme(aspect.ratio = 1, text=element_text(size=15))
+  
+  
+  # Check correlation of union of HVL and LVL pseudobulk corrected genes
+  union_sc_pseudobulk_corrected_degs <- union(rownames(cell_type_sc_pseudobulk_corrected_degs), rownames(cell_type_lvl_sc_pseudobulk_corrected_degs))
+  print(paste0("Number of SC DEGs (pseudobulk corrected) in primary data is: ", length(union_sc_pseudobulk_corrected_degs)))
+  
+  unfiltered_cell_type_sc_degs <- unfiltered_cell_type_sc_degs[rownames(unfiltered_cell_type_sc_degs) %in% union_sc_pseudobulk_corrected_degs,]
+  unfiltered_cell_type_lvl_sc_degs <- unfiltered_cell_type_lvl_sc_degs[rownames(unfiltered_cell_type_lvl_sc_degs) %in% union_sc_pseudobulk_corrected_degs,]
+  
+  unfiltered_cell_type_sc_degs <- unfiltered_cell_type_sc_degs[order(rownames(unfiltered_cell_type_sc_degs)),]
+  unfiltered_cell_type_lvl_sc_degs <- unfiltered_cell_type_lvl_sc_degs[order(rownames(unfiltered_cell_type_lvl_sc_degs)),]
+  
+  comparing_first_vs_second_df <- data.frame(gene_name = rownames(unfiltered_cell_type_sc_degs), first_fc = unfiltered_cell_type_lvl_sc_degs$avg_log2FC,
+                                             second_fc = unfiltered_cell_type_sc_degs$avg_log2FC)
+  
+  # Calculate correlation
+  correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc)
+  print(correlation_val$estimate)
+  print(correlation_val$p.value)
+  sc_correlations[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl_union"]] <- correlation_val
+  
+  # Plot correlation
+  # Idea! Use data to set limits. 
+  sc_correlation_plots[[cell_type]][["sc_primary_pseudobulk_corrected_vs_sc_lvl_union"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
+    geom_point(size = 2) +
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive LVL FC") + ylab("Naive HVL FC") + labs(title = cell_type_no_underscore) + 
+    xlim(-3.5, 3.5) + ylim(-3.5, 3.5) + theme(aspect.ratio = 1, text=element_text(size=15)) + geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red")
 }
 
 hvl_vs_lvl_pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[2]])

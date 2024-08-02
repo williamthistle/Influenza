@@ -59,9 +59,10 @@ for(cell_type in correlation_cell_types) {
   hvl_vs_lvl_cytoepi_correlations[[cell_type]][["cytokine"]] <- comparing_first_vs_second_df
   
   # Plot correlation
-  hvl_vs_lvl_cytoepi_correlation_plots[[cell_type]][["cytokine"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
+  hvl_vs_lvl_cytoepi_correlation_plots[[cell_type]][["cytokine"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = second_fc, y = first_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive HVL FC") + ylab("Naive LVL FC") + labs(title = cell_type_no_underscore) +  xlim(-4, 4) + ylim(-4, 4) + theme(aspect.ratio = 1, text=element_text(size=15))
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive LVL FC") + ylab("Naive HVL FC") + labs(title = cell_type_no_underscore) + 
+    xlim(-4, 4) + ylim(-4, 4) + theme(aspect.ratio = 1, text=element_text(size=15)) + geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red")
   
   # Check correlation for epigenetic genes
   epigenetic_unfiltered_cell_type_sc_degs <- unfiltered_cell_type_sc_degs[rownames(unfiltered_cell_type_sc_degs) %in% epigenetic_genes,]
@@ -79,9 +80,10 @@ for(cell_type in correlation_cell_types) {
   hvl_vs_lvl_cytoepi_correlations[[cell_type]][["epigenetic"]] <- comparing_first_vs_second_df
   
   # Plot correlation
-  hvl_vs_lvl_cytoepi_correlation_plots[[cell_type]][["epigenetic"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
+  hvl_vs_lvl_cytoepi_correlation_plots[[cell_type]][["epigenetic"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = second_fc, y = first_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive HVL FC") + ylab("Naive LVL FC") + labs(title = cell_type_no_underscore) +  xlim(-2, 2) + ylim(-2, 2) + theme(aspect.ratio = 1, text=element_text(size=15))
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive LVL FC") + ylab("Naive HVL FC") + labs(title = cell_type_no_underscore) + 
+    xlim(-2, 2) + ylim(-2, 2) + theme(aspect.ratio = 1, text=element_text(size=15)) + geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red")
 }
 
 cyto_hvl_vs_lvl_cytoepi_correlation_plots <- lapply(hvl_vs_lvl_cytoepi_correlation_plots, function(x) x[[1]])

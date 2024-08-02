@@ -2,16 +2,21 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-find_sc_correlation_final <- function(first_gene_df, second_gene_df) {
-  compare_first_df <- first_gene_df
-  compare_second_df <- second_gene_df[rownames(second_gene_df) %in% compare_first_df$Peak_Name,]
-  compare_first_df <- compare_first_df[compare_first_df$Peak_Name %in% rownames(compare_second_df),]
-  compare_second_df <- compare_second_df[rownames(compare_second_df) %in% compare_first_df$Peak_Name,]
-  compare_first_df <- compare_first_df[order(compare_first_df$Peak_Name),]
-  compare_second_df <- compare_second_df[order(rownames(compare_second_df)),]
+find_sc_correlation_final <- function(sc_das, validation_das, unfiltered_sc_das, unfiltered_validation_das) {
+  union_sc_pseudobulk_corrected_das <- union(sc_das$Peak_Name, validation_das$Peak_Name)
+  print(paste0("Number of SC DAS (pseudobulk corrected) is: ", length(union_sc_pseudobulk_corrected_das)))
   
-  comparing_first_vs_second_df <- data.frame(gene_name = compare_first_df$Peak_Name, first_fc = compare_first_df$sc_log2FC,
-                                             second_fc = compare_second_df$avg_log2FC)
+  unfiltered_sc_das <- unfiltered_sc_das[rownames(unfiltered_sc_das) %in% union_sc_pseudobulk_corrected_das,]
+  unfiltered_validation_das <- unfiltered_validation_das[rownames(unfiltered_validation_das) %in% union_sc_pseudobulk_corrected_das,]
+  
+  unfiltered_sc_das <- unfiltered_sc_das[rownames(unfiltered_sc_das) %in% rownames(unfiltered_validation_das),]
+  unfiltered_validation_das <- unfiltered_validation_das[rownames(unfiltered_validation_das) %in% rownames(unfiltered_sc_das),]
+  
+  unfiltered_sc_das <- unfiltered_sc_das[order(rownames(unfiltered_sc_das)),]
+  unfiltered_validation_das <- unfiltered_validation_das[order(rownames(unfiltered_validation_das)),]
+  
+  comparing_first_vs_second_df <- data.frame(gene_name = rownames(unfiltered_sc_das), first_fc = unfiltered_validation_das$avg_log2FC,
+                                             second_fc = unfiltered_sc_das$avg_log2FC)
   return(comparing_first_vs_second_df)
 }
 
@@ -36,16 +41,14 @@ for(cell_type in correlation_cell_types) {
   # Filtered SC
   cell_type_sc_das <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
                                           sep = "\t", header = TRUE)
-  # Set fold change threshold (only keep high FC peaks)
-  # cell_type_sc_das <- cell_type_sc_das[abs(cell_type_sc_das$sc_log2FC) > 1,]
-  # cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$sc_pval < 0.01,]
   cell_type_validation_sc_das <- read.table(paste0(scATAC_lvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"),
                                                      sep = "\t", header = TRUE)
   # Remove any entries that are min.pct of 0 that will mess up fold change comparisons
+  unfiltered_cell_type_sc_das <- unfiltered_cell_type_sc_das[unfiltered_cell_type_sc_das$pct.1 > 0 & unfiltered_cell_type_sc_das$pct.2 > 0,]
   unfiltered_cell_type_validation_sc_das <- unfiltered_cell_type_validation_sc_das[unfiltered_cell_type_validation_sc_das$pct.1 > 0 & unfiltered_cell_type_validation_sc_das$pct.2 > 0,]
-  cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$Peak_Name %in% rownames(unfiltered_cell_type_validation_sc_das),]
+  # cell_type_sc_das <- cell_type_sc_das[cell_type_sc_das$Peak_Name %in% rownames(unfiltered_cell_type_validation_sc_das),]
   # Check correlation for primary significant SC genes in validation set
-  comparing_first_vs_second_df <- find_sc_correlation_final(cell_type_sc_das, unfiltered_cell_type_validation_sc_das)
+  comparing_first_vs_second_df <- find_sc_correlation_final(cell_type_sc_das, cell_type_validation_sc_das, unfiltered_cell_type_sc_das, unfiltered_cell_type_validation_sc_das)
   
   # Calculate correlation
   correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc,
@@ -57,7 +60,8 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   sc_correlation_plots[[cell_type]][["sc_primary_hvl_vs_lvl"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive HVL FC") + ylab("Naive LVL FC") + labs(title = cell_type_no_underscore) +  xlim(-8, 8) + ylim(-8, 8) + theme(aspect.ratio = 1, text=element_text(size=15))
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Naive LVL FC") + ylab("Naive HVL FC") + labs(title = cell_type_no_underscore) +
+    xlim(-8, 8) + ylim(-8, 8) + theme(aspect.ratio = 1, text=element_text(size=15)) + geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red")
 }
 
 pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[1]])
