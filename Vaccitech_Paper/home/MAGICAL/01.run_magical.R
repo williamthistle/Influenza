@@ -140,7 +140,7 @@ for(magical_dir in magical_dirs) {
 }
 
 # Two new tables!
-# magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
+magical_gene_overlap_df <- create_magical_gene_overlap_df(overall_magical_df, hvl_placebo_LRT_analysis_results_filtered)
 # magical_site_overlap_df <- create_magical_site_overlap_df(overall_magical_df)
 
 
