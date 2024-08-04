@@ -189,7 +189,7 @@ magical_tf_vs_cell_type_df <- create_tf_vs_cell_type_df(overall_magical_df)
 # Are these TFs found in scRNA data?
 tfs_found_in_scRNA_df <- find_tfs_in_scRNA_data(magical_tf_vs_cell_type_df, current_candidate_deg_table)
 
-magical_tf_heatmap_plot <- create_tf_heatmap_plot(tfs_found_in_scRNA_df)
+magical_tf_heatmap_plot <- create_tf_heatmap_plot(magical_tf_vs_cell_type_df)
 ggsave("C:/Users/willi/Desktop/MAGICAL_TF_plot.png", plot = magical_tf_heatmap_plot, width = 10, height = 10, units = "in", dpi = 300)
 
 # TF analysis for min.pct = 0.05

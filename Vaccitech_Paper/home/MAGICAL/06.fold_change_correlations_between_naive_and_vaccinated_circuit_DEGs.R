@@ -65,4 +65,4 @@ for(cell_type in correlation_cell_types) {
 }
 
 hvl_vs_vaccinated_pseudobulk_corrected_plots <- lapply(sc_correlation_plots, function(x) x[[1]])
-ggsave("C:/Users/willi/Desktop/hvl_vs_vaccinated_fc_correlation.png", plot = patchwork::wrap_plots(hvl_vs_vaccinated_pseudobulk_corrected_plots, ncol = 3, nrow = 2), height = 10, width = 10)
+ggsave("C:/Users/willi/Desktop/hvl_vs_vaccinated_fc_correlation.png", plot = patchwork::wrap_plots(hvl_vs_vaccinated_pseudobulk_corrected_plots, ncol = 2, nrow = 2), height = 10, width = 10)
