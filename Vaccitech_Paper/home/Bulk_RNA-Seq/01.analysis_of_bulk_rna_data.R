@@ -589,6 +589,11 @@ lvl_placebo_period_2_LRT_analysis_results <- lvl_placebo_period_2_LRT_analysis_r
 lvl_placebo_period_2_LRT_analysis_results <- subset(lvl_placebo_period_2_LRT_analysis_results, padj < 0.05)
 
 # Some misc code
+write.table(hvl_full_time_series_placebo_period_2_D5_vs_D_minus_1_results[[2]], file = "C:/Users/wat2/Desktop/naive_HVL_day_5.tsv", sep = "\t", quote = FALSE)
+write.table(hvl_full_time_series_placebo_period_2_D8_vs_D_minus_1_results[[2]], file = "C:/Users/wat2/Desktop/naive_HVL_day_8.tsv", sep = "\t", quote = FALSE)
 
+write.table(hvl_full_time_series_vaccinated_period_2_D5_vs_D_minus_1_results[[2]], file = "C:/Users/wat2/Desktop/vaccinated_HVL_day_5.tsv", sep = "\t", quote = FALSE)
+write.table(hvl_full_time_series_vaccinated_period_2_D8_vs_D_minus_1_results[[2]], file = "C:/Users/wat2/Desktop/vaccinated_HVL_day_8.tsv", sep = "\t", quote = FALSE)
+write.table(hvl_full_time_series_vaccinated_period_2_D28_vs_D_minus_1_results[[2]], file = "C:/Users/wat2/Desktop/vaccinated_HVL_day_28.tsv", sep = "\t", quote = FALSE)
 
 
