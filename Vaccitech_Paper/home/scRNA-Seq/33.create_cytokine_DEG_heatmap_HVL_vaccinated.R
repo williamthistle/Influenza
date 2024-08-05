@@ -33,7 +33,7 @@ annotations_final <- annotations %>%
 # Final heatmap genes
 heatmap_genes <- c("CX3CR1", "CCR2", "CCL3", "CXCL16", "CXCL2", "CXCL3", "CXCL8", "CXCR4",
                    "CSF1R", "NFIL3", "IL10", "IL10RA", "IL1R1", "IL1R2", "IL1RAP",
-                   "IFNG", "IRF1", "IRF2", "OAS1", "IFI16", "IFIH1", "IFITM1", "IFNAR1", "IRF8", "IFNGR1", "IRF2BP2", 
+                   "IFNG", "IRF1", "IRF2", "IRF8", "OAS1", "IFI16", "IFIH1", "IFITM1", "IFNAR1", "IFNGR1", "IRF2BP2", 
                    "FOS", "JUN", "FOSL2", "JDP2",
                    "DUSP1", "MAPK14", "MAP2K3", "MAP3K8", "MAPK6", "MAPK8", "MAPKAPK2", "DUSP4",
                    "NFKBIA", "NFKBIZ",
@@ -156,7 +156,7 @@ cytokine_heatmap_plot <- ggplot() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 16),
         axis.text.y = element_text(size = 16, color = category_colors[levels(factor(cytokine_heatmap_df$Gene_Name))])) # + coord_fixed(ratio = 0.5)
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "hvl_vaccinated_cytokine_deg_heatmap.png"), plot = cytokine_heatmap_plot, device='png', dpi=300, width = 5, height = 8, units = "in")
+ggsave(filename = paste0("C:/Users/wat2/Desktop/", "hvl_vaccinated_cytokine_deg_heatmap.png"), plot = cytokine_heatmap_plot, device='png', dpi=300, width = 5, height = 8, units = "in")
 
 # Flip it!
 cytokine_heatmap_plot <- ggplot() + 
@@ -168,5 +168,5 @@ cytokine_heatmap_plot <- ggplot() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 16, color = category_colors[levels(factor(cytokine_heatmap_df$Gene_Name))]),
         axis.text.y = element_text(size = 16)) # + coord_fixed(ratio = 0.5)
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "hvl_vaccinated_cytokine_deg_heatmap_flipped.png"), plot = cytokine_heatmap_plot, device='png', dpi=300, width = 15, height = 3, units = "in")
+ggsave(filename = paste0("C:/Users/wat2/Desktop/", "hvl_vaccinated_cytokine_deg_heatmap_flipped.png"), plot = cytokine_heatmap_plot, device='png', dpi=300, width = 15, height = 3, units = "in")
 
