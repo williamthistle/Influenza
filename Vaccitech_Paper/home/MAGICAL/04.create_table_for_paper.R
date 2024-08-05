@@ -231,3 +231,14 @@ important_magical_tf_vs_gene_df$gene_type <- gene_types
 
 important_magical_tf_vs_gene_df <- important_magical_tf_vs_gene_df[important_magical_tf_vs_gene_df$Cell_Type == "CD14_Mono",]
 important_magical_tf_vs_gene_df <- important_magical_tf_vs_gene_df[important_magical_tf_vs_gene_df$gene_type == "MAP Kinase",]
+
+# Check TFs for specific circuit genes
+magical_tf_vs_gene_df <- create_tf_targets_df(overall_magical_df)
+
+# MAPK7
+MAPK7_magical_tf_vs_gene_df <- magical_tf_vs_gene_df[magical_tf_vs_gene_df$Gene_symbol == "MAPK7",]
+MAPK7_magical_tf_vs_gene_df_scRNA <- MAPK7_magical_tf_vs_gene_df[MAPK7_magical_tf_vs_gene_df$TF_sc_pval < 0.05,]
+
+# MAP3K11
+
+

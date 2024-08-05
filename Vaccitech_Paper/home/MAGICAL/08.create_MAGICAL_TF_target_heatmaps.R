@@ -16,6 +16,9 @@ hvl_naive_magical_df_tf <- create_tf_vs_cell_type_df(hvl_naive_magical_df)
 lvl_naive_magical_df_tf <- create_tf_vs_cell_type_df(lvl_naive_magical_df)
 hvl_vaccinated_magical_df_tf <- create_tf_vs_cell_type_df(hvl_vaccinated_magical_df)
 
-create_tf_heatmap_plot(hvl_naive_magical_df_tf)
-create_tf_heatmap_plot(lvl_naive_magical_df_tf)
-create_tf_heatmap_plot(hvl_vaccinated_magical_df_tf)
+hvl_naive_magical_tf_heatmap_plot <- create_tf_heatmap_plot(hvl_naive_magical_df_tf)
+lvl_naive_magical_tf_heatmap_plot <- create_tf_heatmap_plot(lvl_naive_magical_df_tf)
+hvl_vaccinated_magical_tf_heatmap_plot <- create_tf_heatmap_plot(hvl_vaccinated_magical_df_tf)
+
+ggsave("C:/Users/wat2/Desktop/lvl_naive_MAGICAL_TF_plot.png", plot = lvl_naive_magical_tf_heatmap_plot, width = 10, height = 10, units = "in", dpi = 300)
+ggsave("C:/Users/wat2/Desktop/hvl_vaccinated_MAGICAL_TF_plot.png", plot = hvl_vaccinated_magical_tf_heatmap_plot, width = 10, height = 10, units = "in", dpi = 300)
