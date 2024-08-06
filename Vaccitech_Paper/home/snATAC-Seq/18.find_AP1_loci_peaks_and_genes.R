@@ -117,4 +117,51 @@ scATAC_CD14_mono_peaks_AP1_annotated_final <- scATAC_CD14_mono_peaks_AP1_annotat
 scATAC_CD14_mono_peaks_AP1_annotated_final_pos <- scATAC_CD14_mono_peaks_AP1_annotated_final[scATAC_CD14_mono_peaks_AP1_annotated_final$sc_log2FC > 0,]
 scATAC_CD14_mono_peaks_AP1_annotated_final_neg <- scATAC_CD14_mono_peaks_AP1_annotated_final[scATAC_CD14_mono_peaks_AP1_annotated_final$sc_log2FC < 0,]
 
-# Compare AP1 to IRF1
+# IRF1
+for(cell_type in correlation_cell_types) {
+  print(cell_type)
+  sc_correlations[[cell_type]] <- list()
+  sc_correlation_plots[[cell_type]] <- list()
+  cell_type_no_underscore <- gsub("_", " ", cell_type)
+  # Unfiltered scRNA
+  unfiltered_cell_type_sc_deg <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"),
+                                            sep = "\t", header = TRUE)
+  
+  # Get AP-1 loci for current cell type
+  scATAC_peaks <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_pct_0.01.tsv"), sep = "\t", header = TRUE)
+  
+  chromosomes <- sapply(strsplit(scATAC_peaks$Peak_Name, "-"), `[`, 1)
+  start_coords <- as.numeric(sapply(strsplit(scATAC_peaks$Peak_Name, "-"), `[`, 2))
+  end_coords <- as.numeric(sapply(strsplit(scATAC_peaks$Peak_Name, "-"), `[`, 3))
+  
+  scATAC_peaks$seqnames <- chromosomes
+  scATAC_peaks$start <- start_coords
+  scATAC_peaks$end <- end_coords
+  
+  scATAC_peaks_IRF1 <- scATAC_peaks[scATAC_peaks$seqnames %in% peak_motif_matches_IRF1$chr &
+                                     scATAC_peaks$start %in% peak_motif_matches_IRF1$point1 &
+                                     scATAC_peaks$end %in% peak_motif_matches_IRF1$point2,]
+  
+  # Annotate with genes
+  scATAC_peaks_AP1_annotated <- annotatePeak(makeGRangesFromDataFrame(scATAC_peaks_AP1), TxDb = txdb_hg38, annoDb = "org.Hs.eg.db")
+  scATAC_peaks_AP1_annotated <- as.data.frame(scATAC_peaks_AP1_annotated)
+  scATAC_peaks_AP1_annotated$sc_log2FC <- scATAC_peaks_AP1$sc_log2FC
+  scATAC_peaks_AP1_annotated$sc_pval <- scATAC_peaks_AP1$sc_pval
+  
+  sc_annotated_genes[[cell_type]] <- scATAC_peaks_AP1_annotated
+  
+  # Check correlation for primary significant SC genes in validation set
+  comparing_first_vs_second_df <- find_atac_and_rna_correlation(scATAC_peaks_AP1_annotated, unfiltered_cell_type_sc_deg)
+  
+  # Calculate correlation
+  correlation_val <- cor.test(comparing_first_vs_second_df$first_fc, comparing_first_vs_second_df$second_fc,
+                              method = "spearman")
+  print(correlation_val$estimate)
+  print(correlation_val$p.value)
+  sc_correlations[[cell_type]][["AP1_atac_vs_rna"]] <- correlation_val
+  
+  # Plot correlation
+  sc_correlation_plots[[cell_type]][["AP1_atac_vs_rna"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = first_fc, y = second_fc)) +
+    geom_point(size = 2) +
+    sm_statCorr(corr_method = "spearman") + xlab("ATAC FC") + ylab("RNA FC") + labs(title = cell_type_no_underscore) + xlim(-6, 6) + ylim(-6, 6)
+}
