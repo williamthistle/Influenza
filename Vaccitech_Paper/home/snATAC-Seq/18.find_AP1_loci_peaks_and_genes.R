@@ -128,7 +128,7 @@ for(cell_type in correlation_cell_types) {
                                             sep = "\t", header = TRUE)
   
   # Get AP-1 loci for current cell type
-  scATAC_peaks <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_pct_0.01.tsv"), sep = "\t", header = TRUE)
+  scATAC_peaks <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_final_pct_0.01.tsv"), sep = "\t", header = TRUE)
   
   chromosomes <- sapply(strsplit(scATAC_peaks$Peak_Name, "-"), `[`, 1)
   start_coords <- as.numeric(sapply(strsplit(scATAC_peaks$Peak_Name, "-"), `[`, 2))
@@ -142,11 +142,34 @@ for(cell_type in correlation_cell_types) {
                                      scATAC_peaks$start %in% peak_motif_matches_IRF1$point1 &
                                      scATAC_peaks$end %in% peak_motif_matches_IRF1$point2,]
   
+  # Check number of upregulated and downregulated loci
+  nrow(scATAC_peaks_IRF1[scATAC_peaks_IRF1$sc_log2FC > 0,])
+  nrow(scATAC_peaks_IRF1[scATAC_peaks_IRF1$sc_log2FC < 0,])
+  
+  # Now, let's do SC (no pseudobulk correction)
+  #scATAC_peaks <- read.table(paste0(scATAC_hvl_placebo_das_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_pct_0.01.tsv"), sep = "\t", header = TRUE)
+  
+  #chromosomes <- sapply(strsplit(rownames(scATAC_peaks), "-"), `[`, 1)
+  #start_coords <- as.numeric(sapply(strsplit(rownames(scATAC_peaks), "-"), `[`, 2))
+  #end_coords <- as.numeric(sapply(strsplit(rownames(scATAC_peaks), "-"), `[`, 3))
+  
+  #scATAC_peaks$seqnames <- chromosomes
+  #scATAC_peaks$start <- start_coords
+  #scATAC_peaks$end <- end_coords
+  
+  #scATAC_peaks_IRF1 <- scATAC_peaks[scATAC_peaks$seqnames %in% peak_motif_matches_IRF1$chr &
+  #                                    scATAC_peaks$start %in% peak_motif_matches_IRF1$point1 &
+  #                                    scATAC_peaks$end %in% peak_motif_matches_IRF1$point2,]
+  
+  # Check number of upregulated and downregulated loci
+  #nrow(scATAC_peaks_IRF1[scATAC_peaks_IRF1$avg_log2FC > 0,])
+  #nrow(scATAC_peaks_IRF1[scATAC_peaks_IRF1$avg_log2FC < 0,])
+  
   # Annotate with genes
-  scATAC_peaks_AP1_annotated <- annotatePeak(makeGRangesFromDataFrame(scATAC_peaks_AP1), TxDb = txdb_hg38, annoDb = "org.Hs.eg.db")
-  scATAC_peaks_AP1_annotated <- as.data.frame(scATAC_peaks_AP1_annotated)
-  scATAC_peaks_AP1_annotated$sc_log2FC <- scATAC_peaks_AP1$sc_log2FC
-  scATAC_peaks_AP1_annotated$sc_pval <- scATAC_peaks_AP1$sc_pval
+  scATAC_peaks_IRF1_annotated <- annotatePeak(makeGRangesFromDataFrame(scATAC_peaks_IRF1), TxDb = txdb_hg38, annoDb = "org.Hs.eg.db")
+  scATAC_peaks_IRF1_annotated <- as.data.frame(scATAC_peaks_IRF1_annotated)
+  scATAC_peaks_IRF1_annotated$sc_log2FC <- scATAC_peaks_IRF1$sc_log2FC
+  scATAC_peaks_IRF1_annotated$sc_pval <- scATAC_peaks_IRF1$sc_pval
   
   sc_annotated_genes[[cell_type]] <- scATAC_peaks_AP1_annotated
   
