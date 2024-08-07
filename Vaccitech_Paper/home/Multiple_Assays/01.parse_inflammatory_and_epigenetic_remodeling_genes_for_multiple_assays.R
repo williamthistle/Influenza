@@ -2,12 +2,13 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
+
 combineRows <- function(df1, df2, matches) {
   combined <- data.frame()
   for (i in 1:nrow(matches)) {
     queryRow <- matches[i, "queryHits"]
     subjectRow <- matches[i, "subjectHits"]
-    combinedRow <- cbind(df1[queryRow,], df2[subjectRow,])
+    combinedRow <- cbind(df1[queryRow, ], df2[subjectRow, ])
     combined <- rbind(combined, combinedRow)
   }
   return(combined)
@@ -21,9 +22,18 @@ get_fc_and_p_val_for_all_cell_types <- function(input_gene) {
   min.pct.1_list <- c()
   min.pct.2_list <- c()
   cell_types <- gsub(" ", "_", scRNA_cell_types)
-  for(cell_type in cell_types) {
-    current_genes <- read.table(paste0(scRNA_hvl_placebo_deg_dir, "D28-vs-D_minus_1-degs-", cell_type, "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"), sep = "\t", header = TRUE)
-    current_genes <- current_genes[rownames(current_genes) %in% input_gene,]
+  for (cell_type in cell_types) {
+    current_genes <- read.table(
+      paste0(
+        scRNA_hvl_placebo_deg_dir,
+        "D28-vs-D_minus_1-degs-",
+        cell_type,
+        "-time_point-controlling_for_subject_id_sc_unfiltered.tsv"
+      ),
+      sep = "\t",
+      header = TRUE
+    )
+    current_genes <- current_genes[rownames(current_genes) %in% input_gene, ]
     cell_type_list <- c(cell_type_list, cell_type)
     gene_list <- c(gene_list, rownames(current_genes))
     fc_list <- c(fc_list, current_genes$avg_log2FC)
@@ -31,7 +41,14 @@ get_fc_and_p_val_for_all_cell_types <- function(input_gene) {
     min.pct.1_list <- c(min.pct.1_list, current_genes$pct.1)
     min.pct.2_list <- c(min.pct.2_list, current_genes$pct.2)
   }
-  complete_gene_df <- data.frame(cell_type = cell_type_list, gene = gene_list, FC = fc_list, p_val_adj = p_val_list, pct.1 = min.pct.1_list, pct.2 = min.pct.2_list)
+  complete_gene_df <- data.frame(
+    cell_type = cell_type_list,
+    gene = gene_list,
+    FC = fc_list,
+    p_val_adj = p_val_list,
+    pct.1 = min.pct.1_list,
+    pct.2 = min.pct.2_list
+  )
   return(complete_gene_df)
 }
 
