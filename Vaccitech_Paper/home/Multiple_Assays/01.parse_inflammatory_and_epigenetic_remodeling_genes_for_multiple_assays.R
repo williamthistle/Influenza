@@ -2,7 +2,6 @@
 base_dir <- "~/GitHub/Influenza/Vaccitech_Paper/home/"
 source(paste0(base_dir, "00.setup.R"))
 
-
 combineRows <- function(df1, df2, matches) {
   combined <- data.frame()
   for (i in 1:nrow(matches)) {
