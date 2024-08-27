@@ -33,7 +33,7 @@ annotations_final <- annotations %>%
 # Final heatmap genes
 heatmap_genes <- c("CCL3", "CCL4", "CCL4L2", "CXCL16", "CXCL2",
                    "IL1B",
-                   "IFI44L", "IFIT2", "IFIT3", "IFIT5", "IFITM1", "IFITM10", "IFRD1", 
+                   "IFITM1", "IFI44L", "IFIT2", "IFIT3", "IFIT5", 
                    "FOS", "FOSB", "JUN", "JUND",
                    "DUSP1",
                    "NFKBIA")
@@ -131,7 +131,7 @@ cytokine_heatmap_plot <- ggplot() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 16),
         axis.text.y = element_text(size = 16, color = category_colors[levels(factor(cytokine_heatmap_df$Gene_Name))])) # + coord_fixed(ratio = 0.5)
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "lvl_placebo_cytokine_deg_heatmap.png"), plot = cytokine_heatmap_plot, device='png', dpi=300, width = 5, height = 8, units = "in")
+ggsave(filename = paste0("C:/Users/wat2/Desktop/", "lvl_placebo_cytokine_deg_heatmap.png"), plot = cytokine_heatmap_plot, device='png', dpi=300, width = 5, height = 8, units = "in")
 
 # Flip it!
 cytokine_heatmap_plot <- ggplot() + 
@@ -143,5 +143,5 @@ cytokine_heatmap_plot <- ggplot() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 16, color = category_colors[levels(factor(cytokine_heatmap_df$Gene_Name))]),
         axis.text.y = element_text(size = 16)) # + coord_fixed(ratio = 0.5)
 
-ggsave(filename = paste0("C:/Users/willi/Desktop/", "lvl_placebo_cytokine_deg_heatmap_flipped.png"), plot = cytokine_heatmap_plot, device='png', dpi=300, width = 15, height = 3, units = "in")
+ggsave(filename = paste0("C:/Users/wat2/Desktop/", "lvl_placebo_cytokine_deg_heatmap_flipped.png"), plot = cytokine_heatmap_plot, device='png', dpi=300, width = 15, height = 3, units = "in")
 
