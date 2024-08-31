@@ -100,6 +100,15 @@ summarize_stats(miRNA_placebo_report)
 # MintChIP
 mintchip_placebo_report <- placebo_report[placebo_report$mintchip == TRUE,]
 summarize_stats(mintchip_placebo_report)
+# Subset to the 11 subjects that we actually analyze
+mintchip_paired_samples <- c("17f82eccf700879f","ac2a58addd62cd54","551b6363face39ec","561e4c6a66f8b1e7",
+                             "54079742b6a3cc8c","db7f26dc0f695274","1e5232f7d77ffbcf","83b86144423425e6",
+                             "97053ff8c6b8623c","ce08d2c374a48d3c","00e4bf2b268c136e","18962e531bca3732",
+                             "546421cbf94adc40","d51dc1a1431f87d6","18a86a5137ad6bf4","6892e26fc1a12f37",
+                             "e0e22d32d1fbf6fa","f8e9a81fc752cc09","bbb598e6ac174c1d","cf68fb9f4b61f719",
+                             "5a2aeba907c7baf4","e767550290c513c2")
+mintchip_placebo_paired_samples_report <- mintchip_placebo_report[mintchip_placebo_report$aliquot_id %in% mintchip_paired_samples,]
+summarize_stats(mintchip_placebo_paired_samples_report)
 
 ### VACCINATED REPORT
 vaccinated_report <- all_metadata[all_metadata$treatment == "MVA-NP+M1",]
