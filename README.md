@@ -1,2 +1,3 @@
-# Influenza
- Code and files related to my influenza work
+# Influenza Manuscript Code
+
+ Code and files related to influenza manuscript
