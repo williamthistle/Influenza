@@ -126,26 +126,21 @@ for(marker in mintchip_markers_alt) {
   peak_annotation_plots[[marker]] <- differential_analysis_results
 }
 
-mintchip_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = NULL) + theme_classic(base_size = 18)
-
-anno.df$Feature <- factor(anno.df$Feature, levels = rev(levels(anno.df$Feature)))
-
-p <- ggplot(anno.df, aes_string(x = categoryColumn,
+anno <- lapply(peak_annotation_plots, getAnnoStat)
+anno <- ChIPseeker:::list_to_dataframe(anno)
+anno$Feature <- factor(anno$Feature, levels = rev(c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)",
+                                                      "3' UTR", "1st Exon", "Other Exon", "1st Intron",
+                                                      "Other Intron", "Distal Intergenic", "5' UTR",
+                                                      "Downstream (<=300)")))
+p <- ggplot(anno, aes_string(x = ".id",
                                 fill = "Feature",
                                 y = "Frequency"))
 
 p <- p + geom_bar(stat="identity") + coord_flip() + theme_bw()
-p <- p + ylab(ylab) + xlab(xlab) + ggtitle(title)
+p <- p + ylab("Percentage") + xlab("") + ggtitle("")
 
-if (categoryColumn == 1) {
-  p <- p + scale_x_continuous(breaks=NULL)
-  p <- p+scale_fill_manual(values=rev(getCols(nrow(anno.df))), guide=guide_legend(reverse=TRUE))
-} else {
-  p <- p+scale_fill_manual(values=rev(getCols(length(unique(anno.df$Feature)))), guide=guide_legend(reverse=TRUE))
-}
-
-
-
+mintchip_annotation_barplots <- p+scale_fill_manual(values=rev(ChIPseeker:::getCols(length(unique(anno$Feature)))), guide=guide_legend(reverse=TRUE)) + theme_classic(base_size = 18)
+# mintchip_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = NULL) + theme_classic(base_size = 18)
 
 ggsave(filename = paste0("C:/Users/willi/Desktop/", "mintchip_genomic_features_2.png"), plot = mintchip_annotation_barplots, device='png', dpi=300, width = 8, units = "in")
 
