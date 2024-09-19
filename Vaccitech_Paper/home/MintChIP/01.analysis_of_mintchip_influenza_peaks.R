@@ -116,7 +116,7 @@ mintchip_markers_alt <- c("H3K27me3", "H3K27Ac", "H3K4me3", "H3K36me3", "H3K9me3
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 peak_annotation_plots <- list()
-for(marker in mintchip_markers) {
+for(marker in mintchip_markers_alt) {
   differential_analysis_results_file <- paste0(mintchip_das_dir, marker, "/all/", marker, "_DESeq2_FC_0.1.tsv")
   differential_analysis_results <- read.table(differential_analysis_results_file, sep = "\t", header = TRUE)
   differential_analysis_results <- differential_analysis_results[,c(1,2,3,4,5)]
@@ -127,6 +127,26 @@ for(marker in mintchip_markers) {
 }
 
 mintchip_annotation_barplots <- plotAnnoBar(peak_annotation_plots, ylab = "Percentage", title = NULL) + theme_classic(base_size = 18)
+
+anno.df$Feature <- factor(anno.df$Feature, levels = rev(levels(anno.df$Feature)))
+
+p <- ggplot(anno.df, aes_string(x = categoryColumn,
+                                fill = "Feature",
+                                y = "Frequency"))
+
+p <- p + geom_bar(stat="identity") + coord_flip() + theme_bw()
+p <- p + ylab(ylab) + xlab(xlab) + ggtitle(title)
+
+if (categoryColumn == 1) {
+  p <- p + scale_x_continuous(breaks=NULL)
+  p <- p+scale_fill_manual(values=rev(getCols(nrow(anno.df))), guide=guide_legend(reverse=TRUE))
+} else {
+  p <- p+scale_fill_manual(values=rev(getCols(length(unique(anno.df$Feature)))), guide=guide_legend(reverse=TRUE))
+}
+
+
+
+
 ggsave(filename = paste0("C:/Users/willi/Desktop/", "mintchip_genomic_features_2.png"), plot = mintchip_annotation_barplots, device='png', dpi=300, width = 8, units = "in")
 
       
