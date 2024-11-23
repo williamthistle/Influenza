@@ -64,7 +64,7 @@ for(cell_type in correlation_cell_types) {
   # Plot correlation
   hvl_vs_lvl_cytoepi_correlation_plots[[cell_type]][["cytokine"]] <- ggplot(data = comparing_first_vs_second_df, mapping = aes(x = second_fc, y = first_fc)) +
     geom_point(size = 2) +
-    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Vaccinated HVL FC") + ylab("HVL HVL FC") + labs(title = cell_type_no_underscore) + 
+    sm_statCorr(corr_method = "spearman", text_size = 6) + xlab("Vaccinated HVL FC") + ylab("Naive HVL FC") + labs(title = cell_type_no_underscore) + 
     xlim(-3.5, 3.5) + ylim(-3.5, 3.5) + theme(aspect.ratio = 1, text=element_text(size=15)) + geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red")
   
   # Check correlation for epigenetic genes

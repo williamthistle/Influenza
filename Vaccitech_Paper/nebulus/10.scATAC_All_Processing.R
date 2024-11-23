@@ -207,6 +207,7 @@ write.table(x = peaks_df, file = paste0(ATAC_output_dir, "peaks_info.txt"), sep 
 peak_txt_file <- create_peaks_file(atac_proj_minus_clusters, ATAC_output_dir)
 # Create peak_motif_matches.txt file
 atac_proj_minus_clusters <- create_peak_motif_matches_file(atac_proj_minus_clusters, ATAC_output_dir, peak_txt_file)
+atac_proj_minus_clusters <- addBgdPeaks(atac_proj_minus_clusters)
 # save ArchR project: ArchR::saveArchRProject(ArchRProj = atac_proj_minus_clusters, outputDirectory = paste0(ATAC_output_dir, "minus_clusters_no_batch_correction"), load = FALSE, overwrite = TRUE)
 # load ArchR project: atac_proj_minus_clusters <- loadArchRProject(path = paste0(ATAC_output_dir, "minus_clusters_no_batch_correction"))
 # Find DASs
