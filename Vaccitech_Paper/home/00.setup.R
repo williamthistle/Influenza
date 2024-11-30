@@ -29,27 +29,9 @@ library(multiclassPairs)
 library(biomaRt)
 
 # Load bulk RNA-seq analysis results
-onedrive_dir <- "~"
-setwd(onedrive_dir)
-setwd("../")
-laptop_use <- grep("OneDrive", getwd())
-if(length(laptop_use == 1)) {
-  setwd("../")
-}
-onedrive_dir <- getwd()
-onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
+onedrive_dir <- "C:/Users/willi/Documents/"
 load(paste0(onedrive_dir, "Vaccitech_Paper/Analyses/Bulk_RNA-Seq/Results/bulk_RNA_analysis.RData"))
-
-# Reload onedrive dir
-onedrive_dir <- "~"
-setwd(onedrive_dir)
-setwd("../")
-laptop_use <- grep("OneDrive", getwd())
-if(length(laptop_use == 1)) {
-  setwd("../")
-}
-onedrive_dir <- getwd()
-onedrive_dir <- paste0(onedrive_dir, "/OneDrive - Princeton University/")
+onedrive_dir <- "C:/Users/willi/Documents/"
 
 # Misc settings
 set.seed(get_speedi_seed())
