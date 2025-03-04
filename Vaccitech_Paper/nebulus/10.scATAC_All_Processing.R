@@ -245,10 +245,22 @@ placebo_lvl_atac_proj <- placebo_atac_proj[cellsPass,]
 
 create_magical_input_files_atac(placebo_lvl_atac_proj, paste0(ATAC_output_dir, "MAGICAL_LVL_PLACEBO_", date, "/"))
 
+# Record cell type proportions for each subset
 
-# Record cell type proportions for each subset - TODO
-# HVL_sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "low",]
-# create_cell_type_proportion_MAGICAL_atac(HVL_proj_minus_clusters, "/Genomics/ogtr04/wat2/", HVL_sample_metadata_for_SPEEDI_df)
+# HVL Vaccinated
+HVL_vaccinated_sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "high",]
+HVL_vaccinated_sample_metadata_for_SPEEDI_df <- HVL_vaccinated_sample_metadata_for_SPEEDI_df[HVL_vaccinated_sample_metadata_for_SPEEDI_df$treatment == "MVA-NP+M1",]
+create_cell_type_proportion_MAGICAL_atac(atac_proj_minus_clusters, "/Genomics/ogtr04/wat2/", HVL_vaccinated_sample_metadata_for_SPEEDI_df, "HVL_vaccinated_")
+
+# HVL Placebo
+HVL_placebo_sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "high",]
+HVL_placebo_sample_metadata_for_SPEEDI_df <- HVL_placebo_sample_metadata_for_SPEEDI_df[HVL_placebo_sample_metadata_for_SPEEDI_df$treatment == "PLACEBO",]
+create_cell_type_proportion_MAGICAL_atac(atac_proj_minus_clusters, "/Genomics/ogtr04/wat2/", HVL_placebo_sample_metadata_for_SPEEDI_df, "HVL_placebo_")
+
+# LVL Placebo
+LVL_placebo_sample_metadata_for_SPEEDI_df <- sample_metadata_for_SPEEDI_df[sample_metadata_for_SPEEDI_df$viral_load == "low",]
+LVL_placebo_sample_metadata_for_SPEEDI_df <- LVL_placebo_sample_metadata_for_SPEEDI_df[LVL_placebo_sample_metadata_for_SPEEDI_df$treatment == "PLACEBO",]
+create_cell_type_proportion_MAGICAL_atac(atac_proj_minus_clusters, "/Genomics/ogtr04/wat2/", LVL_placebo_sample_metadata_for_SPEEDI_df, "LVL_placebo_")
 
 # Convert ArchR to Signac
 peak_matrix <- getPeakMatrix(atac_proj_minus_clusters)

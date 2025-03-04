@@ -228,7 +228,7 @@ print_cell_type_distributions <- function(proj) {
 }
 
 # Method to create the cell type proportion file for MAGICAL
-create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, sample_metadata_for_SPEEDI_df) {
+create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, sample_metadata_for_SPEEDI_df, prefix = "") {
   cell_type_proportions_df <- data.frame("Condition" = sample_metadata_for_SPEEDI_df$time_point, 
                                          "Sample_name" = rownames(sample_metadata_for_SPEEDI_df))
   total_cell_counts_df <- data.frame("Sample_name" = rownames(sample_metadata_for_SPEEDI_df))
@@ -263,7 +263,7 @@ create_cell_type_proportion_MAGICAL_atac <- function(proj, analysis_dir, sample_
     names(temp_df)[names(temp_df) == "cell_type_proportions"] <- cell_type
     cell_type_proportions_df <- cbind(cell_type_proportions_df, temp_df)
   }
-  write.csv(cell_type_proportions_df, file = paste0(analysis_dir, "ATAC_cell_type_proportion_time_point.csv"), quote = FALSE, row.names = FALSE)
+  write.csv(cell_type_proportions_df, file = paste0(analysis_dir, prefix, "ATAC_cell_type_proportion_time_point.csv"), quote = FALSE, row.names = FALSE)
 }
 
 # Method to create pseudo bulk replicates and call peaks
