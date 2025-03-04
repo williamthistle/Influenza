@@ -13,8 +13,33 @@ combine_sc_deg_results <- function(input_dir) {
   return(final_table)
 }
 
-# Evaluate bulk cell type proportion changes from CIBERSORTx
+# Evaluate cell type proportion changes in scRNA-seq data
 evaluate_scRNA_cell_type_proportion_changes <- function(cell_type_prop_table) {
+  cell_type_prop_table$Condition <- factor(cell_type_prop_table$Condition, levels = c("D_minus_1", "D28"))
+  # Find unadjusted p-values for each cell type of interest
+  # We use coin::wilcox_test because it handles ties (which happen when there are 0s in the cell type proportions)
+  # Unfortunately, we can't use loops because of the way the function call works (I think)
+  cell_type_proportion_p_values <- c()
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD16_Mono ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD8_Naive ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD14_Mono ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD4_Naive ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD4_Memory ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(B ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD8_Memory ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(NK ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(MAIT ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(cDC ~ Condition, data = cell_type_prop_table)))
+  cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(pDC ~ Condition, data = cell_type_prop_table)))
+  # Adjust for multiple hypothesis testing
+  cell_type_proportion_p_values_adjusted <- p.adjust(cell_type_proportion_p_values, method = "BH")
+  names(cell_type_proportion_p_values_adjusted) <- c("CD16 Mono", "CD8 Naive", "CD14 Mono", "CD4 Naive", "CD4 Memory", "B", "CD8 Memory",
+                                                     "NK", "MAIT", "cDC", "pDC")
+  return(cell_type_proportion_p_values_adjusted)
+}
+
+# Evaluate cell type proportion changes in scATAC-seq data
+evaluate_scATAC_cell_type_proportion_changes <- function(cell_type_prop_table) {
   cell_type_prop_table$Condition <- factor(cell_type_prop_table$Condition, levels = c("D_minus_1", "D28"))
   # Find unadjusted p-values for each cell type of interest
   # We use coin::wilcox_test because it handles ties (which happen when there are 0s in the cell type proportions)
