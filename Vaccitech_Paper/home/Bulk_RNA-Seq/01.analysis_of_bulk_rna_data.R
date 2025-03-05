@@ -380,6 +380,11 @@ current_analysis_results <- current_analysis_results[order(current_analysis_resu
 current_analysis_results <- subset(current_analysis_results, padj < 0.05)
 
 # HIGH VS LOW VIRAL LOAD
+placebo_period_1_D_minus_1_high_vs_low_results <- run_deseq_bulk_analysis_viral_load("both", both_full_time_series_placebo_counts, both_full_time_series_placebo_metadata,
+                                                                                     "1_D_minus_1", "high", "low", paste0(bulk_rna_results_dir, "placebo_period_2_D_minus_1_high_vs_low/"), "1_D_minus_1")
+
+
+
 # OVERALL, everything significant for D-2 / D-1 / D2 / D28 are very low base mean and kind of nonsense
 # D5 / D8 are higher base mean and actually have real DEG
 # This makes sense
