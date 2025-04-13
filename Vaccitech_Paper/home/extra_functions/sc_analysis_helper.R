@@ -31,11 +31,13 @@ evaluate_scRNA_cell_type_proportion_changes <- function(cell_type_prop_table) {
   cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(MAIT ~ Condition, data = cell_type_prop_table)))
   cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(cDC ~ Condition, data = cell_type_prop_table)))
   cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(pDC ~ Condition, data = cell_type_prop_table)))
+  names(cell_type_proportion_p_values) <- c("CD16 Mono", "CD8 Naive", "CD14 Mono", "CD4 Naive", "CD4 Memory", "B", "CD8 Memory",
+                                                    "NK", "MAIT", "cDC", "pDC")
   # Adjust for multiple hypothesis testing
   cell_type_proportion_p_values_adjusted <- p.adjust(cell_type_proportion_p_values, method = "BH")
   names(cell_type_proportion_p_values_adjusted) <- c("CD16 Mono", "CD8 Naive", "CD14 Mono", "CD4 Naive", "CD4 Memory", "B", "CD8 Memory",
                                                      "NK", "MAIT", "cDC", "pDC")
-  return(cell_type_proportion_p_values_adjusted)
+  return(list(cell_type_proportion_p_values, cell_type_proportion_p_values_adjusted))
 }
 
 # Evaluate cell type proportion changes in scATAC-seq data
@@ -54,9 +56,11 @@ evaluate_scATAC_cell_type_proportion_changes <- function(cell_type_prop_table) {
   cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(CD8.Memory ~ Condition, data = cell_type_prop_table)))
   cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(NK ~ Condition, data = cell_type_prop_table)))
   cell_type_proportion_p_values <- c(cell_type_proportion_p_values, coin::pvalue(coin::wilcox_test(MAIT ~ Condition, data = cell_type_prop_table)))
+  names(cell_type_proportion_p_values) <- c("CD16 Mono", "CD8 Naive", "CD14 Mono", "CD4 Naive", "CD4 Memory", "B",
+                                                     "CD8 Memory", "NK", "MAIT")
   # Adjust for multiple hypothesis testing
   cell_type_proportion_p_values_adjusted <- p.adjust(cell_type_proportion_p_values, method = "BH")
   names(cell_type_proportion_p_values_adjusted) <- c("CD16 Mono", "CD8 Naive", "CD14 Mono", "CD4 Naive", "CD4 Memory", "B",
                                                      "CD8 Memory", "NK", "MAIT")
-  return(cell_type_proportion_p_values_adjusted)
+  return(list(cell_type_proportion_p_values, cell_type_proportion_p_values_adjusted))
 }
